@@ -1,0 +1,24 @@
+BuffTap 0.9.4 - licensing scope
+
+Engine.lua, BuffTap.lua, Consumables.lua, ConsumableData.lua, WeaponCoatings.lua, Options.lua, BuffTap.toc, and
+BuffTap-authored documentation and tests are made available under the Mozilla
+Public License, version 2.0. See LICENSE-MPL-2.0.txt for the complete terms.
+
+Exception: Catalog.lua derives from Keepward 1.4.10 and remains under the
+original permission reproduced unchanged in LICENSE-Keepward.txt. BuffTap's
+catalog modifications are offered under the same personal World of Warcraft
+use permission. This does not expand or replace the upstream grant.
+
+This is a mixed-license distribution, not a claim that the entire package is
+MPL-licensed. No MIT license is asserted for the supplied Keepward material.
+The MPL grant applies only to rights the contributors can grant. AI assistance
+does not establish copyright ownership in otherwise unprotectable material.
+
+The bundled BuffTap icon may be used and redistributed with this addon and
+its modified versions; no exclusive rights in AI-generated elements are
+asserted. Game assets referenced by path remain their respective owners'.
+
+No trademark rights or endorsement are granted. Please identify unofficial
+builds clearly. This does not add a restriction to the MPL-covered code.
+
+No source code was incorporated from BuffReminders or other comparison addons.

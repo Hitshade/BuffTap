@@ -1,0 +1,187 @@
+# BuffTap changelog
+
+## 0.9.5 — 2026-09-25
+
+- Redesigned options with charcoal panels, restrained gold accents, readable secondary text, and neutral action buttons.
+- Consumable rows keep the chosen item, native icon, bag count, timing, and Choose action aligned. Auto counts describe the currently preferred item.
+- Replaced paginated item buttons with a searchable eight-row scrolling catalog, in-bags filter enabled on opening, native icons, stock counts, effect tooltips, and persistent selected-item summary. Turn off In bags only to choose absent items.
+- Auto and specific items are mutually exclusive; selection applies immediately and Done closes the chooser. Absent choices stay saved.
+- Party/raid assignments use a buff list and detail pane with native spell icons, full class names, All classes and Reset. Shared group defaults and thresholds expand below the pane.
+- Existing buff logic, Paladin sorting, food database, opt-in defaults, manual weapon coatings, and camping behavior are unchanged.
+- 88 mocked Lua 5.1 scenarios pass. Real-client rendering and interaction testing remain required.
+
+## 0.9.4 — 2026-09-25
+
+- Expanded verified food choices from 2 to 102, including Herb Baked Egg and leveling foods. Added exact resulting buff IDs and 67 eating-state IDs.
+- While food reminders are enabled, recognized eating pauses the reminder queue so class buffs do not interrupt a meal. Existing food buffs remain protected under the configured refresh timing.
+- Added 59 elixir choices with one explicit selected-item reminder. Any recognized active elixir is preserved until it expires; no stacking rules are assumed. Existing Ferocity preferences are retained.
+- Added 85 potion inventory choices. Potions are tracked in options and always used manually; no potion secure action is generated.
+- Added a searchable dropdown with selection checkmarks, pagination, an In bags only filter, effect tooltips, and Out of stock status. Selected unavailable items remain selected and do not substitute another item.
+- Bag changes refresh visible counts; inventory and coverage caches avoid periodic scans. Food and flask Auto selection remains available. Consumables remain opt-in.
+- Camping and weapon application are unchanged. 82 mocked Lua 5.1 scenarios pass; in-game eating, items and dropdown layout require validation.
+
+## 0.9.3 — 2026-09-25
+
+- Compacted the options header and Party & Raid controls without reducing the main window size or font sizes.
+- Removed the Party & Raid assignment scrollbar. All current class assignment lists fit at once, including five Paladin blessing families.
+- Compact class labels have full-name hover help; each buff retains group checkboxes, threshold, class toggles, and Reset.
+- Buff selection and filtering behavior are unchanged. All 70 mocked Lua 5.1 scenarios pass; in-client visual confirmation remains pending.
+
+## 0.9.2 — 2026-09-25
+
+- Fixed friendly-target Thorns being skipped on classes such as Shaman and Warlock. Explicit friendly targets now ignore party/raid class and group filters for all supported target buffs.
+- Added per-buff recipient-class checkboxes and Reset classes to Party & Raid options. Recipients must match both group and class; parties use G1. Defaults preserve previous class preferences.
+- Personal buff maintenance stays independent of group class assignments.
+- Paladin blessings retain configured priority and one-family selection. Greater Blessings share their single-target class settings; group casts fall back to single-target casts when filters would be bypassed.
+- 70 mocked Lua 5.1 scenarios pass. In-game casting and options layout still require testing.
+
+## 0.9.1 â€” 2026-09-25
+
+- Fixed an unreadable main-hand enchant state suppressing a definite missing off-hand coating warning.
+- Treats an inventory item ID of zero as an empty hand.
+- Reuses an unchanged manual-alert display without clearing and rebuilding the empty secure payload.
+- Keeps all ready spell and consumable actions ahead of a manual coating warning.
+- Corrected three catalog IDs: Nature's Grasp rank 6, Lightning Shield rank 4, and removal of Hunter's Mark from Aspect of the Hawk.
+- Added verified fallback levels for current Water Shield, Aspect of the Beast, and Seal of Fury records.
+- Updated the mixed-license scope for 0.9.1 and included `WeaponCoatings.lua` explicitly.
+- 60 mocked Lua 5.1 scenarios pass. Live Rogue/Shaman weapon-event testing remains necessary.
+
+## 0.9.0 â€” 2026-09-25
+
+- Added event-driven, manual-only missing weapon-coating alerts for Rogues and Shamans.
+- Tracks equipped main-hand and off-hand weapons separately, ignores shields and nonweapon off hands, and lets each hand be enabled independently.
+- Coating alerts never receive a secure action or temporary BuffTap binding; poison and imbue application remains manual.
+- Uses Forever's structured temporary-enchantment API plus weapon/enchant events without tooltip parsing or permanent polling.
+- Added exact recognition of the ten hidden Camp Benefits addition auras and displays their names in options and diagnostics.
+- Kept class buffs ahead of manual coating alerts and retained conservative fail-closed behavior when equipment or enchant state is unreadable.
+- 55 mocked Lua 5.1 scenarios pass. Real-client weapon event behavior and visual layout still require smoke testing.
+
+## 0.8.1 â€” 2026-09-25
+
+- Fixed consumable mouse clicks being blocked between input phases; settling now follows observed use.
+- Preserved friendly-target refresh timing when validating clicks.
+- Corrected group-vs-single priority, range-aware group counts, Greater Blessing conflicts, and group reagent checks.
+- Pinned food/flask/elixir use and aura IDs to Forever 1.60.1.70009; reject incomplete metadata and quarantine changed or unobserved non-food effects locally. Auto can try another supported item.
+- Added optional Water Shield support and current Aspect of the Beast / Seal of Fury ranks; retained known-spell checks.
+- Cancelled obsolete timers, ignored unrelated target/aura/data events, and bounded spellbook retries.
+- Hardened saved settings and restricted aura reads. Added a main enable control, compact bag counts, small-screen scaling, and clearer options spacing.
+- Adopted MPL 2.0 for original code; preserved the Keepward catalog exception and original notice.
+- 48 mocked Lua 5.1 scenarios passed. In-game smoke testing remains necessary.
+
+# Changelog
+
+## 0.8.0 - Consumables foundation
+
+- Added an opt-in Consumables tab with curated food, flask, and Elixir of Ferocity reminders.
+- Consumables use the same secure BuffTap button and binding, but only for explicitly whitelisted item IDs.
+- Added event-driven bag count caching; no bag polling or nearby-player scanning.
+- Added conservative effect-family tracking: any recognized Well Fed satisfies Food, and any current known flask satisfies Flask.
+- Added separate consumable rebuff thresholds and preferred-item selection.
+- Added bounded post-use settling windows so food cannot be repeatedly offered while Well Fed is being acquired.
+- Added passive Camp Benefits detection (spell 1229741) as recognition-only status. BuffTap does not infer individual camp benefits or interact with camp objects yet.
+- Added secure item pre-click revalidation, cooldown/usability checks, and fail-closed handling for missing or unreadable item APIs/data.
+- Expanded diagnostics and profiler counters for consumable work.
+- Curated Forever data is tagged to client database build 1.60.1.69913.
+
+## 0.7.0 - Dedicated friendly-target buffing
+
+- Moved friendly-player target buffing out of the Groups page into its own **Target** tab.
+- Added per-buff target-mode enable/disable controls.
+- Added a separate target-mode refresh threshold from 30 seconds to 30 minutes, with optional per-buff overrides.
+- Target-mode timing remains independent from normal solo/party/raid rebuff timing and is still capped at half of the aura's full duration.
+- Added two one-shot settling retries after `PLAYER_TARGET_CHANGED` to handle brief target metadata/aura propagation delays seen in beta/service conditions.
+- Target changes now clear the previous secure action before rebuilding the new target action.
+- Reduced the current-target aura cache lifetime and force-invalidates it during settling retries so stale target snapshots do not linger.
+- Added target-settling work to diagnostics/performance counters.
+- Split long rebuff/cooldown wake timers from short event-debounce timers so routine aura events no longer churn long-lived callbacks.
+- Runtime work counters remain disabled unless the optional profiler is enabled.
+- Restored a hard 48-entry cap on pathological out-of-range watch lists.
+- Kept friendly-target scanning event-driven: no nearby-player scans, nameplate sweeps, or permanent polling loop were added.
+- Added `/bt targetrebuff <seconds>` and `/bt targetrebuff <buff> <seconds>` for testing.
+
+## 0.6.1 - Friendly target quick buffing
+
+- Added optional **Buff friendly player target** mode for quickly buffing friendly players you click in the world.
+- Friendly-target mode uses only single-target spells and takes priority while a valid friendly player is targeted.
+- Added immediate `PLAYER_TARGET_CHANGED` revalidation so the secure button cannot carry a stale spell onto a newly selected target.
+- Reuses the existing aura cache, exact spell-range checks, and event-driven refresh path; no new polling loop was added.
+- `UNIT_AURA` watches the current target only while friendly-target mode is enabled and the target is friendly.
+- Fixed the recipient label so **Show buff recipient** also displays self actions instead of appearing to do nothing when BuffTap selected the player.
+- Added `/bt target on|off`.
+
+## 0.6.0 - Hardening, range awareness, and efficiency pass
+
+- Removed redundant per-buff raid-assignment reset buttons and added checked/unchecked/mixed master group states.
+- Added clearer group-spell icon/name information and per-buff smart-group `Need` thresholds.
+- Added exact spell-specific range filtering with a spellbook fallback; unreachable members are skipped without estimated-distance heuristics.
+- Completely missing buffs now outrank merely expiring buffs; expiring targets are ordered by shortest remaining duration.
+- Added optional remaining-time and group-count overlays to the reminder.
+- Added a Diagnostics & Performance tab with runtime work counters and an opt-in session profiler.
+- Reworked refresh scheduling around coalesced timers/events instead of a permanent high-frequency polling loop.
+- Added batch/cached aura reads, roster caching, and rank-resolution caching to reduce repeated API work.
+- Limited exact range checks to missing/expiring candidates and uses a lightweight active-target range heartbeat only when needed.
+- Hardened timer/event/refresh paths with protected error handling, cache invalidation, secret-value checks, and combat-safe deferred refreshes.
+- Migrated the older reminder overlay settings to the 0.6 names automatically.
+
+## 0.5.1 - Raid assignment behavior cleanup
+
+- Renamed the per-buff `Global` action to the clearer `Default`.
+- Per-buff overrides now disappear automatically when their selections match the raid-group defaults.
+- The `Default` button only lights when that row actually differs from the defaults.
+- If every per-buff row is manually changed to the same value for a raid group, that common value is promoted back to the master default automatically.
+- Changing a raid-group default now clears stale overrides that have become identical to the defaults.
+- Updated the Groups-tab help text to better explain inherited versus customized assignments.
+
+## 0.5.0 - Per-buff raid assignments and reminder polish
+
+- Fixed per-buff **Default** buttons so they enable immediately after a custom rebuff threshold is set.
+- Added per-buff raid group assignments. Each buff inherits the global group selection until individually customized.
+- Added a one-click **Global** reset for each buff assignment row.
+- Group scanning now evaluates all roster members and applies the assignment for the specific buff being considered.
+- Added optional buff-name and target-name labels around the reminder icon.
+- Kept self-buffing independent from raid assignments so BuffTap can still maintain the player's own buffs.
+
+## 0.4.0 - Smarter timing controls
+
+- Added per-buff rebuff thresholds from 15 seconds to 3 minutes.
+- Kept a global default threshold for buffs without a custom value.
+- Added spell icons and reorganized the Buffs page into clearer Buff, Rebuff, and Priority columns.
+- Added configurable smart group thresholds for party/raid group spells and Greater Blessings.
+- Added `/bt rebuff <buff> <seconds>`, `/bt groupneed`, and `/bt blessingneed` commands.
+- Preserved the half-duration safety cap for short-duration buffs.
+
+## 0.3.3 - Forever event and debug cleanup
+
+- Removed redundant events that WoW Forever reports as unsupported: `PLAYER_UNGHOSTED` and `LEARNED_SPELL_IN_TAB`.
+- Clarified binding diagnostics so the normal WoW binding and BuffTap's secure override are reported separately.
+- Debug output now reports whether each BuffTap secure override is active, inactive, or failed.
+
+## 0.3.2 - Priority numbering fix
+
+- Buff priorities now start at 1 for each class.
+- Group and single-target versions of the same logical buff share one priority.
+- Priority values entered through the UI or slash command are clamped to 1 or higher.
+
+## 0.3.1 - UI and rebuff timing test build
+
+- Added a 15-second to 3-minute rebuff threshold slider with a 45-second default.
+- Added BuffTap to the in-game Settings > AddOns menu, with a legacy Interface Options fallback.
+- Kept `/bt` as a quick way to open the full BuffTap window.
+- Fixed tab/header spacing and the Buffs-page footer alignment.
+- Added a visible Priority label for the buff order fields.
+- Preserved the 0.3.0 party/raid assignment and smart group-buff behavior.
+
+## 0.3.0 - Group buffing test build
+
+- Added party and raid buff scanning.
+- Added selectable raid group assignments (1-8).
+- Added smart group-buff selection with single-target fallback.
+- Added class-wide handling for Greater Blessings.
+- Redesigned the settings window into Buffs, Groups, and Appearance tabs.
+- Added group assignment and smart-group slash commands.
+- Preserved the existing secure one-tap casting path and BuffTap branding.
+
+## 0.2.0
+
+- Added BuffTap artwork and addon icon support.
+- Redesigned the initial settings interface.
