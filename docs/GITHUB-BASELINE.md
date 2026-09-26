@@ -4,4 +4,4 @@ Imported the existing BuffTap 0.9.5 source on 2026-09-25. No gameplay changes we
 
 Runtime icons are included. Research downloads, reference-addon archives, old release packages, local paths and personal handoff files are excluded from the selected development documents.
 
-The repository is private. Validate changes against the Forever client before publishing new releases. The weapon-buff investigation for BuffTap has not been implemented.
+The repository is public. Validate changes against the Forever client before publishing new releases. The weapon-buff investigation for BuffTap has not been implemented.
