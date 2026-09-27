@@ -10,7 +10,7 @@ def test(name,code):
  lua=LuaRuntime(unpack_returned_tuples=True)
  lua.execute((ROOT/'tests/mock.lua').read_text())
  ns=lua.table()
- for f in ['Catalog.lua','Engine.lua','ConsumableData.lua','Consumables.lua','WeaponCoatings.lua','BuffTap.lua','Helpers.lua','Options.lua']:
+ for f in ['Catalog.lua','Engine.lua','ConsumableData.lua','Consumables.lua','WeaponCoatings.lua','BuffTap.lua','Helpers.lua','Readiness.lua','Options.lua']:
   lua.execute((ADDON/f).read_text(encoding='utf-8-sig'),'BuffTap',ns)
  lua.execute('BuffTap:InitDB(); BuffTap:Refresh()')
  lua.execute(code)

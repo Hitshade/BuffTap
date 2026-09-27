@@ -207,11 +207,11 @@ function B:BuildHelperPage(parent)
     {"helperQuick","Choose consumables from the icon","Hover a food, flask or elixir reminder to pick another supported item in your bags. Click the main icon to use your choice."},
     {"helperCoverage","Show missing party buffs","Shows buffs your five-player party may be missing and who might provide them. Information only: no casting or chat messages."},
     {"helperTracking","Remind me to enable tracking","Choose Herbs, Minerals or Fish below. When that tracker is off, BuffTap offers a one-tap reminder to turn it on."},
-    {"helperThanks","Thank players who buff me solo","Sends /thank to an identified player who buffs you. Never in parties, raids, instances or combat. At most once a minute; once per player per 10 minutes."},
+    {"helperThanks","Thank players who buff me solo","Thanks an identified solo buff provider. Never in groups, instances or combat. Limited to once a minute and once per player per 10 minutes."},
     {"helperDiscovery","Find unrecognized consumables","Lists bag consumables missing from BuffTap's supported list for review. It does not add or use them. View the report in Diagnostics."},
   }
   for i,spec in ipairs(settings) do
-    local x=18+((i-1)%2)*346; local y=-77-math.floor((i-1)/2)*94
+    local x=18+((i-1)%2)*346; local y=-67-math.floor((i-1)/2)*70
     local key=spec[1]
     f.checks[key]=check(f,spec[2],x,y,function(c)
       if A.Combat() then return end
@@ -224,16 +224,69 @@ function B:BuildHelperPage(parent)
     f.descriptions[key]=label(f,spec[3],x+4,y-27,"GameFontDisableSmall",326)
     addHelp(f.checks[key],spec[2],spec[3])
   end
-  button(f,"View discovery report",368,-361,204,function() B:ShowDiscoveryReport() end)
-  line(f,-447)
-  f.trackerHeading=label(f,"Preferred gathering tracker",18,-461,"GameFontNormal")
-  f.emptyTracker=label(f,"No learned gathering tracker is available on this character.",18,-489,"GameFontDisableSmall",670)
-  button(f,"Restore reminders",18,-530,154,function() B:RestoreHelpers(); B:Options() end)
-  label(f,"Brings back skipped reminders, including stronger-effect errors.",184,-536,"GameFontDisableSmall",500)
+  button(f,"View discovery report",368,-287,204,function() B:ShowDiscoveryReport() end)
+  line(f,-342)
+  f.trackerHeading=label(f,"Preferred gathering tracker",18,-354,"GameFontNormal")
+  f.emptyTracker=label(f,"No learned gathering tracker is available on this character.",18,-380,"GameFontDisableSmall",670)
+  f.readiness=CreateFrame("Frame",nil,f); f.readiness:SetAllPoints(f)
+  local r=f.readiness
+  label(r,"Class readiness",18,-406,"GameFontNormal")
+  f.petCheck=check(r,"Keep my pet ready",18,-426,function(c)
+    if A.Combat() then return end
+    B.db.helperPet=c:GetChecked()==true; B:SyncReadiness(); B:RequestRefresh("pet helper",0); B:Options()
+  end)
+  f.petDescription=label(r,"",22,-452,"GameFontDisableSmall",326)
+  f.stoneCheck=check(r,"Prepare a personal Healthstone",364,-426,function(c)
+    if A.Combat() then return end
+    B.db.helperHealthstone=c:GetChecked()==true; B:SyncReadiness(); B:RequestRefresh("Healthstone helper",0); B:Options()
+  end)
+  f.stoneDescription=label(r,"Offers Create Healthstone when none is in your bags. Requires a Soul Shard and free space. Never uses the stone.",368,-452,"GameFontDisableSmall",326)
+  f.demonChoice=button(r,"Choose preferred demon",18,-499,326,function()
+    if A.Combat() then return end
+    f.demonMenu:SetShown(not f.demonMenu:IsShown())
+  end)
+  f.demonChoice.icon=f.demonChoice:CreateTexture(nil,"ARTWORK")
+  f.demonChoice.icon:SetSize(20,20); f.demonChoice.icon:SetPoint("LEFT",3,0)
+  f.demonMenu=CreateFrame("Frame",nil,r,"BackdropTemplate")
+  local menu=f.demonMenu; menu:SetSize(326,158); menu:SetPoint("BOTTOMLEFT",f.demonChoice,"TOPLEFT",0,2)
+  menu:SetFrameStrata("DIALOG"); menu:EnableMouse(true)
+  menu:SetBackdrop({bgFile="Interface\\Buttons\\WHITE8X8",edgeFile="Interface\\Tooltips\\UI-Tooltip-Border",edgeSize=12})
+  menu:SetBackdropColor(.04,.04,.04,1); menu.rows={}; menu:Hide()
+  f:SetScript("OnHide",function() menu:Hide() end)
+  button(f,"Restore reminders",18,-537,154,function() B:RestoreHelpers(); B:Options() end)
+  label(f,"Brings back skipped reminders, including stronger-effect errors.",184,-543,"GameFontDisableSmall",500)
 end
 
 function B:UpdateHelperOptions()
   local f=self.helperWindow; if not f then return end
+  local class=self:ReadinessClass(); local warlock=class=="WARLOCK"
+  f.readiness:SetShown(warlock or class=="HUNTER"); f.demonMenu:Hide()
+  f.petCheck:SetChecked(self.db.helperPet==true); f.stoneCheck:SetChecked(self.db.helperHealthstone==true)
+  f.stoneCheck:SetShown(warlock); f.stoneDescription:SetShown(warlock); f.demonChoice:SetShown(warlock)
+  f.petDescription:SetText(warlock and "Offers your chosen summon if no living pet is present. Respects Demonic Sacrifice; never replaces a living pet."
+    or "Offers Revive for a visible dead pet. If your assigned pet is absent, reminds you to call or revive it manually.")
+  addHelp(f.petCheck,"Pet readiness","Offers recovery only out of combat, while stationary and unmounted. Any living pet satisfies this reminder.")
+  addHelp(f.stoneCheck,"Personal Healthstone","Creates one personal stone with a click. Any supported carried Healthstone satisfies the reminder, regardless of cooldown. Bank stock does not count.")
+  local demons=self:ReadinessDemons(); local chosen
+  for _,row in ipairs(f.demonMenu.rows) do row:Hide() end
+  for i,entry in ipairs(demons) do
+    local row=f.demonMenu.rows[i]
+    if not row then
+      row=button(f.demonMenu,"",6,-7-(i-1)*29,314,function(control)
+        if A.Combat() then return end
+        B.db.helperDemon=control.spellID; B.readinessPending=nil; B:ExpireReadiness()
+        B:RequestRefresh("preferred demon",0); B:Options()
+      end)
+      row.icon=row:CreateTexture(nil,"ARTWORK"); row.icon:SetSize(22,22); row.icon:SetPoint("LEFT",3,0)
+      f.demonMenu.rows[i]=row
+    end
+    row.spellID=entry.id; row:SetText("    "..entry.name); row.icon:SetTexture(entry.icon); row:Show()
+    if entry.id==self.db.helperDemon then chosen=entry end
+  end
+  f.demonMenu:SetHeight(math.max(1,#demons)*29+13)
+  f.demonChoice:SetText(chosen and ("    "..chosen.name.."  v") or (#demons>0 and "Choose preferred demon  v" or "No learned summon available"))
+  f.demonChoice.icon:SetTexture(chosen and chosen.icon or nil)
+  if #demons>0 then f.demonChoice:Enable() else f.demonChoice:Disable() end
   for key,c in pairs(f.checks) do c:SetChecked(self:HelperEnabled(key)) end
   for _,t in ipairs(f.trackers) do t:Hide() end
   local trackers=self:GatheringTrackers(); f.emptyTracker:SetShown(#trackers==0)
@@ -243,7 +296,7 @@ function B:UpdateHelperOptions()
   for i,entry in ipairs(trackers) do
     local t=f.trackers[i]
     if not t then
-      t=button(f,"",18+(i-1)*226,-487,218,function(control)
+      t=button(f,"",18+(i-1)*226,-376,218,function(control)
         if A.Combat() then return end
         B.db.helperTracker=control.trackerID; B:RequestRefresh("tracking preference",0); B:Options()
       end)

@@ -3,6 +3,66 @@
 -- Verified offline against Forever 1.60.1.70009 and item spell cross-checks.
 -- Runtime metadata must still match before a secure action is offered.
 local _,B=...
+
+-- Curated Forever maintenance consumables. This is intentionally small and
+-- whitelist-only: unknown consumables never become secure actions.
+B.ForeverDataBuild = "1.60.1.70009"
+B.EatingSpellIDs = {[1131]=true,[1248400]=true,[1248401]=true}
+B.CampBenefitsSpellID = 1229741
+-- Exact hidden auras used by Forever's Camp Benefits tooltip. These are
+-- recognition-only; similar stats do not suppress class-buff reminders.
+B.CampAdditions = {
+  {key="tent",name="Camp Tent",auraID=1229451},
+  {key="mana-well",name="Mana Well",auraID=1230587},
+  {key="sharpening-wheel",name="Sharpening Wheel",auraID=1230172},
+  {key="enchanted-lute",name="Enchanted Lute",auraID=1230653},
+  {key="first-aid",name="First Aid Kit",auraID=1230124},
+  {key="fish-bowl",name="Fish Bowl",auraID=1230098},
+  {key="incense",name="Incense Candle",auraID=1229513},
+  {key="lodestone",name="Lodestone",auraID=1230164},
+  {key="chair",name="Camp Chair",auraID=1229519},
+  {key="banner",name="Faction Banner",auraID=1229718},
+}
+B.ConsumableFamilies = {
+  {
+    key="food", name="Food", defaultOn=false, defaultSeconds=300, pendingSeconds=14,
+    -- Any recognized Well Fed effect satisfies the family. This conservative
+    -- rule avoids replacing another food buff just because it is not our chosen food.
+    auraNames={"Well Fed"}, localizedAuraSpellIDs={19705,24799,1248421,1248422}, includeItemSpell=false,
+    items={
+      {id=250071,useSpell=1248401,auraIDs={1248422},name="Steaming Stag Steak",note="20 Strength / 15 min"},
+      {id=250067,useSpell=1248400,auraIDs={1248421},name="Bat Hachee",note="20 Intellect / 15 min"},
+    },
+  },
+  {
+    key="flask", name="Flask", defaultOn=false, defaultSeconds=600, pendingSeconds=2,
+    -- All nine current Forever flask names satisfy this family, including
+    -- Petrification (recognized but not offered as a maintenance choice).
+    auraSpellIDs={17626,17627,17628,17629,17624,1293740,1293741,1293742,1293743},
+    auraNames={"Flask of Distilled Wisdom","Flask of Natural Accuracy","Flask of Natural Aggression",
+      "Flask of Natural Precision","Flask of Natural Swiftness","Flask of Supreme Power",
+      "Flask of Petrification","Flask of the Titans","Flask of Chromatic Resistance"},
+    items={
+      {id=274273,useSpell=1293740,auraIDs={1293740},name="Flask of Natural Accuracy",note="Forever"},
+      {id=274274,useSpell=1293741,auraIDs={1293741},name="Flask of Natural Aggression",note="Forever"},
+      {id=274275,useSpell=1293742,auraIDs={1293742},name="Flask of Natural Precision",note="Forever"},
+      {id=274276,useSpell=1293743,auraIDs={1293743},name="Flask of Natural Swiftness",note="Forever"},
+      {id=13510,useSpell=17626,auraIDs={17626},name="Flask of the Titans",note="Classic"},
+      {id=13511,useSpell=17627,auraIDs={17627},name="Flask of Distilled Wisdom",note="Classic"},
+      {id=13512,useSpell=17628,auraIDs={17628},name="Flask of Supreme Power",note="Classic"},
+      {id=13513,useSpell=17629,auraIDs={17629},name="Flask of Chromatic Resistance",note="Classic"},
+    },
+  },
+  {
+    key="ferocity", name="Elixir of Ferocity", defaultOn=false, defaultSeconds=180, pendingSeconds=2,
+    auraNames={"Elixir of Ferocity"},
+    items={{id=250350,useSpell=1250985,auraIDs={1250985},name="Elixir of Ferocity",note="18 Strength & Agility / 30 min"}},
+  },
+}
+
+B.SOUNDKIT_REMIND = 12867 -- ALARM_CLOCK_WARNING_2, safe on Forever (no PlaySoundFile ogg paths)
+
+
 local food,elixir
 for _,family in ipairs(B.ConsumableFamilies) do
   if family.key=="food" then food=family elseif family.key=="ferocity" then elixir=family end

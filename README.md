@@ -8,7 +8,7 @@ BuffTap watches your buffs, works out what needs attention, and prepares the nex
 
 **Automate the reminders and preparation. Stay in control of every cast.** BuffTap automatically detects, prioritizes, and updates its suggestions; casting spells and using items still require your click or keypress.
 
-**Version 1.0.0.** Optional conveniences are available in the main **Helpers** tab and start disabled, so you can choose exactly how much assistance you want.
+**Version 1.1.0.** Optional conveniences are available in the main **Helpers** tab and start disabled, so you can choose exactly how much assistance you want.
 
 ## One tap, your priorities
 
@@ -33,6 +33,16 @@ Choose supported **food buffs, flasks, and an elixir** to maintain. Search by na
 - **Predictable preferences:** Keep explicit selections and see when they are out of stock.
 - **Respect existing effects:** Food and elixir checks help prevent unnecessary replacement prompts.
 - **Discovery report:** Optionally list unknown bag consumables for review. Discovery does not automatically enable or use unverified items.
+
+## 🐾 Ready for the next pull
+
+Enable **pet readiness** or **personal Healthstone preparation** in Helpers when you want them. Both start off, and ordinary buffing keeps its place ahead of these extras.
+
+- **Warlocks:** Pick a learned preferred demon. BuffTap offers its summon when no living pet is present, respects Demonic Sacrifice, and never replaces a living demon just to match your preference.
+- **Hunters:** One-tap Revive for a visible dead pet. An absent assigned pet gets a manual call/revive reminder when BuffTap cannot verify which recovery is needed.
+- **Personal Healthstones:** Offers your highest learned Create Healthstone spell when you carry none. Any supported rank or improved version satisfies the check. Creation requires a Soul Shard and verified general bag space; the button never consumes a Healthstone.
+
+These helpers wait through mount and pet transitions and offer casts only while stationary, out of combat, and otherwise ready to act. Missing or unreadable client data suppresses an action rather than guessing.
 
 ## Small conveniences that add up
 
@@ -65,4 +75,4 @@ Include your class, addon version, game build, and steps to reproduce the issue.
 
 ---
 
-**Credits and license:** BuffTap-authored code is offered under MPL 2.0. The catalog derives from Keepward and retains its original permission and attribution; see the bundled license notices. Game artwork belongs to its respective owners. Developed with AI-assisted coding and review. No BuffSmith source code was incorporated.
+**License:** BuffTap source is offered under **MPL 2.0**; see the bundled license notices. The class catalog is generated from WoW Forever client data. Game data and artwork remain their respective owners'. Developed with AI-assisted coding and review.

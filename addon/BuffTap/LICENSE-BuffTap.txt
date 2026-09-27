@@ -1,24 +1,18 @@
-BuffTap 1.0.0 - licensing scope
+BuffTap 1.1.0 - licensing scope
 
-Engine.lua, BuffTap.lua, Consumables.lua, ConsumableData.lua, WeaponCoatings.lua, Helpers.lua, Options.lua, BuffTap.toc, and
-BuffTap-authored documentation and tests are made available under the Mozilla
-Public License, version 2.0. See LICENSE-MPL-2.0.txt for the complete terms.
+BuffTap source files, including the replacement generated Catalog.lua,
+Readiness.lua, the catalog generator, and BuffTap-authored documentation and
+tests are offered under the Mozilla Public License, version 2.0.
+See LICENSE-MPL-2.0.txt for the complete terms.
 
-Exception: Catalog.lua derives from Keepward 1.4.10 and remains under the
-original permission reproduced unchanged in LICENSE-Keepward.txt. BuffTap's
-catalog modifications are offered under the same personal World of Warcraft
-use permission. This does not expand or replace the upstream grant.
-
-This is a mixed-license distribution, not a claim that the entire package is
-MPL-licensed. No MIT license is asserted for the supplied Keepward material.
-The MPL grant applies only to rights the contributors can grant. AI assistance
-does not establish copyright ownership in otherwise unprotectable material.
+The grant covers only rights the contributors can grant. Spell names, numeric
+IDs, client facts and referenced game assets remain their respective owners'.
+AI assistance does not establish copyright ownership in otherwise
+unprotectable material.
 
 The bundled BuffTap icon may be used and redistributed with this addon and
 its modified versions; no exclusive rights in AI-generated elements are
-asserted. Game assets referenced by path remain their respective owners'.
+asserted. No trademark rights or endorsement are granted. Please identify
+unofficial builds clearly; this does not add a restriction to the MPL.
 
-No trademark rights or endorsement are granted. Please identify unofficial
-builds clearly. This does not add a restriction to the MPL-covered code.
-
-No source code was incorporated from BuffReminders or other comparison addons.
+Earlier releases retain their original license notices and terms.

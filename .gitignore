@@ -6,11 +6,16 @@
 !/requirements-dev.txt
 !/addon/
 !/tests/
+!/tools/
 !/docs/
 /docs/*
 !/docs/GITHUB-BASELINE.md
+!/docs/CATALOG-DATA.md
+!/docs/RELEASE-REVIEW-1.1.0.md
 __pycache__/
 *.pyc
 *.zip
 .env*
 tests/last-run.txt
+
+tests/last-run-*.txt

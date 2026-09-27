@@ -152,3 +152,5 @@ function consumables(family)
  for _,b in ipairs(BuffTap.Buffs) do BuffTap.db.buffs[b.key]=false end
  BuffTap.db.consumablesEnabled=true; BuffTap.db.consumableFamilies[family]=true; BuffTap:InvalidateConsumables()
 end
+
+function methods:UnregisterEvent(e) self.registered[e]=nil end

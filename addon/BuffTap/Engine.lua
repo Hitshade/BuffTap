@@ -4,7 +4,7 @@
 
 local _, B = ...
 _G.BuffTap = B
-B.version = "1.0.0"
+B.version = "1.1.0"
 B.API = {}
 local A = B.API
 
@@ -38,12 +38,14 @@ function B:InitDB()
     consumablesEnabled=false, consumableFamilies={}, consumableChoices={}, consumableSeconds={},
     weaponReminder=true, weaponMainHand=true, weaponOffHand=true,
     helperDismiss=false, helperBounce=false, helperTracking=false, helperCoverage=false,
-    helperDiscovery=false, helperThanks=false, helperQuick=false, helperTracker=0,
+    helperDiscovery=false, helperThanks=false, helperQuick=false, helperTracker=0, helperPet=false, helperHealthstone=false, helperDemon=0,
     raidGroups={true,true,true,true,true,true,true,true}}
   for k,v in pairs(defaults) do
     if type(self.db[k]) ~= type(v) then self.db[k] = v end
   end
   if not A.Number(self.db.helperTracker) or (self.db.helperTracker~=2383 and self.db.helperTracker~=2580 and self.db.helperTracker~=43308) then self.db.helperTracker=0 end
+  if not A.Number(self.db.helperDemon) or (self.db.helperDemon~=688 and self.db.helperDemon~=697 and self.db.helperDemon~=712 and self.db.helperDemon~=713 and self.db.helperDemon~=691) then self.db.helperDemon=0 end
+  if self.SyncReadiness then self:SyncReadiness() end
   -- 0.3.0 carried an internal 8-second value but exposed no timing control.
   -- Move untouched installs to the new, more useful 45-second default.
   if not hadRebuffVersion then
@@ -116,7 +118,7 @@ end
 
 function B:ResetStats()
   self.stats={refreshes=0,selects=0,auraScans=0,auraHits=0,rosterBuilds=0,rosterHits=0,
-    resolveBuilds=0,resolveHits=0,rangeChecks=0,targetRetries=0,itemCountRefreshes=0,itemInfoLoads=0,consumableSelects=0,weaponReads=0}
+    resolveBuilds=0,resolveHits=0,rangeChecks=0,targetRetries=0,itemCountRefreshes=0,itemInfoLoads=0,consumableSelects=0,weaponReads=0,readinessBagScans=0}
 end
 
 function B:Supported(b)
@@ -646,6 +648,11 @@ function B:AddRangeBlocked(action)
 end
 
 function B:Validate(action)
+  if action and action.source=="readiness" then
+    local needed,why=self:ReadinessStillNeeded(action)
+    if not needed then return false,why end
+    if action.manual then action.valid=true; return true end
+  end
   if action and action.source=="consumable" then
     if type(self.ValidateConsumable)~="function" then return false,"consumable provider unavailable" end
     return self:ValidateConsumable(action,false)
@@ -993,6 +1000,11 @@ function B:Select()
   if self.TrackingAction then
     local tracking=self:TrackingAction()
     if tracking then tracking.selectedAt=GetTime(); return tracking,"tracking reminder" end
+  end
+
+  if self.SelectReadiness then
+    local readiness=self:SelectReadiness()
+    if readiness then return readiness,readiness.manual and "manual pet recovery" or "class readiness" end
   end
 
   -- Weapon coatings are informational reminders. Evaluate them only after all

@@ -170,6 +170,11 @@ function B:CreateButton()
       GameTooltip:AddLine(action.targetName,0.4,1,0.8)
       GameTooltip:AddLine(action.reason,0.85,0.85,0.85,true)
       GameTooltip:AddLine("Manual reminder only — BuffTap will not apply or replace the coating.",0.75,0.75,0.75,true)
+    elseif action.source=="readiness" then
+      if not action.manual and GameTooltip.SetSpellByID then GameTooltip:SetSpellByID(action.id)
+      else GameTooltip:SetText(action.name,1,0.82,0.1) end
+      GameTooltip:AddLine(action.reason,0.85,0.85,0.85,true)
+      GameTooltip:AddLine(action.manual and "Manual reminder only; no click action or key binding." or "Click or use your BuffTap binding to cast.",0.4,1,0.8,true)
     elseif action.source=="consumable" then
       GameTooltip:SetText(action.name,1,0.82,0.1)
       GameTooltip:AddLine("Personal consumable | item "..tostring(action.itemID),0.4,1,0.8)
@@ -195,6 +200,11 @@ function B:CreateButton()
     local action=B.action
     if not action then return end
     if B:HelperSuppressed(action) then B:Commit(nil,"dismissed"); return end
+    if action.source=="readiness" then
+      if action.key=="healthstone" then B.readinessInventory=nil end -- explicit click: recheck carried stock/capacity
+      if not B:Validate(action) then B:Commit(nil,"readiness changed before click") end
+      return
+    end
     if action.source=="tracking" then
       if not B:TrackingStillNeeded(action) or not B:Validate(action) then B:Commit(nil,"tracking changed") end
       return
@@ -225,7 +235,8 @@ function B:CreateButton()
     if A.Combat() or (button and button~="LeftButton") then return end
     local action=B.action
     if action then
-      if action.source=="consumable" and B.AfterConsumableClick then B:AfterConsumableClick(action)
+      if action.source=="readiness" then B:AfterReadinessClick(action,down)
+      elseif action.source=="consumable" and B.AfterConsumableClick then B:AfterConsumableClick(action)
       elseif action.source~="weapon-reminder" then B:InvalidateAura(action.target) end
     end
     B.dirty=true
@@ -239,13 +250,14 @@ function B:Commit(action,reason)
   if not b then return end
   if action and action.source=="consumable" and not self:ValidateConsumable(action,false,true) then action=nil; reason="item changed before preparation" end
   if action and action.source=="weapon-reminder" and not self:ValidateWeaponReminder(action) then action=nil; reason="weapon reminder changed before display" end
+  if action and action.source=="readiness" and not self:Validate(action) then action=nil; reason="readiness changed before preparation" end
   local previous=self.action
   if self.quickChoices then self.quickChoices:Hide() end
   local appearance=table.concat({self.db.size,self.db.opacity,self.db.x,self.db.y,tostring(self.db.glow),tostring(self.db.pulse),
     tostring(self.db.showBuffName),tostring(self.db.showTargetName),tostring(self.db.showTimer),tostring(self.db.showGroupBadge),table.concat(self.db.keys,",")},"|")
   local secureMatches=false
   if action and previous and action.id==previous.id and action.source==previous.source and action.target==previous.target and action.targetGUID==previous.targetGUID then
-    if action.source=="weapon-reminder" then
+    if action.manual then
       secureMatches=action.key==previous.key and action.slot==previous.slot
         and b:GetAttribute("type1")==nil and b:GetAttribute("spell")==nil
         and b:GetAttribute("item")==nil and b:GetAttribute("unit")==nil
@@ -278,9 +290,9 @@ function B:Commit(action,reason)
   if not action or not action.valid or self.setupError then return end
   if b:GetAttribute("state-safety")=="blocked" then self.reason="secure safety state blocked"; return end
 
-  -- Manual coating alerts deliberately have no protected action and install no
+  -- Manual alerts deliberately have no protected action and install no
   -- override bindings. Clicking the icon only revalidates the warning.
-  if action.source=="weapon-reminder" then
+  if action.manual then
     b:SetSize(self.db.size,self.db.size)
     b:ClearAllPoints(); b:SetPoint("CENTER",UIParent,"CENTER",self.db.x,self.db.y)
     b:SetAlpha(self.db.opacity); b.icon:SetTexture(action.icon)
@@ -380,6 +392,7 @@ end
 
 function B:ScheduleWake(delay,reason)
   if not self.db then return end
+  if self.SyncReadiness then self:SyncReadiness() end
   if A.Combat() then self.dirty=true; return end
   delay=math.max(0.05,tonumber(delay) or 0.05)
   if not (C_Timer and type(C_Timer.After)=="function") then
@@ -470,6 +483,7 @@ end
 
 function B:Refresh(captureDiagnostics)
   if not self.db then return end
+  if self.SyncReadiness then self:SyncReadiness() end
   if A.Combat() then self.dirty=true; return end
   if self.stats then self.stats.refreshes=(self.stats.refreshes or 0)+1 end
   self:CancelRefreshTimer()
@@ -566,6 +580,7 @@ function B:DiagnosticsLines()
       out[#out+1]="Camp additions granted: "..table.concat(names,", ")
     end
   end
+  if self.ReadinessSummary then out[#out+1]=self:ReadinessSummary() end
   if self.lastError then out[#out+1]="Last protected error: "..self.lastError end
   if self.stats then
     local x=self.stats
@@ -633,7 +648,7 @@ function B:Status(verbose)
       local x=self.stats
       say(string.format("Work: refresh=%d select=%d auraAPI=%d auraCache=%d rosterBuild=%d rosterCache=%d rankBuild=%d rankCache=%d range=%d targetSettle=%d",
         x.refreshes or 0,x.selects or 0,x.auraScans or 0,x.auraHits or 0,x.rosterBuilds or 0,x.rosterHits or 0,x.resolveBuilds or 0,x.resolveHits or 0,x.rangeChecks or 0,x.targetRetries or 0))
-      say(string.format("Item work: inventory=%d metadata=%d selections=%d weapon=%d",x.itemCountRefreshes or 0,x.itemInfoLoads or 0,x.consumableSelects or 0,x.weaponReads or 0))
+      say(string.format("Item work: inventory=%d metadata=%d selections=%d weapon=%d readiness=%d",x.itemCountRefreshes or 0,x.itemInfoLoads or 0,x.consumableSelects or 0,x.weaponReads or 0,x.readinessBagScans or 0))
     end
     if self.profileStats then
       local p=self.profileStats; local avg=p.count>0 and p.total/p.count or 0
@@ -663,6 +678,11 @@ local castEvents={UNIT_SPELLCAST_SUCCEEDED=true,UNIT_SPELLCAST_FAILED=true,UNIT_
 local function handleEvent(_,event,arg,castGUID,spellID)
   if event=="ADDON_LOADED" then if arg==ADDON then B:InitDB() end; return end
   if not B.db then return end
+  if B.ReadinessEvent then
+    local ok,handled=pcall(B.ReadinessEvent,B,event,arg,castGUID,spellID)
+    if not ok then B.readinessStatus="Class readiness event unavailable"
+    elseif handled then return end
+  end
   if B.HelperEvent then B:HelperEvent(event,arg,castGUID,spellID) end
   if event=="UI_ERROR_MESSAGE" then return end
   if event=="MINIMAP_UPDATE_TRACKING" and not B:HelperEnabled("helperTracking") then return end
