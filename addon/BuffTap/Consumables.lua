@@ -272,7 +272,7 @@ end
 function B:ValidateConsumable(action,forceAura,forceInventory)
   if not action or action.source~="consumable" then return false,"not a consumable action" end
   local family=self:ConsumableFamily(action.familyKey)
-  if not family or family.stockOnly or not self:ConsumableFamilyEnabled(family) then return false,"consumable family disabled or manual inventory only" end
+  if not family or not self:ConsumableFamilyEnabled(family) then return false,"consumable family disabled" end
 
   local static
   for _,item in ipairs(family.items or {}) do if item.id==action.itemID then static=item; break end end
@@ -363,7 +363,7 @@ function B:ResolveConsumable(family)
       local count=self:ConsumableCount(item.id)
       if count>0 then
         local ok,action,why=pcall(self.ResolveConsumableItem,self,family,item)
-        if ok and action then return action end
+        if ok and action and not (self.HelperSuppressed and self:HelperSuppressed(action)) then return action end
         reason=ok and why or "item provider unavailable"
         self:AddDiag("item "..item.id..": "..tostring(reason))
       end
@@ -377,7 +377,7 @@ function B:SelectConsumable()
   if self.stats then self.stats.consumableSelects=(self.stats.consumableSelects or 0)+1 end
   self:RebuildConsumableCache(false)
   for _,family in ipairs(self.ConsumableFamilies or {}) do
-    if not family.stockOnly and self:ConsumableFamilyEnabled(family) then
+    if self:ConsumableFamilyEnabled(family) then
       local action,why=self:ResolveConsumable(family)
       if action then
         action.reason="consumable: "..tostring(action.needState or "missing")

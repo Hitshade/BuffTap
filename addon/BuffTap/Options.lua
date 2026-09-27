@@ -194,6 +194,147 @@ local function consumableChoiceLabel(family)
   return "Auto (none in bags)",134400
 end
 
+-- Helpers share the main window and tab lifecycle. Long discovery output lives
+-- on Diagnostics so every helper setting remains visible without scrolling.
+function B:BuildHelperPage(parent)
+  local f=panel(parent); parent.pages[7]=f; self.helperWindow=f
+  label(f,"Everyday conveniences",18,-16,"GameFontNormalLarge")
+  label(f,"Choose the extras you want. All start off; your existing buff settings are preserved.",18,-43,"GameFontDisableSmall",680)
+  f.checks={}; f.descriptions={}; f.trackers={}
+  local settings={
+    {"helperDismiss","Dismiss a reminder for now","Right-click a buff or item reminder to skip it until you change zones. Restore reminders below brings it back sooner."},
+    {"helperBounce","Stop repeated stronger-buff errors","If your BuffTap click fails because a stronger buff is active, hide that reminder until a zone change or manual restore."},
+    {"helperQuick","Choose consumables from the icon","Hover a food, flask or elixir reminder to pick another supported item in your bags. Click the main icon to use your choice."},
+    {"helperCoverage","Show missing party buffs","Shows buffs your five-player party may be missing and who might provide them. Information only: no casting or chat messages."},
+    {"helperTracking","Remind me to enable tracking","Choose Herbs, Minerals or Fish below. When that tracker is off, BuffTap offers a one-tap reminder to turn it on."},
+    {"helperThanks","Thank players who buff me solo","Sends /thank to an identified player who buffs you. Never in parties, raids, instances or combat. At most once a minute; once per player per 10 minutes."},
+    {"helperDiscovery","Find unrecognized consumables","Lists bag consumables missing from BuffTap's supported list for review. It does not add or use them. View the report in Diagnostics."},
+  }
+  for i,spec in ipairs(settings) do
+    local x=18+((i-1)%2)*346; local y=-77-math.floor((i-1)/2)*94
+    local key=spec[1]
+    f.checks[key]=check(f,spec[2],x,y,function(c)
+      if A.Combat() then return end
+      B.db[key]=c:GetChecked()==true
+      if key=="helperThanks" then B.helperThankSeen=nil; B:ObserveSoloThanks(true) end
+      if key=="helperDiscovery" then B.helperDiscoverDirty=true end
+      if key=="helperDismiss" or key=="helperBounce" then B:RestoreHelpers() end
+      B:RequestRefresh("helper setting",0); B:Options()
+    end)
+    f.descriptions[key]=label(f,spec[3],x+4,y-27,"GameFontDisableSmall",326)
+    addHelp(f.checks[key],spec[2],spec[3])
+  end
+  button(f,"View discovery report",368,-361,204,function() B:ShowDiscoveryReport() end)
+  line(f,-447)
+  f.trackerHeading=label(f,"Preferred gathering tracker",18,-461,"GameFontNormal")
+  f.emptyTracker=label(f,"No learned gathering tracker is available on this character.",18,-489,"GameFontDisableSmall",670)
+  button(f,"Restore reminders",18,-530,154,function() B:RestoreHelpers(); B:Options() end)
+  label(f,"Brings back skipped reminders, including stronger-effect errors.",184,-536,"GameFontDisableSmall",500)
+end
+
+function B:UpdateHelperOptions()
+  local f=self.helperWindow; if not f then return end
+  for key,c in pairs(f.checks) do c:SetChecked(self:HelperEnabled(key)) end
+  for _,t in ipairs(f.trackers) do t:Hide() end
+  local trackers=self:GatheringTrackers(); f.emptyTracker:SetShown(#trackers==0)
+  local selected=false
+  for _,entry in ipairs(trackers) do if entry.id==self.db.helperTracker then selected=true end end
+  f.trackerHeading:SetText(selected and "Preferred gathering tracker" or "Preferred gathering tracker - choose one below")
+  for i,entry in ipairs(trackers) do
+    local t=f.trackers[i]
+    if not t then
+      t=button(f,"",18+(i-1)*226,-487,218,function(control)
+        if A.Combat() then return end
+        B.db.helperTracker=control.trackerID; B:RequestRefresh("tracking preference",0); B:Options()
+      end)
+      t.icon=t:CreateTexture(nil,"ARTWORK"); t.icon:SetSize(20,20); t.icon:SetPoint("LEFT",3,0)
+      f.trackers[i]=t
+    end
+    t.trackerID=entry.id; t.icon:SetTexture(entry.icon)
+    t:SetText((self.db.helperTracker==entry.id and "    > " or "    ")..entry.name)
+    if self:HelperEnabled("helperTracking") then t:Enable(); t:SetAlpha(1) else t:Disable(); t:SetAlpha(.45) end
+    addHelp(t,entry.name,"Select this tracker as your preference. Enable the tracking reminder above to receive prompts.")
+    t:Show()
+  end
+end
+
+function B:HelperOptions()
+  if A.Combat() then return end
+  self:Options(); self.options.selectTab(7)
+end
+
+function B:ShowDiscoveryReport()
+  if A.Combat() then return end
+  self:Options()
+  local f=self.options; f.selectTab(6)
+  if self:HelperEnabled("helperDiscovery") and self.helperDiscoverDirty then self:DiscoverConsumables() end
+  local report={"Unknown consumables - review only", "These items are not automatically added or used.", ""}
+  if self:HelperEnabled("helperDiscovery") then
+    report[#report+1]=self.helperDiscoveryStatus or "No scan yet. Choose Rescan bags below."
+    for _,item in ipairs(self.helperDiscoveries or {}) do
+      local info=self:ConsumableItemInfo(item.id)
+      report[#report+1]=item.name.." | item "..item.id.." | use spell "..tostring(info.spellID or "unavailable")
+    end
+  else report[#report+1]="Enable Find unrecognized consumables on the Helpers tab to scan your bags." end
+  f.discoveryReport:SetText(table.concat(report,"\n")); f.discoveryReport:SetCursorPosition(0)
+  f.diagText:Hide(); f.discoveryScroll:Show()
+end
+
+function B:ShowQuickChoices(action,page)
+  if A.Combat() or not self:HelperEnabled("helperQuick") or not action or action.source~="consumable" then return end
+  local family=self:ConsumableFamily(action.familyKey)
+  if not family then return end
+  local f=self.quickChoices
+  if not f then
+    f=CreateFrame("Frame",nil,UIParent,"BackdropTemplate"); self.quickChoices=f
+    f:SetSize(300,244); f:SetFrameStrata("DIALOG"); f:SetClampedToScreen(true); f:EnableMouse(true)
+    f:SetBackdrop({bgFile="Interface\\Buttons\\WHITE8X8",edgeFile="Interface\\Tooltips\\UI-Tooltip-Border",edgeSize=12}); f:SetBackdropColor(.06,.06,.06,.98)
+    label(f,"Choose, then use the main icon",12,-12,"GameFontNormalSmall")
+    f.rows={}
+    for i=1,6 do
+      local row=button(f,"",12,-34-(i-1)*28,274,function(s)
+        if A.Combat() or not s.itemID then return end
+        B:SetConsumableChoice(f.family,s.itemID); f:Hide(); B:RequestRefresh("quick item choice",0)
+      end)
+      row.icon=row:CreateTexture(nil,"ARTWORK"); row.icon:SetSize(22,22); row.icon:SetPoint("LEFT",2,0)
+      row.itemName=label(row,"",30,-5,"GameFontHighlightSmall",202); row.itemName:SetWordWrap(false)
+      row.stock=label(row,"",236,-5,"GameFontHighlightSmall",34)
+      f.rows[i]=row
+    end
+    button(f,"<",12,-210,34,function() B:ShowQuickChoices(B.action,(f.page or 1)-1) end)
+    button(f,">",52,-210,34,function() B:ShowQuickChoices(B.action,(f.page or 1)+1) end)
+    button(f,"All items",92,-210,92,function() f:Hide(); B:ChooseConsumable(f.family) end)
+    button(f,"Close",192,-210,94,function() f:Hide() end)
+  end
+  local choices={}
+  for _,item in ipairs(family.items or {}) do if self:ConsumableCount(item.id)>0 then choices[#choices+1]=item end end
+  if #choices==0 then f:Hide(); return end
+  f.family=family; f.page=math.max(1,math.min(page or 1,math.ceil(#choices/6)))
+  f:ClearAllPoints(); f:SetPoint("TOPLEFT",self.button,"TOPRIGHT",8,0)
+  for i,row in ipairs(f.rows) do
+    local item=choices[(f.page-1)*6+i]
+    if item then
+      local info=self:ConsumableItemInfo(item.id,item)
+      row.itemID=item.id; row:SetText(""); row.itemName:SetText(info.name); row.stock:SetText(tostring(self:ConsumableCount(item.id)))
+      row.icon:SetTexture(info.texture); addHelp(row,info.name,"Select preference only. Use the main icon to apply; all normal validation still applies."); row:Show()
+    else row.itemID=nil; row:Hide() end
+  end
+  f:Show()
+end
+
+function B:UpdateCoverageDisplay()
+  local lines=self:CoverageLines()
+  if #lines==0 or not self.db.enabled then if self.coverageFrame then self.coverageFrame:Hide() end; return end
+  local f=self.coverageFrame
+  if not f then
+    f=CreateFrame("Frame",nil,UIParent,"BackdropTemplate"); self.coverageFrame=f
+    f:SetBackdrop({bgFile="Interface\\Buttons\\WHITE8X8"}); f:SetBackdropColor(.04,.04,.04,.85); f:SetClampedToScreen(true)
+    f.text=label(f,"",8,-8,"GameFontHighlightSmall",350)
+  end
+  f:SetSize(366,42+#lines*28); f:ClearAllPoints(); f:SetPoint("CENTER",UIParent,"CENTER",self.db.x,self.db.y-100-#lines*14)
+  f.text:SetText("|cffffcc66Party coverage - informational|r\n"..table.concat(lines,"\n")); f:Show()
+end
+
 -- Fixed visible row pool: catalog scrolling never creates hundreds of widgets.
 function B:ChooseConsumable(family,anchor)
   if A.Combat() then return end
@@ -292,7 +433,7 @@ function B:UpdateConsumablePicker()
   end
   local choice=consumableChoiceLabel(family)
   f.summary:SetText("Selected: "..choice..(selected and ("  -  "..self:ConsumableCount(selected).." in bags") or ""))
-  local note=family.stockOnly and "Inventory reminder only. Use potions manually." or family.protectPresent and "One elixir choice. Existing elixir buffs are preserved until expiry." or "One choice at a time. Your selection stays saved when out of stock."
+  local note=family.protectPresent and "One elixir choice. Existing elixir buffs are preserved until expiry." or "One choice at a time. Your selection stays saved when out of stock."
   for _,item in ipairs(family.items or {}) do if item.id==selected and item.note then note=note.."\n"..item.note; break end end
   f.hint:SetText(note)
   f.count:SetText(#list.." matching items"..(f.maxOffset>0 and " - scroll for more" or ""))
@@ -319,7 +460,7 @@ function B:Options()
     line(f,-68)
 
     f.tabs={}; f.pages={}
-    local names={"Buffs","Groups","Target","Consumables","Appearance","Diagnostics"}
+    local names={"Buffs","Groups","Target","Consumables","Appearance","Diagnostics","Helpers"}
     local function setTab(index)
       f.activeTab=index
       for i,p in ipairs(f.pages) do p:SetShown(i==index) end
@@ -327,9 +468,10 @@ function B:Options()
         if i==index then t:LockHighlight() else t:UnlockHighlight() end
       end
     end
+    f.selectTab=setTab
     for i,name in ipairs(names) do
       local idx=i
-      local t=button(f,name,24+(i-1)*116,-72,108,function() setTab(idx) end); f.tabs[i]=t
+      local t=button(f,name,24+(i-1)*100,-72,94,function() setTab(idx) end); f.tabs[i]=t
     end
 
     -- BUFFS PAGE
@@ -452,7 +594,7 @@ function B:Options()
     -- CONSUMABLES PAGE
     local consume=panel(f); f.pages[4]=consume
     label(consume,"Consumables",18,-16,"GameFontNormalLarge")
-    label(consume,"Choose food, flasks and one elixir to maintain. Potions are inventory tracking only.",18,-42,"GameFontDisableSmall",680)
+    label(consume,"Choose the food, flask and elixir buffs you want to maintain.",18,-42,"GameFontDisableSmall",680)
     f.consumablesEnable=check(consume,"Enable consumable reminders",18,-72,function(c)
       if not A.Combat() then B.db.consumablesEnabled=c:GetChecked()==true; if B.InvalidateConsumables then B:InvalidateConsumables() end; B:RequestRefresh("consumables master",0); B:Options() end
     end)
@@ -477,7 +619,7 @@ function B:Options()
       row.choice=label(row,"Auto",82,-29,"GameFontHighlightSmall",420)
       row.prev=button(row,"Choose",584,-8,86,function(btn) B:ChooseConsumable(btn:GetParent().family,btn) end)
       row.inventory=label(row,"",450,-11,"GameFontHighlightSmall",120)
-      label(row,family.stockOnly and "Inventory only; use manually" or family.protectPresent and "Preserve active elixirs; remind after expiry" or "Rebuff at",42,-52,"GameFontDisableSmall",(family.stockOnly or family.protectPresent) and 390 or 62)
+      label(row,family.protectPresent and "Preserve active elixirs; remind after expiry" or "Rebuff at",42,-52,"GameFontDisableSmall",family.protectPresent and 390 or 62)
       row.threshold=compactSlider(row,30,1800,30,230,formatSeconds,function(slider,value)
         local fam=slider:GetParent().family
         if fam then B:SetConsumableThreshold(fam,value); B:InvalidateAura("player"); B:RequestRefresh("consumable threshold",0.08) end
@@ -528,7 +670,7 @@ function B:Options()
     label(app,"Move icon opens a safe preview that cannot cast spells.",18,-354,"GameFontDisableSmall",500)
     line(app,-388)
     button(app,"Reset all settings",18,-414,132,function()
-      if not A.Combat() then BuffTapDB=nil; B:InitDB(); B.bookDirty=true; B.resolveCache=nil; B.rankChoiceCache=nil; B.coverCache=nil; B:InvalidateRoster(); B:InvalidateAura(); B.appearance=nil; B:RequestRefresh("reset settings",0); B:Options() end
+      if not A.Combat() then BuffTapDB=nil; B:InitDB(); B.helperDismissed={}; B.helperThankSeen=nil; B.bookDirty=true; B.resolveCache=nil; B.rankChoiceCache=nil; B.coverCache=nil; B:InvalidateRoster(); B:InvalidateAura(); B.appearance=nil; B:RequestRefresh("reset settings",0); B:Options() end
     end)
 
     -- DIAGNOSTICS PAGE
@@ -543,12 +685,26 @@ function B:Options()
     addHelp(f.profileCheck,"Refresh profiler","Disabled by default. When enabled, BuffTap measures only its own refresh duration with debugprofilestop().")
     f.diagText=label(diag,"",18,-116,"GameFontHighlightSmall",680)
     button(diag,"Refresh diagnostics",18,-390,142,function()
-      if not A.Combat() then B:Refresh(true); B:Options() end
+      if not A.Combat() then f.discoveryScroll:Hide(); f.diagText:Show(); B:Refresh(true); B:Options() end
     end)
     button(diag,"Print to chat",170,-390,108,function() B:Status(true); B:Options() end)
     button(diag,"Reset metrics",288,-390,110,function()
       B.profileStats=nil; if B.profileEnabled then B:ResetStats() else B.stats=nil end; B:Options()
     end)
+
+    local scroll=CreateFrame("ScrollFrame",nil,diag,"UIPanelScrollFrameTemplate")
+    scroll:SetPoint("TOPLEFT",18,-116); scroll:SetSize(654,258); scroll:Hide(); f.discoveryScroll=scroll
+    local report=CreateFrame("EditBox",nil,scroll); report:SetMultiLine(true); report:SetAutoFocus(false)
+    report:SetFontObject("GameFontHighlightSmall"); report:SetWidth(638); report:SetHeight(258)
+    report:SetScript("OnEscapePressed",function(control) control:ClearFocus() end)
+    scroll:SetScrollChild(report); f.discoveryReport=report
+    button(diag,"Unknown items",410,-390,124,function() B:ShowDiscoveryReport() end)
+    button(diag,"Rescan bags",546,-390,130,function()
+      if A.Combat() then return end
+      B:DiscoverConsumables(); B:ShowDiscoveryReport()
+    end)
+    label(diag,"Unknown items is a copyable report for improving item support, not a list of items BuffTap will use.",18,-430,"GameFontDisableSmall",672)
+    self:BuildHelperPage(f)
 
     local function acceptEdit(e,key)
       e:SetScript("OnEnterPressed",function(s) local v=tonumber(s:GetText()); if v and not A.Combat() then setAndRefresh(key,v) end; s:ClearFocus(); B:Options() end)
@@ -569,6 +725,7 @@ function B:Options()
 
   local width,height=UIParent:GetWidth(),UIParent:GetHeight()
   if A.Number(width) and A.Number(height) then f:SetScale(math.min(1,(width-32)/760,(height-32)/680)) end
+  self:UpdateHelperOptions()
   f.enable:SetChecked(self.db.enabled)
   f.versionText:SetText("v"..self.version)
   f.groupEnable:SetChecked(self.db.group); f.smartGroup:SetChecked(self.db.smartGroup); f.friendlyTarget:SetChecked(self.db.friendlyTarget)
@@ -732,7 +889,7 @@ function B:Options()
         row.prev:ClearAllPoints(); row.prev:SetPoint("TOPLEFT",584,-8); row.prev:SetSize(86,26); row.prev:SetText("Choose")
         row.prev:SetScript("OnClick",function() B:ChooseConsumable(family,row.prev) end)
         row.prev:Show()
-        if family.stockOnly or family.protectPresent then row.threshold:Hide(); row.threshold.valueText:Hide() end
+        if family.protectPresent then row.threshold:Hide(); row.threshold.valueText:Hide() end
         local chosen=self:ConsumableChoiceID(family)
         if chosen then
           local count=self:ConsumableCount(chosen)

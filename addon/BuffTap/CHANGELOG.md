@@ -1,5 +1,46 @@
 # BuffTap changelog
 
+## 1.0.0 — Smart buffing, fewer chores (2026-09-27)
+
+- Automatic missing/expiring buff checks and one-tap spell/item preparation, with player input required for each use.
+- Configurable personal, friendly-target, party and raid buffing; per-buff class/group filters, priorities and smart group-spell thresholds.
+- Food, flask and elixir preferences with a searchable picker, quick bag choices and saved out-of-stock selections.
+- Integrated Helpers tab with visible explanations for dismissal, stronger-effect error suppression, gathering tracking, party coverage, unknown-consumable discovery and optional solo thanks.
+- Solo thanks is opt-in, requires an identifiable friendly player caster, and stays off in parties, raids, instances and combat. Global and per-player cooldowns prevent repeated thanks.
+- Removed potion inventory tracking and its 85-item inventory-only catalog. Existing potion settings are cleared on upgrade; food, flask and elixir choices remain intact.
+- Rogue/Shaman missing-coating reminders remain manual-only. No automatic poison application or camp interaction.
+- Fixed Shadow Protection party coverage and clarified unselected gathering tracking.
+- Stronger-effect suppression now requires a matching spell-failure event as well as the error message.
+- Removed obsolete potion-only guards and corrected historical changelog formatting.
+- Updated README and CurseForge description for the 1.0.0 feature set.
+
+
+## 0.10.0-beta2 — Integrated helper options (2026-09-27)
+
+- Replaced the separate helper window with a Helpers tab in the main options. `/bt helpers` selects that tab.
+- Added visible plain-language descriptions beneath every helper toggle, explaining actions, limits and how to undo dismissals.
+- All helper settings fit on one page. Discovery report and rescan controls now live in Diagnostics, with a shortcut from Helpers.
+- Gathering choices display native icons and are disabled until the tracking reminder is enabled.
+- Existing saved preferences and buffing behavior are unchanged.
+- 122 mocked Lua 5.1 regression scenarios pass. In-game visual verification remains pending.
+
+
+## 0.10.0-beta1 — Optional helpers (2026-09-27)
+
+- New Helpers window; all new features are independently opt-in and default off.
+- Temporary reminder dismissal with manual restore and zone-change reset; group and single versions share a family. Group casts respect dismissed recipients.
+- Recent stronger-effect errors can suppress the responsible BuffTap action until restored.
+- Quick consumable preference panel with native icons, bag counts and six choices per page. Selection prepares a preference; the main icon remains the only item-use action.
+- Explicit gathering-tracker preference, checked again before its secure cast.
+- Separate five-player party coverage information; unknown auras are not reported as missing and no chat is sent.
+- Event-driven unknown-consumable report with bounded metadata requests. Does not create unverified item actions.
+- Optional automatic targeted thanks for recognized buffs received solo in the open world. Requires a verified other player caster; no party, raid, instance or combat messages. 60-second global and 10-minute per-player limits.
+- Updated README and CurseForge description emphasizing automatic checks, one-tap convenience and customization without claiming unattended casting.
+- Existing consumable defaults, Paladin priorities and manual weapon application are preserved.
+
+Beta: mocked tests pass; real-client UI, caster attribution and emote availability still require validation. No live release was published.
+
+
 ## 0.9.5 — 2026-09-25
 
 - Redesigned options with charcoal panels, restrained gold accents, readable secondary text, and neutral action buttons.
@@ -35,7 +76,7 @@
 - Paladin blessings retain configured priority and one-family selection. Greater Blessings share their single-target class settings; group casts fall back to single-target casts when filters would be bypassed.
 - 70 mocked Lua 5.1 scenarios pass. In-game casting and options layout still require testing.
 
-## 0.9.1 â€” 2026-09-25
+## 0.9.1 — 2026-09-25
 
 - Fixed an unreadable main-hand enchant state suppressing a definite missing off-hand coating warning.
 - Treats an inventory item ID of zero as an empty hand.
@@ -46,7 +87,7 @@
 - Updated the mixed-license scope for 0.9.1 and included `WeaponCoatings.lua` explicitly.
 - 60 mocked Lua 5.1 scenarios pass. Live Rogue/Shaman weapon-event testing remains necessary.
 
-## 0.9.0 â€” 2026-09-25
+## 0.9.0 — 2026-09-25
 
 - Added event-driven, manual-only missing weapon-coating alerts for Rogues and Shamans.
 - Tracks equipped main-hand and off-hand weapons separately, ignores shields and nonweapon off hands, and lets each hand be enabled independently.
@@ -56,7 +97,7 @@
 - Kept class buffs ahead of manual coating alerts and retained conservative fail-closed behavior when equipment or enchant state is unreadable.
 - 55 mocked Lua 5.1 scenarios pass. Real-client weapon event behavior and visual layout still require smoke testing.
 
-## 0.8.1 â€” 2026-09-25
+## 0.8.1 — 2026-09-25
 
 - Fixed consumable mouse clicks being blocked between input phases; settling now follows observed use.
 - Preserved friendly-target refresh timing when validating clicks.
@@ -68,7 +109,6 @@
 - Adopted MPL 2.0 for original code; preserved the Keepward catalog exception and original notice.
 - 48 mocked Lua 5.1 scenarios passed. In-game smoke testing remains necessary.
 
-# Changelog
 
 ## 0.8.0 - Consumables foundation
 

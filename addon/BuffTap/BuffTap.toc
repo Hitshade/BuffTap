@@ -2,7 +2,7 @@
 ## Title: BuffTap
 ## Notes: One-tap buff maintenance for WoW Forever.
 ## Author: BuffTap contributors; catalog derived from Keepward
-## Version: 0.9.5
+## Version: 1.0.0
 ## SavedVariablesPerCharacter: BuffTapDB
 ## DefaultState: enabled
 ## IconTexture: Interface\AddOns\BuffTap\Media\BuffTapIcon
@@ -13,4 +13,5 @@ ConsumableData.lua
 Consumables.lua
 WeaponCoatings.lua
 BuffTap.lua
+Helpers.lua
 Options.lua

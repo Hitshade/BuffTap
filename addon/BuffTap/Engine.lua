@@ -4,7 +4,7 @@
 
 local _, B = ...
 _G.BuffTap = B
-B.version = "0.9.5"
+B.version = "1.0.0"
 B.API = {}
 local A = B.API
 
@@ -37,10 +37,13 @@ function B:InitDB()
     buffGroups={}, buffClasses={}, buffGroupNeed={}, targetBuffs={}, targetBuffSeconds={}, showBuffName=false, showTargetName=true, showTimer=false, showGroupBadge=true,
     consumablesEnabled=false, consumableFamilies={}, consumableChoices={}, consumableSeconds={},
     weaponReminder=true, weaponMainHand=true, weaponOffHand=true,
+    helperDismiss=false, helperBounce=false, helperTracking=false, helperCoverage=false,
+    helperDiscovery=false, helperThanks=false, helperQuick=false, helperTracker=0,
     raidGroups={true,true,true,true,true,true,true,true}}
   for k,v in pairs(defaults) do
     if type(self.db[k]) ~= type(v) then self.db[k] = v end
   end
+  if not A.Number(self.db.helperTracker) or (self.db.helperTracker~=2383 and self.db.helperTracker~=2580 and self.db.helperTracker~=43308) then self.db.helperTracker=0 end
   -- 0.3.0 carried an internal 8-second value but exposed no timing control.
   -- Move untouched installs to the new, more useful 45-second default.
   if not hadRebuffVersion then
@@ -62,6 +65,10 @@ function B:InitDB()
   if type(self.db.consumableFamilies) ~= "table" then self.db.consumableFamilies = {} end
   if type(self.db.consumableChoices) ~= "table" then self.db.consumableChoices = {} end
   if type(self.db.consumableSeconds) ~= "table" then self.db.consumableSeconds = {} end
+  -- Removed in 1.0.0: inventory-only potion tracking. Preserve other choices.
+  self.db.consumableFamilies["potion-stock"]=nil
+  self.db.consumableChoices["potion-stock"]=nil
+  self.db.consumableSeconds["potion-stock"]=nil
   for key,value in pairs(self.db.consumableFamilies) do if type(value)~="boolean" then self.db.consumableFamilies[key]=nil end end
   for key,value in pairs(self.db.consumableChoices) do if type(value)~="number" then self.db.consumableChoices[key]=nil end end
   for key,value in pairs(self.db.consumableSeconds) do
@@ -461,7 +468,7 @@ local function compactAura(data)
     return nil,"restricted aura value"
   end
   if not A.Text(name) and not A.Number(spellId) then return nil,"aura identity unreadable" end
-  return {name=A.Text(name) and name or nil,spellId=A.Number(spellId) and spellId or nil,
+  return {sourceUnit=A.Text(data.sourceUnit) and data.sourceUnit or nil, name=A.Text(name) and name or nil,spellId=A.Number(spellId) and spellId or nil,
     duration=A.Number(duration) and duration or nil,expirationTime=A.Number(expirationTime) and expirationTime or nil}
 end
 
@@ -786,7 +793,7 @@ function B:ScanMissing(b,entries,scans,scanErrors,rebuffSeconds)
           if scans[entry.unit] then
             local isMissing,source,threshold,remaining,wake=self:Missing(b,action,scans[entry.unit],rebuffSeconds)
             self:ConsiderWake(wake)
-            if isMissing then
+            if isMissing and not (self.HelperSuppressed and self:HelperSuppressed(action)) then
               action.needState=source; action.remaining=remaining; action.threshold=threshold
               missing[#missing+1]={entry=entry,action=action,reason=source,threshold=threshold,remaining=remaining}
             end
@@ -917,6 +924,11 @@ function B:Select()
         local keys={}; for key in pairs(buckets) do keys[#keys+1]=key end; table.sort(keys)
         for _,key in ipairs(keys) do
           local bucket=buckets[key]; local safe=true
+          -- A group cast would also hit recipients whose reminder was dismissed.
+          for _,entry in ipairs(roster) do
+            local affected=b.kind=="blessing" and entry.class==key or b.kind~="blessing" and entry.group==key
+            if affected and self.HelperSuppressed and self:HelperSuppressed({key=b.key,target=entry.unit,targetGUID=A.Call(UnitGUID,entry.unit)}) then safe=false end
+          end
           if b.kind=="blessing" then
             for _,entry in ipairs(roster) do
               if entry.class==key and (exclusive["blessing:"..entry.unit] or not self:GroupSelected(b,entry.group) or not self:GroupClassAllowed(b,entry.class)) then safe=false end
@@ -978,13 +990,18 @@ function B:Select()
     if self.db.consumablesEnabled and why and why~="consumables disabled" then self:AddDiag("consumables: "..tostring(why)) end
   end
 
+  if self.TrackingAction then
+    local tracking=self:TrackingAction()
+    if tracking then tracking.selectedAt=GetTime(); return tracking,"tracking reminder" end
+  end
+
   -- Weapon coatings are informational reminders. Evaluate them only after all
   -- valid castable spell and item actions so a manual alert cannot block the
   -- one-tap workflow.
   if type(self.SelectWeaponReminder)=="function" then
     local ok,action,why=pcall(self.SelectWeaponReminder,self)
     if not ok then self.lastError="weapon reminder provider failed"; return nil,"weapon reminder unavailable" end
-    if action then action.selectedAt=GetTime(); return action,"manual application required" end
+    if action and not (self.HelperSuppressed and self:HelperSuppressed(action)) then action.selectedAt=GetTime(); return action,"manual application required" end
     if self.db.weaponReminder and why and why~="weapon coatings present" and why~="no learned coating ability" then
       self:AddDiag("weapon reminder: "..tostring(why))
     end

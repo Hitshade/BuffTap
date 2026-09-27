@@ -1,6 +1,6 @@
-BuffTap 0.9.4 - licensing scope
+BuffTap 1.0.0 - licensing scope
 
-Engine.lua, BuffTap.lua, Consumables.lua, ConsumableData.lua, WeaponCoatings.lua, Options.lua, BuffTap.toc, and
+Engine.lua, BuffTap.lua, Consumables.lua, ConsumableData.lua, WeaponCoatings.lua, Helpers.lua, Options.lua, BuffTap.toc, and
 BuffTap-authored documentation and tests are made available under the Mozilla
 Public License, version 2.0. See LICENSE-MPL-2.0.txt for the complete terms.
 

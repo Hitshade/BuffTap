@@ -180,6 +180,8 @@ function B:CreateButton()
       GameTooltip:AddLine("Rank: " .. (action.rank~="" and action.rank or "not exposed") .. " | ID " .. action.id,1,1,1)
       if action.rangeSource then GameTooltip:AddLine("Range check: "..action.rangeSource,0.75,0.75,0.75) end
     end
+    if B:HelperEnabled("helperDismiss") then GameTooltip:AddLine("Right-click: dismiss until zone change (restore in Helpers).",0.8,0.8,0.8,true) end
+    if B:HelperEnabled("helperQuick") and action.source=="consumable" then B:ShowQuickChoices(action) end
     GameTooltip:AddLine(table.concat(B.db.keys,", "),0.8,0.8,0.8)
     GameTooltip:Show()
   end)
@@ -192,6 +194,11 @@ function B:CreateButton()
     if A.Combat() then return end
     local action=B.action
     if not action then return end
+    if B:HelperSuppressed(action) then B:Commit(nil,"dismissed"); return end
+    if action.source=="tracking" then
+      if not B:TrackingStillNeeded(action) or not B:Validate(action) then B:Commit(nil,"tracking changed") end
+      return
+    end
     if action.source=="weapon-reminder" then
       if not B:ValidateWeaponReminder(action) then B:Commit(nil,"weapon reminder no longer needed") end
       return
@@ -211,8 +218,10 @@ function B:CreateButton()
     if not missing then B:Commit(nil,"action no longer missing") end
     end)
     if not ok and not A.Combat() then B:Commit(nil,"click validation unavailable") end
+    if ok and not A.Combat() then B:BeginHelperAttempt(B.action) end
   end)
-  b:SetScript("PostClick",function(_,button)
+  b:SetScript("PostClick",function(_,button,down)
+    if not A.Combat() and button=="RightButton" and not down and B:HelperEnabled("helperDismiss") then B:DismissHelper(B.action); return end
     if A.Combat() or (button and button~="LeftButton") then return end
     local action=B.action
     if action then
@@ -231,6 +240,7 @@ function B:Commit(action,reason)
   if action and action.source=="consumable" and not self:ValidateConsumable(action,false,true) then action=nil; reason="item changed before preparation" end
   if action and action.source=="weapon-reminder" and not self:ValidateWeaponReminder(action) then action=nil; reason="weapon reminder changed before display" end
   local previous=self.action
+  if self.quickChoices then self.quickChoices:Hide() end
   local appearance=table.concat({self.db.size,self.db.opacity,self.db.x,self.db.y,tostring(self.db.glow),tostring(self.db.pulse),
     tostring(self.db.showBuffName),tostring(self.db.showTargetName),tostring(self.db.showTimer),tostring(self.db.showGroupBadge),table.concat(self.db.keys,",")},"|")
   local secureMatches=false
@@ -642,7 +652,7 @@ local events={"ADDON_LOADED","PLAYER_LOGIN","PLAYER_ENTERING_WORLD","PLAYER_REGE
   "ZONE_CHANGED_NEW_AREA","PLAYER_LEVEL_UP","SPELL_DATA_LOAD_RESULT","SPELL_TEXT_UPDATE","UNIT_SPELLCAST_SUCCEEDED",
   "UNIT_SPELLCAST_FAILED","UNIT_SPELLCAST_INTERRUPTED","SPELL_UPDATE_COOLDOWN","UNIT_POWER_UPDATE",
   "PLAYER_EQUIPMENT_CHANGED","WEAPON_ENCHANT_CHANGED","WEAPON_SLOT_CHANGED","PLAYER_MOUNT_DISPLAY_CHANGED","UPDATE_SHAPESHIFT_FORM","UPDATE_BINDINGS",
-  "BAG_UPDATE_DELAYED","ITEM_DATA_LOAD_RESULT",
+  "BAG_UPDATE_DELAYED","ITEM_DATA_LOAD_RESULT","UI_ERROR_MESSAGE","MINIMAP_UPDATE_TRACKING","UNIT_CONNECTION",
   "ADDON_RESTRICTION_STATE_CHANGED","UNIT_AURA_BLOCKED","UNIT_AURA_BLOCK_LIST_CLEARED"}
 for _,event in ipairs(events) do if not pcall(f.RegisterEvent,f,event) then B.unsupportedEvents[#B.unsupportedEvents+1]=event end end
 
@@ -653,6 +663,9 @@ local castEvents={UNIT_SPELLCAST_SUCCEEDED=true,UNIT_SPELLCAST_FAILED=true,UNIT_
 local function handleEvent(_,event,arg,castGUID,spellID)
   if event=="ADDON_LOADED" then if arg==ADDON then B:InitDB() end; return end
   if not B.db then return end
+  if B.HelperEvent then B:HelperEvent(event,arg,castGUID,spellID) end
+  if event=="UI_ERROR_MESSAGE" then return end
+  if event=="MINIMAP_UPDATE_TRACKING" and not B:HelperEnabled("helperTracking") then return end
 
   if event=="PLAYER_TARGET_CHANGED" then
     B:InvalidateAura("target")
@@ -681,8 +694,10 @@ local function handleEvent(_,event,arg,castGUID,spellID)
     B.itemRequests[arg]=nil
     if B.InvalidateConsumables then B:InvalidateConsumables(arg) end
   elseif event=="UNIT_AURA" then
-    if not B:IsWatchedUnit(arg) then return end
+    if not B:IsWatchedUnit(arg) and not (B:HelperEnabled("helperCoverage") and A.Text(arg) and arg:match("^party[1-4]$")) then return end
     B:InvalidateAura(arg)
+  elseif event=="UNIT_CONNECTION" then
+    if A.Text(arg) then B:InvalidateAura(arg) end
   elseif event=="GROUP_ROSTER_UPDATE" then
     B:InvalidateRoster(); B:InvalidateAura()
   elseif event=="PLAYER_ENTERING_WORLD" or event=="ZONE_CHANGED_NEW_AREA" then
@@ -760,12 +775,14 @@ SlashCmdList.BUFFTAP=function(text)
   end
   if A.Combat() then say("Settings and refresh are available after combat."); return end
   if cmd=="" or cmd=="config" then B:Options(); return
+  elseif cmd=="helpers" then B:HelperOptions(); return
+  elseif cmd=="restore" then B:RestoreHelpers(); return
   elseif cmd=="settings" and B.OpenOptionsCategory then B:OpenOptionsCategory(); return
   elseif cmd=="bind" then
     if arg=="" then B:CaptureBinding(); return end
     local keys={}; for key in arg:upper():gmatch("[^,%s]+") do keys[#keys+1]=key end; B.db.keys=keys
   elseif cmd=="unbind" then B.db.keys={}
-  elseif cmd=="reset" then BuffTapDB=nil; B:InitDB(); B.bookDirty=true; B.resolveCache=nil; B.rankChoiceCache=nil; B.coverCache=nil; B:InvalidateRoster(); B:InvalidateAura(); if B.options then B.options:Hide() end
+  elseif cmd=="reset" then BuffTapDB=nil; B:InitDB(); B.helperDismissed={}; B.helperThankSeen=nil; B.bookDirty=true; B.resolveCache=nil; B.rankChoiceCache=nil; B.coverCache=nil; B:InvalidateRoster(); B:InvalidateAura(); if B.options then B.options:Hide() end
   elseif cmd=="toggle" then B.db.enabled=not B.db.enabled
   elseif cmd=="refresh" then B.bookDirty=true
   elseif cmd=="enable" or cmd=="disable" then

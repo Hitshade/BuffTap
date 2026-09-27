@@ -89,11 +89,12 @@ function B:SelectWeaponReminder()
       local state=self:WeaponCoatingState(hand.slot)
       if state.known and state.weapon and not state.hasEnchant then
         local poison=class=="ROGUE"
-        return {source="weapon-reminder",manual=true,valid=true,key="weapon-"..hand.key,
+        local action={source="weapon-reminder",manual=true,valid=true,key="weapon-"..hand.key,
           name=poison and "Poison missing" or "Weapon coating missing",
           icon=(A.Number(state.icon) or A.Text(state.icon)) and state.icon or (poison and "Interface\\Icons\\Ability_Poisons" or 136026),
           target="manual",targetName=hand.label.." • manual",slot=hand.slot,needState="missing",
           reason="Apply a "..(poison and "poison" or "weapon coating").." manually to your "..hand.label:lower().."."}
+        if not (self.HelperSuppressed and self:HelperSuppressed(action)) then return action end
       elseif not state.known and state.weapon then
         -- One restricted hand must not hide a definite missing coating on the
         -- other hand. Preserve the diagnostic and finish checking both slots.
