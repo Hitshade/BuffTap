@@ -1,21 +1,68 @@
 # BuffTap
 
-WoW Forever buff reminders with one-tap casting, party and raid assignments, configurable priorities, and optional consumables.
+### ⚡ Less buff management. More adventure.
 
-Current baseline: **0.9.5**. Player downloads: [CurseForge](https://www.curseforge.com/wow/addons/bufftap).
+**Smart buff reminders, one-tap rebuffing, and optional quality-of-life automation for WoW Forever.**
 
-## Features
-- Personal buffs, independent friendly-target settings, and per-buff class/group assignments.
-- Compact charcoal-and-gold options, native game icons, and searchable consumable selection.
-- Optional food, flask, and selected-elixir reminders; potion inventory tracking only.
-- Manual Rogue/Shaman weapon-coating alerts. Application remains manual.
-- Event-driven tracking and out-of-combat, player-triggered spell/item actions.
+BuffTap watches your buffs, works out what needs attention, and prepares the next action for you. Click the icon or press your chosen key to keep moving through missing buffs—without hunting through spellbooks, action bars, or bags.
 
-Install the `addon/BuffTap` folder into your client's `Interface/AddOns` directory. Open options with `/bt`.
+**Automate the reminders and preparation. Stay in control of every cast.** BuffTap automatically detects, prioritizes, and updates its suggestions; casting spells and using items still require your click or keypress.
 
-See [development notes](DEVELOPMENT.md) for tests and [baseline notes](docs/GITHUB-BASELINE.md) for validation limits.
+**Version 1.0.0.** Optional conveniences are available in the main **Helpers** tab and start disabled, so you can choose exactly how much assistance you want.
 
-## Licensing
-This is a mixed-license project. See [scope](addon/BuffTap/LICENSE-BuffTap.txt), [MPL 2.0](addon/BuffTap/LICENSE-MPL-2.0.txt), and [Keepward notice](addon/BuffTap/LICENSE-Keepward.txt). Keepward-derived catalog permissions remain intact. Native game artwork remains its respective owners' property.
+## One tap, your priorities
 
-Developed with AI-assisted coding and review.
+- **Automatic buff reminders:** Catch missing and expiring supported buffs, then advance to the next action after applying them.
+- **Your preferred binding:** Use a keyboard key, mouse-wheel binding, or the clickable icon.
+- **Class-aware buffing:** Maintain learned class buffs with configurable priorities and refresh timing.
+- **Friendly-target buffing:** Quickly buff another player using settings independent of your party and raid assignments.
+- **Smart group spells:** Prefer group versions when enough eligible players need the buff, with configurable thresholds.
+- **Paladin priorities:** Choose your blessing order and recipient filters while preserving BuffTap's blessing-family selection rules.
+
+## Party and raid buff management
+
+Set recipients **per buff, raid group, and class**. Maintain broader coverage for Mark of the Wild while limiting group Thorns to the classes you choose. Class filters are choices, not automatic tank-role detection; open-world friendly-target buffing remains independent.
+
+The optional **party coverage panel** highlights missing buffs another party member's class may provide. It is informational, does not send chat messages, and currently covers five-player parties. The suggested provider's actual spellbook is not assumed known.
+
+## 🧪 Consumables without the bag search
+
+Choose supported **food buffs, flasks, and an elixir** to maintain. Search by name, filter to items in your bags, and keep a preferred item selected even when it runs out. Consumable reminders are optional and start disabled.
+
+- **Quick choices:** Hover a consumable reminder to select another supported item from your bags, then use the main icon to apply it.
+- **Predictable preferences:** Keep explicit selections and see when they are out of stock.
+- **Respect existing effects:** Food and elixir checks help prevent unnecessary replacement prompts.
+- **Discovery report:** Optionally list unknown bag consumables for review. Discovery does not automatically enable or use unverified items.
+
+## Small conveniences that add up
+
+- **Dismiss for now:** Right-click an unwanted reminder until your next zone change, or restore reminders immediately.
+- **Fewer repeated errors:** Optionally suppress a recent BuffTap action when the game rejects it because a stronger effect is already active. Restore it manually or on zone change.
+- **Gathering reminders:** Choose a learned Find Herbs, Find Minerals, or Find Fish tracker and get a one-tap reminder when it is off. BuffTap does not cycle between trackers.
+- **Automatic solo thanks:** Opt in to a targeted `/thank` when another identifiable player gives you a supported buff while you are solo in the open world. Disabled in parties, raids, instances, and combat; limited to once per minute overall and once per ten minutes per player. If the caster cannot be verified, BuffTap stays quiet.
+- **Weapon-coating alerts:** Separate missing-coating reminders for eligible Rogue and Shaman weapons. Poison and imbue application stays manual; this is not automatic oil or sharpening-stone management.
+
+## Make it fit your UI
+
+Move and resize the reminder, adjust opacity, show buff and target names, add remaining-time labels, or enable an optional glow, pulse, and sound. Native game icons, a searchable item picker, and compact assignment controls keep your choices readable.
+
+BuffTap uses event-driven updates and cached information. Optional discovery runs on inventory changes rather than repeatedly scanning bags during ordinary aura updates.
+
+## Get started
+
+1. Install the **BuffTap** folder inside your Forever client's `Interface/AddOns` folder.
+2. Type **`/bt`** to choose your buffs, binding, and appearance.
+3. Enable party, friendly-target, or consumable features as needed.
+4. Open the **Helpers tab** in the main options or type **`/bt helpers`** to choose the new conveniences. Use **`/bt restore`** to restore dismissed reminders.
+
+BuffTap is built for **WoW Forever** and out-of-combat maintenance. It suspends its casting actions in combat. Supported abilities depend on your learned spells and the information the client exposes.
+
+## Feedback and support
+
+Include your class, addon version, game build, and steps to reproduce the issue. **`/bt debug`** provides diagnostics; optional profiling is available through **`/bt profile on`** and **`/bt profile off`**.
+
+[Download on CurseForge](https://www.curseforge.com/wow/addons/bufftap) · [Source and issue reports](https://github.com/Hitshade/BuffTap)
+
+---
+
+**Credits and license:** BuffTap-authored code is offered under MPL 2.0. The catalog derives from Keepward and retains its original permission and attribution; see the bundled license notices. Game artwork belongs to its respective owners. Developed with AI-assisted coding and review. No BuffSmith source code was incorporated.
