@@ -8,8 +8,15 @@ local A=B.API
 -- Consumables are deliberately whitelist-driven. Unknown items are never turned
 -- into secure actions, so beta database changes fail by omission rather than by
 -- guessing from tooltip text.
+local normCache,normCount={},0
 local function norm(v)
-  return A.Text(v) and v:lower():gsub("%s*%b()$", "") or ""
+  if not A.Text(v) then return "" end
+  local cached=normCache[v]
+  if cached then return cached end
+  cached=v:lower():gsub("%s*%b()$", "")
+  if normCount>=2000 then normCache,normCount={},0 end
+  normCache[v]=cached; normCount=normCount+1
+  return cached
 end
 
 local function safeItemCount(itemID)

@@ -14,8 +14,10 @@ function B:HelperKey(action)
     ..":"..tostring(action.targetGUID or action.target or "player")
 end
 function B:HelperSuppressed(action)
+  local dismissed=self.helperDismissed
+  if not dismissed or next(dismissed)==nil then return false end
   local key=self:HelperKey(action)
-  return key and self.helperDismissed and self.helperDismissed[key]~=nil
+  return key and dismissed[key]~=nil
 end
 function B:DismissHelper(action,reason)
   if A.Combat() or not action then return end

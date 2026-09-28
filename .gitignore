@@ -3,6 +3,7 @@
 !/.gitignore
 !/README.md
 !/DEVELOPMENT.md
+!/RELEASE-NOTES-*.md
 !/requirements-dev.txt
 !/addon/
 !/tests/
@@ -12,6 +13,7 @@
 !/docs/GITHUB-BASELINE.md
 !/docs/CATALOG-DATA.md
 !/docs/RELEASE-REVIEW-1.1.0.md
+!/docs/RELEASE-REVIEW-1.1.1.md
 __pycache__/
 *.pyc
 *.zip

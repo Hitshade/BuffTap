@@ -1,4 +1,4 @@
-BuffTap 1.1.0 - licensing scope
+BuffTap 1.1.1 - licensing scope
 
 BuffTap source files, including the replacement generated Catalog.lua,
 Readiness.lua, the catalog generator, and BuffTap-authored documentation and

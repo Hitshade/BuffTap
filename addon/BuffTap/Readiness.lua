@@ -26,14 +26,23 @@ for _,events in ipairs({commonEvents,petEvents}) do for _,e in ipairs(events) do
 local SETTLE=2 -- bounded transition allowance; validate this duration in the live client
 
 function B:ReadinessClass()
-  local class=A.Call(function() local _,c=UnitClass("player"); return c end)
-  return A.Text(class) and class or nil
+  if self.readinessClassToken then return self.readinessClassToken end
+  local ok,_,class=pcall(UnitClass,"player")
+  if ok and A.Text(class) then self.readinessClassToken=class; return class end
+  return nil
 end
 function B:ReadinessEnabled(key)
-  if not self.db or not self.db.enabled then return false end
-  local class=self:ReadinessClass()
-  return key=="pet" and self.db.helperPet==true and (class=="HUNTER" or class=="WARLOCK")
-    or key=="healthstone" and self.db.helperHealthstone==true and class=="WARLOCK"
+  local db=self.db
+  if not db or not db.enabled then return false end
+  if key=="pet" then
+    if db.helperPet~=true then return false end
+    local class=self:ReadinessClass()
+    return class=="HUNTER" or class=="WARLOCK"
+  elseif key=="healthstone" then
+    if db.helperHealthstone~=true then return false end
+    return self:ReadinessClass()=="WARLOCK"
+  end
+  return false
 end
 function B:ReadinessDemons()
   local result={}
@@ -88,7 +97,16 @@ function B:SyncReadiness()
   self.readinessEvents=self.readinessEvents or {}
   for e in pairs(extraEvents) do
     if wanted[e] and not self.readinessEvents[e] then
-      self.readinessEvents[e]=pcall(self.events.RegisterEvent,self.events,e) or nil
+      local registered=false
+      if e:sub(1,5)=="UNIT_" and type(self.events.RegisterUnitEvent)=="function" then
+        local ok,result=pcall(self.events.RegisterUnitEvent,self.events,e,e=="UNIT_FLAGS" and "pet" or "player")
+        registered=ok and result~=false
+      end
+      if not registered then
+        local ok,result=pcall(self.events.RegisterEvent,self.events,e)
+        registered=ok and result~=false
+      end
+      self.readinessEvents[e]=registered or nil
     elseif not wanted[e] and self.readinessEvents[e] then
       pcall(self.events.UnregisterEvent,self.events,e); self.readinessEvents[e]=nil
     end

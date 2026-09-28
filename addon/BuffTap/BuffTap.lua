@@ -669,7 +669,19 @@ local events={"ADDON_LOADED","PLAYER_LOGIN","PLAYER_ENTERING_WORLD","PLAYER_REGE
   "PLAYER_EQUIPMENT_CHANGED","WEAPON_ENCHANT_CHANGED","WEAPON_SLOT_CHANGED","PLAYER_MOUNT_DISPLAY_CHANGED","UPDATE_SHAPESHIFT_FORM","UPDATE_BINDINGS",
   "BAG_UPDATE_DELAYED","ITEM_DATA_LOAD_RESULT","UI_ERROR_MESSAGE","MINIMAP_UPDATE_TRACKING","UNIT_CONNECTION",
   "ADDON_RESTRICTION_STATE_CHANGED","UNIT_AURA_BLOCKED","UNIT_AURA_BLOCK_LIST_CLEARED"}
-for _,event in ipairs(events) do if not pcall(f.RegisterEvent,f,event) then B.unsupportedEvents[#B.unsupportedEvents+1]=event end end
+local playerOnlyEvents={UNIT_POWER_UPDATE=true,UNIT_SPELLCAST_SUCCEEDED=true,UNIT_SPELLCAST_FAILED=true,UNIT_SPELLCAST_INTERRUPTED=true}
+for _,event in ipairs(events) do
+  local registered=false
+  if playerOnlyEvents[event] and type(f.RegisterUnitEvent)=="function" then
+    local ok,result=pcall(f.RegisterUnitEvent,f,event,"player")
+    registered=ok and result~=false
+  end
+  if not registered then
+    local ok,result=pcall(f.RegisterEvent,f,event)
+    registered=ok and result~=false
+  end
+  if not registered then B.unsupportedEvents[#B.unsupportedEvents+1]=event end
+end
 
 local bookEvents={SPELLS_CHANGED=true,PLAYER_LOGIN=true,PLAYER_ENTERING_WORLD=true,PLAYER_TALENT_UPDATE=true,
   SPELL_DATA_LOAD_RESULT=true,SPELL_TEXT_UPDATE=true,PLAYER_SPECIALIZATION_CHANGED=true,ACTIVE_TALENT_GROUP_CHANGED=true,PLAYER_LEVEL_UP=true}

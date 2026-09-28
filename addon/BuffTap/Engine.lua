@@ -4,7 +4,7 @@
 
 local _, B = ...
 _G.BuffTap = B
-B.version = "1.1.0"
+B.version = "1.1.1"
 B.API = {}
 local A = B.API
 
@@ -20,7 +20,16 @@ end
 function A.Number(v) return A.Public(v) and type(v) == "number" and v==v and v>-math.huge and v<math.huge end
 function A.Text(v) return A.Public(v) and type(v) == "string" and v ~= "" end
 function A.Combat() return not InCombatLockdown or InCombatLockdown() end
-local function fold(v) return A.Text(v) and v:lower():gsub("%s*%b()$", "") or "" end
+local foldCache,foldCount={},0
+local function fold(v)
+  if not A.Text(v) then return "" end
+  local cached=foldCache[v]
+  if cached then return cached end
+  cached=v:lower():gsub("%s*%b()$", "")
+  if foldCount>=2000 then foldCache,foldCount={},0 end
+  foldCache[v]=cached; foldCount=foldCount+1
+  return cached
+end
 
 function B:InitDB()
   if type(BuffTapDB) ~= "table" then BuffTapDB = {} end
@@ -805,13 +814,13 @@ function B:ScanMissing(b,entries,scans,scanErrors,rebuffSeconds)
               missing[#missing+1]={entry=entry,action=action,reason=source,threshold=threshold,remaining=remaining}
             end
           else
-            self:AddDiag(b.key .. " -> " .. entry.unit .. ": " .. tostring(scanErrors[entry.unit]))
+            if self.captureDiagnostics then self:AddDiag(b.key .. " -> " .. entry.unit .. ": " .. tostring(scanErrors[entry.unit])) end
           end
         else
-          self:AddDiag(b.key .. " -> " .. entry.unit .. ": " .. (eligibleWhy or "ineligible"))
+          if self.captureDiagnostics then self:AddDiag(b.key .. " -> " .. entry.unit .. ": " .. (eligibleWhy or "ineligible")) end
         end
       else
-        self:AddDiag(b.key .. " -> " .. entry.unit .. ": " .. (reason or "unresolved"))
+        if self.captureDiagnostics then self:AddDiag(b.key .. " -> " .. entry.unit .. ": " .. (reason or "unresolved")) end
       end
     end
   end

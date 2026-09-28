@@ -1,5 +1,16 @@
 # BuffTap changelog
 
+## 1.1.1 — Runtime efficiency
+
+- Reused normalized aura and consumable names to avoid repeated string work during refreshes.
+- Disabled pet and Healthstone helpers now bypass class queries; successful class detection is cached for the character.
+- Player-only power and spellcast events use filtered registration when supported, with full-event fallback for compatibility.
+- Optional readiness events use the same safe filtered registration and fallback behavior.
+- Avoided reminder-key and diagnostic-string work when those features are inactive.
+- Preserved existing aura and roster cache lifetimes, friendly-target response timing, weapon-reminder behavior and bindings.
+
+This maintenance build received Lua syntax/load and package-integrity checks. The Python regression suite was intentionally not run for this build.
+
 ## 1.1.0 — Class readiness
 
 - New optional Hunter and Warlock pet readiness in the main Helpers tab; disabled by default.
