@@ -130,7 +130,7 @@ function B:CaptureBinding()
     local bg=f:CreateTexture(nil,"BACKGROUND"); bg:SetAllPoints(); bg:SetColorTexture(0.01,0.02,0.04,0.90)
     local logo=f:CreateTexture(nil,"ARTWORK"); logo:SetSize(88,88); logo:SetPoint("CENTER",0,78); logo:SetTexture(ICON_PATH)
     local hint=f:CreateFontString(nil,"OVERLAY","GameFontNormalLarge"); hint:SetPoint("CENTER",0,-8); hint:SetJustifyH("CENTER")
-    hint:SetText("Set BuffTap binding\n\nPress a key or scroll the mouse wheel\n|cff8aa5b8Escape cancels|r")
+    hint:SetText("Set BuffTap binding\n\nPress a key, mouse button, or scroll wheel\n|cff8aa5b8Escape cancels|r")
     local function bind(key)
       if A.Combat() then f:Hide(); return end
       if IsShiftKeyDown() then key="SHIFT-"..key end
@@ -143,6 +143,20 @@ function B:CaptureBinding()
       if key=="ESCAPE" then f:Hide(); return end
       if key:find("SHIFT") or key:find("CTRL") or key:find("ALT") or key:find("META") then return end
       bind(key)
+    end)
+    f:SetScript("OnMouseDown",function(_,btn)
+      if (btn=="LeftButton" or btn=="RightButton") and not (IsShiftKeyDown() or IsControlKeyDown() or IsAltKeyDown()) then
+        return
+      end
+      if btn=="LeftButton" then
+        bind("BUTTON1")
+      elseif btn=="RightButton" then
+        bind("BUTTON2")
+      elseif btn=="MiddleButton" then
+        bind("BUTTON3")
+      else
+        bind(btn:upper()) -- BUTTON4, BUTTON5, etc.
+      end
     end)
     f:SetScript("OnMouseWheel",function(_,delta) bind(delta>0 and "MOUSEWHEELUP" or "MOUSEWHEELDOWN") end)
     f:RegisterEvent("PLAYER_REGEN_DISABLED"); f:SetScript("OnEvent",function() f:Hide() end)
