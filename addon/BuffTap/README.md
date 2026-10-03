@@ -8,12 +8,12 @@ BuffTap watches your buffs, works out what needs attention, and prepares the nex
 
 **Automate the reminders and preparation. Stay in control of every cast.** BuffTap automatically detects, prioritizes, and updates its suggestions; casting spells and using items still require your click or keypress.
 
-**Version 1.1.1.** Optional conveniences are available in the main **Helpers** tab and start disabled, so you can choose exactly how much assistance you want.
+**Version 1.1.2.** Optional conveniences are available in the main **Helpers** tab and start disabled, so you can choose exactly how much assistance you want.
 
 ## One tap, your priorities
 
 - **Automatic buff reminders:** Catch missing and expiring supported buffs, then advance to the next action after applying them.
-- **Your preferred binding:** Use a keyboard key, mouse-wheel binding, or the clickable icon.
+- **Your preferred binding:** Use a keyboard key, mouse wheel, middle/side mouse button, or the clickable icon. Mouse buttons support Shift/Ctrl/Alt; left/right click requires a modifier.
 - **Class-aware buffing:** Maintain learned class buffs with configurable priorities and refresh timing.
 - **Friendly-target buffing:** Quickly buff another player using settings independent of your party and raid assignments.
 - **Smart group spells:** Prefer group versions when enough eligible players need the buff, with configurable thresholds.

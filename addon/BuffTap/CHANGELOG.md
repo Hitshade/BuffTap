@@ -1,5 +1,14 @@
 # BuffTap changelog
 
+## 1.1.2 — Mouse-button bindings
+
+- Added middle-click and side-button binding capture in options, including Shift/Ctrl/Alt combinations.
+- Left/right click requires a modifier; clearer instructions explain the available inputs.
+- Existing secure casting and combat restrictions remain in place. No polling or background scanning added.
+- Based on juan-medina's GitHub PR #1, with input validation and expanded regression scenarios.
+
+All 189 mocked Lua 5.1 scenarios passed, including eight new mouse-binding checks. Package integrity verified; live-client verification remains outstanding.
+
 ## 1.1.1 — Runtime efficiency
 
 - Reused normalized aura and consumable names to avoid repeated string work during refreshes.

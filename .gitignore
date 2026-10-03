@@ -14,6 +14,7 @@
 !/docs/CATALOG-DATA.md
 !/docs/RELEASE-REVIEW-1.1.0.md
 !/docs/RELEASE-REVIEW-1.1.1.md
+!/docs/RELEASE-REVIEW-1.1.2.md
 __pycache__/
 *.pyc
 *.zip
