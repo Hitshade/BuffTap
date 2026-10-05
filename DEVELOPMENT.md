@@ -1,13 +1,7 @@
 # BuffTap development
 
-Current local version: **1.1.2**. Runtime source: addon/BuffTap.
+Current local version: **1.2.1**. Runtime: addon/BuffTap. Prepared for live testing, not published.
 
-Install `requirements-dev.txt`, then run `python tests/test_mouse_bindings.py`.
-This includes all baseline/helper tests and uses Lua 5.1 through lupa 2.8.
-All 189 scenarios pass for 1.1.2. Live client checks remain necessary; see
-docs/RELEASE-REVIEW-1.1.2.md. Catalog regeneration is documented in docs/CATALOG-DATA.md.
+Install requirements-dev.txt and run `python tests/test_weapons.py` to include all 234 scenarios (Lua 5.1 via lupa 2.8). Weapon facts are generated from the same client DB2 exports as the class catalog; no reference addon code copied. See docs/RELEASE-REVIEW-1.2.1.md for required live checks.
 
-No automatic deployment is configured. This task prepared 1.1.2 locally;
-publishing is a separate user-requested step. Preserve release archives and
-their original notices. Research, references, private handoffs and logs are not
-public repository content. The installable ZIP contains one BuffTap folder.
+Publish only runtime, public documentation, tests and development tools. Exclude research, reference copies, private handoffs, logs and historical archives. The installable ZIP contains one BuffTap folder. Earlier packages remain intact for rollback.

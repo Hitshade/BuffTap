@@ -49,7 +49,7 @@ C_UnitAuras={
 }
 local function noop() end
 local function visual()
- return setmetatable({SetTexture=function(s,v) s.texture=v end,SetText=function(s,v) s.text=v end}, {__index=function() return noop end})
+ return setmetatable({SetTexture=function(s,v) s.texture=v end,SetText=function(s,v) s.text=v end,SetShown=function(s,v) s.shown=not not v end,Show=function(s) s.shown=true end,Hide=function(s) s.shown=false end,IsShown=function(s) return s.shown end}, {__index=function() return noop end})
 end
 local methods={}
 function methods:SetAttribute(k,v) assert(not combat or self.secure,'protected write in combat'); self.attrs[k]=v end

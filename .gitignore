@@ -22,3 +22,6 @@ __pycache__/
 tests/last-run.txt
 
 tests/last-run-*.txt
+
+!/docs/RELEASE-REVIEW-1.2.0.md
+!/docs/RELEASE-REVIEW-1.2.1.md

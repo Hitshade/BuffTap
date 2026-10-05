@@ -4,6 +4,8 @@
 
 local ADDON,B=...
 local A=B.API
+local TAB={Buffs=1,Groups=2,Target=3,Consumables=4,Weapons=5,Appearance=6,Diagnostics=7,Helpers=8}
+local TAB_NAMES={"Buffs","Groups","Target","Consumables","Weapons","Appearance","Diagnostics","Helpers"}
 local ICON_PATH="Interface\\AddOns\\BuffTap\\Media\\BuffTapIcon"
 
 local function label(parent,text,x,y,font,width)
@@ -204,7 +206,7 @@ end
 -- Helpers share the main window and tab lifecycle. Long discovery output lives
 -- on Diagnostics so every helper setting remains visible without scrolling.
 function B:BuildHelperPage(parent)
-  local f=panel(parent); parent.pages[7]=f; self.helperWindow=f
+  local f=panel(parent); parent.pages[TAB.Helpers]=f; self.helperWindow=f
   label(f,"Everyday conveniences",18,-16,"GameFontNormalLarge")
   label(f,"Choose the extras you want. All start off; your existing buff settings are preserved.",18,-43,"GameFontDisableSmall",680)
   f.checks={}; f.descriptions={}; f.trackers={}
@@ -320,13 +322,13 @@ end
 
 function B:HelperOptions()
   if A.Combat() then return end
-  self:Options(); self.options.selectTab(7)
+  self:Options(); self.options.selectTab(TAB.Helpers)
 end
 
 function B:ShowDiscoveryReport()
   if A.Combat() then return end
   self:Options()
-  local f=self.options; f.selectTab(6)
+  local f=self.options; f.selectTab(TAB.Diagnostics)
   if self:HelperEnabled("helperDiscovery") and self.helperDiscoverDirty then self:DiscoverConsumables() end
   local report={"Unknown consumables - review only", "These items are not automatically added or used.", ""}
   if self:HelperEnabled("helperDiscovery") then
@@ -520,7 +522,7 @@ function B:Options()
     line(f,-68)
 
     f.tabs={}; f.pages={}
-    local names={"Buffs","Groups","Target","Consumables","Appearance","Diagnostics","Helpers"}
+    local names=TAB_NAMES
     local function setTab(index)
       f.activeTab=index
       for i,p in ipairs(f.pages) do p:SetShown(i==index) end
@@ -531,37 +533,51 @@ function B:Options()
     f.selectTab=setTab
     for i,name in ipairs(names) do
       local idx=i
-      local t=button(f,name,24+(i-1)*100,-72,94,function() setTab(idx) end); f.tabs[i]=t
+      local t=button(f,name,24+(i-1)*86,-72,80,function() setTab(idx) end); f.tabs[i]=t
     end
 
     -- BUFFS PAGE
-    local buffs=panel(f); f.pages[1]=buffs
+    local buffs=panel(f); f.pages[TAB.Buffs]=buffs
     label(buffs,"Buffs",18,-16,"GameFontNormalLarge")
     label(buffs,"Lower priority numbers are checked first. Timing inherits the default until customized.",18,-42,"GameFontDisableSmall",650)
     label(buffs,"Rebuff",334,-66,"GameFontDisableSmall",70)
     label(buffs,"Priority",590,-66,"GameFontDisableSmall",70)
     local scroll=CreateFrame("ScrollFrame",nil,buffs,"UIPanelScrollFrameTemplate")
-    scroll:SetPoint("TOPLEFT",14,-88); scroll:SetPoint("BOTTOMRIGHT",-34,180)
+    scroll:SetPoint("TOPLEFT",14,-88); scroll:SetPoint("BOTTOMRIGHT",-34,126)
     local child=CreateFrame("Frame",nil,scroll); child:SetSize(660,1); scroll:SetScrollChild(child); f.buffChild=child; f.buffRows={}
 
     f.emptyBuffs=label(child,"No supported aura buffs for this class.",8,-12,"GameFontDisableSmall",610)
-    f.weaponTitle=label(buffs,"Weapon coating reminder",18,-304,"GameFontNormal")
-    f.weaponTitle:ClearAllPoints(); f.weaponTitle:SetPoint("BOTTOMLEFT",18,150)
-    f.weaponHint=label(buffs,"Shows a manual alert only; it never applies or replaces a coating.",190,-304,"GameFontDisableSmall",470)
-    f.weaponHint:ClearAllPoints(); f.weaponHint:SetPoint("BOTTOMLEFT",190,150)
-    f.weaponEnable=check(buffs,"Enable",18,-332,function(c)
-      if not A.Combat() then B.db.weaponReminder=c:GetChecked()==true; B:RequestRefresh("weapon reminder toggle",0); B:Options() end
-    end)
-    f.weaponEnable:ClearAllPoints(); f.weaponEnable:SetPoint("BOTTOMLEFT",18,116)
-    f.weaponMain=check(buffs,"Main hand",150,-332,function(c)
-      if not A.Combat() then B.db.weaponMainHand=c:GetChecked()==true; B:RequestRefresh("weapon hand toggle",0); B:Options() end
-    end)
-    f.weaponMain:ClearAllPoints(); f.weaponMain:SetPoint("BOTTOMLEFT",150,116)
-    f.weaponOff=check(buffs,"Off hand",310,-332,function(c)
-      if not A.Combat() then B.db.weaponOffHand=c:GetChecked()==true; B:RequestRefresh("weapon hand toggle",0); B:Options() end
-    end)
-    f.weaponOff:ClearAllPoints(); f.weaponOff:SetPoint("BOTTOMLEFT",310,116)
-    addHelp(f.weaponEnable,"Manual weapon coating reminder","Available to Rogues and Shamans after a supported poison or weapon imbue is learned. Any temporary enchant satisfies the selected hand.")
+    local weapons=panel(f); f.pages[TAB.Weapons]=weapons
+    f.weaponTitle=label(weapons,"Weapon buffs",18,-16,"GameFontNormalLarge")
+    f.weaponHint=label(weapons,"Maintain a preferred buff on each weapon using your normal BuffTap binding.",18,-42,"GameFontDisableSmall",660)
+    f.weaponEnable=check(weapons,"Enable weapon reminders",18,-72,function(c) setAndRefresh("weaponReminder",c:GetChecked()==true); B:Options() end)
+    f.weaponApply=check(weapons,"Apply through scroll / click",330,-72,function(c) setAndRefresh("weaponApply",c:GetChecked()==true); B:Options() end)
+    addHelp(f.weaponApply,"Weapon application","Choose your preferences below. Existing users start with manual alerts. Scroll application only works out of combat. Rogue poisons use carried supported items; Shamans use learned imbues.")
+    f.weaponMain=check(weapons,"Main hand",18,-116,function(c) setAndRefresh("weaponMainHand",c:GetChecked()==true); B:Options() end)
+    f.weaponOff=check(weapons,"Off hand",18,-166,function(c) setAndRefresh("weaponOffHand",c:GetChecked()==true); B:Options() end)
+    f.weaponPickers={}
+    for i,hand in ipairs({"main","off"}) do
+      local key=hand
+      local pick=button(weapons,"Choose preferred buff",180,-116-(i-1)*50,470,function(control)
+        if A.Combat() then return end
+        for _,other in pairs(f.weaponPickers) do if other~=control then other.menu:Hide() end end
+        local menu=control.menu; menu:SetShown(not menu:IsShown())
+      end)
+      pick.icon=pick:CreateTexture(nil,"ARTWORK"); pick.icon:SetSize(22,22); pick.icon:SetPoint("LEFT",4,0)
+      local menu=CreateFrame("Frame",nil,weapons,"BackdropTemplate"); pick.menu=menu
+      menu:SetSize(470,190); menu:SetPoint("TOPLEFT",pick,"BOTTOMLEFT",0,-2); menu:SetFrameStrata("TOOLTIP")
+      menu:SetBackdrop({bgFile="Interface\\Buttons\\WHITE8X8",edgeFile="Interface\\Buttons\\WHITE8X8",edgeSize=1}); menu:SetBackdropColor(0.06,0.06,0.06,1); menu:Hide(); menu.rows={}
+      f.weaponPickers[key]=pick
+    end
+    f.weaponTimingLabel=label(weapons,"Refresh before expiry",18,-230,"GameFontNormal")
+    f.weaponTiming=compactSlider(weapons,0,300,15,270,formatSeconds,function(v) setAndRefresh("weaponSeconds",v) end)
+    f.weaponTiming:SetPoint("TOPLEFT",220,-230)
+    f.weaponReplace=check(weapons,"Replace a different buff with my preference",18,-274,function(c) setAndRefresh("weaponReplace",c:GetChecked()==true) end)
+    addHelp(f.weaponReplace,"Replacing an existing weapon buff","Off by default. Enable only if you want your preferred buff to replace another recognized buff. Unknown coating data always uses a manual fallback.")
+    f.weaponPoisonHint=label(weapons,"Poison ranks: highest carried usable rank. Preferences stay saved when out of stock.",18,-320,"GameFontDisableSmall",660)
+    f.weaponHandsHint=label(weapons,"Shamans maintain their main-hand imbue. Rogues choose each hand separately. Shields, held off-hand items, and fishing poles are excluded.",18,-352,"GameFontDisableSmall",660)
+    f.weaponStatus=label(weapons,"",18,-416,"GameFontHighlightSmall",660)
+    f.weaponUnavailable=label(weapons,"Weapon buffs are available to Rogues and Shamans.",18,-72,"GameFontDisableSmall",660)
     local timingLabel=buffs:CreateFontString(nil,"OVERLAY","GameFontNormal")
     timingLabel:SetPoint("BOTTOMLEFT",18,88); timingLabel:SetText("Default rebuff threshold")
     local timingHint=buffs:CreateFontString(nil,"OVERLAY","GameFontDisableSmall")
@@ -573,7 +589,7 @@ function B:Options()
     resetBuffs:ClearAllPoints(); resetBuffs:SetPoint("BOTTOMRIGHT",-18,14)
 
     -- GROUPS PAGE
-    local groups=panel(f); f.pages[2]=groups
+    local groups=panel(f); f.pages[TAB.Groups]=groups
     label(groups,"Party & raid buffing",18,-16,"GameFontNormalLarge")
     label(groups,"Select groups and classes for each buff. Party members use G1.",18,-38,"GameFontDisableSmall",680)
     f.groupEnable=check(groups,"Enable party / raid",18,-58,function(s) setAndRefresh("group",s:GetChecked()==true); B:Options() end)
@@ -620,7 +636,7 @@ function B:Options()
     f.assignEmpty=label(assignChild,"No party / raid buffs available for this class.",8,-12,"GameFontHighlight",440)
 
     -- FRIENDLY TARGET PAGE
-    local target=panel(f); f.pages[3]=target
+    local target=panel(f); f.pages[TAB.Target]=target
     label(target,"Friendly target buffing",18,-16,"GameFontNormalLarge")
     label(target,"Click a friendly player and BuffTap can offer selected single-target buffs before returning to your normal queue.",18,-42,"GameFontDisableSmall",680)
     f.friendlyTarget=check(target,"Enable friendly target buffing",18,-76,function(s) setAndRefresh("friendlyTarget",s:GetChecked()==true); B:Options() end)
@@ -652,7 +668,7 @@ function B:Options()
     resetTarget:ClearAllPoints(); resetTarget:SetPoint("BOTTOMRIGHT",-18,14)
 
     -- CONSUMABLES PAGE
-    local consume=panel(f); f.pages[4]=consume
+    local consume=panel(f); f.pages[TAB.Consumables]=consume
     label(consume,"Consumables",18,-16,"GameFontNormalLarge")
     label(consume,"Choose the food, flask and elixir buffs you want to maintain.",18,-42,"GameFontDisableSmall",680)
     f.consumablesEnable=check(consume,"Enable consumable reminders",18,-72,function(c)
@@ -694,7 +710,7 @@ function B:Options()
     label(consume,"Recognition only in this build; BuffTap will not guess individual camp effects or interact with camp objects.",18,campY-44,"GameFontDisableSmall",660)
 
     -- APPEARANCE PAGE
-    local app=panel(f); f.pages[5]=app
+    local app=panel(f); f.pages[TAB.Appearance]=app
     label(app,"Binding",18,-16,"GameFontNormalLarge")
     f.bindingText=label(app,"Current: —",18,-46,"GameFontHighlight",280)
     button(app,"Set binding",310,-42,116,function() B:CaptureBinding() end)
@@ -734,7 +750,7 @@ function B:Options()
     end)
 
     -- DIAGNOSTICS PAGE
-    local diag=panel(f); f.pages[6]=diag
+    local diag=panel(f); f.pages[TAB.Diagnostics]=diag
     label(diag,"Diagnostics & performance",18,-16,"GameFontNormalLarge")
     label(diag,"Core scanning is event-driven. Profiling is optional and lasts only for this game session.",18,-42,"GameFontDisableSmall",680)
     f.profileCheck=check(diag,"Measure refresh cost",18,-76,function(c)
@@ -981,13 +997,43 @@ function B:Options()
   f.rebuffSlider.silent=true; f.rebuffSlider:SetValue(self.db.seconds); f.rebuffSlider.valueText:SetText(formatSeconds(self.db.seconds)); f.rebuffSlider.silent=false
 
   local weaponClass=self.WeaponReminderClass and self:WeaponReminderClass()
-  for _,control in ipairs({f.weaponTitle,f.weaponHint,f.weaponEnable,f.weaponMain,f.weaponOff}) do control:SetShown(weaponClass~=nil) end
+  f.weaponUnavailable:SetShown(not weaponClass)
+  f.weaponPoisonHint:SetShown(weaponClass=="ROGUE")
+  for _,control in ipairs({f.weaponHint,f.weaponEnable,f.weaponApply,f.weaponMain,f.weaponOff,f.weaponTimingLabel,f.weaponTiming,f.weaponReplace,f.weaponStatus,f.weaponHandsHint}) do control:SetShown(weaponClass~=nil) end
+  for _,pick in pairs(f.weaponPickers) do pick:SetShown(weaponClass~=nil); pick.menu:Hide() end
   if weaponClass then
-    f.weaponEnable:SetChecked(self.db.weaponReminder==true)
+    f.weaponEnable:SetChecked(self.db.weaponReminder==true); f.weaponApply:SetChecked(self.db.weaponApply==true)
     f.weaponMain:SetChecked(self.db.weaponMainHand~=false); f.weaponOff:SetChecked(self.db.weaponOffHand~=false)
-    local active=self.db.weaponReminder==true
-    if active then f.weaponMain:Enable(); f.weaponOff:Enable() else f.weaponMain:Disable(); f.weaponOff:Disable() end
-    f.weaponMain:SetAlpha(active and 1 or 0.45); f.weaponOff:SetAlpha(active and 1 or 0.45)
+    f.weaponReplace:SetChecked(self.db.weaponReplace==true)
+    f.weaponOff:SetShown(weaponClass=="ROGUE")
+    f.weaponTiming.silent=true; f.weaponTiming:SetValue(self.db.weaponSeconds); f.weaponTiming.valueText:SetText(formatSeconds(self.db.weaponSeconds)); f.weaponTiming.silent=false
+    f.weaponStatus:SetText(self:WeaponReminderSummary())
+    for hand,pick in pairs(f.weaponPickers) do
+      pick:SetShown(hand=="main" or weaponClass=="ROGUE")
+      local handKey=hand; local selected=self:WeaponPreference(hand)
+      pick:SetText(selected and selected.name or "Choose preferred buff")
+      local src=selected and self:WeaponChoiceSource(selected)
+      local preferredIcon=selected and A.Call(C_Spell and C_Spell.GetSpellTexture,selected.ranks[#selected.ranks])
+      pick.icon:SetTexture(src and src.icon or preferredIcon or "Interface\\Icons\\INV_Misc_QuestionMark")
+      for _,row in ipairs(pick.menu.rows) do row:Hide() end
+      local choices={{name="None (manual missing-buff alert)"}}
+      for _,choice in ipairs(self.WeaponChoices) do if choice.class==weaponClass then choices[#choices+1]=choice end end
+      for i,choice in ipairs(choices) do
+        local choiceKey=choice.key
+        local row=pick.menu.rows[i]
+        if not row then row=button(pick.menu,"",4,-4-(i-1)*28,462,function(control)
+          if A.Combat() then return end
+          B.db.weaponChoices[control.hand]=control.choice; B.weaponPending=nil; B:RequestRefresh("weapon preference",0); B:Options()
+        end); row.icon=row:CreateTexture(nil,"ARTWORK"); row.icon:SetSize(22,22); row.icon:SetPoint("LEFT",4,0); pick.menu.rows[i]=row end
+        row.hand=handKey; row.choice=choiceKey
+        local source,why=self:WeaponChoiceSource(choiceKey and choice or nil)
+        local icon=source and source.icon or (choiceKey and A.Call(C_Spell and C_Spell.GetSpellTexture,choice.ranks[#choice.ranks]))
+        row.icon:SetTexture(icon or "Interface\\Icons\\INV_Misc_QuestionMark")
+        row:SetText(choice.name..(choiceKey and (source and (source.count and " (in bags: "..source.count..")" or " (learned)") or " (unavailable)") or "")); row:Show()
+        addHelp(row,choice.name,why or "Select this buff for this hand. Highest available rank is used.")
+      end
+      pick.menu:SetHeight(#choices*28+8)
+    end
   end
 
   for _,r in ipairs(f.buffRows) do r:Hide() end

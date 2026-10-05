@@ -4,7 +4,7 @@
 
 local _, B = ...
 _G.BuffTap = B
-B.version = "1.1.2"
+B.version = "1.2.1"
 B.API = {}
 local A = B.API
 
@@ -46,6 +46,7 @@ function B:InitDB()
     buffGroups={}, buffClasses={}, buffGroupNeed={}, targetBuffs={}, targetBuffSeconds={}, showBuffName=false, showTargetName=true, showTimer=false, showGroupBadge=true,
     consumablesEnabled=false, consumableFamilies={}, consumableChoices={}, consumableSeconds={},
     weaponReminder=true, weaponMainHand=true, weaponOffHand=true,
+    weaponApply=false, weaponReplace=false, weaponChoices={}, weaponSeconds=60,
     helperDismiss=false, helperBounce=false, helperTracking=false, helperCoverage=false,
     helperDiscovery=false, helperThanks=false, helperQuick=false, helperTracker=0, helperPet=false, helperHealthstone=false, helperDemon=0,
     raidGroups={true,true,true,true,true,true,true,true}}
@@ -55,6 +56,20 @@ function B:InitDB()
   if not A.Number(self.db.helperTracker) or (self.db.helperTracker~=2383 and self.db.helperTracker~=2580 and self.db.helperTracker~=43308) then self.db.helperTracker=0 end
   if not A.Number(self.db.helperDemon) or (self.db.helperDemon~=688 and self.db.helperDemon~=697 and self.db.helperDemon~=712 and self.db.helperDemon~=713 and self.db.helperDemon~=691) then self.db.helperDemon=0 end
   if self.SyncReadiness then self:SyncReadiness() end
+  -- Validate catalog keys without deleting preferences while class data is loading.
+  local class=self.WeaponReminderClass and self:WeaponReminderClass()
+  local rawClass=A.Call(function() local _,token=UnitClass("player"); return token end)
+  for hand,key in pairs(self.db.weaponChoices) do
+    local valid=false
+    if (hand=="main" or hand=="off") and A.Text(key) then
+      for _,choice in ipairs(self.WeaponChoices or {}) do
+        if choice.key==key and (not A.Text(rawClass) or choice.class==class) then valid=true; break end
+      end
+    end
+    if not valid then self.db.weaponChoices[hand]=nil end
+  end
+  if not A.Number(self.db.weaponSeconds) then self.db.weaponSeconds=60 end
+  self.db.weaponSeconds=math.max(0,math.min(300,self.db.weaponSeconds))
   -- 0.3.0 carried an internal 8-second value but exposed no timing control.
   -- Move untouched installs to the new, more useful 45-second default.
   if not hadRebuffVersion then
@@ -1022,7 +1037,7 @@ function B:Select()
   if type(self.SelectWeaponReminder)=="function" then
     local ok,action,why=pcall(self.SelectWeaponReminder,self)
     if not ok then self.lastError="weapon reminder provider failed"; return nil,"weapon reminder unavailable" end
-    if action and not (self.HelperSuppressed and self:HelperSuppressed(action)) then action.selectedAt=GetTime(); return action,"manual application required" end
+    if action and not (self.HelperSuppressed and self:HelperSuppressed(action)) then action.selectedAt=GetTime(); return action,action.manual and "manual application required" or "weapon application ready" end
     if self.db.weaponReminder and why and why~="weapon coatings present" and why~="no learned coating ability" then
       self:AddDiag("weapon reminder: "..tostring(why))
     end

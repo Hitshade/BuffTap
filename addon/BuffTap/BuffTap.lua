@@ -122,6 +122,7 @@ function B:CreateButton()
       self:SetAttribute("spell", nil)
       self:SetAttribute("item", nil)
       self:SetAttribute("unit", nil)
+      self:SetAttribute("target-slot", nil)
       self:ClearBindings()
       self:Hide()
     end
@@ -169,7 +170,7 @@ function B:CreateButton()
       GameTooltip:SetText(action.name,1,0.82,0.1)
       GameTooltip:AddLine(action.targetName,0.4,1,0.8)
       GameTooltip:AddLine(action.reason,0.85,0.85,0.85,true)
-      GameTooltip:AddLine("Manual reminder only — BuffTap will not apply or replace the coating.",0.75,0.75,0.75,true)
+      GameTooltip:AddLine(action.manual and "Manual reminder only; no binding is installed." or "Scroll or click to apply your preferred weapon buff.",0.75,0.75,0.75,true)
     elseif action.source=="readiness" then
       if not action.manual and GameTooltip.SetSpellByID then GameTooltip:SetSpellByID(action.id)
       else GameTooltip:SetText(action.name,1,0.82,0.1) end
@@ -235,7 +236,8 @@ function B:CreateButton()
     if A.Combat() or (button and button~="LeftButton") then return end
     local action=B.action
     if action then
-      if action.source=="readiness" then B:AfterReadinessClick(action,down)
+      if action.source=="weapon-reminder" then B:AfterWeaponClick(action,down)
+      elseif action.source=="readiness" then B:AfterReadinessClick(action,down)
       elseif action.source=="consumable" and B.AfterConsumableClick then B:AfterConsumableClick(action)
       elseif action.source~="weapon-reminder" then B:InvalidateAura(action.target) end
     end
@@ -256,17 +258,18 @@ function B:Commit(action,reason)
   local appearance=table.concat({self.db.size,self.db.opacity,self.db.x,self.db.y,tostring(self.db.glow),tostring(self.db.pulse),
     tostring(self.db.showBuffName),tostring(self.db.showTargetName),tostring(self.db.showTimer),tostring(self.db.showGroupBadge),table.concat(self.db.keys,",")},"|")
   local secureMatches=false
-  if action and previous and action.id==previous.id and action.source==previous.source and action.target==previous.target and action.targetGUID==previous.targetGUID then
+  if action and previous and action.id==previous.id and action.source==previous.source and action.target==previous.target and action.targetGUID==previous.targetGUID and action.slot==previous.slot then
     if action.manual then
       secureMatches=action.key==previous.key and action.slot==previous.slot
         and b:GetAttribute("type1")==nil and b:GetAttribute("spell")==nil
         and b:GetAttribute("item")==nil and b:GetAttribute("unit")==nil
-    elseif action.source=="consumable" then
+    elseif action.source=="consumable" or (action.source=="weapon-reminder" and action.secureType=="item") then
       secureMatches=b:GetAttribute("type1")=="item" and b:GetAttribute("item")==action.itemToken
     else
       secureMatches=b:GetAttribute("type1")=="spell" and b:GetAttribute("spell")==action.id and b:GetAttribute("unit")==action.target
     end
   end
+  if action and action.source=="weapon-reminder" and not action.manual then secureMatches=secureMatches and b:GetAttribute("target-slot")==action.slot end
   if secureMatches and self.appearance==appearance and b:GetAttribute("state-safety")~="blocked" then
     self.action=action; self.reason=reason
     self:UpdateOverlay(); self:UpdatePulse()
@@ -279,7 +282,7 @@ function B:Commit(action,reason)
   -- Clear the secure payload before doing anything else. Even if the binding API
   -- unexpectedly disappears/fails on a beta build, the stale click has no action.
   b:Hide()
-  b:SetAttribute("type1",nil); b:SetAttribute("spell",nil); b:SetAttribute("item",nil); b:SetAttribute("unit",nil)
+  b:SetAttribute("type1",nil); b:SetAttribute("spell",nil); b:SetAttribute("item",nil); b:SetAttribute("unit",nil); b:SetAttribute("target-slot",nil)
   self.action=nil; self.reason=reason
   if type(ClearOverrideBindings)~="function" then self.setupError="override binding API unavailable"; return end
   local cleared=pcall(ClearOverrideBindings,b)
@@ -307,7 +310,8 @@ function B:Commit(action,reason)
     return
   end
 
-  if action.source=="consumable" then
+  if action.source=="weapon-reminder" then b:SetAttribute("target-slot",action.slot) end
+  if action.source=="consumable" or (action.source=="weapon-reminder" and action.secureType=="item") then
     b:SetAttribute("item",action.itemToken)
     b:SetAttribute("type1","item")
     if b:GetAttribute("item")~=action.itemToken or b:GetAttribute("type1")~="item" then
@@ -523,6 +527,7 @@ function B:Refresh(captureDiagnostics)
       pcall(self.button.SetAttribute,self.button,"spell",nil)
       pcall(self.button.SetAttribute,self.button,"item",nil)
       pcall(self.button.SetAttribute,self.button,"unit",nil)
+      pcall(self.button.SetAttribute,self.button,"target-slot",nil)
       if type(ClearOverrideBindings)=="function" then pcall(ClearOverrideBindings,self.button) end
     end
   end
@@ -571,7 +576,7 @@ function B:DiagnosticsLines()
   if self.wakeDue then out[#out+1]="Next exact wake: "..string.format("%.1fs",math.max(0,self.wakeDue-GetTime())).." ("..tostring(self.wakeReason or "threshold/cooldown")..")" end
   out[#out+1]="C_Timer.After: "..tostring(C_Timer and type(C_Timer.After)=="function").." | spell range: "..tostring(C_Spell and type(C_Spell.IsSpellInRange)=="function")
   out[#out+1]="Consumables: "..(self.db and self.db.consumablesEnabled and "on" or "off").." | item count: "..tostring(C_Item and type(C_Item.GetItemCount)=="function").." | secure item provider: "..tostring(type(self.SelectConsumable)=="function")
-  if self.WeaponReminderClass then out[#out+1]="Weapon reminder: "..self:WeaponReminderSummary().." | manual only" end
+  if self.WeaponReminderClass then out[#out+1]="Weapon reminder: "..self:WeaponReminderSummary()..(self.db.weaponApply and " | scroll application enabled" or " | manual alerts") end
   if self.db and self.CampState then
     local camp=self:CampState()
     out[#out+1]="Camp Benefits: "..(camp.active and (camp.remaining and ("active ("..shortTime(camp.remaining)..")") or "active") or (camp.unknown and "unreadable" or "not active"))
@@ -720,7 +725,7 @@ local function handleEvent(_,event,arg,castGUID,spellID)
       if B.options and B.options:IsShown() then B:Options() end
       if B.itemPicker and B.itemPicker:IsShown() then B:UpdateConsumablePicker() end
     end
-    if not B.db.consumablesEnabled and not B.db.group and not B.powerBlocked then return end
+    if not B.db.consumablesEnabled and not B.db.group and not B.powerBlocked and not (B.db.weaponApply and B:WeaponReminderClass()=="ROGUE") then return end
   elseif event=="ITEM_DATA_LOAD_RESULT" then
     if not A.Number(arg) or not (B.itemRequests and B.itemRequests[arg]) then return end
     B.itemRequests[arg]=nil

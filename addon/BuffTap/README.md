@@ -8,7 +8,7 @@ BuffTap watches your buffs, works out what needs attention, and prepares the nex
 
 **Automate the reminders and preparation. Stay in control of every cast.** BuffTap automatically detects, prioritizes, and updates its suggestions; casting spells and using items still require your click or keypress.
 
-**Version 1.1.2.** Optional conveniences are available in the main **Helpers** tab and start disabled, so you can choose exactly how much assistance you want.
+**Version 1.2.1.** Optional conveniences are available in the main **Helpers** tab and start disabled, so you can choose exactly how much assistance you want.
 
 ## One tap, your priorities
 
@@ -50,7 +50,7 @@ These helpers wait through mount and pet transitions and offer casts only while 
 - **Fewer repeated errors:** Optionally suppress a recent BuffTap action when the game rejects it because a stronger effect is already active. Restore it manually or on zone change.
 - **Gathering reminders:** Choose a learned Find Herbs, Find Minerals, or Find Fish tracker and get a one-tap reminder when it is off. BuffTap does not cycle between trackers.
 - **Automatic solo thanks:** Opt in to a targeted `/thank` when another identifiable player gives you a supported buff while you are solo in the open world. Disabled in parties, raids, instances, and combat; limited to once per minute overall and once per ten minutes per player. If the caster cannot be verified, BuffTap stays quiet.
-- **Weapon-coating alerts:** Separate missing-coating reminders for eligible Rogue and Shaman weapons. Poison and imbue application stays manual; this is not automatic oil or sharpening-stone management.
+- **Scroll-to-apply weapon buffs:** Opt in to maintain your preferred learned Shaman imbue or carried Rogue poisons through the normal BuffTap binding. Choose each Rogue hand separately, set refresh timing, and decide whether a different existing buff may be replaced. Shamans maintain the main-hand weapon; shields and held off-hand items are excluded. Out-of-stock poisons retain their saved preference and show a manual reminder. Oils and sharpening stones are not automatically managed.
 
 ## Make it fit your UI
 

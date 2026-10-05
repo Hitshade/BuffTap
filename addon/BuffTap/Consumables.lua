@@ -147,6 +147,19 @@ function B:InvalidateConsumables(itemID)
   if A.Number(itemID) and self.itemMeta then self.itemMeta[itemID]=nil end
 end
 
+-- Shared metadata requests use timestamps, never boolean sentinels.
+function B:RequestItemData(itemID)
+  if not A.Number(itemID) or not (C_Item and type(C_Item.RequestLoadItemDataByID)=="function") then return end
+  self.itemRequests=self.itemRequests or {}
+  local now=GetTime(); local requested=self.itemRequests[itemID]
+  if not A.Number(requested) or now-requested>10 then
+    self.itemRequests[itemID]=now
+    local ok=pcall(C_Item.RequestLoadItemDataByID,itemID)
+    if not ok then self.itemRequests[itemID]=nil end
+    if ok and self.stats then self.stats.itemInfoLoads=(self.stats.itemInfoLoads or 0)+1 end
+  end
+end
+
 function B:ConsumableItemInfo(itemID,static)
   self.itemMeta=self.itemMeta or {}
   local cached=self.itemMeta[itemID]
@@ -160,15 +173,7 @@ function B:ConsumableItemInfo(itemID,static)
   info.spellName,info.spellID=spellName,spellID
   self.itemMeta[itemID]=info
 
-  if not info.loaded and C_Item and type(C_Item.RequestLoadItemDataByID)=="function" then
-    self.itemRequests=self.itemRequests or {}
-    local now=GetTime()
-    if not self.itemRequests[itemID] or now-self.itemRequests[itemID]>10 then
-      self.itemRequests[itemID]=now
-      pcall(C_Item.RequestLoadItemDataByID,itemID)
-      if self.stats then self.stats.itemInfoLoads=(self.stats.itemInfoLoads or 0)+1 end
-    end
-  end
+  if not info.loaded then self:RequestItemData(itemID) end
   return info
 end
 
