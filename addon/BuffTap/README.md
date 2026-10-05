@@ -8,7 +8,7 @@ BuffTap watches your buffs, works out what needs attention, and prepares the nex
 
 **Automate the reminders and preparation. Stay in control of every cast.** BuffTap automatically detects, prioritizes, and updates its suggestions; casting spells and using items still require your click or keypress.
 
-**Version 1.2.1.** Optional conveniences are available in the main **Helpers** tab and start disabled, so you can choose exactly how much assistance you want.
+**Version 1.3.0.** Optional conveniences are available in the main **Helpers** tab and start disabled, so you can choose exactly how much assistance you want.
 
 ## One tap, your priorities
 
@@ -76,3 +76,18 @@ Include your class, addon version, game build, and steps to reproduce the issue.
 ---
 
 **License:** BuffTap source is offered under **MPL 2.0**; see the bundled license notices. The class catalog is generated from WoW Forever client data. Game data and artwork remain their respective owners'. Developed with AI-assisted coding and review.
+
+## 📦 Stay stocked for your next adventure
+
+Enable **Consumables → Supplies** for optional **low-stock warnings** on your selected Rogue poisons, food buffs, flasks, and elixirs. Set a warning minimum and desired quantity for each supply, then see your usable stock and shortfall at a glance.
+
+- **A small stock indicator:** Remains useful even when there is nothing to cast, without taking over the buff queue.
+- **Your notification preferences:** Visual warnings, optional private chat alerts and sound, plus a ten-minute snooze.
+- **Private ready-check summaries:** Opt in to a report of tracked supply shortages when a ready check begins. Nothing is sent to your group.
+- **Predictable counts:** Explicit item choices count only that item; Auto combines usable supported items. Poison ranks are combined, and choosing the same poison for both hands counts it once.
+- **Clear availability:** Distinguishes empty bags, low stock, carried but unusable items, and information that is still loading.
+
+All supply features start disabled. Group-buff reagents and resurrection supplies are not included in stock warnings in this release.
+
+**Smarter use of group reagents:** Before a reagent-consuming group buff fires, BuffTap checks that enough eligible recipients still need it. If another player has already supplied the buff, it cancels an unnecessary group cast and prepares the next suggestion for your next input. Mixed group spell ranks no longer combine to meet the threshold.
+

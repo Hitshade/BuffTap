@@ -4,7 +4,7 @@
 
 local _, B = ...
 _G.BuffTap = B
-B.version = "1.2.1"
+B.version = "1.3.0"
 B.API = {}
 local A = B.API
 
@@ -31,6 +31,20 @@ local function fold(v)
   return cached
 end
 
+-- Binding strings are literal API inputs. Preserve printable punctuation
+-- from key capture while rejecting whitespace and control characters.
+function B:NormalizeBindings(values)
+  local keys,seen={},{}
+  for i=1,8 do
+    local key=values[i]
+    if type(key)=="string" and #key>0 and #key<=64 and key:match("^[%w%p]+$") then
+      key=key:upper()
+      if not seen[key] then keys[#keys+1]=key; seen[key]=true end
+    end
+  end
+  return keys
+end
+
 function B:InitDB()
   if type(BuffTapDB) ~= "table" then BuffTapDB = {} end
   self.db = BuffTapDB
@@ -45,6 +59,7 @@ function B:InitDB()
     groupNeed=3, blessingNeed=2, friendlyTarget=false, targetSeconds=300, keys={"MOUSEWHEELDOWN"}, buffs={}, priorities={}, buffSeconds={},
     buffGroups={}, buffClasses={}, buffGroupNeed={}, targetBuffs={}, targetBuffSeconds={}, showBuffName=false, showTargetName=true, showTimer=false, showGroupBadge=true,
     consumablesEnabled=false, consumableFamilies={}, consumableChoices={}, consumableSeconds={},
+    suppliesEnabled=false, suppliesChat=false, suppliesSound=false, suppliesReadyCheck=false, supplySettings={},
     weaponReminder=true, weaponMainHand=true, weaponOffHand=true,
     weaponApply=false, weaponReplace=false, weaponChoices={}, weaponSeconds=60,
     helperDismiss=false, helperBounce=false, helperTracking=false, helperCoverage=false,
@@ -117,14 +132,7 @@ function B:InitDB()
     if type(value) ~= "number" or value ~= value then self.db.targetBuffSeconds[key] = nil
     else self.db.targetBuffSeconds[key] = math.max(30, math.min(1800, math.floor(value/30 + 0.5)*30)) end
   end
-  local keys,seen={},{}
-  for i=1,8 do
-    local key=self.db.keys[i]
-    if type(key)=="string" and #key>0 and #key<=64 and key:match("^[%w%-]+$") and not seen[key] then
-      keys[#keys+1]=key; seen[key]=true
-    end
-  end
-  self.db.keys=keys
+  self.db.keys=self:NormalizeBindings(self.db.keys)
   for key,value in pairs(self.db.priorities) do
     if not A.Number(value) then self.db.priorities[key]=nil
     else self.db.priorities[key]=math.max(1,math.min(999,math.floor(value))) end
@@ -138,6 +146,7 @@ function B:InitDB()
     else for class,value in pairs(map) do if type(value)~="boolean" then map[class]=nil end end end
   end
   self.auraCache=self.auraCache or {}
+  if self.InitSupplies then self:InitSupplies() end
 end
 
 function B:ResetStats()
@@ -971,11 +980,16 @@ function B:Select()
             end
           end
           if safe and #bucket>=self:GroupNeed(groupDef) then
+            local rankCounts={}
+            for _,candidate in ipairs(bucket) do rankCounts[candidate.action.id]=(rankCounts[candidate.action.id] or 0)+1 end
             for _,candidate in ipairs(bucket) do
               local ga,need=candidate.action,candidate.need
-              if self:Validate(ga) then
-                ga.reason=tostring(#bucket).." verified recipients need "..b.name
-                ga.needState=need.reason; ga.remaining=need.remaining; ga.groupCast=true; ga.groupCount=#bucket
+              -- Different target levels can resolve different group ranks. Only
+              -- recipients verified for this exact rank justify its reagent cost.
+              local verified=rankCounts[ga.id] or 0
+              if verified>=self:GroupNeed(groupDef) and self:Validate(ga) then
+                ga.reason=tostring(verified).." verified recipients need "..b.name
+                ga.needState=need.reason; ga.remaining=need.remaining; ga.groupCast=true; ga.groupCount=verified
                 ga.selectedAt=GetTime(); return ga,"ready"
               end
             end
@@ -1043,4 +1057,18 @@ function B:Select()
     end
   end
   return nil,"nothing actionable"
+end
+
+-- A group reminder can become stale between display and the click (another
+-- player buffs, a member dies/leaves, or assignment/threshold/range changes).
+-- Re-run selection with fresh roster/auras only at the explicit group click.
+-- Never swap in a different cast on that click: cancel, then refresh normally.
+function B:RevalidateGroupAction(action)
+  if A.Combat() or not action or not action.groupCast then return false end
+  self:InvalidateRoster(); self:InvalidateAura()
+  local fresh=self:Select()
+  local valid=fresh and fresh.groupCast and fresh.id==action.id and fresh.key==action.key and
+    fresh.target==action.target and fresh.targetGUID==action.targetGUID
+  if valid then action.groupCount=fresh.groupCount; action.reason=fresh.reason end
+  return valid==true
 end

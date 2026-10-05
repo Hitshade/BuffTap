@@ -33,6 +33,8 @@ local function equippedWeapon(slot)
   return nil,"item class unavailable"
 end
 
+function B:EquippedBuffWeapon(slot) return equippedWeapon(slot) end
+
 local function paperDollEnchant(slot)
   local fn=C_PaperDollInfo and C_PaperDollInfo.GetTemporaryEnchantmentInfo
   if type(fn)~="function" then return nil,"temporary enchant API unavailable" end
@@ -228,10 +230,14 @@ function B:WeaponChoiceSource(choice)
   end
   -- Only supported consumable poison IDs can become item actions. Highest
   -- carried usable rank wins; preferences remain saved when stock runs out.
+  local carried,unknown=0,false
   for _,pair in ipairs(choice.items) do
     local id=pair[1]
     local count=A.Call(C_Item and C_Item.GetItemCount,id,false,false,false,false)
-    if A.Number(count) and count>0 and A.Call(C_Item and C_Item.IsUsableItem,id)==true then
+    if A.Number(count) then carried=carried+math.max(0,count) else unknown=true end
+    local usable=count and A.Number(count) and count>0 and A.Call(C_Item and C_Item.IsUsableItem,id)
+    if A.Number(count) and count>0 and usable~=true and usable~=false then unknown=true end
+    if A.Number(count) and count>0 and usable==true then
       local spellFn=C_Item and C_Item.GetItemSpell
       if type(spellFn)~="function" then return nil,"Poison item spell API unavailable." end
       local spellOK,spellName,spellID=pcall(spellFn,id)
@@ -253,7 +259,9 @@ function B:WeaponChoiceSource(choice)
       end
     end
   end
-  return nil,"Preferred poison is out of stock or unusable."
+  if unknown then return nil,"Preferred poison inventory or usability data is unavailable." end
+  if carried>0 then return nil,"Preferred poison is carried, but no carried rank is usable." end
+  return nil,"Preferred poison is out of stock."
 end
 
 function B:WeaponNeed(state,choice)

@@ -124,6 +124,102 @@ local function buffIcon(def)
   return action and action.icon or 134400
 end
 
+function B:BuildSupplyOptions(parent)
+  local f=self.options
+  local p=CreateFrame("Frame",nil,parent)
+  p:SetPoint("TOPLEFT",0,-36); p:SetPoint("BOTTOMRIGHT",0,0); f.supplyBody=p
+  label(p,"Supplies",18,-16,"GameFontNormalLarge")
+  label(p,"Optional bag-stock warnings for your selected poisons and buff consumables.",18,-42,"GameFontDisableSmall",670)
+  f.supplyEnable=check(p,"Enable supply warnings",18,-70,function(c) setAndRefresh("suppliesEnabled",c:GetChecked()==true); B:UpdateSupplyOptions() end)
+  addHelp(f.supplyEnable,"Supply warnings","Shows a small stock indicator beside BuffTap. Counts carried usable items only. No purchases, bank tracking, or changes to casting priorities.")
+  f.supplyChat=check(p,"Private chat alerts",18,-102,function(c) setAndRefresh("suppliesChat",c:GetChecked()==true) end)
+  f.supplySound=check(p,"Alert sound",230,-102,function(c) setAndRefresh("suppliesSound",c:GetChecked()==true) end)
+  f.supplyReady=check(p,"Private ready-check summary",410,-102,function(c) setAndRefresh("suppliesReadyCheck",c:GetChecked()==true) end)
+  addHelp(f.supplyChat,"Private stock alerts","One message when an enabled supply becomes low or empty. Restocking above its minimum resets the warning. Nothing is sent to other players.")
+  addHelp(f.supplyReady,"Ready-check supply summary","Reports enabled supply shortages to you when a ready check starts. This checks stock, not raid buffs, cooldowns, or whether you are ready to fight. In combat, reports wait for combat to end, for up to 30 seconds.")
+  line(p,-140)
+  label(p,"Track / supply",18,-158,"GameFontDisableSmall",250)
+  label(p,"Usable",298,-158,"GameFontDisableSmall",60)
+  label(p,"Warn below",365,-158,"GameFontDisableSmall",75)
+  label(p,"Want",462,-158,"GameFontDisableSmall",55)
+  label(p,"Missing",550,-158,"GameFontDisableSmall",70)
+  f.supplyRows={}
+  for i=1,5 do
+    local row=CreateFrame("Frame",nil,p,"BackdropTemplate")
+    row:SetSize(676,43); row:SetPoint("TOPLEFT",12,-180-(i-1)*47)
+    row:SetBackdrop({bgFile="Interface\\Buttons\\WHITE8X8"}); row:SetBackdropColor(0.085,0.085,0.075,0.95)
+    row.enable=check(row,"",0,-7,function(c)
+      if A.Combat() then return end
+      local entry=c:GetParent().entry
+      if entry then entry.settings.enabled=c:GetChecked()==true; B:InvalidateSupplies(false); B:UpdateSupplyOptions() end
+    end)
+    row.icon=row:CreateTexture(nil,"ARTWORK"); row.icon:SetSize(26,26); row.icon:SetPoint("TOPLEFT",27,-8)
+    row.name=label(row,"",62,-6,"GameFontHighlightSmall",214)
+    row.name:SetWordWrap(false); row.name:SetHeight(16)
+    row.state=label(row,"",62,-23,"GameFontDisableSmall",214)
+    row.count=label(row,"",288,-13,"GameFontHighlightSmall",52)
+    row.minimum=editbox(row,366,-10,44,true)
+    row.target=editbox(row,452,-10,44,true)
+    row.shortfall=label(row,"",545,-13,"GameFontHighlightSmall",74)
+    for _,field in ipairs({"minimum","target"}) do
+      local key=field
+      row[field]:SetScript("OnEnterPressed",function(e)
+        if A.Combat() then return end
+        local entry=e:GetParent().entry; local value=tonumber(e:GetText())
+        if entry and A.Number(value) then
+          entry.settings[key]=math.max(1,math.min(999,math.floor(value)))
+          entry.settings.target=math.max(entry.settings.minimum,entry.settings.target)
+          B:InvalidateSupplies(false)
+        end
+        e:ClearFocus(); B:UpdateSupplyOptions()
+      end)
+      row[field]:SetScript("OnEscapePressed",function(e) e:ClearFocus(); B:UpdateSupplyOptions() end)
+    end
+    addHelp(row.minimum,"Warn below","Alert when usable stock falls below this number. Zero stock always warns. Press Enter to save.")
+    addHelp(row.target,"Desired stock","Your personal target quantity. Missing shows how many more usable items would reach it. BuffTap does not buy them. Press Enter to save.")
+    f.supplyRows[i]=row
+  end
+  f.supplyEmpty=label(p,"",18,-190,"GameFontHighlightSmall",665)
+  f.supplySnooze=button(p,"Snooze 10 min",18,-468,122,function() B:SnoozeSupplies() end)
+  button(p,"Restore alerts",150,-468,118,function() B:RestoreSupplies() end)
+  button(p,"Check supplies",554,-468,126,function() B:ReportSupplies() end)
+  f.supplyHint=label(p,"Warnings do not block your buff queue. Shared poison choices count once.",18,-434,"GameFontDisableSmall",660)
+end
+
+function B:UpdateSupplyOptions()
+  local f=self.options
+  if not f or not f.supplyBody or A.Combat() then return end
+  local entries=self:SyncSupplies()
+  f.supplyEnable:SetChecked(self.db.suppliesEnabled)
+  f.supplyChat:SetChecked(self.db.suppliesChat); f.supplySound:SetChecked(self.db.suppliesSound); f.supplyReady:SetChecked(self.db.suppliesReadyCheck)
+  for i,row in ipairs(f.supplyRows) do
+    local entry=entries[i]
+    if row.entry and (not entry or row.entry.key~=entry.key) then row.minimum:ClearFocus(); row.target:ClearFocus() end
+    row.entry=entry; row:SetShown(entry~=nil)
+    if entry then
+      row.enable:SetChecked(entry.settings.enabled); row.icon:SetTexture(entry.icon); row.name:SetText(entry.name)
+      local states={loading="Inventory settling",unknown="Stock or item data unavailable",empty="Out of stock",unusable="Carried, none usable",low="Low stock",ok="Stock ready"}
+      row.state:SetText(states[entry.state] or "Unknown")
+      row.count:SetText(entry.count~=nil and tostring(entry.count) or "?")
+      if not row.minimum:HasFocus() then row.minimum:SetText(tostring(entry.settings.minimum)) end
+      if not row.target:HasFocus() then row.target:SetText(tostring(entry.settings.target)) end
+      row.shortfall:SetText(entry.shortfall~=nil and tostring(entry.shortfall) or "?")
+      addHelp(row,entry.name,entry.detail.."\nCarried: "..tostring(entry.carried or "?")..". Unreadable counts never trigger a shortage warning."..
+        (entry.mappingMismatch and "\nAn item effect differs from BuffTap's supported catalog and is excluded." or ""))
+    end
+  end
+  f.supplyEmpty:SetShown(#entries==0)
+  f.supplyEmpty:SetText(not self.db.enabled and "Enable BuffTap to resume supply tracking." or not self.db.suppliesEnabled and "Enable supply warnings to configure stock thresholds." or
+    "Enable a food, flask or elixir reminder, or select a Rogue poison for an equipped hand.")
+  f.supplyHint:SetText(self:SupplySnoozed() and "Stock alerts are snoozed for 10 minutes; ready-check summaries remain available." or
+    "Warnings do not block your buff queue. Shared poison choices count once.")
+end
+
+function B:ShowSuppliesOptions()
+  if A.Combat() then return end
+  self:Options(); self.options.selectTab(TAB.Consumables); self.options.selectConsumableView(true)
+end
+
 function B:CaptureBinding()
   if A.Combat() then return end
   if not self.capture then
@@ -138,7 +234,9 @@ function B:CaptureBinding()
       if IsShiftKeyDown() then key="SHIFT-"..key end
       if IsControlKeyDown() then key="CTRL-"..key end
       if IsAltKeyDown() then key="ALT-"..key end
-      B.db.keys={key}; f:Hide(); B.appearance=nil; B:RequestRefresh("binding",0); B:Status(false)
+      local keys=B:NormalizeBindings({key})
+      if #keys==0 then return end
+      B.db.keys=keys; f:Hide(); B.appearance=nil; B:RequestRefresh("binding",0); B:Status(false)
       if B.options and B.options:IsShown() then B:Options() end
     end
     f:SetScript("OnKeyDown",function(_,key)
@@ -668,7 +766,19 @@ function B:Options()
     resetTarget:ClearAllPoints(); resetTarget:SetPoint("BOTTOMRIGHT",-18,14)
 
     -- CONSUMABLES PAGE
-    local consume=panel(f); f.pages[TAB.Consumables]=consume
+    local consumePanel=panel(f); f.pages[TAB.Consumables]=consumePanel
+    local consume=CreateFrame("Frame",nil,consumePanel); consume:SetPoint("TOPLEFT",0,-36); consume:SetPoint("BOTTOMRIGHT",0,0)
+    f.consumableBody=consume
+    self:BuildSupplyOptions(consumePanel)
+    local buffView=button(consumePanel,"Buff items",18,-8,104,function() f.selectConsumableView(false) end)
+    local supplyView=button(consumePanel,"Supplies",132,-8,104,function() f.selectConsumableView(true) end)
+    f.selectConsumableView=function(supplies)
+      f.consumableBody:SetShown(not supplies); f.supplyBody:SetShown(supplies)
+      if supplies then buffView:UnlockHighlight(); supplyView:LockHighlight(); B:UpdateSupplyOptions()
+      else supplyView:UnlockHighlight(); buffView:LockHighlight() end
+      if B.itemPicker then B.itemPicker:Hide() end
+    end
+    f.selectConsumableView(false)
     label(consume,"Consumables",18,-16,"GameFontNormalLarge")
     label(consume,"Choose the food, flask and elixir buffs you want to maintain.",18,-42,"GameFontDisableSmall",680)
     f.consumablesEnable=check(consume,"Enable consumable reminders",18,-72,function(c)
@@ -802,6 +912,7 @@ function B:Options()
   local width,height=UIParent:GetWidth(),UIParent:GetHeight()
   if A.Number(width) and A.Number(height) then f:SetScale(math.min(1,(width-32)/760,(height-32)/680)) end
   self:UpdateHelperOptions()
+  self:UpdateSupplyOptions()
   f.enable:SetChecked(self.db.enabled)
   f.versionText:SetText("v"..self.version)
   f.groupEnable:SetChecked(self.db.group); f.smartGroup:SetChecked(self.db.smartGroup); f.friendlyTarget:SetChecked(self.db.friendlyTarget)
@@ -1023,7 +1134,7 @@ function B:Options()
         local row=pick.menu.rows[i]
         if not row then row=button(pick.menu,"",4,-4-(i-1)*28,462,function(control)
           if A.Combat() then return end
-          B.db.weaponChoices[control.hand]=control.choice; B.weaponPending=nil; B:RequestRefresh("weapon preference",0); B:Options()
+          B.db.weaponChoices[control.hand]=control.choice; B.weaponPending=nil; B:InvalidateSupplies(false); B:RequestRefresh("weapon preference",0); B:Options()
         end); row.icon=row:CreateTexture(nil,"ARTWORK"); row.icon:SetSize(22,22); row.icon:SetPoint("LEFT",4,0); pick.menu.rows[i]=row end
         row.hand=handKey; row.choice=choiceKey
         local source,why=self:WeaponChoiceSource(choiceKey and choice or nil)

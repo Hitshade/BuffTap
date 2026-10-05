@@ -1,6 +1,20 @@
 # BuffTap changelog
 
-## 1.2.1 — Weapon options and reliability cleanup
+## 1.3.0 â€” Supply warnings and smarter group recasts
+
+- Optional Supplies controls are integrated in Consumables. Track your selected Rogue poisons, food buffs, flasks and elixirs with per-supply warning minimums and desired quantities.
+- Separate stock indicator plus optional private chat alerts, sound and ready-check supply summaries. Stock alerts can be snoozed for ten minutes. All new features start disabled.
+- Usable poison ranks are combined and shared hand preferences counted once. Explicit consumable preferences remain unchanged when out of stock.
+- Empty, low, unusable, loading and unreadable stock are distinguished. Unknown data never generates an empty-bag warning; mismatched item effects do not count as supported usable supplies.
+- Reagent-consuming group buffs now recount eligible recipients at the click. An obsolete group cast cancels safely; a new suggestion requires the next click or binding input.
+- Group ranks no longer combine incompatible recipients to meet group spell thresholds. Existing healthy group-buff coverage remains respected across all supported classes.
+- Stock checks use coalesced inventory events and caches, with startup/combat safeguards. No new recurring polling, purchasing, bank/alt tracking, or cross-player coordination.
+
+Group/recovery reagent stock warnings and Reagent Economy detection are deferred because the hidden active perk state is not yet verified in Forever. Existing reagent checks and Healthstone/pet behavior are unchanged. Oils, stones and Mage imbue scrolls remain outside automatic weapon application.
+
+Validation: 342 mocked Lua 5.1 scenarios passed, including 108 new stock and group-recast cases. Ten runtime Lua files loaded successfully. Live UI rendering and actual native API/cast behavior require the checks in docs/RELEASE-REVIEW-1.3.0.md. Prepared locally; not published.
+
+## 1.2.1 â€” Weapon options and reliability cleanup
 
 - Moved Weapons immediately before Appearance in the main options window.
 - Hid weapon-specific controls and explanatory labels for unsupported classes; kept the class availability message.
@@ -12,7 +26,7 @@
 Validation: all 234 mocked Lua 5.1 scenarios passed, including six new regression scenarios. All nine runtime Lua files load during these checks. The release ZIP is verified against the source and manifest. Live weapon application and Rogue off-hand targeting remain unverified in this review; use the existing in-game checks before publication.
 
 
-## 1.2.0 — Scroll-to-apply weapon buffs
+## 1.2.0 â€” Scroll-to-apply weapon buffs
 
 - New integrated Weapons options page with native icons, preferred buff selectors, and poison stock availability.
 - Opt-in scroll/click application for learned Shaman main-hand imbues and supported carried Rogue poison items on either hand.
@@ -21,11 +35,11 @@ Validation: all 234 mocked Lua 5.1 scenarios passed, including six new regressio
 - Uses Forever's weapon-enchant categories so an oil cannot satisfy a missing Shaman imbue. Permanent enchants never satisfy weapon-buff reminders.
 - Schedules threshold/expiry checks through the existing wake timer; no new polling loop. Bag restocks and metadata-load events restore ready poison actions.
 - Revalidates preferences, weapon identity, stock, usability and cooldown before arming/clicking; clears weapon targeting on combat entry and when returning to ordinary buffs.
-- Weapon application starts disabled, preserving existing manual-alert behavior. Open `/bt` → Weapons, choose preferences, and enable Apply through scroll / click.
+- Weapon application starts disabled, preserving existing manual-alert behavior. Open `/bt` â†’ Weapons, choose preferences, and enable Apply through scroll / click.
 
 Validation: 228 mocked Lua 5.1 scenarios passed (189 prior plus 39 weapon scenarios). Live-client application, especially Rogue off-hand targeting and the options layout, needs an in-game smoke test before publication.
 
-## 1.1.2 — Mouse-button bindings
+## 1.1.2 â€” Mouse-button bindings
 
 - Added middle-click and side-button binding capture in options, including Shift/Ctrl/Alt combinations.
 - Left/right click requires a modifier; clearer instructions explain the available inputs.
@@ -34,7 +48,7 @@ Validation: 228 mocked Lua 5.1 scenarios passed (189 prior plus 39 weapon scenar
 
 All 189 mocked Lua 5.1 scenarios passed, including eight new mouse-binding checks. Package integrity verified; live-client verification remains outstanding.
 
-## 1.1.1 — Runtime efficiency
+## 1.1.1 â€” Runtime efficiency
 
 - Reused normalized aura and consumable names to avoid repeated string work during refreshes.
 - Disabled pet and Healthstone helpers now bypass class queries; successful class detection is cached for the character.
@@ -45,7 +59,7 @@ All 189 mocked Lua 5.1 scenarios passed, including eight new mouse-binding check
 
 This maintenance build received Lua syntax/load and package-integrity checks. The Python regression suite was intentionally not run for this build.
 
-## 1.1.0 — Class readiness
+## 1.1.0 â€” Class readiness
 
 - New optional Hunter and Warlock pet readiness in the main Helpers tab; disabled by default.
 - Warlocks choose a learned preferred demon. Any living pet satisfies the reminder; Demonic Sacrifice suppresses summons.
@@ -59,7 +73,7 @@ This maintenance build received Lua syntax/load and package-integrity checks. Th
 181 mocked Lua 5.1 regression scenarios pass. Live-client pet transitions, Healthstone creation and the compact Helpers layout still need in-game verification.
 
 
-## 1.0.0 — Smart buffing, fewer chores (2026-09-27)
+## 1.0.0 â€” Smart buffing, fewer chores (2026-09-27)
 
 - Automatic missing/expiring buff checks and one-tap spell/item preparation, with player input required for each use.
 - Configurable personal, friendly-target, party and raid buffing; per-buff class/group filters, priorities and smart group-spell thresholds.
@@ -74,7 +88,7 @@ This maintenance build received Lua syntax/load and package-integrity checks. Th
 - Updated README and CurseForge description for the 1.0.0 feature set.
 
 
-## 0.10.0-beta2 — Integrated helper options (2026-09-27)
+## 0.10.0-beta2 â€” Integrated helper options (2026-09-27)
 
 - Replaced the separate helper window with a Helpers tab in the main options. `/bt helpers` selects that tab.
 - Added visible plain-language descriptions beneath every helper toggle, explaining actions, limits and how to undo dismissals.
@@ -84,7 +98,7 @@ This maintenance build received Lua syntax/load and package-integrity checks. Th
 - 122 mocked Lua 5.1 regression scenarios pass. In-game visual verification remains pending.
 
 
-## 0.10.0-beta1 — Optional helpers (2026-09-27)
+## 0.10.0-beta1 â€” Optional helpers (2026-09-27)
 
 - New Helpers window; all new features are independently opt-in and default off.
 - Temporary reminder dismissal with manual restore and zone-change reset; group and single versions share a family. Group casts respect dismissed recipients.
@@ -100,7 +114,7 @@ This maintenance build received Lua syntax/load and package-integrity checks. Th
 Beta: mocked tests pass; real-client UI, caster attribution and emote availability still require validation. No live release was published.
 
 
-## 0.9.5 — 2026-09-25
+## 0.9.5 â€” 2026-09-25
 
 - Redesigned options with charcoal panels, restrained gold accents, readable secondary text, and neutral action buttons.
 - Consumable rows keep the chosen item, native icon, bag count, timing, and Choose action aligned. Auto counts describe the currently preferred item.
@@ -110,7 +124,7 @@ Beta: mocked tests pass; real-client UI, caster attribution and emote availabili
 - Existing buff logic, Paladin sorting, food database, opt-in defaults, manual weapon coatings, and camping behavior are unchanged.
 - 88 mocked Lua 5.1 scenarios pass. Real-client rendering and interaction testing remain required.
 
-## 0.9.4 — 2026-09-25
+## 0.9.4 â€” 2026-09-25
 
 - Expanded verified food choices from 2 to 102, including Herb Baked Egg and leveling foods. Added exact resulting buff IDs and 67 eating-state IDs.
 - While food reminders are enabled, recognized eating pauses the reminder queue so class buffs do not interrupt a meal. Existing food buffs remain protected under the configured refresh timing.
@@ -120,14 +134,14 @@ Beta: mocked tests pass; real-client UI, caster attribution and emote availabili
 - Bag changes refresh visible counts; inventory and coverage caches avoid periodic scans. Food and flask Auto selection remains available. Consumables remain opt-in.
 - Camping and weapon application are unchanged. 82 mocked Lua 5.1 scenarios pass; in-game eating, items and dropdown layout require validation.
 
-## 0.9.3 — 2026-09-25
+## 0.9.3 â€” 2026-09-25
 
 - Compacted the options header and Party & Raid controls without reducing the main window size or font sizes.
 - Removed the Party & Raid assignment scrollbar. All current class assignment lists fit at once, including five Paladin blessing families.
 - Compact class labels have full-name hover help; each buff retains group checkboxes, threshold, class toggles, and Reset.
 - Buff selection and filtering behavior are unchanged. All 70 mocked Lua 5.1 scenarios pass; in-client visual confirmation remains pending.
 
-## 0.9.2 — 2026-09-25
+## 0.9.2 â€” 2026-09-25
 
 - Fixed friendly-target Thorns being skipped on classes such as Shaman and Warlock. Explicit friendly targets now ignore party/raid class and group filters for all supported target buffs.
 - Added per-buff recipient-class checkboxes and Reset classes to Party & Raid options. Recipients must match both group and class; parties use G1. Defaults preserve previous class preferences.
@@ -135,7 +149,7 @@ Beta: mocked tests pass; real-client UI, caster attribution and emote availabili
 - Paladin blessings retain configured priority and one-family selection. Greater Blessings share their single-target class settings; group casts fall back to single-target casts when filters would be bypassed.
 - 70 mocked Lua 5.1 scenarios pass. In-game casting and options layout still require testing.
 
-## 0.9.1 — 2026-09-25
+## 0.9.1 â€” 2026-09-25
 
 - Fixed an unreadable main-hand enchant state suppressing a definite missing off-hand coating warning.
 - Treats an inventory item ID of zero as an empty hand.
@@ -146,7 +160,7 @@ Beta: mocked tests pass; real-client UI, caster attribution and emote availabili
 - Updated the mixed-license scope for 0.9.1 and included `WeaponCoatings.lua` explicitly.
 - 60 mocked Lua 5.1 scenarios pass. Live Rogue/Shaman weapon-event testing remains necessary.
 
-## 0.9.0 — 2026-09-25
+## 0.9.0 â€” 2026-09-25
 
 - Added event-driven, manual-only missing weapon-coating alerts for Rogues and Shamans.
 - Tracks equipped main-hand and off-hand weapons separately, ignores shields and nonweapon off hands, and lets each hand be enabled independently.
@@ -156,7 +170,7 @@ Beta: mocked tests pass; real-client UI, caster attribution and emote availabili
 - Kept class buffs ahead of manual coating alerts and retained conservative fail-closed behavior when equipment or enchant state is unreadable.
 - 55 mocked Lua 5.1 scenarios pass. Real-client weapon event behavior and visual layout still require smoke testing.
 
-## 0.8.1 — 2026-09-25
+## 0.8.1 â€” 2026-09-25
 
 - Fixed consumable mouse clicks being blocked between input phases; settling now follows observed use.
 - Preserved friendly-target refresh timing when validating clicks.

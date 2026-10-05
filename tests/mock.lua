@@ -120,6 +120,7 @@ function advance(dt)
  now=target
 end
 items={}; bags={[17021]=20,[17026]=20,[21177]=20}; countCalls=0; equipped={}; weaponEnchants={}
+C_Container={GetContainerNumSlots=function(id) return id==0 and 16 or 0 end}
 C_Item={
  GetItemCount=function(id,bank,uses,reagent,account) assert(not bank and not reagent and not account); countCalls=countCalls+1; return bags[id] or 0 end,
  GetItemInfo=function(id) local i=items[id]; if i and i.loaded~=false then return i.name,'item:'..id,1,1,1,'Consumable','',20,'',i.icon end end,

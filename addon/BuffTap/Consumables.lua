@@ -117,6 +117,7 @@ end
 
 function B:SetConsumableChoice(family,itemID)
   if not family or not self.db then return end
+  if self.InvalidateSupplies then self:InvalidateSupplies(false) end
   if itemID==nil then self.db.consumableChoices[family.key]=nil; return end
   itemID=tonumber(itemID)
   for _,item in ipairs(family.items or {}) do
@@ -144,6 +145,7 @@ end
 function B:InvalidateConsumables(itemID)
   self.consumableDirty=true
   self.consumableCoverage=nil
+  if self.InvalidateSupplies then self:InvalidateSupplies(false) end
   if A.Number(itemID) and self.itemMeta then self.itemMeta[itemID]=nil end
 end
 

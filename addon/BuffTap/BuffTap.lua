@@ -222,6 +222,12 @@ function B:CreateButton()
     end
     local valid=B:Validate(action)
     if not valid then B:Commit(nil,"click validation failed"); return end
+    if action.groupCast and B.GroupReagents and B.GroupReagents[action.id] then
+      if not B:RevalidateGroupAction(action) then
+        B:Commit(nil,"group no longer needs this cast"); B:RequestRefresh("group click changed",0.05)
+      end
+      return
+    end
     local def=B:FindBuff(action.key)
     local auras=B:GetAuras(action.target,true)
     if not auras or not def then B:Commit(nil,"action no longer verifiable"); return end
@@ -532,6 +538,7 @@ function B:Refresh(captureDiagnostics)
     end
   end
   self.dirty=false; self.pendingReason=nil
+  if self.SyncSupplies then self:SyncSupplies() end
 
   -- Exact wake-up for the next aura crossing a rebuff threshold or cooldown end.
   -- Long wakes live on their own timer channel so short event debounces do not churn them.
@@ -695,6 +702,7 @@ local castEvents={UNIT_SPELLCAST_SUCCEEDED=true,UNIT_SPELLCAST_FAILED=true,UNIT_
 local function handleEvent(_,event,arg,castGUID,spellID)
   if event=="ADDON_LOADED" then if arg==ADDON then B:InitDB() end; return end
   if not B.db then return end
+  if B.SuppliesEvent and B:SuppliesEvent(event,arg) then return end
   if B.ReadinessEvent then
     local ok,handled=pcall(B.ReadinessEvent,B,event,arg,castGUID,spellID)
     if not ok then B.readinessStatus="Class readiness event unavailable"
@@ -813,11 +821,13 @@ SlashCmdList.BUFFTAP=function(text)
   if A.Combat() then say("Settings and refresh are available after combat."); return end
   if cmd=="" or cmd=="config" then B:Options(); return
   elseif cmd=="helpers" then B:HelperOptions(); return
+  elseif cmd=="supplies" then B:ShowSuppliesOptions(); return
+  elseif cmd=="supplycheck" then B:ReportSupplies(); return
   elseif cmd=="restore" then B:RestoreHelpers(); return
   elseif cmd=="settings" and B.OpenOptionsCategory then B:OpenOptionsCategory(); return
   elseif cmd=="bind" then
     if arg=="" then B:CaptureBinding(); return end
-    local keys={}; for key in arg:upper():gmatch("[^,%s]+") do keys[#keys+1]=key end; B.db.keys=keys
+    local keys={}; for key in arg:upper():gmatch("[^,%s]+") do keys[#keys+1]=key end; B.db.keys=B:NormalizeBindings(keys)
   elseif cmd=="unbind" then B.db.keys={}
   elseif cmd=="reset" then BuffTapDB=nil; B:InitDB(); B.helperDismissed={}; B.helperThankSeen=nil; B.bookDirty=true; B.resolveCache=nil; B.rankChoiceCache=nil; B.coverCache=nil; B:InvalidateRoster(); B:InvalidateAura(); if B.options then B.options:Hide() end
   elseif cmd=="toggle" then B.db.enabled=not B.db.enabled
