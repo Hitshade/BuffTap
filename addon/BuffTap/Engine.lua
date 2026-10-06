@@ -4,7 +4,7 @@
 
 local _, B = ...
 _G.BuffTap = B
-B.version = "1.9.0"
+B.version = "1.10.2"
 B.API = {}
 local A = B.API
 
@@ -57,7 +57,7 @@ function B:InitDB()
   local defaults = {enabled=true, size=64, opacity=1, x=0, y=-180,
     seconds=45, rebuffVersion=1, sound=false, reminderSound="default", supplySound="default", soundChannel="Master", soundInterval=5, glow=true, pulse=false, group=false, smartGroup=true,
     groupNeed=3, blessingNeed=2, friendlyTarget=false, targetSeconds=300, keys={"MOUSEWHEELDOWN"}, buffs={}, priorities={}, buffSeconds={},
-    pauseResting=false, targetClassBlessings=true, targetBlessingClasses={}, blessingAssignments=false, blessingClasses={}, buffGroups={}, buffClasses={}, buffGroupNeed={}, targetBuffs={}, targetBuffSeconds={}, showBuffName=false, showTargetName=true, showTimer=false, showGroupBadge=true,
+    pauseResting=false, targetClassBlessings=true, targetBlessingFallback=true, targetBlessingClasses={}, targetBlessingPriorities={}, groupBlessingPriorities={}, blessingAssignments=false, blessingClasses={}, buffGroups={}, buffClasses={}, buffGroupNeed={}, targetBuffs={}, targetBuffSeconds={}, showBuffName=false, showTargetName=true, showTimer=false, showGroupBadge=true,
     consumablesEnabled=false, consumableFamilies={}, consumableChoices={}, consumableSeconds={},
     suppliesEnabled=false, suppliesChat=false, suppliesSound=false, suppliesReadyCheck=false, supplySettings={},
     weaponReminder=true, weaponMainHand=true, weaponOffHand=true,
@@ -214,8 +214,10 @@ function B:TargetBlessingChoice(entry)
   if not self.db.targetClassBlessings then return nil end
   local selected=self.db.targetBlessingClasses[entry.class]
   if selected=="skip" then return "skip" end
+  if selected=="priority" then return self:OrderedBlessingChoice(entry,self.db.targetBlessingPriorities[entry.class],true) end
   local function eligible(def,automatic)
-    if not def or def.kind~="blessing" or def.singleKey or not self:Enabled(def) or not self:TargetBuffEnabled(def) then return false end
+    if not def or def.kind~="blessing" or def.singleKey then return false end
+    if automatic and (not self:Enabled(def) or not self:TargetBuffEnabled(def)) then return false end
     if automatic and def.target then
       local matched=false
       for _,class in ipairs(def.target) do if class==entry.class then matched=true; break end end
@@ -223,16 +225,110 @@ function B:TargetBlessingChoice(entry)
     end
     return self:Supported(def)==true and self:Resolve(def,entry.unit)~=nil
   end
-  -- An explicit class choice may deliberately differ from the catalog defaults.
-  if selected and eligible(self:FindBuff(selected),false) then return selected end
+  -- Explicit preference comes first; remaining choices follow enabled priorities.
+  local choices,seen={},{}
+  local function add(def,automatic)
+    if eligible(def,automatic) and not seen[def.key] then
+      choices[#choices+1]=def; seen[def.key]=true
+    end
+  end
+  if selected then add(self:FindBuff(selected),false) end
   if not entry.class then return "skip" end
-  for _,def in ipairs(self.blessingClassList or self:ClassList()) do
-    if eligible(def,true) then return def.key end
+  for _,def in ipairs(self.blessingClassList or self:ClassList()) do add(def,true) end
+  if not self.db.targetBlessingFallback then return choices[1] and choices[1].key or "skip" end
+  return self:PickBlessingPriority(entry,choices,true)
+end
+
+-- Static ID lookup avoids a catalog walk for every aura, recipient and choice.
+function B:BlessingAuraFamily(aura)
+  if not self.blessingAuraIDs then
+    -- Ownership-only IDs verified in the Forever spell-name export. These are
+    -- never offered for casting by the maintenance catalog.
+    local ids={[1022]="tactical",[5599]="tactical",[10278]="tactical",[442948]="tactical",
+      [1044]="tactical",[6940]="tactical",[20729]="tactical"}
+    for _,def in ipairs(self.Buffs) do
+      if def.kind=="blessing" then for _,id in ipairs(def.ranks or {}) do ids[id]=def.singleKey or def.key end end
+    end
+    self.blessingAuraIDs=ids
+  end
+  local family=A.Number(aura.spellId) and self.blessingAuraIDs[aura.spellId]
+  if family then return family end
+  if not A.Number(aura.spellId) and A.Text(aura.name) then
+    for _,id in ipairs({1022,5599,10278,442948,1044,6940,20729}) do
+      if fold(aura.name)==fold(A.Call(C_Spell and C_Spell.GetSpellName,id)) then return "tactical" end
+    end
+    for _,def in ipairs(self.Buffs) do
+      if def.kind=="blessing" then
+        if fold(aura.name)==fold(def.name) then return def.singleKey or def.key end
+        for _,id in ipairs(def.ranks or {}) do
+          if fold(aura.name)==fold(A.Call(C_Spell and C_Spell.GetSpellName,id)) then return def.singleKey or def.key end
+        end
+      end
+    end
+  end
+end
+
+function B:PickBlessingPriority(entry,choices,target)
+  local auras=self:GetAuras(entry.unit,false)
+  if not auras then return "skip" end
+  local own,unknown=false,false
+  for _,aura in ipairs(auras) do
+    local family=self:BlessingAuraFamily(aura)
+    if family then
+      local source=aura.sourceUnit
+      local isOwn=source=="player" and true or (source and A.Call(UnitIsUnit,source,"player"))
+      if isOwn==true then
+        if own and own~=family then return "skip" end
+        own=family
+      elseif isOwn~=false or A.Call(UnitExists,source)~=true then unknown=true end
+    end
+  end
+  -- Never guess that a nil, restricted or unresolved caster is another Paladin.
+  if unknown then return "skip" end
+  if own then
+    for _,def in ipairs(choices) do if def.key==own then return own end end
+    return "skip"
+  end
+  for _,def in ipairs(choices) do
+    local action=self:Resolve(def,entry.unit)
+    local missing,_,_,_,wake=self:Missing(def,action,auras,target and self:TargetRebuffSeconds(def) or nil)
+    self:ConsiderWake(wake)
+    if missing then return def.key end
   end
   return "skip"
 end
 
+function B:OrderedBlessingChoice(entry,order,target,neverSalvation)
+  if type(order)~="table" then return "skip" end
+  local choices={}
+  for _,key in ipairs(order) do
+    local def=self:FindBuff(key)
+    if def and def.kind=="blessing" and not def.singleKey
+      and not (key=="bos" and neverSalvation)
+      and self:Supported(def)==true and self:Resolve(def,entry.unit) then
+      choices[#choices+1]=def
+    end
+  end
+  if target and not self.db.targetBlessingFallback then choices=choices[1] and {choices[1]} or {} end
+  return self:PickBlessingPriority(entry,choices,target)
+end
+
+function B:DefaultBlessingOrder(class,target,first)
+  local order,seen={},{}
+  if self:FindBuff(first) then order[1]=first; seen[first]=true end
+  for _,def in ipairs(self.blessingClassList or self:ClassList()) do
+    if def.kind=="blessing" and not def.singleKey and self:Enabled(def) and not seen[def.key]
+      and (not target or self:TargetBuffEnabled(def)) then
+      local allowed=not def.target
+      for _,c in ipairs(def.target or {}) do if c==class then allowed=true end end
+      if allowed then order[#order+1]=def.key; seen[def.key]=true end
+    end
+  end
+  return order
+end
+
 function B:TargetBuffEnabled(b)
+  if b and b.kind=="blessing" and self.db.targetClassBlessings then return true end
   local key=self:RootKey(b)
   if not key then return false end
   local value=self.db.targetBuffs and self.db.targetBuffs[key]
@@ -241,6 +337,7 @@ function B:TargetBuffEnabled(b)
 end
 
 function B:TargetRebuffSeconds(b)
+  if b and b.kind=="blessing" and self.db.targetClassBlessings then return self.db.targetSeconds or 300 end
   local key=self:RootKey(b)
   local value=key and self.db.targetBuffSeconds and self.db.targetBuffSeconds[key]
   if type(value)=="number" then return math.max(30,math.min(1800,value)) end
@@ -829,8 +926,22 @@ end
 -- a player's chosen blessing. Player exceptions belong to this session/group only.
 B.BlessingFamilies={"bok","bom","bow","bos","bol"}
 function B:NormalizeBlessingAssignments()
-  local valid={skip=true}; for _,key in ipairs(self.BlessingFamilies) do valid[key]=true end
+  local valid={skip=true,priority=true}; for _,key in ipairs(self.BlessingFamilies) do valid[key]=true end
   local classes={WARRIOR=true,PALADIN=true,HUNTER=true,ROGUE=true,PRIEST=true,SHAMAN=true,MAGE=true,WARLOCK=true,DRUID=true}
+  local families={}; for _,key in ipairs(self.BlessingFamilies) do families[key]=true end
+  for _,map in ipairs({self.db.targetBlessingPriorities,self.db.groupBlessingPriorities}) do
+    for class,order in pairs(map) do
+      if not classes[class] or type(order)~="table" then map[class]=nil
+      else
+        local clean,seen={},{}
+        for i=1,#self.BlessingFamilies do
+          local key=order[i]
+          if type(key)=="string" and families[key] and not seen[key] then clean[#clean+1]=key; seen[key]=true end
+        end
+        map[class]=clean
+      end
+    end
+  end
   for _,map in ipairs({self.db.blessingClasses,self.db.targetBlessingClasses}) do
     for class,key in pairs(map) do
       if not classes[class] or type(key)~="string" or not valid[key] then map[class]=nil end
@@ -862,6 +973,9 @@ function B:BlessingChoice(entry)
   local guid=A.Call(UnitGUID,entry.unit)
   local override=A.Text(guid) and self.blessingPlayers and self.blessingPlayers[guid]
   local key=override and override.choice or self.db.blessingClasses[entry.class]
+  if key=="priority" then
+    return self:OrderedBlessingChoice(entry,self.db.groupBlessingPriorities[entry.class],false,override and override.neverSalvation)
+  end
   if not key then
     -- Legacy fallback is deterministic: first enabled, class-allowed family.
     for _,def in ipairs(self.blessingClassList or self:ClassList()) do
@@ -879,6 +993,7 @@ function B:SetBlessingPlayer(entry,key,neverSalvation)
   if A.Combat() then return end
   local guid=entry and A.Call(UnitGUID,entry.unit)
   if not A.Text(guid) then return end
+  if key=="priority" then return end
   self.blessingPlayers=self.blessingPlayers or {}
   if key==nil and not neverSalvation then self.blessingPlayers[guid]=nil
   else self.blessingPlayers[guid]={choice=key,neverSalvation=neverSalvation==true} end
@@ -896,9 +1011,12 @@ function B:BlessingActionAllowed(action)
   local def=action and self:FindBuff(action.key)
   if not def or def.kind~="blessing" then return true end
   if action.quickTarget and not action.blessingAssigned then
-    if not self.db.friendlyTarget or not self:TargetBuffEnabled(def) or not self:Enabled(def) then return false end
+    if not self.db.friendlyTarget then return false end
     local entry=self:FriendlyTargetEntry()
     if not entry then return false end
+    local selected=self.db.targetClassBlessings and self.db.targetBlessingClasses[entry.class]
+    local explicit=selected and selected~="skip"
+    if not explicit and (not self:TargetBuffEnabled(def) or not self:Enabled(def)) then return false end
     -- If a group assignment became active after preparation, force a fresh scan.
     if self:BlessingAssignmentsActive() then
       for _,member in ipairs(self:Roster()) do
@@ -1041,10 +1159,12 @@ function B:Select()
   end
   if quick then
     if not quick.blessingAssigned then quick.targetBlessingChoice=self:TargetBlessingChoice(quick) end
+    local chosen=self.db.targetClassBlessings and self.db.targetBlessingClasses[quick.class]
+    local explicitTarget=not quick.blessingAssigned and chosen and chosen~="skip"
     local blessingOwned=false
     for _,b in ipairs(list) do
       local supported,why=self:Supported(b)
-      if (self:Enabled(b) or (blessingPlan and quick.blessingAssigned and b.kind=="blessing")) and (self:TargetBuffEnabled(b) or (blessingPlan and quick.blessingAssigned and b.kind=="blessing")) and supported and not b.singleKey and (b.kind=="single" or b.kind=="blessing")
+      if (self:Enabled(b) or (explicitTarget and b.kind=="blessing") or (blessingPlan and quick.blessingAssigned and b.kind=="blessing")) and (self:TargetBuffEnabled(b) or (blessingPlan and quick.blessingAssigned and b.kind=="blessing")) and supported and not b.singleKey and (b.kind=="single" or b.kind=="blessing")
         and not (b.kind=="blessing" and blessingOwned) and self:RecipientAllowed(b,quick) then
         local targetThreshold=self:TargetRebuffSeconds(b)
         local missing=self:ScanMissing(b,{quick},scans,scanErrors,targetThreshold)

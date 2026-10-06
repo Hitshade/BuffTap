@@ -168,6 +168,101 @@ local function blessingIcon(key)
   if not def then return 134400 end
   return A.Call(C_Spell and C_Spell.GetSpellTexture,def.ranks[1]) or buffIcon(def)
 end
+local function prioritySummary(order)
+  local names={}
+  for i,key in ipairs(order or {}) do names[#names+1]=i.." "..blessingName(key) end
+  return #names>0 and table.concat(names," > ") or L("No blessings selected")
+end
+local function showBlessingPriorityMenu(menu,control)
+  menu.owner=control
+  for _,row in ipairs(menu.rows) do row:Hide() end
+  menu:SetSize(380,260)
+  menu.priorityRows=menu.priorityRows or {}
+  if not menu.priorityTitle then
+    menu.priorityTitle=label(menu,"",10,-10,"GameFontNormal",360)
+    menu.priorityHelp=label(menu,"",10,-30,"GameFontDisableSmall",360)
+    menu.priorityAutomatic=button(menu,"Automatic",8,-222,116,function()
+      if A.Combat() or not menu.owner or menu.owner.disabled then return end
+      menu.owner.setChoice(nil); menu:Hide(); B:InvalidateAura(); B:RequestRefresh("blessing automatic",0); B:Options()
+    end)
+    menu.prioritySkip=button(menu,"Skip class",130,-222,116,function()
+      if A.Combat() or not menu.owner or menu.owner.disabled then return end
+      menu.owner.setChoice("skip"); menu:Hide(); B:InvalidateAura(); B:RequestRefresh("blessing skip",0); B:Options()
+    end)
+    menu.priorityDone=button(menu,"Done",252,-222,116,function() menu:Hide() end)
+  end
+  menu.priorityTitle:SetText(L("Blessing priorities: %s",((LOCALIZED_CLASS_NAMES_MALE and LOCALIZED_CLASS_NAMES_MALE[control.priorityClass]) or control.priorityClass:sub(1,1)..control.priorityClass:sub(2):lower())))
+  menu.priorityHelp:SetText(L("Check to include. Use arrows to order; 1 is first."))
+  menu.priorityAutomatic:SetText(L(control.priorityTarget and "Automatic" or "Buff settings"))
+  for _,t in ipairs(menu.separators or {}) do t:Hide() end
+  menu.priorityTitle:Show(); menu.priorityHelp:Show(); menu.priorityAutomatic:Show(); menu.prioritySkip:Show(); menu.priorityDone:Show()
+  local mode=control.getChoice()
+  local order={}
+  local source
+  if mode=="priority" then source=control.getOrder() or {}
+  elseif mode=="skip" then source={}
+  elseif mode then source={mode}
+  else source=B:DefaultBlessingOrder(control.priorityClass,control.priorityTarget) end
+  for i,key in ipairs(source or {}) do order[i]=key end
+  control.editorOrder=order
+  if mode~="priority" then
+    local name=mode=="skip" and L("Skip class") or mode and L("Fixed: %s",blessingName(mode)) or L(control.priorityTarget and "Automatic" or "Buff settings")
+    menu.priorityHelp:SetText(name..". "..L("Change checks or arrows to customize."))
+  end
+  local keys,seen={},{}
+  for _,key in ipairs(order) do keys[#keys+1]=key; seen[key]=true end
+  for _,key in ipairs(B.BlessingFamilies) do if not seen[key] then keys[#keys+1]=key end end
+  local function save(nextOrder)
+    if A.Combat() or control.disabled or menu.owner~=control then return end
+    control.setOrder(nextOrder); control.setChoice("priority")
+    B:InvalidateAura(); B:RequestRefresh("blessing priority order",0); B:Options()
+    showBlessingPriorityMenu(menu,control); menu:Show()
+  end
+  for i,key in ipairs(keys) do
+    local row=menu.priorityRows[i]
+    if not row then
+      row=CreateFrame("Frame",nil,menu); row:SetSize(364,30); row:SetPoint("TOPLEFT",8,-54-(i-1)*32)
+      row.toggle=check(row,"",0,0,function(c)
+        local owner=menu.owner
+        if A.Combat() or not owner or owner.disabled then return end
+        local nextOrder={}; local present=false
+        for _,v in ipairs(owner.editorOrder or {}) do if v==c.key then present=true else nextOrder[#nextOrder+1]=v end end
+        if not present then nextOrder[#nextOrder+1]=c.key end
+        owner.saveOrder(nextOrder)
+      end)
+      row.icon=row:CreateTexture(nil,"ARTWORK"); row.icon:SetSize(22,22); row.icon:SetPoint("LEFT",27,0)
+      row.name=label(row,"",56,-3,"GameFontHighlightSmall",235); row.name:SetWordWrap(false)
+      row.note=label(row,"",56,-18,"GameFontDisableSmall",235); row.note:SetWordWrap(false)
+      for _,direction in ipairs({-1,1}) do
+        local delta=direction
+        local arrow=button(row,"",delta<0 and 292 or 328,-2,34,function(btn)
+          local owner=menu.owner
+          if A.Combat() or not owner or owner.disabled then return end
+          local nextOrder={}; for j,v in ipairs(owner.editorOrder or {}) do nextOrder[j]=v end
+          local index=btn.index; local dest=index and index+delta
+          if dest and dest>=1 and dest<=#nextOrder then nextOrder[index],nextOrder[dest]=nextOrder[dest],nextOrder[index]; owner.saveOrder(nextOrder) end
+        end)
+        local texture=arrow:CreateTexture(nil,"ARTWORK"); texture:SetSize(22,22); texture:SetPoint("CENTER")
+        texture:SetTexture(delta<0 and "Interface\\ChatFrame\\UI-ChatIcon-ScrollUp-Up" or "Interface\\ChatFrame\\UI-ChatIcon-ScrollDown-Up")
+        addHelp(arrow,delta<0 and "Move earlier" or "Move later","Lower numbers are tried first. Only included blessings can be reordered.")
+        if delta<0 then row.up=arrow else row.down=arrow end
+      end
+      menu.priorityRows[i]=row
+    end
+    local index
+    for j,v in ipairs(order) do if v==key then index=j; break end end
+    row.toggle.key=key; row.toggle:SetChecked(index~=nil)
+    row.icon:SetTexture(blessingIcon(key)); row.name:SetText((index and tostring(index)..". " or "")..blessingName(key))
+    local note=not index and "Not included" or not B:BlessingLearned(key) and "not learned" or "Use arrows to reorder"
+    row.note:SetText(L(note))
+    row.up.index=index; row.down.index=index
+    row.up:SetEnabled(index~=nil and index>1); row.down:SetEnabled(index~=nil and index<#order)
+    row:Show()
+  end
+  control.saveOrder=save
+  addHelp(control,"Blessing priority order",prioritySummary(order).."\nOne blessing from you per player. Your own blessing is maintained. Unknown ownership stops fallback. Explicit player exceptions override group priorities.")
+end
+
 local function blessingPick(parent,x,y,width,getChoice,setChoice,player)
   local pick=button(parent,"",x,y,width,function(control)
     if A.Combat() or control.disabled then return end
@@ -176,15 +271,22 @@ local function blessingPick(parent,x,y,width,getChoice,setChoice,player)
       f.blessingMenu=CreateFrame("Frame",nil,f,"BackdropTemplate")
       f.blessingMenu:SetBackdrop({bgFile="Interface\\Buttons\\WHITE8X8",edgeFile="Interface\\Buttons\\WHITE8X8",edgeSize=1})
       f.blessingMenu:SetBackdropColor(0.025,0.035,0.045,1); f.blessingMenu:SetBackdropBorderColor(0.55,0.44,0.23,1)
+      f.blessingMenu.separators={}
       for _,y in ipairs({-32,-172}) do
-        local separator=f.blessingMenu:CreateTexture(nil,"ARTWORK"); separator:SetColorTexture(0.48,0.40,0.25,0.65); separator:SetPoint("TOPLEFT",8,y); separator:SetSize(254,1)
+        local separator=f.blessingMenu:CreateTexture(nil,"ARTWORK"); separator:SetColorTexture(0.48,0.40,0.25,0.65); separator:SetPoint("TOPLEFT",8,y); separator:SetSize(254,1); f.blessingMenu.separators[#f.blessingMenu.separators+1]=separator
       end
       f.blessingMenu:SetFrameStrata("TOOLTIP"); f.blessingMenu:SetClampedToScreen(true); f.blessingMenu:EnableMouse(true); f.blessingMenu.rows={}; f.blessingMenu:Hide()
     end
     local menu=f.blessingMenu
     if menu:IsShown() and menu.owner==control then menu:Hide(); return end
-    menu.owner=control; menu:ClearAllPoints(); menu:SetPoint("TOPLEFT",control,"BOTTOMLEFT",0,-2); menu:SetSize(270,204)
+    menu.owner=control; menu:ClearAllPoints(); menu:SetPoint("TOPLEFT",control,"BOTTOMLEFT",0,-2)
+    if control.getOrder then showBlessingPriorityMenu(menu,control); menu:Show(); return end
+    for _,row in ipairs(menu.priorityRows or {}) do row:Hide() end
+    for _,name in ipairs({"priorityTitle","priorityHelp","priorityAutomatic","prioritySkip","priorityDone"}) do if menu[name] then menu[name]:Hide() end end
+    for _,t in ipairs(menu.separators or {}) do t:Show() end
+    menu:SetSize(270,204)
     local choices={"inherit","bok","bom","bow","bos","bol","skip"}
+    for _,row in ipairs(menu.rows) do row:Hide() end
     for i,key in ipairs(choices) do
       local option=menu.rows[i]
       if not option then
@@ -198,13 +300,13 @@ local function blessingPick(parent,x,y,width,getChoice,setChoice,player)
         local text=option:GetFontString(); if text then text:ClearAllPoints(); text:SetPoint("LEFT",48,0); text:SetPoint("RIGHT",-5,0); text:SetJustifyH("LEFT") end
         menu.rows[i]=option
       end
-      option.key=key
+      option:Show(); option.key=key
       local name=key=="inherit" and (player=="target" and L("Automatic: class + priority") or (player and L("Inherit class") or L("Follow buff settings"))) or (key=="skip" and player==true and L("Skip this player") or blessingName(key))
       local def=B:FindBuff(key); local learned=not def or B:BlessingLearned(key)
       option:SetText(name..(learned and "" or (" ("..L("not learned")..")")))
       option.icon:SetTexture(def and blessingIcon(key) or (key=="skip" and "Interface\\Buttons\\UI-GroupLoot-Pass-Up" or "Interface\\Buttons\\UI-OptionsButton")); option.icon:Show()
       option.selected:SetShown((control.getChoice() or "inherit")==key); fitButtonText(option,262)
-      addHelp(option,name,player=="target" and "Choose a blessing for this target class. Automatic follows enabled target priorities and class suitability. Unlearned or disabled choices fall back to Automatic; Skip offers no blessing. Group assignments take precedence for group members." or learned and "Sets the blessing this Paladin maintains. Each application still needs your input." or "This choice stays saved, but BuffTap cannot apply it until you learn it. No silent substitution.")
+      addHelp(option,name,player=="target" and "Choose a blessing for this target class. Automatic follows enabled target priorities and class suitability. A selected first choice is enabled for targets independently of personal buffs. Unlearned choices fall back to Automatic; Skip offers no blessing. Group assignments take precedence for group members." or learned and "Sets the blessing this Paladin maintains. Each application still needs your input." or "This choice stays saved, but BuffTap cannot apply it until you learn it. No silent substitution.")
     end
     menu:Show()
   end)
@@ -220,15 +322,24 @@ local function blessingPick(parent,x,y,width,getChoice,setChoice,player)
   pick.icon=pick:CreateTexture(nil,"ARTWORK"); pick.icon:SetSize(21,21); pick.icon:SetPoint("LEFT",5,0)
   pick.Update=function(self)
     local key=self.getChoice(); self:SetText(not key and player=="target" and L("Automatic") or (player and not key and L("Inherit class") or (key=="skip" and player==true and L("Skip this player") or blessingName(key))))
+    if key=="priority" and self.getOrder then
+      local order=self.getOrder() or {}
+      local shown={}; local limit=width<200 and 1 or 2
+      for i=1,math.min(limit,#order) do shown[#shown+1]=i.." "..blessingName(order[i]) end
+      local summary=#shown>0 and table.concat(shown," > ") or L("None selected")
+      if #order>limit then summary=summary.." +"..(#order-limit) end
+      self:SetText(summary)
+      addHelp(self,"Custom blessing priorities",prioritySummary(self.getOrder()).."\nClick to include and reorder blessings. Unlearned entries are skipped. Checked blessings are enabled for this list independently of personal buffs; your own blessing is maintained. Unknown ownership stops fallback.")
+    end
     fitButtonText(self,width-44)
-    self.icon:SetTexture(key=="skip" and "Interface\\Buttons\\UI-GroupLoot-Pass-Up" or (key and blessingIcon(key) or "Interface\\Buttons\\UI-OptionsButton")); self.icon:Show()
+    self.icon:SetTexture(key=="skip" and "Interface\\Buttons\\UI-GroupLoot-Pass-Up" or (key=="priority" and self.getOrder and (self.getOrder() or {})[1] and blessingIcon((self.getOrder() or {})[1]) or key and key~="priority" and blessingIcon(key) or "Interface\\Buttons\\UI-OptionsButton")); self.icon:Show()
   end
   return pick
 end
 function B:BuildBlessingOptions(parent)
   local f=self.options; local p=CreateFrame("Frame",nil,parent); p:SetAllPoints(); f.blessingPanel=p
   label(p,L("Party & raid buffing"),18,-16,"GameFontNormalLarge")
-  label(p,"Choose your blessing for each class. Expand a class for player exceptions.",18,-39,"GameFontDisableSmall",680)
+  label(p,"Choose a fixed blessing or an ordered list for each class. Expand for player exceptions.",18,-39,"GameFontDisableSmall",680)
   f.blessingGroupEnable=check(p,L("Enable party / raid"),18,-57,function(c) setAndRefresh("group",c:GetChecked()==true); B:Options() end)
   f.blessingSmart=check(p,"Use Greater Blessings",280,-57,function(c) setAndRefresh("smartGroup",c:GetChecked()==true); B:Options() end)
   label(p,L("Raid groups"),18,-91,"GameFontHighlightSmall",85)
@@ -251,10 +362,10 @@ function B:BuildBlessingOptions(parent)
   f.blessingEnable=check(p,"Enable class assignments",345,-158,function(c) setAndRefresh("blessingAssignments",c:GetChecked()==true); B:Options() end)
   button(p,"Restore defaults",565,-159,140,function()
     if A.Combat() then return end
-    B.db.blessingAssignments=false; B.db.blessingClasses={}; B.blessingPlayers=nil; B:RequestRefresh("restore blessings",0); B:Options()
+    B.db.blessingAssignments=false; B.db.blessingClasses={}; B.db.groupBlessingPriorities={}; B.blessingPlayers=nil; B:RequestRefresh("restore blessings",0); B:Options()
   end)
   f.blessingInstruction=label(p,"",18,-190,"GameFontDisableSmall",686)
-  label(p,L("Class"),24,-214,"GameFontDisableSmall",112); label(p,"Blessing to maintain",224,-214,"GameFontDisableSmall",270)
+  label(p,L("Class"),24,-214,"GameFontDisableSmall",112); label(p,"Blessing / priority order",224,-214,"GameFontDisableSmall",270)
   label(p,"Player exceptions",546,-214,"GameFontDisableSmall",140)
   f.blessingRows={}
   for index,class in ipairs(self.RecipientClasses) do
@@ -266,6 +377,9 @@ function B:BuildBlessingOptions(parent)
     local name=(LOCALIZED_CLASS_NAMES_MALE and LOCALIZED_CLASS_NAMES_MALE[token]) or token:sub(1,1)..token:sub(2):lower()
     label(row,name,36,-8,"GameFontHighlightSmall",114)
     row.pick=blessingPick(row,206,0,286,function() return B.db.blessingClasses[token] end,function(key) B.db.blessingClasses[token]=key end)
+    row.pick.priorityClass=token; row.pick.priorityTarget=false
+    row.pick.getOrder=function() return B.db.groupBlessingPriorities[token] end
+    row.pick.setOrder=function(order) B.db.groupBlessingPriorities[token]=order end
     row.status=label(row,"",0,0,"GameFontDisableSmall",190); row.status:Hide()
     row.players=button(row,"",548,-2,132,function()
       if A.Combat() or not B.db.blessingAssignments or not B.db.group then return end
@@ -319,7 +433,7 @@ function B:UpdateBlessingOptions()
   f.blessingThreshold.silent=true; f.blessingThreshold:SetValue(self.db.blessingNeed); f.blessingThreshold.valueText:SetText(self.db.blessingNeed.."+"); f.blessingThreshold.silent=false
   local roster=self:Roster(); local active=self:BlessingAssignmentsActive(); self.blessingClassList=self:ClassList(); local y=-230
   local editable=self.db.blessingAssignments and self.db.group
-  f.blessingInstruction:SetText(L(not self.db.blessingAssignments and "Enable class assignments to choose a blessing for each class." or not self.db.group and "Enable party / raid to use these class assignments." or "Choose one blessing per class. Player exceptions override that choice."))
+  f.blessingInstruction:SetText(L(not self.db.blessingAssignments and "Enable class assignments to choose a blessing for each class." or not self.db.group and "Enable party / raid to use these class assignments." or "Open a class to select and order blessings. Player exceptions take precedence."))
   if not editable then f.expandedBlessing=nil end
   f.blessingDetail:Hide()
   for _,r in ipairs(f.blessingPlayerRows) do r:Hide(); r.entry=nil; r.guid=nil end
@@ -508,6 +622,17 @@ local function logicalBuffs()
     if supported and not b.singleKey then out[#out+1]=b end
   end
   return out
+end
+
+function B:MoveBuffPriority(key,destination)
+  if A.Combat() then return false end
+  local list=logicalBuffs(); local from,to
+  for i,def in ipairs(list) do if def.key==key then from=i end; if def.key==destination then to=i end end
+  if not from or not to or from==to then return false end
+  table.insert(list,to,table.remove(list,from))
+  for i,def in ipairs(list) do self.db.priorities[def.key]=i end
+  self.blessingClassList=nil; self:InvalidateAura(); self:RequestRefresh("buff order",0); self:Options()
+  return true
 end
 
 local function pairedGroupName(b)
@@ -913,7 +1038,7 @@ function B:Options()
     -- BUFFS PAGE
     local buffs=panel(f); f.pages[TAB.Buffs]=buffs
     label(buffs,L("Buffs"),18,-16,"GameFontNormalLarge")
-    label(buffs,L("Lower priority numbers are checked first. Timing inherits the default until customized."),18,-42,"GameFontDisableSmall",650)
+    label(buffs,L("Use arrows to reorder. Buffs at the top are checked first."),18,-42,"GameFontDisableSmall",650)
     label(buffs,L("Rebuff"),334,-66,"GameFontDisableSmall",70)
     label(buffs,L("Priority"),590,-66,"GameFontDisableSmall",70)
     local scroll=CreateFrame("ScrollFrame",nil,buffs,"UIPanelScrollFrameTemplate")
@@ -1057,31 +1182,39 @@ function B:Options()
     f.targetDefaultSlider:SetPoint("TOPLEFT",18,-164)
     addHelp(f.targetDefaultSlider,"Target refresh timing","Target mode may refresh much earlier than normal party/raid timing. BuffTap still caps the effective threshold at half of the aura's full duration, so a one-hour buff can be refreshed at 30 minutes but not earlier.")
     f.targetBlessingPanel=CreateFrame("Frame",nil,target)
-    f.targetBlessingPanel:SetPoint("TOPLEFT",12,-204); f.targetBlessingPanel:SetSize(698,156)
+    f.targetBlessingPanel:SetPoint("TOPLEFT",12,-204); f.targetBlessingPanel:SetSize(698,188)
     f.targetClassAware=check(f.targetBlessingPanel,"Class-aware target blessings",6,0,function(c) setAndRefresh("targetClassBlessings",c:GetChecked()==true); B:Options() end)
     addHelp(f.targetClassAware,"Class-aware target blessings","Automatic follows enabled priorities and class suitability. Class choices apply to friendly targets; group assignments take precedence for group members. Disable to use unrestricted target priorities.")
+    f.targetBlessingFallback=check(f.targetBlessingPanel,"Allow fallback to the next blessing",6,-128,function(c) setAndRefresh("targetBlessingFallback",c:GetChecked()==true); B:Options() end)
+    addHelp(f.targetBlessingFallback,"Target blessing priorities","Checking a blessing enables it for that class list. All class choices use the default target refresh above. Automatic follows Buffs priorities and enabled spells. Uncheck fallback to offer only the first eligible choice. Your own blessing is maintained; unknown ownership stops fallback. Group assignments remain authoritative.")
     f.targetBlessingPicks={}
     for i,class in ipairs(B.RecipientClasses) do
       local token=class; local x=((i-1)%3)*230; local y=-32-math.floor((i-1)/3)*32
       label(f.targetBlessingPanel,(LOCALIZED_CLASS_NAMES_MALE and LOCALIZED_CLASS_NAMES_MALE[token]) or token:sub(1,1)..token:sub(2):lower(),x+6,y-7,"GameFontHighlightSmall",80)
       f.targetBlessingPicks[i]=blessingPick(f.targetBlessingPanel,x+89,y,136,function() return B.db.targetBlessingClasses[token] end,function(key) B.db.targetBlessingClasses[token]=key end,"target")
+      local pick=f.targetBlessingPicks[i]; pick.priorityClass=token; pick.priorityTarget=true
+      pick.getOrder=function() return B.db.targetBlessingPriorities[token] end
+      pick.setOrder=function(order) B.db.targetBlessingPriorities[token]=order end
     end
-    f.targetBlessingInstruction=label(f.targetBlessingPanel,"",6,-134,"GameFontDisableSmall",686)
-    f.targetHeaders=CreateFrame("Frame",nil,target); f.targetHeaders:SetPoint("TOPLEFT",0,-204); f.targetHeaders:SetSize(698,66)
+    f.targetBlessingInstruction=label(f.targetBlessingPanel,"",6,-160,"GameFontDisableSmall",686)
+    f.targetHeaders=CreateFrame("Frame",nil,target); f.targetHeaders:SetPoint("TOPLEFT",0,-204); f.targetHeaders:SetSize(698,78)
     local header=f.targetHeaders
     line(header,0)
-    label(header,"Target buffs",18,-18,"GameFontNormal")
-    label(header,L("Apply"),18,-44,"GameFontDisableSmall",48)
-    label(header,L("Buff"),82,-44,"GameFontDisableSmall",160)
-    label(header,L("Custom timing"),276,-44,"GameFontDisableSmall",100)
-    label(header,L("Refresh when remaining"),402,-44,"GameFontDisableSmall",180)
+    label(header,"Spell availability & refresh timing",18,-18,"GameFontNormal")
+    header:EnableMouse(true)
+    addHelp(header,"Spell availability & refresh timing","Allow controls which spells friendly-target mode may offer, including custom blessing lists. Refresh timing applies to that spell across recipient classes. Custom priorities choose the order; this section does not add another blessing assignment. Leaving custom timing off uses the default target refresh above.")
+    label(header,"Spell switches and timing apply across all target classes, including custom priorities.",18,-34,"GameFontDisableSmall",680)
+    label(header,L("Allow"),18,-56,"GameFontDisableSmall",48)
+    label(header,L("Buff"),82,-56,"GameFontDisableSmall",160)
+    label(header,L("Override timing"),276,-56,"GameFontDisableSmall",100)
+    label(header,L("Refresh when remaining"),402,-56,"GameFontDisableSmall",180)
     local targetScroll=CreateFrame("ScrollFrame",nil,target,"UIPanelScrollFrameTemplate")
-    targetScroll:SetPoint("TOPLEFT",14,-270); targetScroll:SetPoint("BOTTOMRIGHT",-34,54)
+    targetScroll:SetPoint("TOPLEFT",14,-282); targetScroll:SetPoint("BOTTOMRIGHT",-34,54)
     local targetChild=CreateFrame("Frame",nil,targetScroll); targetChild:SetSize(660,1); targetScroll:SetScrollChild(targetChild)
     f.targetChild=targetChild; f.targetRows={}; f.targetScroll=targetScroll
     local resetTarget=button(target,L("Reset target settings"),0,0,132,function()
       if not A.Combat() then
-        B.db.friendlyTarget=false; B.db.targetSeconds=300; B.db.targetBuffs={}; B.db.targetBuffSeconds={}; B.db.targetClassBlessings=true; B.db.targetBlessingClasses={}
+        B.db.friendlyTarget=false; B.db.targetSeconds=300; B.db.targetBuffs={}; B.db.targetBuffSeconds={}; B.db.targetClassBlessings=true; B.db.targetBlessingFallback=true; B.db.targetBlessingClasses={}; B.db.targetBlessingPriorities={}
         B:InitDB(); B:InvalidateAura("target"); B:RequestRefresh("reset target settings",0); B:Options()
       end
     end)
@@ -1128,6 +1261,8 @@ function B:Options()
       row.prev=button(row,L("Choose"),584,-8,86,function(btn) B:ChooseConsumable(btn:GetParent().family,btn) end)
       row.inventory=label(row,"",450,-11,"GameFontHighlightSmall",120)
       label(row,family.protectPresent and "Preserve active elixirs; remind after expiry" or "Rebuff at",42,-52,"GameFontDisableSmall",family.protectPresent and 390 or 62)
+      addHelp(row.enable,"Allow on friendly targets","This spell must be allowed here and enabled on Buffs to appear in target recommendations, including custom blessing priorities. This is an availability filter, not another priority list.")
+      addHelp(row.custom,"Override target refresh timing","Use a different refresh threshold for this spell across all target classes. Leave unchecked to use the default target refresh above.")
       row.threshold=compactSlider(row,30,1800,30,230,formatSeconds,function(slider,value)
         local fam=slider:GetParent().family
         if fam then B:SetConsumableThreshold(fam,value); B:InvalidateAura("player"); B:RequestRefresh("consumable threshold",0.08) end
@@ -1287,10 +1422,13 @@ function B:Options()
   self:UpdateSupplyOptions()
   local paladin=A.Call(function() local _,token=UnitClass("player"); return token end)=="PALADIN"
   f.targetBlessingPanel:SetShown(paladin); f.targetClassAware:SetChecked(self.db.targetClassBlessings)
+  f.targetBlessingFallback:SetChecked(self.db.targetBlessingFallback)
   for _,pick in ipairs(f.targetBlessingPicks) do pick:Update(); pick:SetAvailable(self.db.targetClassBlessings and self.db.friendlyTarget) end
-  f.targetBlessingInstruction:SetText(L(not self.db.friendlyTarget and "Enable friendly target buffing to use these class choices." or not self.db.targetClassBlessings and "Enable class-aware target blessings to customize each class." or "Automatic follows target priorities and class suitability. Group assignments take precedence."))
-  f.targetHeaders:ClearAllPoints(); f.targetHeaders:SetPoint("TOPLEFT",0,paladin and -364 or -204)
-  f.targetScroll:ClearAllPoints(); f.targetScroll:SetPoint("TOPLEFT",14,paladin and -430 or -270); f.targetScroll:SetPoint("BOTTOMRIGHT",-34,54)
+  f.targetBlessingInstruction:SetText(L(not self.db.friendlyTarget and "Enable friendly target buffing to use these class choices." or not self.db.targetClassBlessings and "Enable class-aware target blessings to customize each class." or "Open a class to check and order blessings. All use the refresh above. Automatic follows Buffs settings."))
+  local simplePal=paladin and self.db.targetClassBlessings
+  f.targetHeaders:SetShown(not simplePal); f.targetScroll:SetShown(not simplePal)
+  f.targetHeaders:ClearAllPoints(); f.targetHeaders:SetPoint("TOPLEFT",0,paladin and -396 or -204)
+  f.targetScroll:ClearAllPoints(); f.targetScroll:SetPoint("TOPLEFT",14,paladin and -474 or -282); f.targetScroll:SetPoint("BOTTOMRIGHT",-34,54)
   f.pauseResting:SetChecked(self.db.pauseResting)
   f.enable:SetChecked(self.db.enabled)
   f.versionText:SetText("v"..self.version)
@@ -1394,7 +1532,7 @@ function B:Options()
   self:UpdateBlessingOptions()
 
   for _,r in ipairs(f.targetRows) do r:Hide() end
-  local targetBuffs=targetAssignableBuffs()
+  local targetBuffs=simplePal and {} or targetAssignableBuffs()
   for rowIndex,b in ipairs(targetBuffs) do
     local row=f.targetRows[rowIndex]
     if not row then
@@ -1407,7 +1545,7 @@ function B:Options()
       row.icon=row:CreateTexture(nil,"ARTWORK"); row.icon:SetSize(32,32); row.icon:SetPoint("TOPLEFT",42,-8)
       row.name=label(row,"",82,-6,"GameFontHighlightSmall",180)
       row.detail=label(row,"",82,-24,"GameFontDisableSmall",180)
-      row.custom=check(row,"Custom",270,-12,function(s)
+      row.custom=check(row,"Override",270,-12,function(s)
         local def=s:GetParent().def
         if def and not A.Combat() then
           if s:GetChecked()==true then B.db.targetBuffSeconds[def.key]=B.db.targetSeconds else B.db.targetBuffSeconds[def.key]=nil end
@@ -1599,7 +1737,19 @@ function B:Options()
         if def and not A.Combat() then B.db.buffSeconds[def.key]=nil; B:RequestRefresh("rebuff default",0); B:Options() end
       end)
       addHelp(row.default,"Use default timing","Remove this buff’s custom refresh timing and use the default rebuff threshold below. This does not reset its priority or enable setting.")
-      row.order=editbox(row,590,-17,48,true)
+      for _,direction in ipairs({-1,1}) do
+        local delta=direction
+        local arrow=button(row,"",delta<0 and 550 or 576,-16,24,function(btn)
+          if A.Combat() then return end
+          local current=btn:GetParent().def; local list=logicalBuffs()
+          for i,def in ipairs(list) do if current and def.key==current.key and list[i+delta] then B:MoveBuffPriority(def.key,list[i+delta].key); return end end
+        end)
+        local t=arrow:CreateTexture(nil,"ARTWORK"); t:SetSize(20,20); t:SetPoint("CENTER")
+        t:SetTexture(delta<0 and "Interface\\ChatFrame\\UI-ChatIcon-ScrollUp-Up" or "Interface\\ChatFrame\\UI-ChatIcon-ScrollDown-Up")
+        addHelp(arrow,delta<0 and "Move earlier" or "Move later","Move this buff earlier or later in the list. Priority numbers update automatically.")
+        if delta<0 then row.up=arrow else row.down=arrow end
+      end
+      row.order=editbox(row,610,-17,28,true)
       row.order:SetScript("OnEnterPressed",function(s)
         local def=s:GetParent().def; if def and not A.Combat() then B.db.priorities[def.key]=math.max(1,tonumber(s:GetText()) or def.order); B:RequestRefresh("priority",0) end; s:ClearFocus(); B:Options()
       end)
@@ -1617,6 +1767,7 @@ function B:Options()
       row.groupIcon:Hide(); row.detail:ClearAllPoints(); row.detail:SetPoint("TOPLEFT",84,-28)
       row.detail:SetText(b.kind=="self" and L("Self buff") or L("Single-target buff"))
     end
+    row.up:SetEnabled(visible>1); row.down:SetEnabled(visible<#list)
     row.order:SetText(tostring(self.db.priorities[b.key] or b.order))
     local threshold=self:RebuffSeconds(b)
     row.rebuff.silent=true; row.rebuff:SetValue(threshold); row.rebuff.valueText:SetText(formatSeconds(threshold)); row.rebuff.silent=false

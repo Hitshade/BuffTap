@@ -13,7 +13,7 @@ Choose what to maintain, who receives it, and when to refresh it.
 - **Personal and friendly-target buffing** with independent settings and class-aware Paladin target choices.
 - **Per-buff raid-group and class filters**, priorities, and refresh thresholds.
 - **Smart group spells** that check who still needs the buff before spending reagents.
-- **Paladin blessing assignments** by recipient class, with individual player exceptions and optional Salvation protection.
+- **Paladin blessing assignments and ordered priorities** for targets and groups, with individual player exceptions and optional Salvation protection.
 
 ## ⚔️ Keep your weapons ready
 
@@ -37,7 +37,7 @@ Helpers are opt-in, so you choose how much assistance you want.
 
 ## 🎨 Make it your own
 
-Move and resize the reminder, adjust opacity, labels, timers, glow, and pulse. Choose separate reminder and low-stock sounds, preview them, and control alert frequency. Reminders pause while mounted; optionally pause them in cities and inns too.
+Use arrows to arrange buff priorities. Move and resize the reminder, adjust opacity, labels, timers, glow, and pulse. Choose separate reminder and low-stock sounds, preview them, and control alert frequency. Reminders pause while mounted; optionally pause them in cities and inns too.
 
 Open settings from the **draggable minimap button** or enable an optional **LibDataBroker display** alongside—or in place of—the standard reminder. Native game icons and automatic Spanish, German, French, and Brazilian Portuguese localization keep the interface familiar; untranslated text falls back to English.
 
@@ -52,3 +52,4 @@ Found a problem? Include your class, addon version, game build, and steps to rep
 ---
 
 **MPL 2.0.** See bundled license notices. Game data and artwork belong to their respective owners. Developed with AI-assisted coding and review.
+

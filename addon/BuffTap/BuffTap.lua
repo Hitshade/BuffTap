@@ -234,6 +234,7 @@ function B:CreateButton()
     local def=B:FindBuff(action.key)
     local auras=B:GetAuras(action.target,true)
     if not auras or not def then B:Commit(nil,"action no longer verifiable"); return end
+    if not B:BlessingActionAllowed(action) then B:Commit(nil,"blessing ownership changed before click"); return end
     local missing=B:Missing(def,action,auras,action.quickTarget and B:TargetRebuffSeconds(def) or nil)
     if not missing then B:Commit(nil,"action no longer missing") end
     end)

@@ -1,11 +1,15 @@
 # BuffTap development
 
-Current version: **1.9.0**. Runtime: `addon/BuffTap`.
+Current local version: **1.10.2**. Runtime: `addon/BuffTap`. Latest published version remains 1.9.0.
 
-Install `requirements-dev.txt`, then run `python tests/test_blessing_ui.py` for all 531 isolated mocked Lua 5.1 scenarios. The entry point imports all previous suites. Run `python tools/verify_mage_catalog.py` to cross-check supported Mage scrolls against reviewed evidence.
+Install `requirements-dev.txt`, then run `python tests/test_ordered_blessings.py` for all 608 isolated mocked Lua 5.1 scenarios. This entry point imports all earlier suites. Run `python tools/verify_mage_catalog.py` to cross-check Mage scroll evidence.
 
-Source includes event-driven cached buff selection, safe player-triggered out-of-combat actions, class-aware Paladin targets and group assignments, optional resting-area pause, stock alerts, localized options, minimap access and opt-in broker display. No bank/alt tracking, auto-purchasing or cross-player assignment coordination.
+Options support arrow ordering for class buff lists and independent Paladin Target/Groups priority lists. Group custom priorities are opt-in; explicit player choices remain authoritative. Unknown ownership fails closed. Tactical blessing IDs from the reviewed Forever spell-name export are ownership-only guards, never castable maintenance entries. Two-Paladin cases still need live-client testing.
 
-Installable ZIPs are release assets; only `addon/BuffTap` belongs in the client AddOns folder. Tests, logs and research are not loaded by the addon. New layout and resting transitions have automated coverage and still need live-client feedback. Mage item application remains data-verified and mock-tested; Spellbreak remains excluded due to ambiguous effect mapping.
+Selection uses event-driven aura/inventory caches and bounded timers. No permanent polling, cross-player assignment coordination, bank/alt tracking, or auto-purchasing. All casts and item use require player input out of combat.
 
-Catalog generators require the corresponding client DB2 CSV export as their input directory. Full data exports and reference addons are not redistributed. Bundled libraries retain their licenses.
+Installable ZIPs contain only `addon/BuffTap`; development tests and research are not loaded by the client. Full client database exports and reference addons are not redistributed. Bundled libraries retain their licenses.
+
+Class-aware Paladin target lists are their own spell permission: checking a learned blessing enables it there without changing personal buff toggles. All use the shared targetSeconds setting; hidden legacy targetBuffs and targetBuffSeconds values are ignored for class-aware blessings. Other classes and Paladin legacy mode keep the old explicit filters and optional per-spell timing. Group custom lists use shared raid exclusions and player overrides, not hidden legacy per-buff gates.
+
+Class dropdowns open the priority editor directly. Preview state lives on the options control only; opening or closing never writes saved settings. A checkbox or arrow edit saves the ordered list. Player exception selectors remain single-choice.

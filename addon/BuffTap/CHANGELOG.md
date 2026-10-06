@@ -1,3 +1,39 @@
+# BuffTap 1.10.2
+
+- Target and Groups class dropdowns now open the numbered blessing editor directly. Include blessings and use arrows to reorder in one panel; Automatic/Buff settings, Skip and Done remain in that panel.
+- Opening and closing the editor does not change settings. Automatic, fixed and skipped choices are previewed; the first checkbox or arrow edit saves a custom list. Existing settings and player exceptions are preserved.
+- Remove the intermediate selection menu and Custom priorities submenu for class controls. Individual player exceptions retain their appropriate single-choice selector.
+- Preserve arrow-only ordering, simplified Paladin target controls, ownership checks and Greater Blessing safeguards.
+
+Validation: 608 mocked Lua 5.1 scenarios pass. Live-client layout and two-Paladin confirmation remain pending. Not published.
+
+# BuffTap 1.10.1
+
+- Remove priority icon dragging and related controls/help. Use up/down arrows to arrange buffs and Paladin blessing lists.
+- Simplify class-aware Paladin Target options: remove the redundant lower spell section. Checking a blessing in a custom list enables that blessing for target use independently of personal buff toggles. All class choices use the visible default target refresh setting.
+- Automatic follows enabled Buffs settings; custom lists use exactly their checked learned blessings. Unlearned entries remain saved and are skipped. Existing personal buff settings are preserved.
+- Group custom lists likewise enable their selected blessings without a second personal-buff gate. Shared raid-group exclusions, explicit player exceptions, ownership checks and Greater Blessing safeguards remain authoritative.
+- Other classes retain their necessary target spell controls, clearly labeled Spell availability & refresh timing. Legacy Paladin controls remain accessible when class-aware mode is disabled.
+
+Validation: 602 mocked Lua 5.1 scenarios pass. Live two-Paladin testing and native layout confirmation remain pending. Not published.
+
+# BuffTap 1.10.0
+
+- Arrange your main Buffs list by using up/down arrows. Applies to every class with maintainable spell entries; priorities update automatically and group/single ranks remain paired.
+- Add independent per-class Paladin priority lists to Target and Groups. Choose Custom priorities in a class dropdown, check which blessings to include, and use arrows to order them. All five supported maintenance blessings may be included once. A compact summary shows the first choices; hover reveals the complete sequence.
+- Fixed group class assignments and individual player exceptions retain precedence. Custom group priorities are opt-in. Existing settings are preserved; selecting Custom priorities seeds the existing preference first.
+- Maintain your own blessing, skip healthy blessings supplied by other Paladins, and stop fallback when ownership is unknown or the caster cannot be verified. Tactical blessings are recognized for ownership safety only and never offered for maintenance.
+- Use individual blessings when same-class fallback choices differ. Greater Blessings require agreement across the affected class, eligible recipients, and the configured reagent threshold. Fresh click-time checks cancel stale casts rather than substitute another spell.
+- Target fallback can be disabled. Unlearned or disabled custom entries are skipped; empty lists offer no blessing. Automatic mode remains available.
+- Use existing aura caches, bounded threshold wake-ups and a static blessing-ID lookup. No new polling, communication protocol, or libraries.
+
+Validation: 600 isolated mocked Lua 5.1 scenarios pass. Live two-Paladin testing and options layout confirmation remain pending. No publication performed.
+
+## 1.9.1
+
+- Add ownership-aware Paladin friendly-target blessing fallback, with a Target toggle. Class preference is first; remaining enabled, suitable blessings follow Buffs priorities.
+- Preserve own blessings and stop fallback when caster identity cannot be verified. Fresh click-time scans cancel stale recommendations. Group assignments remain authoritative.
+
 # BuffTap 1.9.0
 
 - All Paladin seals now start off; explicitly saved seal choices are preserved. Tactical combat abilities remain excluded.
