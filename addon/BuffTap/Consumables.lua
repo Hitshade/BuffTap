@@ -126,22 +126,6 @@ function B:SetConsumableChoice(family,itemID)
   self.db.consumableChoices[family.key]=nil
 end
 
-function B:CycleConsumableChoice(family,delta)
-  if not family then return end
-  local choices={nil}
-  -- Lua arrays cannot retain an initial nil, so index 1 is the Auto sentinel 0.
-  choices[1]=0
-  if family.explicitChoice then choices={} end
-  local selected=self:ConsumableChoiceID(family)
-  for _,item in ipairs(family.items or {}) do if self:ConsumableCount(item.id)>0 or selected==item.id then choices[#choices+1]=item.id end end
-  if #choices==0 then return end
-  local current=self:ConsumableChoiceID(family) or 0
-  local index=1
-  for i,id in ipairs(choices) do if id==current then index=i; break end end
-  index=((index-1+(delta or 1)) % #choices)+1
-  self:SetConsumableChoice(family,choices[index]~=0 and choices[index] or nil)
-end
-
 function B:InvalidateConsumables(itemID)
   self.consumableDirty=true
   self.consumableCoverage=nil

@@ -8,7 +8,7 @@ local function L(key,...) return B:Text(key,...) end
 local TAB={Buffs=1,Groups=2,Target=3,Consumables=4,Weapons=5,Appearance=6,Helpers=7,Diagnostics=8}
 local TAB_NAMES={L("Buffs"),L("Groups"),L("Target"),L("Consumables"),L("Weapons"),L("Customization"),L("Helpers"),L("Diagnostics")}
 local TAB_WIDTHS={62,66,66,108,80,116,74,94}
-local OPTIONS_WIDTH,OPTIONS_HEIGHT=760,806
+local OPTIONS_WIDTH,OPTIONS_HEIGHT=760,868
 local ICON_PATH="Interface\\AddOns\\BuffTap\\Media\\BuffTapIcon"
 
 local function label(parent,text,x,y,font,width)
@@ -42,7 +42,7 @@ local function fitButtonText(control,width)
   text:SetWordWrap(false)
 end
 
-local function button(parent,text,x,y,w,fn)
+local function flatButton(parent,text,x,y,w,fn)
   local b=CreateFrame("Button",nil,parent,"BackdropTemplate")
   b:SetBackdrop({bgFile="Interface\\Buttons\\WHITE8X8",edgeFile="Interface\\Buttons\\WHITE8X8",edgeSize=1})
   b:SetBackdropColor(0.075,0.095,0.11,1); b:SetBackdropBorderColor(0.48,0.40,0.25,1)
@@ -54,10 +54,23 @@ local function button(parent,text,x,y,w,fn)
   return b
 end
 
+-- Native action buttons supply their own border and disabled/pressed artwork.
+local function button(parent,text,x,y,w,fn)
+  local b=CreateFrame("Button",nil,parent,"UIPanelButtonTemplate")
+  b:SetSize(w or 110,26); b:SetPoint("TOPLEFT",x,y); b:SetText(L(text)); b:SetScript("OnClick",fn)
+  b:SetNormalFontObject("GameFontNormalSmall"); b:SetDisabledFontObject("GameFontDisableSmall")
+  fitButtonText(b,w or 110)
+  return b
+end
+local function arrowButton(parent,text,x,y,w,fn)
+  local b=flatButton(parent,text,x,y,w,fn); b:SetBackdrop(nil)
+  return b
+end
+
 -- One selector convention: explicit choices, a visible arrow and toggle-to-close.
 local function selector(parent,text,x,y,width,choices,onSelect,searchable)
   local control,menu,render
-  control=button(parent,text,x,y,width,function()
+  control=flatButton(parent,text,x,y,width,function()
     if A.Combat() then return end
     if menu:IsShown() then menu:Hide(); return end
     if B.options and B.options.activeSelector and B.options.activeSelector~=menu then B.options.activeSelector:Hide() end
@@ -66,6 +79,8 @@ local function selector(parent,text,x,y,width,choices,onSelect,searchable)
   end)
   control.arrow=control:CreateTexture(nil,"OVERLAY"); control.arrow:SetSize(16,16); control.arrow:SetPoint("RIGHT",-4,0)
   control.arrow:SetTexture("Interface\\ChatFrame\\UI-ChatIcon-ScrollDown-Up")
+  local textRegion=control:GetFontString()
+  if textRegion then textRegion:ClearAllPoints(); textRegion:SetPoint("LEFT",10,0); textRegion:SetPoint("RIGHT",-26,0) end
   menu=CreateFrame("Frame",nil,parent,"BackdropTemplate"); control.menu=menu
   menu:SetPoint("TOPLEFT",control,"BOTTOMLEFT",0,-2); menu:SetFrameStrata("TOOLTIP"); menu:SetClampedToScreen(true)
   menu:SetBackdrop({bgFile="Interface\\Buttons\\WHITE8X8",edgeFile="Interface\\Buttons\\WHITE8X8",edgeSize=1})
@@ -84,7 +99,7 @@ local function selector(parent,text,x,y,width,choices,onSelect,searchable)
     for _,row in ipairs(menu.rows) do row:Hide() end
     for i=1,count do
       local entry=entries[i]; local row=menu.rows[i]
-      if not row then row=button(searchable and menu.content or menu,"",4,-(searchable and 0 or top)-(i-1)*28,(searchable and 312 or width)-8,function(btn)
+      if not row then row=flatButton(searchable and menu.content or menu,"",4,-(searchable and 0 or top)-(i-1)*28,(searchable and 312 or width)-8,function(btn)
         if A.Combat() then return end
         onSelect(btn.choice); menu:Hide(); B:Options()
       end); menu.rows[i]=row end
@@ -107,6 +122,8 @@ end
 local function selectorArrow(control)
   local arrow=control:CreateTexture(nil,"OVERLAY"); arrow:SetSize(16,16); arrow:SetPoint("RIGHT",-4,0)
   arrow:SetTexture("Interface\\ChatFrame\\UI-ChatIcon-ScrollDown-Up"); control.arrow=arrow
+  local textRegion=control:GetFontString()
+  if textRegion then textRegion:ClearAllPoints(); textRegion:SetPoint("LEFT",30,0); textRegion:SetPoint("RIGHT",-26,0) end
 end
 
 local function check(parent,text,x,y,fn)
@@ -135,7 +152,7 @@ end
 
 local function panel(parent)
   local f=CreateFrame("Frame",nil,parent,"BackdropTemplate")
-  f:SetPoint("TOPLEFT",18,-144); f:SetPoint("BOTTOMRIGHT",-18,32)
+  f:SetPoint("TOPLEFT",18,-206); f:SetPoint("BOTTOMRIGHT",-18,32)
   f:SetBackdrop({bgFile="Interface\\Buttons\\WHITE8X8",edgeFile="Interface\\Buttons\\WHITE8X8",edgeSize=1})
   f:SetBackdropColor(0.035,0.045,0.05,0.98); f:SetBackdropBorderColor(0.44,0.36,0.20,0.8)
   return f
@@ -308,7 +325,7 @@ local function showBlessingPriorityMenu(menu,control)
       row.note=label(row,"",56,-18,"GameFontDisableSmall",235); row.note:SetWordWrap(false)
       for _,direction in ipairs({-1,1}) do
         local delta=direction
-        local arrow=button(row,"",delta<0 and 292 or 328,-2,34,function(btn)
+        local arrow=arrowButton(row,"",delta<0 and 292 or 328,-2,34,function(btn)
           local owner=menu.owner
           if A.Combat() or not owner or owner.disabled then return end
           local nextOrder={}; for j,v in ipairs(owner.editorOrder or {}) do nextOrder[j]=v end
@@ -338,7 +355,7 @@ local function showBlessingPriorityMenu(menu,control)
 end
 
 local function blessingPick(parent,x,y,width,getChoice,setChoice,player)
-  local pick=button(parent,"",x,y,width,function(control)
+  local pick=flatButton(parent,"",x,y,width,function(control)
     if A.Combat() or control.disabled then return end
     local f=B.options
     if not f.blessingMenu then
@@ -364,7 +381,7 @@ local function blessingPick(parent,x,y,width,getChoice,setChoice,player)
     for i,key in ipairs(choices) do
       local option=menu.rows[i]
       if not option then
-        option=button(menu,"",4,-4-(i-1)*28,262,function(btn)
+        option=flatButton(menu,"",4,-4-(i-1)*28,262,function(btn)
           if A.Combat() or not menu.owner or menu.owner.disabled then return end
           local owner=menu.owner; if owner then local key=btn.key; if key=="inherit" then key=nil end; owner.setChoice(key) end
           menu:Hide(); B:InvalidateAura(); B:RequestRefresh("blessing assignment",0); B:Options()
@@ -455,7 +472,7 @@ function B:BuildBlessingOptions(parent)
     row.pick.getOrder=function() return B.db.groupBlessingPriorities[token] end
     row.pick.setOrder=function(order) B.db.groupBlessingPriorities[token]=order end
     row.status=label(row,"",0,0,"GameFontDisableSmall",190); row.status:Hide()
-    row.players=button(row,"",548,-2,132,function()
+    row.players=flatButton(row,"",548,-2,132,function()
       if A.Combat() or not B.db.blessingAssignments or not B.db.group then return end
       if f.expandedBlessing==token then f.expandedBlessing=nil else f.expandedBlessing=token end
       f.blessingPlayerOffset=0; B:Options()
@@ -468,7 +485,7 @@ function B:BuildBlessingOptions(parent)
   detail:SetBackdrop({bgFile="Interface\\Buttons\\WHITE8X8",edgeFile="Interface\\Buttons\\WHITE8X8",edgeSize=1})
   detail:SetBackdropColor(0.065,0.085,0.10,1); detail:SetBackdropBorderColor(0.22,0.32,0.38,1)
   label(detail,"Player exceptions",12,-6,"GameFontNormalSmall")
-  f.blessingCollapse=button(detail,"",634,-2,26,function() f.expandedBlessing=nil; B:Options() end)
+  f.blessingCollapse=arrowButton(detail,"",634,-2,26,function() f.expandedBlessing=nil; B:Options() end)
   local collapse=f.blessingCollapse:CreateTexture(nil,"ARTWORK"); collapse:SetAllPoints(); collapse:SetTexture("Interface\\ChatFrame\\UI-ChatIcon-ScrollUp-Up")
   f.blessingPlayerRows={}
   for i=1,2 do
@@ -801,7 +818,7 @@ function B:BuildHelperPage(parent)
     B.db.helperHealthstone=c:GetChecked()==true; B:SyncReadiness(); B:RequestRefresh("Healthstone helper",0); B:Options()
   end)
   f.stoneDescription=label(r,L("Offers Create Healthstone when none is in your bags. Requires a Soul Shard and free space. Never uses the stone."),368,-484,"GameFontDisableSmall",326)
-  f.demonChoice=button(r,"Choose preferred demon",18,-531,326,function()
+  f.demonChoice=flatButton(r,"Choose preferred demon",18,-531,326,function()
     if A.Combat() then return end
     f.demonMenu:SetShown(not f.demonMenu:IsShown())
   end)
@@ -833,7 +850,7 @@ function B:UpdateHelperOptions()
   for i,entry in ipairs(demons) do
     local row=f.demonMenu.rows[i]
     if not row then
-      row=button(f.demonMenu,"",6,-7-(i-1)*29,314,function(control)
+      row=flatButton(f.demonMenu,"",6,-7-(i-1)*29,314,function(control)
         if A.Combat() then return end
         B.db.helperDemon=control.spellID; B.readinessPending=nil; B:ExpireReadiness()
         B:RequestRefresh("preferred demon",0); B:Options()
@@ -857,7 +874,7 @@ function B:UpdateHelperOptions()
   for i,entry in ipairs(trackers) do
     local t=f.trackers[i]
     if not t then
-      t=button(f,"",18+(i-1)*226,-408,218,function(control)
+      t=flatButton(f,"",18+(i-1)*226,-408,218,function(control)
         if A.Combat() then return end
         B.db.helperTracker=control.trackerID; B:RequestRefresh("tracking preference",0); B:Options()
       end)
@@ -901,12 +918,12 @@ function B:ShowQuickChoices(action,page)
   local f=self.quickChoices
   if not f then
     f=CreateFrame("Frame",nil,UIParent,"BackdropTemplate"); self.quickChoices=f
-    f:SetSize(300,244); f:SetFrameStrata("DIALOG"); f:SetClampedToScreen(true); f:EnableMouse(true)
+    f:SetSize(300,244); f:SetFrameStrata("FULLSCREEN_DIALOG"); f:SetClampedToScreen(true); f:EnableMouse(true)
     f:SetBackdrop({bgFile="Interface\\Buttons\\WHITE8X8",edgeFile="Interface\\Tooltips\\UI-Tooltip-Border",edgeSize=12}); f:SetBackdropColor(.06,.06,.06,.98)
     label(f,"Choose, then use the main icon",12,-12,"GameFontNormalSmall")
     f.rows={}
     for i=1,6 do
-      local row=button(f,"",12,-34-(i-1)*28,274,function(s)
+      local row=flatButton(f,"",12,-34-(i-1)*28,274,function(s)
         if A.Combat() or not s.itemID then return end
         B:SetConsumableChoice(f.family,s.itemID); f:Hide(); B:RequestRefresh("quick item choice",0)
       end)
@@ -963,14 +980,14 @@ function B:ChooseConsumable(family,anchor)
     label(f,L("Search"),20,-59,"GameFontHighlightSmall")
     f.search=editbox(f,76,-54,300,false)
     f.bags=check(f,L("In bags only"),410,-54,function() f.offset=0; B:UpdateConsumablePicker() end)
-    f.auto=button(f,"",20,-90,606,function()
+    f.auto=flatButton(f,"",20,-90,606,function()
       if A.Combat() then return end
       B:SetConsumableChoice(f.family,nil); B:InvalidateConsumables(); B:RequestRefresh("auto selected",0); B:Options(); B:UpdateConsumablePicker()
     end)
     label(f,L("Item"),66,-127,"GameFontNormalSmall"); label(f,L("In bags"),518,-127,"GameFontNormalSmall")
     f.rows={}
     for i=1,8 do
-      local row=button(f,"",20,-147-(i-1)*34,580,function(btn)
+      local row=flatButton(f,"",20,-147-(i-1)*34,580,function(btn)
         if A.Combat() then return end
         B:SetConsumableChoice(f.family,btn.itemID); B:InvalidateConsumables(); B:RequestRefresh("item selected",0)
         B:Options(); B:UpdateConsumablePicker()
@@ -1063,32 +1080,30 @@ function B:Options()
   local f=self.options
   if not f then
     f=CreateFrame("Frame","BuffTapOptions",UIParent,"BackdropTemplate"); self.options=f
-    f:SetSize(OPTIONS_WIDTH,OPTIONS_HEIGHT); f:SetPoint("CENTER"); f:SetFrameStrata("DIALOG"); f:SetClampedToScreen(true)
+    f:SetSize(OPTIONS_WIDTH,OPTIONS_HEIGHT); f:SetPoint("CENTER"); f:SetFrameStrata("DIALOG"); f:SetToplevel(true); f:SetClampedToScreen(true)
     f:SetBackdrop({bgFile="Interface\\Buttons\\WHITE8X8",edgeFile="Interface\\Tooltips\\UI-Tooltip-Border",tile=true,tileSize=16,edgeSize=14,insets={left=3,right=3,top=3,bottom=3}})
-    f:SetBackdropColor(0.035,0.035,0.035,0.98); f:SetBackdropBorderColor(0.60,0.48,0.25,1)
+    f:SetBackdropColor(0.035,0.035,0.035,1); f:SetBackdropBorderColor(0.60,0.48,0.25,1)
     f:EnableMouse(true); f:SetMovable(true); f:RegisterForDrag("LeftButton"); f:SetScript("OnDragStart",f.StartMoving); f:SetScript("OnDragStop",f.StopMovingOrSizing)
     if UISpecialFrames then table.insert(UISpecialFrames,"BuffTapOptions") end
 
-    -- Keep branding, controls and navigation on separate aligned baselines.
-    f.logo=f:CreateTexture(nil,"OVERLAY"); f.logo:SetSize(48,48); f.logo:SetPoint("TOPLEFT",24,-16); f.logo:SetTexture(ICON_PATH)
-    f.title=label(f,"BuffTap",84,-18,"GameFontNormalLarge")
-    label(f,L("One-tap buffing for WoW Forever"),84,-44,"GameFontHighlightSmall",260)
-    f.versionText=label(f,"v"..B.version,636,-18,"GameFontDisableSmall",100)
+    -- Share the actual banner artwork with onboarding.
+    f.banner=B:AddMiniBanner(f,OPTIONS_WIDTH)
+    f.versionText=label(f,"v"..B.version,550,-22,"GameFontDisableSmall",70)
     f.versionText:SetJustifyH("RIGHT")
-    f.closeButton=button(f,L("Close"),636,-42,100,function() f:Hide() end)
-    -- Classic panel artwork gives Close its familiar red normal/pressed states.
+    f.closeButton=button(f,L("Close"),636,-16,100,function() f:Hide() end)
+    -- Keep explicit header artwork for Forever clients whose template leaves
+    -- this control without visible button textures.
     f.closeButton:SetNormalTexture("Interface\\Buttons\\UI-Panel-Button-Up")
     f.closeButton:SetPushedTexture("Interface\\Buttons\\UI-Panel-Button-Down")
     f.closeButton:SetDisabledTexture("Interface\\Buttons\\UI-Panel-Button-Disabled")
     for _,texture in ipairs({f.closeButton:GetNormalTexture(),f.closeButton:GetPushedTexture(),f.closeButton:GetDisabledTexture()}) do
-      texture:SetTexCoord(0,0.625,0,0.6875)
+      if texture then texture:SetTexCoord(0,0.625,0,0.6875) end
     end
-    f.closeButton:SetNormalFontObject("GameFontNormalSmall")
     f.closeButton:SetSize(100,28)
-    f.statusText=label(f,"",24,-72,"GameFontHighlightSmall",706); f.statusText:SetWordWrap(false)
-    f.saveHint=label(f,L("Checkboxes, lists and sliders save immediately. Numeric fields: Enter to save; Escape to cancel."),18,-786,"GameFontDisableSmall",706)
-    f.enable=check(f,L("Enable BuffTap"),360,-44,function(c) setAndRefresh("enabled",c:GetChecked()==true) end)
-    line(f,-98)
+    f.statusText=label(f,"",200,-144,"GameFontHighlightSmall",536); f.statusText:SetWordWrap(false); f.statusText:SetJustifyH("RIGHT")
+    f.saveHint=label(f,L("Checkboxes, lists and sliders save immediately. Numeric fields: Enter to save; Escape to cancel."),18,-848,"GameFontDisableSmall",706)
+    f.enable=check(f,L("Enable BuffTap"),24,-138,function(c) setAndRefresh("enabled",c:GetChecked()==true) end)
+    line(f,-162)
 
     f.tabs={}; f.pages={}
     local names=TAB_NAMES
@@ -1108,7 +1123,7 @@ function B:Options()
     for i,name in ipairs(names) do
       local idx=i
       local width=TAB_WIDTHS[i]
-      local t=button(f,name,tabX,-104,width,function() setTab(idx) end)
+      local t=flatButton(f,name,tabX,-166,width,function() setTab(idx) end)
       t:SetSize(width,30); f.tabs[i]=t
       tabX=tabX+width+6
     end
@@ -1131,15 +1146,15 @@ function B:Options()
     f.weaponRetry=button(weapons,L("Retry reminders"),528,-16,154,function() B:RetryConsumableReminders(); B:Options() end)
     addHelp(f.weaponRetry,L("Retry reminders"),L("Restarts item loading and paused consumable reminders. Changed item effects remain blocked."))
     f.weaponEnable=check(weapons,L("Enable weapon reminders"),18,-72,function(c) setAndRefresh("weaponReminder",c:GetChecked()==true); B:Options() end)
-    f.weaponApply=selector(weapons,"",330,-72,350,function() return {{key=false,name="Remind only"},{key=true,name="Remind and apply"}} end,function(value) setAndRefresh("weaponApply",value) end)
+    f.weaponApply=selector(weapons,"",180,-72,502,function() return {{key=false,name="Remind only"},{key=true,name="Remind and apply"}} end,function(value) setAndRefresh("weaponApply",value) end)
     addHelp(f.weaponApply,"Weapon mode","Remind only shows missing weapon buffs without preparing an application. Remind and apply prepares your selected spell or item for your next scroll or click, out of combat. Every application still requires your input.")
     f.weaponSectionHeading=label(weapons,L("Poisons / class imbues"),18,-100,"GameFontNormalSmall")
     f.weaponMain=check(weapons,L("Main hand"),18,-116,function(c) setAndRefresh("weaponMainHand",c:GetChecked()==true); B:Options() end)
-    f.weaponOff=check(weapons,L("Off hand"),18,-166,function(c) setAndRefresh("weaponOffHand",c:GetChecked()==true); B:Options() end)
+    f.weaponOff=check(weapons,L("Off hand"),18,-164,function(c) setAndRefresh("weaponOffHand",c:GetChecked()==true); B:Options() end)
     f.weaponPickers={}
     for i,hand in ipairs({"main","off"}) do
       local key=hand
-      local pick=button(weapons,L("Choose preferred buff"),180,-116-(i-1)*50,470,function(control)
+      local pick=flatButton(weapons,L("Choose preferred buff"),180,-116-(i-1)*48,502,function(control)
         if A.Combat() then return end
         for _,other in pairs(f.weaponPickers) do if other~=control then other.menu:Hide() end end
         for _,other in pairs(f.coatingPickers or {}) do other.menu:Hide() end
@@ -1148,18 +1163,18 @@ function B:Options()
       selectorArrow(pick)
       pick.icon=pick:CreateTexture(nil,"ARTWORK"); pick.icon:SetSize(22,22); pick.icon:SetPoint("LEFT",4,0)
       local menu=CreateFrame("Frame",nil,weapons,"BackdropTemplate"); pick.menu=menu
-      menu:SetSize(470,242); menu:SetPoint("TOPLEFT",pick,"BOTTOMLEFT",0,-2); menu:SetFrameStrata("TOOLTIP")
+      menu:SetSize(502,242); menu:SetPoint("TOPLEFT",pick,"BOTTOMLEFT",0,-2); menu:SetFrameStrata("TOOLTIP")
       menu:SetBackdrop({bgFile="Interface\\Buttons\\WHITE8X8",edgeFile="Interface\\Buttons\\WHITE8X8",edgeSize=1}); menu:SetBackdropColor(0.06,0.06,0.06,1); menu:Hide(); menu.rows={}
       local scroll=CreateFrame("ScrollFrame",nil,menu,"UIPanelScrollFrameTemplate"); scroll:SetPoint("TOPLEFT",4,-4); scroll:SetPoint("BOTTOMRIGHT",-28,4)
-      local child=CreateFrame("Frame",nil,scroll); child:SetSize(434,1); scroll:SetScrollChild(child); menu.child=child
+      local child=CreateFrame("Frame",nil,scroll); child:SetSize(466,1); scroll:SetScrollChild(child); menu.child=child
       f.weaponPickers[key]=pick
     end
     f.coatingHeading=label(weapons,L("Oils and stones"),18,-224,"GameFontNormal")
     f.coatingPickers={}; f.coatingHandLabels={}
     for i,hand in ipairs({"main","off"}) do
       local handKey=hand
-      f.coatingHandLabels[hand]=label(weapons,L(i==1 and "Main hand" or "Off hand"),24,-256-(i-1)*44,"GameFontHighlightSmall",130)
-      local pick=button(weapons,"None",180,-250-(i-1)*44,470,function(control)
+      f.coatingHandLabels[hand]=label(weapons,L(i==1 and "Main hand" or "Off hand"),18,-256-(i-1)*48,"GameFontHighlightSmall",130)
+      local pick=flatButton(weapons,"None",180,-250-(i-1)*48,502,function(control)
         if A.Combat() then return end
         for _,other in pairs(f.weaponPickers) do other.menu:Hide() end
         for _,other in pairs(f.coatingPickers) do if other~=control then other.menu:Hide() end end
@@ -1168,10 +1183,10 @@ function B:Options()
       selectorArrow(pick)
       pick.icon=pick:CreateTexture(nil,"ARTWORK"); pick.icon:SetSize(22,22); pick.icon:SetPoint("LEFT",4,0)
       local menu=CreateFrame("Frame",nil,weapons,"BackdropTemplate"); pick.menu=menu
-      menu:SetSize(470,242); menu:SetPoint("TOPLEFT",pick,"BOTTOMLEFT",0,-2); menu:SetFrameStrata("TOOLTIP")
+      menu:SetSize(502,242); menu:SetPoint("TOPLEFT",pick,"BOTTOMLEFT",0,-2); menu:SetFrameStrata("TOOLTIP")
       menu:SetBackdrop({bgFile="Interface\\Buttons\\WHITE8X8",edgeFile="Interface\\Buttons\\WHITE8X8",edgeSize=1}); menu:SetBackdropColor(.06,.06,.06,1)
       local scroll=CreateFrame("ScrollFrame",nil,menu,"UIPanelScrollFrameTemplate"); scroll:SetPoint("TOPLEFT",4,-4); scroll:SetPoint("BOTTOMRIGHT",-28,4)
-      local child=CreateFrame("Frame",nil,scroll); child:SetSize(434,1); scroll:SetScrollChild(child); menu.child=child; menu.rows={}; menu:Hide()
+      local child=CreateFrame("Frame",nil,scroll); child:SetSize(466,1); scroll:SetScrollChild(child); menu.child=child; menu.rows={}; menu:Hide()
       f.coatingPickers[handKey]=pick
     end
     f.weaponTimingLabel=label(weapons,L("Refresh before expiry"),18,-368,"GameFontNormal")
@@ -1232,18 +1247,20 @@ function B:Options()
     end)
     f.groupNeedSlider:SetScript("OnMouseUp",function() if not A.Combat() then B:Options() end end)
     f.groupNeedSlider:SetPoint("TOPLEFT",128,-45)
-    label(shared,L("Greater Blessings"),362,-48,"GameFontHighlight",132)
+    f.blessingNeedLabel=label(shared,L("Greater Blessings"),362,-48,"GameFontHighlight",132)
     f.blessingNeedSlider=compactSlider(shared,2,5,1,120,function(v) return tostring(v).."+" end,function(_,v)
       B.db.blessingNeed=v; B:NormalizeGroupNeeds(); B:InitDB(); B:RequestRefresh("blessing threshold default",0.08)
     end)
     f.blessingNeedSlider:SetScript("OnMouseUp",function() if not A.Combat() then B:Options() end end)
     f.blessingNeedSlider:SetPoint("TOPLEFT",492,-45)
+    card(groups,12,-270,194,300)
     label(groups,L("Select a buff"),18,-274,"GameFontNormal")
     local listScroll=CreateFrame("ScrollFrame",nil,groups,"UIPanelScrollFrameTemplate")
     listScroll:SetPoint("TOPLEFT",18,-298); listScroll:SetSize(178,274)
+    f.assignScroll=listScroll
     f.assignList=CreateFrame("Frame",nil,listScroll); f.assignList:SetSize(174,1); listScroll:SetScrollChild(f.assignList)
     f.assignButtons={}
-    local assignChild=CreateFrame("Frame",nil,groups); assignChild:SetPoint("TOPLEFT",230,-274); assignChild:SetSize(474,296)
+    local assignChild=CreateFrame("Frame",nil,groups); assignChild:SetPoint("TOPLEFT",230,-270); assignChild:SetSize(474,296)
     f.assignChild=assignChild; f.assignRows={}
     f.assignEmpty=label(assignChild,"No party / raid buffs available for this class.",8,-12,"GameFontHighlight",440)
 
@@ -1306,8 +1323,8 @@ function B:Options()
     local consume=CreateFrame("Frame",nil,consumePanel); consume:SetPoint("TOPLEFT",0,-36); consume:SetPoint("BOTTOMRIGHT",0,0)
     f.consumableBody=consume
     self:BuildSupplyOptions(consumePanel)
-    local buffView=button(consumePanel,"Buff items",18,-8,104,function() f.selectConsumableView(false) end)
-    local supplyView=button(consumePanel,L("Supplies"),132,-8,104,function() f.selectConsumableView(true) end)
+    local buffView=flatButton(consumePanel,"Buff items",18,-8,104,function() f.selectConsumableView(false) end)
+    local supplyView=flatButton(consumePanel,L("Supplies"),132,-8,104,function() f.selectConsumableView(true) end)
     f.selectConsumableView=function(supplies)
       f.consumableBody:SetShown(not supplies); f.supplyBody:SetShown(supplies)
       if supplies then buffView:UnlockHighlight(); supplyView:LockHighlight(); B:UpdateSupplyOptions()
@@ -1381,8 +1398,8 @@ function B:Options()
       B:InitDB(); B.appearance=nil; B:RequestRefresh("appearance",0); B:Options()
     end)
     f.soundCheck=check(app,L("Enable reminder sound"),18,-488,function(s) setAndRefresh("sound",s:GetChecked()==true) end)
-    f.glowCheck=check(app,L("Glow"),122,-204,function(s) setAndRefresh("glow",s:GetChecked()==true) end)
-    f.pulseCheck=check(app,L("Pulse"),220,-204,function(s) setAndRefresh("pulse",s:GetChecked()==true) end)
+    f.glowCheck=check(app,L("Glow"),18,-204,function(s) setAndRefresh("glow",s:GetChecked()==true) end)
+    f.pulseCheck=check(app,L("Pulse"),170,-204,function(s) setAndRefresh("pulse",s:GetChecked()==true) end)
     f.buffNameCheck=check(app,L("Show buff name"),18,-238,function(s) setAndRefresh("showBuffName",s:GetChecked()==true) end)
     f.targetNameCheck=check(app,L("Show buff recipient"),326,-238,function(s) setAndRefresh("showTargetName",s:GetChecked()==true) end)
     addHelp(f.targetNameCheck,"Buff recipient","Shows the name of whoever BuffTap is about to buff, including you when the current action is a self buff.")
@@ -1392,10 +1409,16 @@ function B:Options()
     addHelp(f.groupBadgeCheck,L("Group count"),"Shows how many players need the buff when BuffTap selects a group-version spell.")
     button(app,L("Move icon"),18,-318,108,function() B:MoveAnchor() end)
     button(app,L("Center"),136,-318,90,function() if not A.Combat() then B.db.x=0; B.db.y=-180; B.appearance=nil; B:RequestRefresh("center icon",0); B:Options() end end)
-    button(app,L("Reset look"),236,-318,100,function()
-      if not A.Combat() then B.db.size=64; B.db.opacity=1; B.db.x=0; B.db.y=-180; B.db.glow=true; B.db.pulse=false; B.db.showBuffName=false; B.db.showTargetName=true; B.db.showTimer=false; B.db.showGroupBadge=true; B.appearance=nil; B:RequestRefresh("reset look",0); B:Options() end
+    f.resetLookButton=button(app,L("Reset look"),236,-318,100,function()
+      if not A.Combat() then B.db.size=64; B.db.opacity=1; B.db.x=0; B.db.y=-180; B.db.glow=true; B.db.pulse=false; B.db.showBuffName=false; B.db.showTargetName=true; B.db.showTimer=false; B.db.showGroupBadge=true; B.db.labelFont="default"; B.db.labelColor="default"; B.appearance=nil; B:RequestRefresh("reset look",0); B:Options() end
     end)
-    label(app,L("Numeric fields: press Enter to save one, or Apply to save all. Move icon opens a safe preview."),18,-354,"GameFontDisableSmall",500)
+    label(app,L("Enter saves fields. Move here or in Blizzard Edit Mode."),18,-354,"GameFontDisableSmall",380)
+    label(app,L("Label font"),350,-206,"GameFontHighlightSmall")
+    f.fontButton=selector(app,"",440,-200,242,function() return B:ReminderFonts() end,function(value) B.db.labelFont=value; B.appearance=nil; B:RequestRefresh("label font",0) end)
+    f.colorButton=selector(app,"",522,-318,160,function() return B:ReminderColors() end,function(value) B.db.labelColor=value; B.appearance=nil; B:RequestRefresh("label color",0) end)
+    addHelp(f.fontButton,L("Label font"),L("Choose a built-in game font for reminder labels. Settings text stays unchanged."))
+    addHelp(f.colorButton,L("Label color"),L("Choose the color of reminder labels. Default keeps the group count gold."))
+    button(app,L("How to buff"),536,-350,146,function() B:ShowWelcome(true) end)
     button(app,L("Preview appearance"),348,-318,150,function() B:PreviewAppearance() end)
     line(app,-382)
     label(app,L("Sounds"),18,-392,"GameFontNormal")
@@ -1552,8 +1575,8 @@ function B:Options()
         local def=slider:GetParent().def
         if def then B:SetGroupNeed(def,value); B:RequestRefresh("group threshold",0) end
       end)
-      row.need:SetPoint("TOPLEFT",165,-265)
-      row.needLabel=label(row,"Group spell at",8,-265,"GameFontHighlightSmall",140)
+      row.need:SetPoint("TOPLEFT",165,-263)
+      row.needLabel=label(row,"Group spell at",8,-263,"GameFontHighlightSmall",140)
       label(row,"Recipient classes",8,-116,"GameFontNormal")
       label(row,"Recipients must match group AND class. Party uses group 1.\nPersonal buffs and open-world targets ignore these filters.",8,-221,"GameFontDisableSmall",450)
       row.classes={}
@@ -1572,10 +1595,10 @@ function B:Options()
         addHelp(c,className,"Party/raid recipients must match both the selected group and class. Personal buffs and explicit friendly targets ignore these filters. Class does not identify the tank role.")
         row.classes[token]=c
       end
-      row.resetClasses=button(row,L("Reset"),374,-110,80,function()
+      row.resetClasses=button(row,L("Reset"),374,-258,80,function()
         if row.def and not A.Combat() then B.db.buffClasses[B:RootKey(row.def)]=nil; B:RequestRefresh("reset classes",0); B:Options() end
       end)
-      row.allClasses=button(row,"All classes",280,-110,86,function()
+      row.allClasses=button(row,"All classes",280,-258,86,function()
         if not row.def or A.Combat() then return end
         local map={}; for _,class in ipairs(B.RecipientClasses) do map[class]=true end
         B.db.buffClasses[B:RootKey(row.def)]=map; B:RequestRefresh("all classes",0); B:Options()
@@ -1585,7 +1608,7 @@ function B:Options()
     row.def=b; row:ClearAllPoints(); row:SetPoint("TOPLEFT",0,0); row:SetShown(f.selectedAssignment==b.key); row.name:SetText(spellLabel(b)); row.icon:SetTexture(buffIcon(b))
     local select=f.assignButtons[rowIndex]
     if not select then
-      select=button(f.assignList,"",0,-(rowIndex-1)*42,174,function(btn) f.selectedAssignment=btn.def.key; B:Options() end)
+      select=flatButton(f.assignList,"",0,-(rowIndex-1)*42,174,function(btn) f.selectedAssignment=btn.def.key; B:Options() end)
       select:SetHeight(38)
       select.icon=select:CreateTexture(nil,"ARTWORK"); select.icon:SetSize(24,24); select.icon:SetPoint("TOPLEFT",6,-7)
       select.title=label(select,"",36,-6,"GameFontHighlightSmall",132)
@@ -1603,6 +1626,10 @@ function B:Options()
     else row.need:Hide(); row.need.valueText:Hide(); row.needLabel:Hide() end
   end
   f.assignList:SetHeight(math.max(1,#assignmentBuffs*42))
+  f.assignScroll:SetHeight(math.min(252,math.max(42,#assignmentBuffs*42)))
+  f.blessingNeedLabel:SetShown(paladin)
+  f.blessingNeedSlider:SetShown(paladin)
+  f.blessingNeedSlider.valueText:SetShown(paladin)
   self:UpdateBlessingOptions()
 
   for _,r in ipairs(f.targetRows) do r:Hide() end
@@ -1695,6 +1722,8 @@ function B:Options()
     end
   end
 
+  for _,choice in ipairs(self:ReminderFonts()) do if choice.key==self.db.labelFont then f.fontButton:SetText(L(choice.name)) end end
+  for _,choice in ipairs(self:ReminderColors()) do if choice.key==self.db.labelColor then f.colorButton:SetText(L(choice.name)) end end
   f.bindingText:SetText("Current: "..(#self.db.keys>0 and table.concat(self.db.keys,", ") or "none"))
   f.sizeEdit:SetText(tostring(self.db.size)); f.opacityEdit:SetText(tostring(math.floor(self.db.opacity*100+0.5))); f.xEdit:SetText(tostring(math.floor(self.db.x+0.5))); f.yEdit:SetText(tostring(math.floor(self.db.y+0.5)))
   for _,choice in ipairs(self:SoundChoices()) do
@@ -1741,7 +1770,7 @@ function B:Options()
       for i,choice in ipairs(choices) do
         local choiceKey=choice.key
         local row=pick.menu.rows[i]
-        if not row then row=button(pick.menu.child,"",0,-(i-1)*28,434,function(control)
+        if not row then row=flatButton(pick.menu.child,"",0,-(i-1)*28,466,function(control)
           if A.Combat() then return end
           B.db.weaponChoices[control.hand]=control.choice; B.weaponPending=nil; B:InvalidateSupplies(false); B:RequestRefresh("weapon preference",0); B:Options()
         end); row.icon=row:CreateTexture(nil,"ARTWORK"); row.icon:SetSize(22,22); row.icon:SetPoint("LEFT",4,0); pick.menu.rows[i]=row end
@@ -1750,7 +1779,7 @@ function B:Options()
         local icon=source and source.icon or (choiceKey and A.Call(C_Spell and C_Spell.GetSpellTexture,choice.ranks[#choice.ranks]))
         row.icon:SetTexture(icon or "Interface\\Icons\\INV_Misc_QuestionMark")
         local incompatible=choiceKey and choice.class=="MAGE" and B:CoatingWeaponMatches(16,choice)~=true
-        row:SetText(choice.name..(choiceKey and (incompatible and " (incompatible weapon)" or source and (source.count and " (in bags: "..source.count..")" or " (learned)") or " (unavailable)") or "")); fitButtonText(row,388); row:Show()
+        row:SetText(choice.name..(choiceKey and (incompatible and " (incompatible weapon)" or source and (source.count and " (in bags: "..source.count..")" or " (learned)") or " (unavailable)") or "")); fitButtonText(row,420); row:Show()
         addHelp(row,choice.name,why or "Select this buff for this hand. Highest available rank is used.")
       end
       pick.menu.child:SetHeight(#choices*28)
@@ -1762,13 +1791,14 @@ function B:Options()
     local selected=self:CoatingPreference(hand)
     local src=selected and self:WeaponChoiceSource(selected)
     pick:SetText(selected and selected.name or L("None")); fitButtonText(pick,420)
+    pick.icon:SetShown(selected~=nil)
     pick.icon:SetTexture(src and src.icon or (selected and A.Call(C_Spell and C_Spell.GetSpellTexture,selected.ranks[1])) or "Interface\\Icons\\INV_Misc_QuestionMark")
     local choices={{name=L("None")}}
     for _,choice in ipairs(self.CoatingChoices) do choices[#choices+1]=choice end
     for i,choice in ipairs(choices) do
       local row=pick.menu.rows[i]
       if not row then
-        row=button(pick.menu.child,"",0,-(i-1)*28,434,function(control)
+        row=flatButton(pick.menu.child,"",0,-(i-1)*28,466,function(control)
           if A.Combat() then return end
           B.db.weaponCoatings[control.hand]=control.choice; B.weaponPending=nil; B:InvalidateSupplies(false); B:RequestRefresh("coating preference",0); B:Options()
         end)
@@ -1779,7 +1809,7 @@ function B:Options()
       if choice.key then source,why=self:WeaponChoiceSource(choice) end
       local matches=choice.key and self:CoatingWeaponMatches(hand=="main" and 16 or 17,choice)
       local status=choice.key and (matches~=true and " (incompatible weapon)" or source and " (uses: "..source.count..")" or " (unavailable)") or ""
-      row:SetText(choice.name..status); fitButtonText(row,388)
+      row:SetText(choice.name..status); fitButtonText(row,420)
       row.icon:SetTexture(source and source.icon or (choice.key and A.Call(C_Spell and C_Spell.GetSpellTexture,choice.ranks[1])) or "Interface\\Icons\\INV_Misc_QuestionMark")
       addHelp(row,choice.name,why or "Choose this temporary coating. Highest carried usable stone rank is selected. Other enchant categories are preserved.")
     end
@@ -1816,7 +1846,7 @@ function B:Options()
       addHelp(row.default,"Use default timing","Remove this buff’s custom refresh timing and use the default rebuff threshold below. This does not reset its priority or enable setting.")
       for _,direction in ipairs({-1,1}) do
         local delta=direction
-        local arrow=button(row,"",delta<0 and 550 or 576,-16,24,function(btn)
+        local arrow=arrowButton(row,"",delta<0 and 550 or 576,-16,24,function(btn)
           if A.Combat() then return end
           local current=btn:GetParent().def; local list=logicalBuffs()
           for i,def in ipairs(list) do if current and def.key==current.key and list[i+delta] then B:MoveBuffPriority(def.key,list[i+delta].key); return end end
@@ -1858,7 +1888,7 @@ function B:Options()
   f.emptyBuffs:SetShown(visible==0)
   f.buffChild:SetHeight(math.max(1,visible*58))
   if f.diagText then f.diagText:SetText(table.concat(self:DiagnosticsLines(),"\n\n")) end
-  f:Show()
+  f:Show(); f:Raise()
 end
 
 
@@ -1867,7 +1897,7 @@ function B:PreviewAppearance()
   local f=self.appearancePreview
   if not f then
     f=CreateFrame("Frame",nil,UIParent,"BackdropTemplate"); self.appearancePreview=f
-    f:SetFrameStrata("DIALOG"); f:EnableMouse(true)
+    f:SetFrameStrata("FULLSCREEN_DIALOG"); f:EnableMouse(true)
     f:SetBackdrop({bgFile="Interface\\Buttons\\WHITE8X8",edgeFile="Interface\\Tooltips\\UI-Tooltip-Border",edgeSize=12})
     f:SetBackdropColor(0.03,0.04,0.05,1)
     f.icon=f:CreateTexture(nil,"ARTWORK"); f.icon:SetPoint("TOPLEFT",4,-4); f.icon:SetPoint("BOTTOMRIGHT",-4,4); f.icon:SetTexture(ICON_PATH)
@@ -1896,6 +1926,7 @@ function B:PreviewAppearance()
   f.count:ClearAllPoints(); f.count:SetPoint("TOPLEFT",f,"TOPLEFT",4,-3); f.count:SetShown(self.db.showGroupBadge)
   f.glow:SetShown(self.db.glow or self.db.pulse)
   if f.pulseAnimation then if self.db.pulse then f.pulseAnimation:Play() else f.pulseAnimation:Stop() end end
+  if self.ApplyReminderStyle then self:ApplyReminderStyle(f) end
   f:Show()
 end
 

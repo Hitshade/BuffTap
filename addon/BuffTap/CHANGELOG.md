@@ -1,3 +1,31 @@
+# BuffTap 1.13.1 — Visual polish and cleanup
+
+Consolidates the latest local 1.13.0 refinements into one versioned build.
+
+- Compact image banner in options and onboarding; fixed foreground layering and unsupported Ready-status character.
+- Native action buttons, explicit Close artwork, cleaner priority arrows, and aligned Weapons/Customization controls.
+- Balanced Groups layout and Paladin-only Greater Blessings threshold controls.
+- Removed unused PNG and three uncalled helpers; active compatibility paths retained.
+- Includes the 1.13.0 convenience features: minimap quick controls, timed pause, onboarding, reminder fonts/colors and safe Edit Mode movement preview.
+
+Validation: 719 mocked Lua 5.1 scenarios, Lua syntax and ZIP integrity checks. Live visual confirmation remains necessary. Not published.
+
+# BuffTap 1.13.0 — Convenience and customization
+
+- Right-click the minimap icon or broker display for Settings, Enable/Disable, temporary pause, Resume, and a safe reminder preview.
+- Pause reminders for 5, 15, or 30 minutes without changing buff selections or bindings. The pause also quiets automatic stock alerts and solo thanks; it ends automatically and resets on reload.
+- Move a harmless BuffTap preview while Blizzard Edit Mode is open. Its position is shared with Customization → Move icon. The protected casting button never participates in dragging.
+- Actual compact banner artwork in options and onboarding, sharing one 512×256 RGB TGA. The visible banner is about 600×123 in options and 528×109 in onboarding; the existing options page area is preserved.
+- Brief first-use guidance explains the current binding and minimap controls. Reopen it with Customization → How to buff.
+- Built-in game-font choices and white/default, gold, cyan, and green label colors; defaults preserve the existing appearance.
+- New menu and onboarding text localized in Spanish, German, French, and Brazilian Portuguese, with English fallback.
+
+No group-composition tracker, additional buff display, new casting permissions, permanent polling, or additional library dependencies.
+
+Validation: 669 isolated mocked Lua 5.1 scenarios passed. Live Forever Edit Mode positioning, translated layout fit, and font appearance require in-game verification. Edit Mode integration uses guarded OnShow/OnHide hooks and our own unprotected preview; it does not register a Blizzard system or save separate positions per Blizzard layout. If Edit Mode is unavailable, Move icon remains usable.
+
+Local build prepared; not published. Latest published release remains 1.12.0.
+
 # BuffTap 1.12.0
 
 - Expanded game sound choices: Whisper ping, Alarm clock 1 and 3, and Quest complete, offered when the client exposes the corresponding sound constant.

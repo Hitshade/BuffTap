@@ -3,14 +3,15 @@
 local _,B=...
 local A=B.API
 local function lib(name) return LibStub and LibStub:GetLibrary(name,true) end
-local function click()
+local function click(_,mouseButton)
+  if mouseButton=="RightButton" and B.ShowQuickMenu then B:ShowQuickMenu(); return end
   if A.Combat() then B.Print(B:Text("Settings are available after combat.")); return end
   if B.options and B.options:IsShown() then B.options:Hide() else B:Options() end
 end
 local function tooltip(t)
   t:AddLine("BuffTap "..B.version)
   t:AddLine(B:FriendlyStatus(),1,1,1,true)
-  t:AddLine(B:Text("Click to open settings. Drag the minimap button to move it."),.8,.8,.8,true)
+  t:AddLine(B:Text("Left-click: settings. Right-click: quick controls. Drag to move."),.8,.8,.8,true)
 end
 function B:UpdateBroker()
   if self.options and self.options:IsShown() and self.options.statusText then self.options.statusText:SetText(self:FriendlyStatus()) end

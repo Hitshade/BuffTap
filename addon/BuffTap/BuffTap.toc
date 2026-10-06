@@ -2,7 +2,7 @@
 ## Title: BuffTap
 ## Notes: One-tap buff maintenance for WoW Forever.
 ## Author: BuffTap contributors
-## Version: 1.12.0
+## Version: 1.13.1
 ## SavedVariablesPerCharacter: BuffTapDB
 ## OptionalDeps: LibSharedMedia-3.0, SharedMedia
 ## DefaultState: enabled
@@ -30,3 +30,4 @@ BuffTap.lua
 Helpers.lua
 Readiness.lua
 Options.lua
+Convenience.lua

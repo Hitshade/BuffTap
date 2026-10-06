@@ -96,10 +96,12 @@ end
 function B:FriendlyStatus()
   if not self.db or not self.db.enabled then return self:Text("BuffTap is disabled.") end
   if A.Combat() then return self:Text("Reminders pause during combat.") end
+  if self.pauseUntil and GetTime()<self.pauseUntil then return self:Text("Reminders paused: %d min remaining",math.ceil((self.pauseUntil-GetTime())/60)) end
+  if self.editModeActive then return self:Text("Editing reminder position.") end
   if self.action then
     local a=self.action
     if a.manual then return self:Text("Manual application: %s",a.name or "?") end
-    return self:Text("Ready: %s → %s",a.name or "?",a.targetName or a.target or "?")
+    return self:Text("Ready: %s - %s",a.name or "?",a.targetName or a.target or "?")
   end
   if self.reason=="resting" then return self:Text("Reminders pause in cities and inns.") end
   if self.reason=="mounted" then return self:Text("Reminders pause while mounted.") end

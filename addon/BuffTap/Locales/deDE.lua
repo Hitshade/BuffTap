@@ -147,7 +147,7 @@ B.Locales["deDE"]={
   ["Reminders pause while mounted."]="Erinnerungen pausieren beim Reiten.",
   ["Player is dead, a ghost, or unavailable."]="Spieler ist tot, ein Geist oder nicht verfügbar.",
   ["No action is currently eligible. Buffs may be covered or excluded; check Diagnostics for details."]="Aktuell ist keine Aktion möglich. Stärkungen können vorhanden oder ausgeschlossen sein; Details unter Diagnose.",
-  ["Ready: %s → %s"]="Bereit: %s → %s",
+  ["Ready: %s - %s"]="Bereit: %s - %s",
   ["Status: %s"]="Status: %s",
   ["%d sec"]="%d Sek.",
   ["%d min"]="%d Min.",
@@ -279,3 +279,38 @@ B.Locales.deDE["Sounds"]="Klänge"
 B.Locales.deDE["Enable reminder sound"]="Erinnerungston aktivieren"
 B.Locales.deDE["Enter to save"]="Enter zum Speichern"
 B.Locales.deDE["Only checked blessings are used. Use arrows to order; 1 is first."]="Nur markierte Segen werden verwendet. Mit Pfeilen ordnen; 1 ist zuerst."
+
+-- Convenience controls and first-use guidance.
+B.Locales.deDE["Welcome to BuffTap"]="Willkommen bei BuffTap"
+B.Locales.deDE["Default font"]="Standardschrift"
+B.Locales.deDE["Unit-name font"]="Schrift für Einheitennamen"
+B.Locales.deDE["Combat-number font"]="Schrift für Kampfzahlen"
+B.Locales.deDE["Label font"]="Textschrift"
+B.Locales.deDE["Text: default"]="Text: Standard"
+B.Locales.deDE["Text: gold"]="Text: Gold"
+B.Locales.deDE["Text: cyan"]="Text: Cyan"
+B.Locales.deDE["Text: green"]="Text: Grün"
+B.Locales.deDE["How to buff"]="So funktioniert es"
+B.Locales.deDE["Open settings"]="Einstellungen öffnen"
+B.Locales.deDE["Disable BuffTap"]="BuffTap deaktivieren"
+B.Locales.deDE["Resume reminders"]="Erinnerungen fortsetzen"
+B.Locales.deDE["Pause reminders for:"]="Erinnerungen pausieren für:"
+B.Locales.deDE["%d min"]="%d Min."
+B.Locales.deDE["Preview reminder"]="Erinnerung ansehen"
+B.Locales.deDE["Choose buffs and binding"]="Buffs und Taste auswählen"
+B.Locales.deDE["Got it"]="Verstanden"
+B.Locales.deDE["none — click the reminder"]="keine — Erinnerung anklicken"
+B.Locales.deDE["BuffTap — drag to move"]="BuffTap — zum Verschieben ziehen"
+B.Locales.deDE["Editing reminder position."]="Position der Erinnerung bearbeiten."
+B.Locales.deDE["Reminders paused: %d min remaining"]="Erinnerungen pausiert: noch %d Min."
+B.Locales.deDE["Enter saves fields. Move here or in Blizzard Edit Mode."]="Eingabe speichert. Hier oder im Blizzard-Bearbeitungsmodus verschieben."
+B.Locales.deDE["Left-click: settings. Right-click: quick controls. Drag to move."]="Linksklick: Einstellungen. Rechtsklick: Schnellzugriff. Ziehen zum Verschieben."
+B.Locales.deDE["Choose the buffs you want in Settings.\n\nYour current binding: %s\nWhen a reminder appears, use that binding or click it to apply the next buff. Every cast needs your input.\n\nLeft-click the minimap icon for Settings; right-click for pause and preview controls."]="Wähle die gewünschten Buffs in den Einstellungen.\n\nAktuelle Taste: %s\nWenn eine Erinnerung erscheint, nutze die Taste oder klicke darauf, um den nächsten Buff zu wirken. Jeder Zauber benötigt deine Eingabe.\n\nMinikarte: Linksklick für Einstellungen, Rechtsklick für Pause und Vorschau."
+
+-- Branded onboarding.
+B.Locales.deDE["Ready when you are."]="Bereit, wenn du es bist."
+B.Locales.deDE["Choose your buffs — pick what to maintain in Settings."]="Wähle in den Einstellungen die Buffs, die du erhalten möchtest."
+B.Locales.deDE["Use your binding — scroll or click when a reminder appears."]="Nutze deine Taste oder klicke, wenn eine Erinnerung erscheint."
+B.Locales.deDE["Keep adventuring — BuffTap prepares your next action."]="BuffTap bereitet deine nächste Aktion vor. Weiter ins Abenteuer!"
+B.Locales.deDE["Your current binding"]="Deine aktuelle Taste"
+B.Locales.deDE["Right-click the minimap icon for quick controls and pause."]="Rechtsklick auf das Minikartensymbol öffnet Schnellzugriff und Pause."

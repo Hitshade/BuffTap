@@ -264,6 +264,7 @@ function B:Commit(action,reason)
   if action and action.source=="consumable" and not self:ValidateConsumable(action,false,true) then action=nil; reason="item changed before preparation" end
   if action and action.source=="weapon-reminder" and not self:ValidateWeaponReminder(action) then action=nil; reason="weapon reminder changed before display" end
   if action and action.source=="readiness" and not self:Validate(action) then action=nil; reason="readiness changed before preparation" end
+  if self.ApplyReminderStyle then self:ApplyReminderStyle(b) end
   local previous=self.action
   if self.quickChoices then self.quickChoices:Hide() end
   local appearance=table.concat({self.db.size,self.db.opacity,self.db.x,self.db.y,tostring(self.db.glow),tostring(self.db.pulse),
@@ -572,11 +573,6 @@ function B:IsWatchedUnit(unit)
   return false
 end
 
-function B:CaptureDiagnostics()
-  if A.Combat() then return end
-  self:Refresh(true)
-end
-
 function B:DiagnosticsLines()
   local out={}
   out[#out+1]="State: " .. (A.Combat() and "combat / secure suspension" or (self.reason or "initializing"))
@@ -706,7 +702,7 @@ local bookEvents={SPELLS_CHANGED=true,PLAYER_LOGIN=true,PLAYER_ENTERING_WORLD=tr
 local castEvents={UNIT_SPELLCAST_SUCCEEDED=true,UNIT_SPELLCAST_FAILED=true,UNIT_SPELLCAST_INTERRUPTED=true}
 
 local function handleEvent(_,event,arg,castGUID,spellID)
-  if event=="ADDON_LOADED" then if arg==ADDON then B:InitDB() end; return end
+  if event=="ADDON_LOADED" then if arg==ADDON then B:InitDB() end; if B.SyncEditMode then B:SyncEditMode() end; return end
   if not B.db then return end
     if event=="PLAYER_REGEN_DISABLED" and B.SuspendItemDataRetries then B:SuspendItemDataRetries() end
   if event=="PLAYER_REGEN_ENABLED" and B.ResumeItemDataRetries then B:ResumeItemDataRetries() end
@@ -794,9 +790,12 @@ local itemRequested=event=="ITEM_DATA_LOAD_RESULT" and A.Number(arg) and ((B.ite
   if event=="UPDATE_BINDINGS" then B.appearance=nil end
   if event=="PLAYER_LOGIN" or event=="PLAYER_ENTERING_WORLD" then
     if B.RegisterOptionsCategory then B:RegisterOptionsCategory() end
-    B:Refresh(false); return
+    B:Refresh(false)
+    if B.SyncEditMode then B:SyncEditMode() end
+    if B.ScheduleWelcome then B:ScheduleWelcome() end
+    return
   end
-  if event=="PLAYER_REGEN_ENABLED" then B:Refresh(false); return end
+  if event=="PLAYER_REGEN_ENABLED" then B:Refresh(false); if B.ScheduleWelcome then B:ScheduleWelcome() end; return end
   B.dirty=true
   B:RequestRefresh(event,0.05)
 end

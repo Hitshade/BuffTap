@@ -147,7 +147,7 @@ B.Locales["ptBR"]={
   ["Reminders pause while mounted."]="Lembretes ficam pausados em montarias.",
   ["Player is dead, a ghost, or unavailable."]="O personagem está morto, é um fantasma ou está indisponível.",
   ["No action is currently eligible. Buffs may be covered or excluded; check Diagnostics for details."]="Nenhuma ação está disponível agora. Benefícios podem estar ativos ou excluídos; consulte Diagnóstico.",
-  ["Ready: %s → %s"]="Pronto: %s → %s",
+  ["Ready: %s - %s"]="Pronto: %s - %s",
   ["Status: %s"]="Estado: %s",
   ["%d sec"]="%d s",
   ["%d min"]="%d min",
@@ -279,3 +279,38 @@ B.Locales.ptBR["Sounds"]="Sons"
 B.Locales.ptBR["Enable reminder sound"]="Ativar som do lembrete"
 B.Locales.ptBR["Enter to save"]="Enter para salvar"
 B.Locales.ptBR["Only checked blessings are used. Use arrows to order; 1 is first."]="Somente bênçãos marcadas são usadas. Ordene com as setas; 1 vem primeiro."
+
+-- Convenience controls and first-use guidance.
+B.Locales.ptBR["Welcome to BuffTap"]="Bem-vindo ao BuffTap"
+B.Locales.ptBR["Default font"]="Fonte padrão"
+B.Locales.ptBR["Unit-name font"]="Fonte de nomes"
+B.Locales.ptBR["Combat-number font"]="Fonte de números de combate"
+B.Locales.ptBR["Label font"]="Fonte do texto"
+B.Locales.ptBR["Text: default"]="Texto: padrão"
+B.Locales.ptBR["Text: gold"]="Texto: dourado"
+B.Locales.ptBR["Text: cyan"]="Texto: ciano"
+B.Locales.ptBR["Text: green"]="Texto: verde"
+B.Locales.ptBR["How to buff"]="Como aplicar bônus"
+B.Locales.ptBR["Open settings"]="Abrir configurações"
+B.Locales.ptBR["Disable BuffTap"]="Desativar BuffTap"
+B.Locales.ptBR["Resume reminders"]="Retomar lembretes"
+B.Locales.ptBR["Pause reminders for:"]="Pausar lembretes por:"
+B.Locales.ptBR["%d min"]="%d min"
+B.Locales.ptBR["Preview reminder"]="Prévia do lembrete"
+B.Locales.ptBR["Choose buffs and binding"]="Escolher bônus e atalho"
+B.Locales.ptBR["Got it"]="Entendi"
+B.Locales.ptBR["none — click the reminder"]="nenhum — clique no lembrete"
+B.Locales.ptBR["BuffTap — drag to move"]="BuffTap — arraste para mover"
+B.Locales.ptBR["Editing reminder position."]="Editando a posição do lembrete."
+B.Locales.ptBR["Reminders paused: %d min remaining"]="Lembretes pausados: restam %d min"
+B.Locales.ptBR["Enter saves fields. Move here or in Blizzard Edit Mode."]="Enter salva. Mova aqui ou no modo de edição da Blizzard."
+B.Locales.ptBR["Left-click: settings. Right-click: quick controls. Drag to move."]="Clique esquerdo: configurações. Clique direito: controles rápidos. Arraste para mover."
+B.Locales.ptBR["Choose the buffs you want in Settings.\n\nYour current binding: %s\nWhen a reminder appears, use that binding or click it to apply the next buff. Every cast needs your input.\n\nLeft-click the minimap icon for Settings; right-click for pause and preview controls."]="Escolha os bônus desejados nas configurações.\n\nAtalho atual: %s\nQuando aparecer um lembrete, use o atalho ou clique nele para aplicar o próximo bônus. Cada lançamento exige sua ação.\n\nMinimapa: clique esquerdo para configurações; clique direito para pausa e prévia."
+
+-- Branded onboarding.
+B.Locales.ptBR["Ready when you are."]="Pronto quando você estiver."
+B.Locales.ptBR["Choose your buffs — pick what to maintain in Settings."]="Escolha nas configurações os bônus que deseja manter."
+B.Locales.ptBR["Use your binding — scroll or click when a reminder appears."]="Use seu atalho ou clique quando aparecer um lembrete."
+B.Locales.ptBR["Keep adventuring — BuffTap prepares your next action."]="Continue a aventura: BuffTap prepara sua próxima ação."
+B.Locales.ptBR["Your current binding"]="Seu atalho atual"
+B.Locales.ptBR["Right-click the minimap icon for quick controls and pause."]="Clique direito no ícone do minimapa para controles rápidos e pausa."

@@ -4,7 +4,7 @@
 
 local _, B = ...
 _G.BuffTap = B
-B.version = "1.12.0"
+B.version = "1.13.1"
 B.API = {}
 local A = B.API
 
@@ -70,6 +70,7 @@ function B:InitDB()
   end
   if not A.Number(self.db.helperTracker) or (self.db.helperTracker~=2383 and self.db.helperTracker~=2580 and self.db.helperTracker~=43308) then self.db.helperTracker=0 end
   if not A.Number(self.db.helperDemon) or (self.db.helperDemon~=688 and self.db.helperDemon~=697 and self.db.helperDemon~=712 and self.db.helperDemon~=713 and self.db.helperDemon~=691) then self.db.helperDemon=0 end
+  if self.NormalizeConvenience then self:NormalizeConvenience() end
   if self.NormalizeAlerts then self:NormalizeAlerts() end
   if self.NormalizeCoatings then self:NormalizeCoatings() end
   if self.SyncBroker then self:SyncBroker() end
@@ -206,6 +207,8 @@ end
 
 -- Read native state on demand; events drive updates, with no location polling.
 function B:ReminderPauseReason()
+  if self.pauseUntil and GetTime()<self.pauseUntil then return "temporary pause" end
+  if self.editModeActive then return "editing reminder" end
   if A.Call(IsMounted)==true then return "mounted" end
   if self.db and self.db.pauseResting and A.Call(IsResting)==true then return "resting" end
 end
@@ -421,11 +424,6 @@ function B:NormalizeBuffGroups(b)
     return true
   end
   return false
-end
-
-function B:ClearBuffGroups(b)
-  local key=self:RootKey(b)
-  if key and self.db.buffGroups then self.db.buffGroups[key]=nil end
 end
 
 function B:GroupAssignableBuffs()

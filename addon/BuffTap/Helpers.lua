@@ -200,7 +200,7 @@ function B:DiscoverConsumables()
 end
 
 function B:SoloThanksAllowed()
-  return self:HelperEnabled("helperThanks") and self.db.enabled and not A.Combat()
+  return self:HelperEnabled("helperThanks") and self.db.enabled and not A.Combat() and not self:ReminderPauseReason()
     and A.Call(IsInGroup)==false and A.Call(IsInRaid)==false and A.Call(IsInInstance)==false
     and A.Call(UnitIsDeadOrGhost,"player")==false
 end
