@@ -1,4 +1,4 @@
-![BuffTap — Less buff management. More adventure. For all classes in WoW Forever.](https://raw.githubusercontent.com/Hitshade/BuffTap/main/docs/bufftap-banner.png)
+![BuffTap — Less buff management. More adventure. For all classes in WoW Forever.](docs/bufftap-banner.png)
 
 **Smart buff reminders and effortless mouse-wheel buffing for all classes in WoW Forever.**
 
@@ -37,7 +37,7 @@ Helpers are opt-in, so you choose how much assistance you want.
 
 ## 🎨 Make it your own
 
-Open **Customization** to adjust your binding, appearance, sounds and quick access. Open **Customization** to adjust your binding, appearance, sounds and quick access. Open **Customization** to adjust your binding, appearance, sounds and quick access. Open **Customization** to adjust your binding, appearance, sounds and quick access. Use arrows to arrange buff priorities. Move and resize the reminder, adjust opacity, labels, timers, glow, and pulse. Choose separate reminder and low-stock sounds, preview them, and control alert frequency. Reminders pause while mounted; optionally pause them in cities and inns too.
+Open **Customization** to adjust your binding, appearance, sounds and quick access. Use arrows to arrange buff priorities. Move and resize the reminder, adjust opacity, labels, timers, glow, and pulse. Choose separate reminder and low-stock sounds from game assets or installed SharedMedia packs, search and preview them, and control alert frequency. Reminders pause while mounted; optionally pause them in cities and inns too.
 
 Open settings from the **draggable minimap button** or enable an optional **LibDataBroker display** alongside—or in place of—the standard reminder. Native game icons and automatic Spanish, German, French, and Brazilian Portuguese localization keep the interface familiar; untranslated text falls back to English.
 

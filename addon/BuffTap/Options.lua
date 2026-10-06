@@ -55,32 +55,52 @@ local function button(parent,text,x,y,w,fn)
 end
 
 -- One selector convention: explicit choices, a visible arrow and toggle-to-close.
-local function selector(parent,text,x,y,width,choices,onSelect)
-  local control
+local function selector(parent,text,x,y,width,choices,onSelect,searchable)
+  local control,menu,render
   control=button(parent,text,x,y,width,function()
     if A.Combat() then return end
-    local menu=control.menu
     if menu:IsShown() then menu:Hide(); return end
     if B.options and B.options.activeSelector and B.options.activeSelector~=menu then B.options.activeSelector:Hide() end
     if B.options then B.options.activeSelector=menu end
-    local entries=choices(); menu:SetSize(width,#entries*28+8)
-    for _,row in ipairs(menu.rows) do row:Hide() end
-    for i,entry in ipairs(entries) do
-      local row=menu.rows[i]
-      if not row then row=button(menu,"",4,-4-(i-1)*28,width-8,function(btn)
-        if A.Combat() then return end
-        onSelect(btn.choice); menu:Hide(); B:Options()
-      end); menu.rows[i]=row end
-      row.choice=entry.key; row:SetText(L(entry.name)); row:Show()
-    end
-    menu:Show()
+    render(); menu:Show()
   end)
   control.arrow=control:CreateTexture(nil,"OVERLAY"); control.arrow:SetSize(16,16); control.arrow:SetPoint("RIGHT",-4,0)
   control.arrow:SetTexture("Interface\\ChatFrame\\UI-ChatIcon-ScrollDown-Up")
-  local menu=CreateFrame("Frame",nil,parent,"BackdropTemplate"); control.menu=menu
+  menu=CreateFrame("Frame",nil,parent,"BackdropTemplate"); control.menu=menu
   menu:SetPoint("TOPLEFT",control,"BOTTOMLEFT",0,-2); menu:SetFrameStrata("TOOLTIP"); menu:SetClampedToScreen(true)
   menu:SetBackdrop({bgFile="Interface\\Buttons\\WHITE8X8",edgeFile="Interface\\Buttons\\WHITE8X8",edgeSize=1})
   menu:SetBackdropColor(.04,.05,.06,1); menu:SetBackdropBorderColor(.48,.40,.25,1); menu.rows={}; menu:Hide()
+  render=function()
+    local all=choices(); local entries={}
+    local query=searchable and string.lower(menu.search:GetText() or "") or ""
+    for _,entry in ipairs(all) do if query=="" or string.find(string.lower(entry.name),query,1,true) then entries[#entries+1]=entry end end
+    local count=#entries
+    local top=searchable and 34 or 4
+    menu:SetSize(searchable and 340 or width,top+(searchable and math.max(28,math.min(7,count)*28) or count*28)+4)
+    if searchable then
+      menu.content:SetHeight(math.max(1,count*28)); menu.scroll:SetVerticalScroll(0)
+      menu.empty:SetShown(count==0)
+    end
+    for _,row in ipairs(menu.rows) do row:Hide() end
+    for i=1,count do
+      local entry=entries[i]; local row=menu.rows[i]
+      if not row then row=button(searchable and menu.content or menu,"",4,-(searchable and 0 or top)-(i-1)*28,(searchable and 312 or width)-8,function(btn)
+        if A.Combat() then return end
+        onSelect(btn.choice); menu:Hide(); B:Options()
+      end); menu.rows[i]=row end
+      row.choice=entry.key; row:SetText((searchable and entry.source and L(entry.source)..": " or "")..L(entry.name)); row:Show()
+    end
+  end
+  if searchable then
+    label(menu,L("Search"),8,-10,"GameFontHighlightSmall")
+    menu.search=CreateFrame("EditBox",nil,menu,"InputBoxTemplate"); menu.search:SetSize(256,22); menu.search:SetPoint("TOPLEFT",68,-5); menu.search:SetAutoFocus(false)
+    menu.search:SetScript("OnTextChanged",function() render() end)
+    menu.search:SetScript("OnEscapePressed",function(box) box:ClearFocus(); menu:Hide() end)
+    menu.scroll=CreateFrame("ScrollFrame",nil,menu,"UIPanelScrollFrameTemplate")
+    menu.scroll:SetPoint("TOPLEFT",4,-34); menu.scroll:SetPoint("BOTTOMRIGHT",-28,4)
+    menu.content=CreateFrame("Frame",nil,menu.scroll); menu.content:SetSize(308,1); menu.scroll:SetScrollChild(menu.content)
+    menu.empty=label(menu.content,L("No matches"),8,-6,"GameFontDisableSmall"); menu.empty:Hide()
+  end
   parent:HookScript("OnHide",function() menu:Hide() end)
   return control
 end
@@ -1382,9 +1402,9 @@ function B:Options()
     local function soundControl(kind,y)
       label(app,kind=="supply" and L("Supply sound") or L("Reminder sound"),18,y-5,"GameFontHighlightSmall",112)
       local key=kind=="supply" and "supplySound" or "reminderSound"
-      local choice=selector(app,"",138,y,180,function() return B:SoundChoices() end,function(value) B.db[key]=value end)
+      local choice=selector(app,"",138,y,180,function() return B:SoundChoices() end,function(value) B.db[key]=value end,true)
       button(app,L("Preview"),326,y,90,function() if not B:PlayAlert(kind,true) then B.Print(L("Sound preview unavailable.")) end end)
-      addHelp(choice,L("Sound"),L("Open the list to choose a sound.").."\n"..L("Only verified client sound choices are offered. Preview ignores the alert toggle."))
+      addHelp(choice,L("Sound"),L("Open the list to choose a sound.").."\n"..L("Game sounds and installed SharedMedia sounds are available. Search or scroll the list; Preview ignores the alert toggle. Missing media uses the default sound without forgetting your choice."))
       return choice
     end
     f.reminderSoundButton=soundControl("reminder",-416)

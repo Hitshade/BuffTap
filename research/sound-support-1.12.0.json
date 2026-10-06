@@ -1,0 +1,16 @@
+{
+  "build": "1.60.1.70009",
+  "source": "https://wago.tools/db2/SoundKit/csv?build=1.60.1.70009",
+  "sha256": "af49f60cedc2b56333b99b4a53a6a4a46d79643c0d74bf182abe1d70ec9c40f5",
+  "verifiedIDs": [
+    12867,
+    8960,
+    8959,
+    3081,
+    18871,
+    12889,
+    878
+  ],
+  "additionalChoices": "Require named SOUNDKIT constant in the running client",
+  "sharedMedia": "Optional installed library, HashTable lookup of explicit sound selection; PlaySoundFile for file paths or file IDs. No bundled media/library. No polling. Registry read only when picker opens or alert plays."
+}
