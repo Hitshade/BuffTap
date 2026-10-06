@@ -497,4 +497,3 @@ function B:WeaponInventoryRelevant()
   end
   return false
 end
-

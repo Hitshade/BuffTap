@@ -26,6 +26,7 @@ function B:NormalizeAlerts()
 end
 function B:PlayAlert(kind,preview)
   if not self.db or type(PlaySound)~="function" then return false end
+  if not preview and self.ReminderPauseReason and self:ReminderPauseReason() then return false end
   if not preview and not (kind=="supply" and self.db.suppliesSound or kind~="supply" and self.db.sound) then return false end
   local selected=self.db[kind=="supply" and "supplySound" or "reminderSound"]
   local id=12867
@@ -42,6 +43,7 @@ function B:FriendlyStatus()
   if not self.db or not self.db.enabled then return self:Text("BuffTap is disabled.") end
   if A.Combat() then return self:Text("Reminders pause during combat.") end
   if self.action then return self:Text("Ready: %s → %s",self.action.name or "?",self.action.targetName or "?") end
+  if self.reason=="resting" then return self:Text("Reminders pause in cities and inns.") end
   if self.reason=="mounted" then return self:Text("Reminders pause while mounted.") end
   if self.reason=="dead / ghost / player unavailable" then return self:Text("Player is dead, a ghost, or unavailable.") end
   if self.reason=="nothing actionable" then return self:Text("No action is currently eligible. Buffs may be covered or excluded; check Diagnostics for details.") end

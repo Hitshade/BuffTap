@@ -4,7 +4,7 @@
 
 local _, B = ...
 _G.BuffTap = B
-B.version = "1.8.1"
+B.version = "1.9.0"
 B.API = {}
 local A = B.API
 
@@ -57,7 +57,7 @@ function B:InitDB()
   local defaults = {enabled=true, size=64, opacity=1, x=0, y=-180,
     seconds=45, rebuffVersion=1, sound=false, reminderSound="default", supplySound="default", soundChannel="Master", soundInterval=5, glow=true, pulse=false, group=false, smartGroup=true,
     groupNeed=3, blessingNeed=2, friendlyTarget=false, targetSeconds=300, keys={"MOUSEWHEELDOWN"}, buffs={}, priorities={}, buffSeconds={},
-    blessingAssignments=false, blessingClasses={}, buffGroups={}, buffClasses={}, buffGroupNeed={}, targetBuffs={}, targetBuffSeconds={}, showBuffName=false, showTargetName=true, showTimer=false, showGroupBadge=true,
+    pauseResting=false, targetClassBlessings=true, targetBlessingClasses={}, blessingAssignments=false, blessingClasses={}, buffGroups={}, buffClasses={}, buffGroupNeed={}, targetBuffs={}, targetBuffSeconds={}, showBuffName=false, showTargetName=true, showTimer=false, showGroupBadge=true,
     consumablesEnabled=false, consumableFamilies={}, consumableChoices={}, consumableSeconds={},
     suppliesEnabled=false, suppliesChat=false, suppliesSound=false, suppliesReadyCheck=false, supplySettings={},
     weaponReminder=true, weaponMainHand=true, weaponOffHand=true,
@@ -202,6 +202,34 @@ function B:RebuffSeconds(b)
   local value=key and self.db.buffSeconds and self.db.buffSeconds[key]
   if type(value)=="number" then return math.max(15,math.min(180,value)) end
   return self.db.seconds
+end
+
+-- Read native state on demand; events drive updates, with no location polling.
+function B:ReminderPauseReason()
+  if A.Call(IsMounted)==true then return "mounted" end
+  if self.db and self.db.pauseResting and A.Call(IsResting)==true then return "resting" end
+end
+
+function B:TargetBlessingChoice(entry)
+  if not self.db.targetClassBlessings then return nil end
+  local selected=self.db.targetBlessingClasses[entry.class]
+  if selected=="skip" then return "skip" end
+  local function eligible(def,automatic)
+    if not def or def.kind~="blessing" or def.singleKey or not self:Enabled(def) or not self:TargetBuffEnabled(def) then return false end
+    if automatic and def.target then
+      local matched=false
+      for _,class in ipairs(def.target) do if class==entry.class then matched=true; break end end
+      if not matched then return false end
+    end
+    return self:Supported(def)==true and self:Resolve(def,entry.unit)~=nil
+  end
+  -- An explicit class choice may deliberately differ from the catalog defaults.
+  if selected and eligible(self:FindBuff(selected),false) then return selected end
+  if not entry.class then return "skip" end
+  for _,def in ipairs(self.blessingClassList or self:ClassList()) do
+    if eligible(def,true) then return def.key end
+  end
+  return "skip"
 end
 
 function B:TargetBuffEnabled(b)
@@ -685,6 +713,7 @@ function B:AddRangeBlocked(action)
 end
 
 function B:Validate(action)
+  local paused=self:ReminderPauseReason(); if paused then return false,paused end
   if action and action.source=="readiness" then
     local needed,why=self:ReadinessStillNeeded(action)
     if not needed then return false,why end
@@ -802,8 +831,10 @@ B.BlessingFamilies={"bok","bom","bow","bos","bol"}
 function B:NormalizeBlessingAssignments()
   local valid={skip=true}; for _,key in ipairs(self.BlessingFamilies) do valid[key]=true end
   local classes={WARRIOR=true,PALADIN=true,HUNTER=true,ROGUE=true,PRIEST=true,SHAMAN=true,MAGE=true,WARLOCK=true,DRUID=true}
-  for class,key in pairs(self.db.blessingClasses) do
-    if not classes[class] or type(key)~="string" or not valid[key] then self.db.blessingClasses[class]=nil end
+  for _,map in ipairs({self.db.blessingClasses,self.db.targetBlessingClasses}) do
+    for class,key in pairs(map) do
+      if not classes[class] or type(key)~="string" or not valid[key] then map[class]=nil end
+    end
   end
 end
 function B:BlessingGroupNeed(def)
@@ -864,6 +895,20 @@ end
 function B:BlessingActionAllowed(action)
   local def=action and self:FindBuff(action.key)
   if not def or def.kind~="blessing" then return true end
+  if action.quickTarget and not action.blessingAssigned then
+    if not self.db.friendlyTarget or not self:TargetBuffEnabled(def) or not self:Enabled(def) then return false end
+    local entry=self:FriendlyTargetEntry()
+    if not entry then return false end
+    -- If a group assignment became active after preparation, force a fresh scan.
+    if self:BlessingAssignmentsActive() then
+      for _,member in ipairs(self:Roster()) do
+        local guid=A.Call(UnitGUID,entry.unit)
+        if A.Call(UnitIsUnit,member.unit,entry.unit)==true or (A.Text(guid) and A.Call(UnitGUID,member.unit)==guid) then return false end
+      end
+    end
+    local choice=self:TargetBlessingChoice(entry)
+    return choice==nil or choice==(def.singleKey or def.key)
+  end
   if not self:BlessingAssignmentsActive() then return not action.blessingAssigned end
   local roster=self:Roster(); local target
   for _,entry in ipairs(roster) do
@@ -889,6 +934,11 @@ function B:RecipientAllowed(b,entry)
   -- Explicit targets and personal maintenance are independent of group assignments.
   if b.kind=="blessing" and self:BlessingAssignmentsActive() and (not entry.quickTarget or entry.blessingAssigned) then
     return self:BlessingChoice(entry)==(b.singleKey or b.key)
+  end
+  if entry.quickTarget and b.kind=="blessing" then
+    local choice=entry.targetBlessingChoice
+    if choice==nil then choice=self:TargetBlessingChoice(entry) end
+    return choice==nil or choice==(b.singleKey or b.key)
   end
   return entry.quickTarget or entry.unit=="player" or self:GroupClassAllowed(b,entry.class)
 end
@@ -952,7 +1002,7 @@ function B:Select()
   if self.captureDiagnostics then self.diagnostics={} end
   if not self.db.enabled then return nil,"disabled" end
   if A.Call(UnitIsDeadOrGhost,"player") ~= false then return nil,"dead / ghost / player unavailable" end
-  if A.Call(IsMounted) == true then return nil,"mounted" end
+  local paused=self:ReminderPauseReason(); if paused then return nil,paused end
   local casting,castError=A.Call(UnitCastingInfo,"player")
   local channeling,channelError=A.Call(UnitChannelInfo,"player")
   if castError or channelError then return nil,"cast/channel state unreadable" end
@@ -990,11 +1040,12 @@ function B:Select()
     end
   end
   if quick then
+    if not quick.blessingAssigned then quick.targetBlessingChoice=self:TargetBlessingChoice(quick) end
     local blessingOwned=false
     for _,b in ipairs(list) do
       local supported,why=self:Supported(b)
       if (self:Enabled(b) or (blessingPlan and quick.blessingAssigned and b.kind=="blessing")) and (self:TargetBuffEnabled(b) or (blessingPlan and quick.blessingAssigned and b.kind=="blessing")) and supported and not b.singleKey and (b.kind=="single" or b.kind=="blessing")
-        and not (b.kind=="blessing" and blessingOwned) then
+        and not (b.kind=="blessing" and blessingOwned) and self:RecipientAllowed(b,quick) then
         local targetThreshold=self:TargetRebuffSeconds(b)
         local missing=self:ScanMissing(b,{quick},scans,scanErrors,targetThreshold)
         if #missing>0 then
@@ -1175,4 +1226,3 @@ function B:RevalidateGroupAction(action)
   if valid then action.groupCount=fresh.groupCount; action.reason=fresh.reason end
   return valid==true
 end
-

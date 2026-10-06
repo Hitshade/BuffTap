@@ -59,11 +59,12 @@ local original=CreateFrame
 CreateFrame=function(...)
  local frame=original(...); local size=frame.SetSize
  frame.SetSize=function(self,w,h) self.width=w; self.height=h; size(self,w,h) end
+ frame.SetHeight=function(self,h) self.height=h end
  frame.SetPoint=function(self,...) local p={...}; if p[1]=="TOPLEFT" then self.points=p end end
  return frame
 end
 BuffTap:Options(); local f=BuffTap.options; f.expandedBlessing='WARRIOR'; BuffTap:Options()
-assert(f.height==766 and f.blessingDetail.height==86)
+assert(f.height==766 and f.blessingDetail.height==78)
 for _,row in ipairs(f.blessingRows) do assert(-row.points[3]+row.height<574) end
 assert(#f.blessingPlayerRows==2)
 ''')
@@ -85,6 +86,7 @@ local original=CreateFrame
 CreateFrame=function(...)
  local frame=original(...)
  frame.SetSize=function(self,w,h) self.width=w; self.height=h end
+ frame.SetHeight=function(self,h) self.height=h end
  frame.SetPoint=function(self,...) local p={...}; if p[1]=="TOPLEFT" then self.points=p end end
  return frame
 end

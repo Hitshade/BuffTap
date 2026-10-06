@@ -166,7 +166,7 @@ function B:CreateButton()
 
   b:SetScript("OnEnter",function()
     local action=B.action
-    if A.Combat() or not action or not action.valid or not GameTooltip then return end
+    if A.Combat() or B:ReminderPauseReason() or not action or not action.valid or not GameTooltip then return end
     GameTooltip:SetOwner(b,"ANCHOR_RIGHT")
     if action.source=="weapon-reminder" then
       GameTooltip:SetText(action.name,1,0.82,0.1)
@@ -201,6 +201,7 @@ function B:CreateButton()
     local ok=guarded("click validation",function()
     if A.Combat() then return end
     local action=B.action
+    local paused=B:ReminderPauseReason(); if paused then B:Commit(nil,paused); return end
     if not action then return end
     if B:HelperSuppressed(action) then B:Commit(nil,"dismissed"); return end
     if action.source=="readiness" then
@@ -243,6 +244,7 @@ function B:CreateButton()
     if not A.Combat() and button=="RightButton" and not down and B:HelperEnabled("helperDismiss") then B:DismissHelper(B.action); return end
     if A.Combat() or (button and button~="LeftButton") then return end
     local action=B.action
+    local paused=B:ReminderPauseReason(); if paused then B:Commit(nil,paused); return end
     if action then
       if action.source=="weapon-reminder" then B:AfterWeaponClick(action,down)
       elseif action.source=="readiness" then B:AfterReadinessClick(action,down)
@@ -681,7 +683,7 @@ local events={"ADDON_LOADED","PLAYER_LOGIN","PLAYER_ENTERING_WORLD","PLAYER_REGE
   "PLAYER_TALENT_UPDATE","ACTIVE_TALENT_GROUP_CHANGED","PLAYER_SPECIALIZATION_CHANGED","GROUP_ROSTER_UPDATE",
   "ZONE_CHANGED_NEW_AREA","PLAYER_LEVEL_UP","SPELL_DATA_LOAD_RESULT","SPELL_TEXT_UPDATE","UNIT_SPELLCAST_SUCCEEDED",
   "UNIT_SPELLCAST_FAILED","UNIT_SPELLCAST_INTERRUPTED","SPELL_UPDATE_COOLDOWN","UNIT_POWER_UPDATE",
-  "PLAYER_EQUIPMENT_CHANGED","WEAPON_ENCHANT_CHANGED","WEAPON_SLOT_CHANGED","PLAYER_MOUNT_DISPLAY_CHANGED","UPDATE_SHAPESHIFT_FORM","UPDATE_BINDINGS",
+  "PLAYER_EQUIPMENT_CHANGED","WEAPON_ENCHANT_CHANGED","WEAPON_SLOT_CHANGED","PLAYER_MOUNT_DISPLAY_CHANGED","PLAYER_UPDATE_RESTING","UPDATE_SHAPESHIFT_FORM","UPDATE_BINDINGS",
   "BAG_UPDATE_DELAYED","ITEM_DATA_LOAD_RESULT","UI_ERROR_MESSAGE","MINIMAP_UPDATE_TRACKING","UNIT_CONNECTION",
   "ADDON_RESTRICTION_STATE_CHANGED","UNIT_AURA_BLOCKED","UNIT_AURA_BLOCK_LIST_CLEARED"}
 local playerOnlyEvents={UNIT_POWER_UPDATE=true,UNIT_SPELLCAST_SUCCEEDED=true,UNIT_SPELLCAST_FAILED=true,UNIT_SPELLCAST_INTERRUPTED=true}
@@ -717,6 +719,12 @@ local itemRequested=event=="ITEM_DATA_LOAD_RESULT" and A.Number(arg) and ((B.ite
     local ok,handled=pcall(B.ReadinessEvent,B,event,arg,castGUID,spellID)
     if not ok then B.readinessStatus="Class readiness event unavailable"
     elseif handled then return end
+  end
+  if event=="PLAYER_MOUNT_DISPLAY_CHANGED" or event=="PLAYER_UPDATE_RESTING" then
+    if B.InvalidateSupplies then B:InvalidateSupplies(false) end
+    if B.UpdateSupplyBadge then B:UpdateSupplyBadge() end
+    if A.Combat() then B.dirty=true else B:Refresh(false) end
+    return
   end
   if B.HelperEvent then B:HelperEvent(event,arg,castGUID,spellID) end
   if event=="UI_ERROR_MESSAGE" then return end
@@ -912,4 +920,3 @@ SlashCmdList.BUFFTAP=function(text)
   B.appearance=nil
   B:Refresh(false); B:Status(false)
 end
-

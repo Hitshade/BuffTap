@@ -51,7 +51,7 @@ PALADIN aura shadow-res-aura 19876 0 paladinaura
 PALADIN aura frost-res-aura 19888 0 paladinaura
 PALADIN aura fire-res-aura 19891 0 paladinaura
 PALADIN tracking sense-undead 5502 0
-PALADIN seal seal-righteousness 21084 1 seals
+PALADIN seal seal-righteousness 21084 0 seals
 PALADIN seal seal-crusader 21082 0 seals
 PALADIN seal seal-command 20375 0 seals
 PALADIN seal seal-justice 20164 0 seals

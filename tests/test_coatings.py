@@ -39,4 +39,3 @@ test('Diagnostics tolerate incomplete action display metadata',"BuffTap.action={
 print(f'ALL {len(tests)} SCENARIOS PASSED')
 (ROOT/'tests/regression-coatings-latest.txt').write_text('\n'.join('PASS '+n for n in tests)+f'\n{len(tests)} mocked Lua 5.1 scenarios passed. Live weapon application and stacking checks pending.\n',encoding='utf-8')
 
-

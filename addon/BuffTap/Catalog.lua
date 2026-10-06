@@ -46,7 +46,7 @@ B.Buffs={
   {key="frost-res-aura",class="PALADIN",kind="aura",name="Frost Resistance Aura",ranks={19898,19897,19888},defaultOn=false,coverage="paladinaura"},
   {key="fire-res-aura",class="PALADIN",kind="aura",name="Fire Resistance Aura",ranks={19900,19899,19891},defaultOn=false,coverage="paladinaura"},
   {key="sense-undead",class="PALADIN",kind="tracking",name="Sense Undead",ranks={5502},defaultOn=false,covers={"Sense Undead"}},
-  {key="seal-righteousness",class="PALADIN",kind="seal",name="Seal of Righteousness",ranks={20293,20292,20291,20290,20289,20288,20287,21084,20154},defaultOn=true,coverage="seals"},
+  {key="seal-righteousness",class="PALADIN",kind="seal",name="Seal of Righteousness",ranks={20293,20292,20291,20290,20289,20288,20287,21084,20154},defaultOn=false,coverage="seals"},
   {key="seal-crusader",class="PALADIN",kind="seal",name="Seal of the Crusader",ranks={20308,20307,20306,20305,20162,21082},defaultOn=false,coverage="seals"},
   {key="seal-command",class="PALADIN",kind="seal",name="Seal of Command",ranks={20920,20919,20918,20915,20375},defaultOn=false,coverage="seals"},
   {key="seal-justice",class="PALADIN",kind="seal",name="Seal of Justice",ranks={20164},defaultOn=false,coverage="seals"},

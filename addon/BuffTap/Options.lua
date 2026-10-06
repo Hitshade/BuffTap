@@ -158,8 +158,8 @@ end
 
 
 local function blessingName(key)
-  if not key or key=="inherit" then return L("Use current settings") end
-  if key=="skip" then return L("Skip") end
+  if not key or key=="inherit" then return L("Follow buff settings") end
+  if key=="skip" then return L("Skip this class") end
   local def=B:FindBuff(key)
   return def and spellLabel(def):gsub("Blessing of ","") or L("Unavailable")
 end
@@ -170,43 +170,58 @@ local function blessingIcon(key)
 end
 local function blessingPick(parent,x,y,width,getChoice,setChoice,player)
   local pick=button(parent,"",x,y,width,function(control)
-    if A.Combat() then return end
+    if A.Combat() or control.disabled then return end
     local f=B.options
     if not f.blessingMenu then
       f.blessingMenu=CreateFrame("Frame",nil,f,"BackdropTemplate")
       f.blessingMenu:SetBackdrop({bgFile="Interface\\Buttons\\WHITE8X8",edgeFile="Interface\\Buttons\\WHITE8X8",edgeSize=1})
       f.blessingMenu:SetBackdropColor(0.025,0.035,0.045,1); f.blessingMenu:SetBackdropBorderColor(0.55,0.44,0.23,1)
-      f.blessingMenu:SetFrameStrata("TOOLTIP"); f.blessingMenu:SetClampedToScreen(true); f.blessingMenu.rows={}
+      for _,y in ipairs({-32,-172}) do
+        local separator=f.blessingMenu:CreateTexture(nil,"ARTWORK"); separator:SetColorTexture(0.48,0.40,0.25,0.65); separator:SetPoint("TOPLEFT",8,y); separator:SetSize(254,1)
+      end
+      f.blessingMenu:SetFrameStrata("TOOLTIP"); f.blessingMenu:SetClampedToScreen(true); f.blessingMenu:EnableMouse(true); f.blessingMenu.rows={}; f.blessingMenu:Hide()
     end
     local menu=f.blessingMenu
     if menu:IsShown() and menu.owner==control then menu:Hide(); return end
-    menu.owner=control; menu:ClearAllPoints(); menu:SetPoint("TOPLEFT",control,"BOTTOMLEFT",0,-2); menu:SetSize(230,204)
+    menu.owner=control; menu:ClearAllPoints(); menu:SetPoint("TOPLEFT",control,"BOTTOMLEFT",0,-2); menu:SetSize(270,204)
     local choices={"inherit","bok","bom","bow","bos","bol","skip"}
     for i,key in ipairs(choices) do
       local option=menu.rows[i]
       if not option then
-        option=button(menu,"",4,-4-(i-1)*28,222,function(btn)
-          if A.Combat() then return end
+        option=button(menu,"",4,-4-(i-1)*28,262,function(btn)
+          if A.Combat() or not menu.owner or menu.owner.disabled then return end
           local owner=menu.owner; if owner then local key=btn.key; if key=="inherit" then key=nil end; owner.setChoice(key) end
           menu:Hide(); B:InvalidateAura(); B:RequestRefresh("blessing assignment",0); B:Options()
         end)
-        option.icon=option:CreateTexture(nil,"ARTWORK"); option.icon:SetSize(20,20); option.icon:SetPoint("LEFT",4,0)
+        option.icon=option:CreateTexture(nil,"ARTWORK"); option.icon:SetSize(20,20); option.icon:SetPoint("LEFT",23,0)
+        option.selected=option:CreateTexture(nil,"OVERLAY"); option.selected:SetSize(18,18); option.selected:SetPoint("LEFT",3,0); option.selected:SetTexture("Interface\\Buttons\\UI-CheckBox-Check")
+        local text=option:GetFontString(); if text then text:ClearAllPoints(); text:SetPoint("LEFT",48,0); text:SetPoint("RIGHT",-5,0); text:SetJustifyH("LEFT") end
         menu.rows[i]=option
       end
       option.key=key
-      local name=key=="inherit" and (player and "Inherit class choice" or L("Use current settings")) or blessingName(key)
+      local name=key=="inherit" and (player=="target" and L("Automatic: class + priority") or (player and L("Inherit class") or L("Follow buff settings"))) or (key=="skip" and player==true and L("Skip this player") or blessingName(key))
       local def=B:FindBuff(key); local learned=not def or B:BlessingLearned(key)
-      option:SetText("      "..name..(learned and "" or (" ("..L("not learned")..")")))
-      option.icon:SetTexture(blessingIcon(key)); option.icon:SetShown(def~=nil)
-      addHelp(option,name,learned and "Sets the blessing this Paladin maintains. Each application still needs your input." or "This choice stays saved, but BuffTap cannot apply it until you learn it. No silent substitution.")
+      option:SetText(name..(learned and "" or (" ("..L("not learned")..")")))
+      option.icon:SetTexture(def and blessingIcon(key) or (key=="skip" and "Interface\\Buttons\\UI-GroupLoot-Pass-Up" or "Interface\\Buttons\\UI-OptionsButton")); option.icon:Show()
+      option.selected:SetShown((control.getChoice() or "inherit")==key); fitButtonText(option,262)
+      addHelp(option,name,player=="target" and "Choose a blessing for this target class. Automatic follows enabled target priorities and class suitability. Unlearned or disabled choices fall back to Automatic; Skip offers no blessing. Group assignments take precedence for group members." or learned and "Sets the blessing this Paladin maintains. Each application still needs your input." or "This choice stays saved, but BuffTap cannot apply it until you learn it. No silent substitution.")
     end
     menu:Show()
   end)
   pick.getChoice=getChoice; pick.setChoice=setChoice
+  pick.arrow=pick:CreateTexture(nil,"ARTWORK"); pick.arrow:SetSize(22,22); pick.arrow:SetPoint("RIGHT",-2,0)
+  pick.arrow:SetTexture("Interface\\ChatFrame\\UI-ChatIcon-ScrollDown-Up")
+  pick.divider=pick:CreateTexture(nil,"ARTWORK"); pick.divider:SetColorTexture(0.48,0.40,0.25,0.8); pick.divider:SetSize(1,22); pick.divider:SetPoint("RIGHT",-27,0)
+  local text=pick:GetFontString(); if text then text:ClearAllPoints(); text:SetPoint("LEFT",30,0); text:SetPoint("RIGHT",-30,0); text:SetJustifyH("LEFT"); text:SetWordWrap(false) end
+  pick.SetAvailable=function(self,enabled)
+    self.disabled=not enabled; self:SetEnabled(enabled); self:SetAlpha(enabled and 1 or 0.4)
+    if self.disabled and B.options.blessingMenu and B.options.blessingMenu.owner==self then B.options.blessingMenu:Hide() end
+  end
   pick.icon=pick:CreateTexture(nil,"ARTWORK"); pick.icon:SetSize(21,21); pick.icon:SetPoint("LEFT",5,0)
   pick.Update=function(self)
-    local key=self.getChoice(); self:SetText("     "..(player and not key and L("Inherit class") or blessingName(key)).."  v")
-    self.icon:SetTexture(blessingIcon(key)); self.icon:SetShown(key~=nil and key~="skip")
+    local key=self.getChoice(); self:SetText(not key and player=="target" and L("Automatic") or (player and not key and L("Inherit class") or (key=="skip" and player==true and L("Skip this player") or blessingName(key))))
+    fitButtonText(self,width-44)
+    self.icon:SetTexture(key=="skip" and "Interface\\Buttons\\UI-GroupLoot-Pass-Up" or (key and blessingIcon(key) or "Interface\\Buttons\\UI-OptionsButton")); self.icon:Show()
   end
   return pick
 end
@@ -233,35 +248,43 @@ function B:BuildBlessingOptions(parent)
   label(p,"Only when class choices agree.",345,-124,"GameFontDisableSmall",340)
   line(p,-150)
   label(p,"Blessing assignments",18,-164,"GameFontNormalLarge")
-  f.blessingEnable=check(p,"Use class assignments",345,-158,function(c) setAndRefresh("blessingAssignments",c:GetChecked()==true); B:Options() end)
+  f.blessingEnable=check(p,"Enable class assignments",345,-158,function(c) setAndRefresh("blessingAssignments",c:GetChecked()==true); B:Options() end)
   button(p,"Restore defaults",565,-159,140,function()
     if A.Combat() then return end
     B.db.blessingAssignments=false; B.db.blessingClasses={}; B.blessingPlayers=nil; B:RequestRefresh("restore blessings",0); B:Options()
   end)
-  label(p,L("Class"),24,-197,"GameFontDisableSmall",112); label(p,"Your blessing",170,-197,"GameFontDisableSmall",170)
-  label(p,L("Casting"),364,-197,"GameFontDisableSmall",178); label(p,L("Players"),574,-197,"GameFontDisableSmall",100)
+  f.blessingInstruction=label(p,"",18,-190,"GameFontDisableSmall",686)
+  label(p,L("Class"),24,-214,"GameFontDisableSmall",112); label(p,"Blessing to maintain",224,-214,"GameFontDisableSmall",270)
+  label(p,"Player exceptions",546,-214,"GameFontDisableSmall",140)
   f.blessingRows={}
   for index,class in ipairs(self.RecipientClasses) do
-    local token=class; local row=CreateFrame("Frame",nil,p,"BackdropTemplate"); row:SetSize(686,28)
+    local token=class; local row=CreateFrame("Frame",nil,p,"BackdropTemplate"); row:SetSize(686,25)
     row:SetBackdrop({bgFile="Interface\\Buttons\\WHITE8X8"}); row:SetBackdropColor(index%2==0 and 0.035 or 0.065,0.075,0.09,1)
-    row.icon=row:CreateTexture(nil,"ARTWORK"); row.icon:SetSize(23,23); row.icon:SetPoint("TOPLEFT",6,-3)
+    row.icon=row:CreateTexture(nil,"ARTWORK"); row.icon:SetSize(21,21); row.icon:SetPoint("TOPLEFT",6,-2)
     row.icon:SetTexture("Interface\\GLUES\\CHARACTERCREATE\\UI-CHARACTERCREATE-CLASSES")
     local coords=CLASS_ICON_TCOORDS and CLASS_ICON_TCOORDS[token]; if coords then row.icon:SetTexCoord(unpack(coords)) end
     local name=(LOCALIZED_CLASS_NAMES_MALE and LOCALIZED_CLASS_NAMES_MALE[token]) or token:sub(1,1)..token:sub(2):lower()
     label(row,name,36,-8,"GameFontHighlightSmall",114)
-    row.pick=blessingPick(row,150,-2,180,function() return B.db.blessingClasses[token] end,function(key) B.db.blessingClasses[token]=key end)
-    row.status=label(row,"",348,-8,"GameFontDisableSmall",190)
+    row.pick=blessingPick(row,206,0,286,function() return B.db.blessingClasses[token] end,function(key) B.db.blessingClasses[token]=key end)
+    row.status=label(row,"",0,0,"GameFontDisableSmall",190); row.status:Hide()
     row.players=button(row,"",548,-2,132,function()
-      f.expandedBlessing=f.expandedBlessing==token and nil or token; f.blessingPlayerOffset=0; B:Options()
+      if A.Combat() or not B.db.blessingAssignments or not B.db.group then return end
+      if f.expandedBlessing==token then f.expandedBlessing=nil else f.expandedBlessing=token end
+      f.blessingPlayerOffset=0; B:Options()
     end)
+    row.players:SetBackdropBorderColor(0,0,0,0); row.players:SetBackdropColor(0,0,0,0)
+    row.players.arrow=row.players:CreateTexture(nil,"ARTWORK"); row.players.arrow:SetSize(18,18); row.players.arrow:SetPoint("LEFT",3,0)
     row.class=token; f.blessingRows[index]=row
   end
-  local detail=CreateFrame("Frame",nil,p,"BackdropTemplate"); detail:SetSize(668,86); f.blessingDetail=detail
+  local detail=CreateFrame("Frame",nil,p,"BackdropTemplate"); detail:SetSize(668,106); f.blessingDetail=detail
   detail:SetBackdrop({bgFile="Interface\\Buttons\\WHITE8X8",edgeFile="Interface\\Buttons\\WHITE8X8",edgeSize=1})
   detail:SetBackdropColor(0.065,0.085,0.10,1); detail:SetBackdropBorderColor(0.22,0.32,0.38,1)
+  label(detail,"Player exceptions",12,-6,"GameFontNormalSmall")
+  f.blessingCollapse=button(detail,"",634,-2,26,function() f.expandedBlessing=nil; B:Options() end)
+  local collapse=f.blessingCollapse:CreateTexture(nil,"ARTWORK"); collapse:SetAllPoints(); collapse:SetTexture("Interface\\ChatFrame\\UI-ChatIcon-ScrollUp-Up")
   f.blessingPlayerRows={}
   for i=1,2 do
-    local row=CreateFrame("Frame",nil,detail); row:SetSize(660,26); row:SetPoint("TOPLEFT",4,-4-(i-1)*27)
+    local row=CreateFrame("Frame",nil,detail); row:SetSize(660,26); row:SetPoint("TOPLEFT",4,-26-(i-1)*27)
     row.name=label(row,"",8,-7,"GameFontHighlightSmall",190)
     row.pick=blessingPick(row,210,0,190,function()
       local v=B.blessingPlayers and B.blessingPlayers[row.guid]; return v and v.choice
@@ -278,12 +301,12 @@ function B:BuildBlessingOptions(parent)
     addHelp(row.protect,L("Never Salvation"),"Blocks Salvation for this player and any Greater Salvation that would affect them. Choose another individual blessing if needed. No role or spec guessing.")
     f.blessingPlayerRows[i]=row
   end
-  f.blessingPageText=label(detail,"",12,-62,"GameFontDisableSmall",380)
-  button(detail,L("Previous"),444,-58,98,function() f.blessingPlayerOffset=math.max(0,(f.blessingPlayerOffset or 0)-2); B:Options() end)
-  button(detail,L("Next"),548,-58,98,function() f.blessingPlayerOffset=(f.blessingPlayerOffset or 0)+2; B:Options() end)
+  f.blessingPageText=label(detail,"",12,-85,"GameFontDisableSmall",380)
+  f.blessingPrevious=button(detail,L("Previous"),444,-80,98,function() f.blessingPlayerOffset=math.max(0,(f.blessingPlayerOffset or 0)-2); B:Options() end)
+  f.blessingNext=button(detail,L("Next"),548,-80,98,function() f.blessingPlayerOffset=(f.blessingPlayerOffset or 0)+2; B:Options() end)
   f.blessingFooter=label(p,"Mixed choices use individual blessings. Player exceptions last for this group session.",18,-602,"GameFontDisableSmall",686)
   button(p,"Existing buff filters",18,-574,160,function() f.blessingLegacy=true; B:Options() end)
-  label(p,"Personal and ungrouped target settings stay separate.",192,-581,"GameFontDisableSmall",510)
+  label(p,"Follow buff settings uses your enabled buffs, priorities and filters.",192,-581,"GameFontDisableSmall",510)
 end
 function B:UpdateBlessingOptions()
   local f=self.options; local class=A.Call(function() local _,token=UnitClass("player"); return token end); local paladin=class=="PALADIN"
@@ -294,14 +317,19 @@ function B:UpdateBlessingOptions()
   f.blessingEnable:SetChecked(self.db.blessingAssignments); f.blessingGroupEnable:SetChecked(self.db.group); f.blessingSmart:SetChecked(self.db.smartGroup)
   for i,c in ipairs(f.blessingGroups) do c:SetChecked(self.db.raidGroups[i]) end
   f.blessingThreshold.silent=true; f.blessingThreshold:SetValue(self.db.blessingNeed); f.blessingThreshold.valueText:SetText(self.db.blessingNeed.."+"); f.blessingThreshold.silent=false
-  local roster=self:Roster(); local active=self:BlessingAssignmentsActive(); self.blessingClassList=self:ClassList(); local y=-214
+  local roster=self:Roster(); local active=self:BlessingAssignmentsActive(); self.blessingClassList=self:ClassList(); local y=-230
+  local editable=self.db.blessingAssignments and self.db.group
+  f.blessingInstruction:SetText(L(not self.db.blessingAssignments and "Enable class assignments to choose a blessing for each class." or not self.db.group and "Enable party / raid to use these class assignments." or "Choose one blessing per class. Player exceptions override that choice."))
+  if not editable then f.expandedBlessing=nil end
   f.blessingDetail:Hide()
   for _,r in ipairs(f.blessingPlayerRows) do r:Hide(); r.entry=nil; r.guid=nil end
   for _,row in ipairs(f.blessingRows) do
     row:ClearAllPoints(); row:SetPoint("TOPLEFT",18,y); row.pick:Update()
-    row.pick:SetEnabled(self.db.blessingAssignments)
+    row.pick:SetAvailable(editable)
     local entries={}; for _,entry in ipairs(roster) do if entry.class==row.class then entries[#entries+1]=entry end end
-    row.players:SetText(#entries.." players  "..(f.expandedBlessing==row.class and "v" or ">"))
+    row.players:SetText(L(#entries==1 and "%d player" or "%d players",#entries))
+    row.players:SetEnabled(editable and #entries>0); row.players:SetAlpha(editable and #entries>0 and 1 or 0.4)
+    row.players.arrow:SetTexture(f.expandedBlessing==row.class and "Interface\\ChatFrame\\UI-ChatIcon-ScrollUp-Up" or "Interface\\ChatFrame\\UI-ChatIcon-ScrollDown-Up")
     local chosen=self.db.blessingClasses[row.class]; local status="Current settings"
     if self.db.blessingAssignments then
       status=#entries==0 and "No group players" or "Individual"
@@ -317,7 +345,7 @@ function B:UpdateBlessingOptions()
         else status="Individual: below threshold" end
       end
     end
-    row.status:SetText(status); y=y-29
+    row.status:SetText(status); addHelp(row.players,"Player exceptions",L(status).."\n"..L("Click to expand or collapse individual player choices.")); y=y-26
     if f.expandedBlessing==row.class and #entries>0 then
       local offset=math.min(f.blessingPlayerOffset or 0,math.floor((#entries-1)/2)*2); f.blessingPlayerOffset=offset
       f.blessingDetail:ClearAllPoints(); f.blessingDetail:SetPoint("TOPLEFT",36,y); f.blessingDetail:Show()
@@ -325,12 +353,17 @@ function B:UpdateBlessingOptions()
         local entry=entries[offset+i]
         if entry then
           r.entry=entry; r.guid=A.Call(UnitGUID,entry.unit); r.name:SetText(A.Call(UnitName,entry.unit) or entry.unit)
-          r.pick:Update(); r.pick:SetEnabled(self.db.blessingAssignments)
+          r.pick:Update(); r.pick:SetAvailable(editable)
           local v=self.blessingPlayers and self.blessingPlayers[r.guid]; r.protect:SetChecked(v and v.neverSalvation or false); r.protect:SetEnabled(self.db.blessingAssignments); r:Show()
         end
       end
       f.blessingPageText:SetText("Players "..(offset+1).."–"..math.min(offset+2,#entries).." / "..#entries.." · choices override class")
-      y=y-88
+      local paged=#entries>2; f.blessingPrevious:SetShown(paged); f.blessingNext:SetShown(paged)
+      f.blessingPrevious:SetEnabled(offset>0); f.blessingNext:SetEnabled(offset+2<#entries)
+      local height=paged and 106 or (#entries==1 and 78 or 106)
+      f.blessingDetail:SetHeight(height)
+      f.blessingPageText:ClearAllPoints(); f.blessingPageText:SetPoint("TOPLEFT",12,height==78 and -59 or -85)
+      y=y-height-2
     end
   end
 end
@@ -543,24 +576,32 @@ function B:BuildHelperPage(parent)
     f.descriptions[key]=label(f,spec[3],x+4,y-27,"GameFontDisableSmall",326)
     addHelp(f.checks[key],spec[2],spec[3])
   end
-  button(f,L("View discovery report"),368,-287,204,function() B:ShowDiscoveryReport() end)
-  line(f,-342)
-  f.trackerHeading=label(f,L("Preferred gathering tracker"),18,-354,"GameFontNormal")
-  f.emptyTracker=label(f,L("No learned gathering tracker is available on this character."),18,-380,"GameFontDisableSmall",670)
+  card(f,364,-275,336,86)
+  label(f,"Reminder behavior",372,-281,"GameFontNormal")
+  parent.pauseResting=check(f,"Pause reminders while resting",368,-300,function(c)
+    if A.Combat() then return end
+    setAndRefresh("pauseResting",c:GetChecked()==true); B:InvalidateSupplies(false); B:Refresh(false); B:Options()
+  end)
+  label(f,"Hide buff reminders and quiet automatic stock alerts in cities and inns. Settings remain accessible.",372,-327,"GameFontDisableSmall",320)
+  addHelp(parent.pauseResting,"Pause reminders while resting","Hide buff reminders and quiet automatic stock alerts in cities and inns. Settings remain accessible.")
+  button(f,L("View discovery report"),368,-569,204,function() B:ShowDiscoveryReport() end)
+  line(f,-374)
+  f.trackerHeading=label(f,L("Preferred gathering tracker"),18,-386,"GameFontNormal")
+  f.emptyTracker=label(f,L("No learned gathering tracker is available on this character."),18,-412,"GameFontDisableSmall",670)
   f.readiness=CreateFrame("Frame",nil,f); f.readiness:SetAllPoints(f)
   local r=f.readiness
-  label(r,L("Class readiness"),18,-406,"GameFontNormal")
-  f.petCheck=check(r,L("Keep my pet ready"),18,-426,function(c)
+  label(r,L("Class readiness"),18,-438,"GameFontNormal")
+  f.petCheck=check(r,L("Keep my pet ready"),18,-458,function(c)
     if A.Combat() then return end
     B.db.helperPet=c:GetChecked()==true; B:SyncReadiness(); B:RequestRefresh("pet helper",0); B:Options()
   end)
-  f.petDescription=label(r,"",22,-452,"GameFontDisableSmall",326)
-  f.stoneCheck=check(r,L("Prepare a personal Healthstone"),364,-426,function(c)
+  f.petDescription=label(r,"",22,-484,"GameFontDisableSmall",326)
+  f.stoneCheck=check(r,L("Prepare a personal Healthstone"),364,-458,function(c)
     if A.Combat() then return end
     B.db.helperHealthstone=c:GetChecked()==true; B:SyncReadiness(); B:RequestRefresh("Healthstone helper",0); B:Options()
   end)
-  f.stoneDescription=label(r,L("Offers Create Healthstone when none is in your bags. Requires a Soul Shard and free space. Never uses the stone."),368,-452,"GameFontDisableSmall",326)
-  f.demonChoice=button(r,"Choose preferred demon",18,-499,326,function()
+  f.stoneDescription=label(r,L("Offers Create Healthstone when none is in your bags. Requires a Soul Shard and free space. Never uses the stone."),368,-484,"GameFontDisableSmall",326)
+  f.demonChoice=button(r,"Choose preferred demon",18,-531,326,function()
     if A.Combat() then return end
     f.demonMenu:SetShown(not f.demonMenu:IsShown())
   end)
@@ -572,8 +613,8 @@ function B:BuildHelperPage(parent)
   menu:SetBackdrop({bgFile="Interface\\Buttons\\WHITE8X8",edgeFile="Interface\\Tooltips\\UI-Tooltip-Border",edgeSize=12})
   menu:SetBackdropColor(.04,.04,.04,1); menu.rows={}; menu:Hide()
   f:SetScript("OnHide",function() menu:Hide() end)
-  button(f,L("Restore reminders"),18,-537,154,function() B:RestoreHelpers(); B:Options() end)
-  label(f,"Brings back skipped reminders, including stronger-effect errors.",184,-543,"GameFontDisableSmall",500)
+  button(f,L("Restore reminders"),18,-569,154,function() B:RestoreHelpers(); B:Options() end)
+  label(f,"Brings back skipped reminders, including stronger-effect errors.",184,-605,"GameFontDisableSmall",500)
 end
 
 function B:UpdateHelperOptions()
@@ -615,7 +656,7 @@ function B:UpdateHelperOptions()
   for i,entry in ipairs(trackers) do
     local t=f.trackers[i]
     if not t then
-      t=button(f,"",18+(i-1)*226,-376,218,function(control)
+      t=button(f,"",18+(i-1)*226,-408,218,function(control)
         if A.Combat() then return end
         B.db.helperTracker=control.trackerID; B:RequestRefresh("tracking preference",0); B:Options()
       end)
@@ -1015,19 +1056,32 @@ function B:Options()
     f.targetDefaultSlider:SetScript("OnMouseUp",function() if not A.Combat() then B:Options() end end)
     f.targetDefaultSlider:SetPoint("TOPLEFT",18,-164)
     addHelp(f.targetDefaultSlider,"Target refresh timing","Target mode may refresh much earlier than normal party/raid timing. BuffTap still caps the effective threshold at half of the aura's full duration, so a one-hour buff can be refreshed at 30 minutes but not earlier.")
-    line(target,-204)
-    label(target,"Target buffs",18,-222,"GameFontNormal")
-    label(target,L("Apply"),18,-248,"GameFontDisableSmall",48)
-    label(target,"Buff",82,-248,"GameFontDisableSmall",160)
-    label(target,"Custom timing",276,-248,"GameFontDisableSmall",100)
-    label(target,"Refresh when remaining",402,-248,"GameFontDisableSmall",180)
+    f.targetBlessingPanel=CreateFrame("Frame",nil,target)
+    f.targetBlessingPanel:SetPoint("TOPLEFT",12,-204); f.targetBlessingPanel:SetSize(698,156)
+    f.targetClassAware=check(f.targetBlessingPanel,"Class-aware target blessings",6,0,function(c) setAndRefresh("targetClassBlessings",c:GetChecked()==true); B:Options() end)
+    addHelp(f.targetClassAware,"Class-aware target blessings","Automatic follows enabled priorities and class suitability. Class choices apply to friendly targets; group assignments take precedence for group members. Disable to use unrestricted target priorities.")
+    f.targetBlessingPicks={}
+    for i,class in ipairs(B.RecipientClasses) do
+      local token=class; local x=((i-1)%3)*230; local y=-32-math.floor((i-1)/3)*32
+      label(f.targetBlessingPanel,(LOCALIZED_CLASS_NAMES_MALE and LOCALIZED_CLASS_NAMES_MALE[token]) or token:sub(1,1)..token:sub(2):lower(),x+6,y-7,"GameFontHighlightSmall",80)
+      f.targetBlessingPicks[i]=blessingPick(f.targetBlessingPanel,x+89,y,136,function() return B.db.targetBlessingClasses[token] end,function(key) B.db.targetBlessingClasses[token]=key end,"target")
+    end
+    f.targetBlessingInstruction=label(f.targetBlessingPanel,"",6,-134,"GameFontDisableSmall",686)
+    f.targetHeaders=CreateFrame("Frame",nil,target); f.targetHeaders:SetPoint("TOPLEFT",0,-204); f.targetHeaders:SetSize(698,66)
+    local header=f.targetHeaders
+    line(header,0)
+    label(header,"Target buffs",18,-18,"GameFontNormal")
+    label(header,L("Apply"),18,-44,"GameFontDisableSmall",48)
+    label(header,L("Buff"),82,-44,"GameFontDisableSmall",160)
+    label(header,L("Custom timing"),276,-44,"GameFontDisableSmall",100)
+    label(header,L("Refresh when remaining"),402,-44,"GameFontDisableSmall",180)
     local targetScroll=CreateFrame("ScrollFrame",nil,target,"UIPanelScrollFrameTemplate")
     targetScroll:SetPoint("TOPLEFT",14,-270); targetScroll:SetPoint("BOTTOMRIGHT",-34,54)
     local targetChild=CreateFrame("Frame",nil,targetScroll); targetChild:SetSize(660,1); targetScroll:SetScrollChild(targetChild)
-    f.targetChild=targetChild; f.targetRows={}
+    f.targetChild=targetChild; f.targetRows={}; f.targetScroll=targetScroll
     local resetTarget=button(target,L("Reset target settings"),0,0,132,function()
       if not A.Combat() then
-        B.db.friendlyTarget=false; B.db.targetSeconds=300; B.db.targetBuffs={}; B.db.targetBuffSeconds={}
+        B.db.friendlyTarget=false; B.db.targetSeconds=300; B.db.targetBuffs={}; B.db.targetBuffSeconds={}; B.db.targetClassBlessings=true; B.db.targetBlessingClasses={}
         B:InitDB(); B:InvalidateAura("target"); B:RequestRefresh("reset target settings",0); B:Options()
       end
     end)
@@ -1153,7 +1207,6 @@ function B:Options()
     label(app,L("Minimum interval"),436,-454,"GameFontHighlightSmall",116)
     f.soundInterval=compactSlider(app,5,60,5,80,formatSeconds,function(_,value) setAndRefresh("soundInterval",value) end)
     f.soundInterval:SetPoint("TOPLEFT",550,-453)
-    label(app,L("Translations are a first pass; untranslated text falls back to English. Spell and item names follow the client."),18,-490,"GameFontDisableSmall",670)
     label(app,L("Quick access"),200,-538,"GameFontNormal")
     f.minimapCheck=check(app,L("Minimap button"),200,-564,function(s) B.db.minimap.hide=not s:GetChecked(); B:SyncBroker() end)
     f.brokerCheck=check(app,L("Broker display"),440,-564,function(s) B.db.brokerEnabled=s:GetChecked()==true; B:SyncBroker(); B:Options() end)
@@ -1232,6 +1285,13 @@ function B:Options()
   if A.Number(width) and A.Number(height) then f:SetScale(math.min(1,(width-32)/OPTIONS_WIDTH,(height-32)/OPTIONS_HEIGHT)) end
   self:UpdateHelperOptions()
   self:UpdateSupplyOptions()
+  local paladin=A.Call(function() local _,token=UnitClass("player"); return token end)=="PALADIN"
+  f.targetBlessingPanel:SetShown(paladin); f.targetClassAware:SetChecked(self.db.targetClassBlessings)
+  for _,pick in ipairs(f.targetBlessingPicks) do pick:Update(); pick:SetAvailable(self.db.targetClassBlessings and self.db.friendlyTarget) end
+  f.targetBlessingInstruction:SetText(L(not self.db.friendlyTarget and "Enable friendly target buffing to use these class choices." or not self.db.targetClassBlessings and "Enable class-aware target blessings to customize each class." or "Automatic follows target priorities and class suitability. Group assignments take precedence."))
+  f.targetHeaders:ClearAllPoints(); f.targetHeaders:SetPoint("TOPLEFT",0,paladin and -364 or -204)
+  f.targetScroll:ClearAllPoints(); f.targetScroll:SetPoint("TOPLEFT",14,paladin and -430 or -270); f.targetScroll:SetPoint("BOTTOMRIGHT",-34,54)
+  f.pauseResting:SetChecked(self.db.pauseResting)
   f.enable:SetChecked(self.db.enabled)
   f.versionText:SetText("v"..self.version)
   f.groupEnable:SetChecked(self.db.group); f.smartGroup:SetChecked(self.db.smartGroup); f.friendlyTarget:SetChecked(self.db.friendlyTarget)
@@ -1538,11 +1598,13 @@ function B:Options()
         local def=btn:GetParent().def
         if def and not A.Combat() then B.db.buffSeconds[def.key]=nil; B:RequestRefresh("rebuff default",0); B:Options() end
       end)
+      addHelp(row.default,"Use default timing","Remove this buff’s custom refresh timing and use the default rebuff threshold below. This does not reset its priority or enable setting.")
       row.order=editbox(row,590,-17,48,true)
       row.order:SetScript("OnEnterPressed",function(s)
         local def=s:GetParent().def; if def and not A.Combat() then B.db.priorities[def.key]=math.max(1,tonumber(s:GetText()) or def.order); B:RequestRefresh("priority",0) end; s:ClearFocus(); B:Options()
       end)
       row.order:SetScript("OnEscapePressed",function(s) s:ClearFocus(); B:Options() end)
+      addHelp(row.order,"Buff priority","Lower numbers are checked first. Set the same priority for equal ordering; your enabled buffs determine what can be offered.")
       f.buffRows[visible]=row
     end
     row.def=b; row:ClearAllPoints(); row:SetPoint("TOPLEFT",0,-(visible-1)*58); row:Show(); row.check:SetChecked(self:Enabled(b)); row.name:SetText(spellLabel(b)); row.icon:SetTexture(buffIcon(b))

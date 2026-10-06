@@ -204,7 +204,7 @@ function B:SyncSupplies(silent)
     if entry.settings.enabled and low then
       warnings[#warnings+1]=entry
       retained[entry.key]=self.supplyEpisodes[entry.key] or false
-      if not retained[entry.key] and not self:SupplySnoozed() then
+      if not retained[entry.key] and not self:SupplySnoozed() and not self:ReminderPauseReason() then
         newWarnings[#newWarnings+1]=entry
         retained[entry.key]=true
       end
@@ -251,7 +251,7 @@ function B:CreateSupplyBadge()
 end
 
 function B:UpdateSupplyBadge()
-  local show=enabled(self) and not A.Combat() and not self:SupplySnoozed() and
+  local show=enabled(self) and not A.Combat() and not self:ReminderPauseReason() and not self:SupplySnoozed() and
     A.Call(UnitIsDeadOrGhost,"player")==false and #(self.supplyWarnings or {})>0
   if not show then if self.supplyBadge then self.supplyBadge:Hide() end; return end
   self:CreateSupplyBadge()
@@ -299,7 +299,7 @@ end
 
 function B:SuppliesEvent(event,itemID)
   if event=="READY_CHECK" then
-    if enabled(self) and self.db.suppliesReadyCheck then self:ReportSupplies() end
+    if enabled(self) and self.db.suppliesReadyCheck and not self:ReminderPauseReason() then self:ReportSupplies() end
     return true
   end
   if not enabled(self) then return false end
@@ -312,7 +312,7 @@ function B:SuppliesEvent(event,itemID)
   elseif event=="PLAYER_REGEN_ENABLED" then
     self:InvalidateSupplies(true)
     local pending=self.supplyReadyCheckAt; self.supplyReadyCheckAt=nil
-    if pending and GetTime()-pending<=30 then self:ReportSupplies() else self:SyncSupplies() end
+    if pending and GetTime()-pending<=30 and not self:ReminderPauseReason() then self:ReportSupplies() else self:SyncSupplies() end
     return false
   end
   local inventory=event=="BAG_UPDATE_DELAYED" or event=="ITEM_DATA_LOAD_RESULT"
