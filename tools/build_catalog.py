@@ -103,6 +103,7 @@ def rows(file):
     with (DATA/file).open(encoding='utf-8-sig',newline='') as f: return list(csv.DictReader(f))
 names={int(r['ID']):r['Name_lang'] for r in rows('spellnames.csv')}
 levels={int(r['SpellID']):int(r['SpellLevel']) for r in rows('SpellLevels.csv') if r['DifficultyID']=='0'}
+icons={int(r['SpellID']):int(r['SpellIconFileDataID']) for r in rows('SpellMisc.csv') if r['DifficultyID']=='0' and int(r['SpellIconFileDataID'])>0}
 abilities=rows('SkillLineAbility.csv')
 subtexts={int(r['ID']):r['NameSubtext_lang'] for r in rows('Spell.csv')}
 effects={}
@@ -122,7 +123,7 @@ for line in SPEC.splitlines():
     # Retain the explicitly verified spell as a client alias even if its skill row is absent.
     ids.add(seed)
     ranks=sorted(ids,key=lambda i:(levels.get(i,0),i),reverse=True)
-    d=dict(key=key,class_=cls,kind=kind,name=name,ranks=ranks,defaultOn=on=='1')
+    d=dict(key=key,class_=cls,kind=kind,name=name,ranks=ranks,icon=icons.get(seed) or next((icons[i] for i in ranks if icons.get(i)),134400),defaultOn=on=='1')
     if group:
         d['coverage']=group[0]; coverage.setdefault(group[0],[]).append(name)
     else: d['covers']=[] if kind=='pet' else [name]
@@ -154,6 +155,6 @@ for r in sorted(rows('SpellReagents.csv'),key=lambda r:int(r['SpellID'])):
         if reagents: lines.append(f'  [{i}]='+lua(reagents)+',')
 lines += ['}', '']
 (OUT/'Catalog.lua').write_text('\n'.join(lines),encoding='utf-8')
-evidence={'build':'1.60.1.70009','source':'Blizzard DB2 tables exported through wago.tools','tables':{n:hashlib.sha256((DATA/n).read_bytes()).hexdigest() for n in ['spellnames.csv','SpellLevels.csv','SkillLineAbility.csv','SpellEffect.csv','SpellReagents.csv','Spell.csv']},'definitions':definitions,'ranks':len(allids)}
+evidence={'build':'1.60.1.70009','source':'Blizzard DB2 tables exported through wago.tools','tables':{n:hashlib.sha256((DATA/n).read_bytes()).hexdigest() for n in ['spellnames.csv','SpellLevels.csv','SkillLineAbility.csv','SpellEffect.csv','SpellReagents.csv','Spell.csv','SpellMisc.csv']},'definitions':definitions,'ranks':len(allids)}
 (ROOT/'tools/catalog-evidence.json').write_text(json.dumps(evidence,indent=2),encoding='utf-8')
 print(f'Generated {len(definitions)} families, {len(allids)} client spell records.')

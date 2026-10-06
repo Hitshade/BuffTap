@@ -270,3 +270,12 @@ B.Locales["esES"]={
   ["Check to include. Use arrows to order; 1 is first."]="Marca para incluir. Usa las flechas; 1 va primero.",
   ["Use arrows to reorder"]="Usa las flechas para reordenar",
 }
+
+B.Locales.esES["Customization"]="Personalización"
+B.Locales.esES["Remind only"]="Solo recordar"
+B.Locales.esES["Remind and apply"]="Recordar y aplicar"
+B.Locales.esES["Reminder appearance"]="Aspecto del recordatorio"
+B.Locales.esES["Sounds"]="Sonidos"
+B.Locales.esES["Enable reminder sound"]="Activar sonido del recordatorio"
+B.Locales.esES["Enter to save"]="Intro para guardar"
+B.Locales.esES["Only checked blessings are used. Use arrows to order; 1 is first."]="Solo se usan las bendiciones marcadas. Ordena con flechas; 1 va primero."

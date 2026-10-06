@@ -6,9 +6,9 @@ local ADDON,B=...
 local A=B.API
 local function L(key,...) return B:Text(key,...) end
 local TAB={Buffs=1,Groups=2,Target=3,Consumables=4,Weapons=5,Appearance=6,Helpers=7,Diagnostics=8}
-local TAB_NAMES={L("Buffs"),L("Groups"),L("Target"),L("Consumables"),L("Weapons"),L("Appearance"),L("Helpers"),L("Diagnostics")}
-local TAB_WIDTHS={62,66,66,108,80,104,74,106}
-local OPTIONS_WIDTH,OPTIONS_HEIGHT=760,766
+local TAB_NAMES={L("Buffs"),L("Groups"),L("Target"),L("Consumables"),L("Weapons"),L("Customization"),L("Helpers"),L("Diagnostics")}
+local TAB_WIDTHS={62,66,66,108,80,116,74,94}
+local OPTIONS_WIDTH,OPTIONS_HEIGHT=760,806
 local ICON_PATH="Interface\\AddOns\\BuffTap\\Media\\BuffTapIcon"
 
 local function label(parent,text,x,y,font,width)
@@ -54,6 +54,41 @@ local function button(parent,text,x,y,w,fn)
   return b
 end
 
+-- One selector convention: explicit choices, a visible arrow and toggle-to-close.
+local function selector(parent,text,x,y,width,choices,onSelect)
+  local control
+  control=button(parent,text,x,y,width,function()
+    if A.Combat() then return end
+    local menu=control.menu
+    if menu:IsShown() then menu:Hide(); return end
+    if B.options and B.options.activeSelector and B.options.activeSelector~=menu then B.options.activeSelector:Hide() end
+    if B.options then B.options.activeSelector=menu end
+    local entries=choices(); menu:SetSize(width,#entries*28+8)
+    for _,row in ipairs(menu.rows) do row:Hide() end
+    for i,entry in ipairs(entries) do
+      local row=menu.rows[i]
+      if not row then row=button(menu,"",4,-4-(i-1)*28,width-8,function(btn)
+        if A.Combat() then return end
+        onSelect(btn.choice); menu:Hide(); B:Options()
+      end); menu.rows[i]=row end
+      row.choice=entry.key; row:SetText(L(entry.name)); row:Show()
+    end
+    menu:Show()
+  end)
+  control.arrow=control:CreateTexture(nil,"OVERLAY"); control.arrow:SetSize(16,16); control.arrow:SetPoint("RIGHT",-4,0)
+  control.arrow:SetTexture("Interface\\ChatFrame\\UI-ChatIcon-ScrollDown-Up")
+  local menu=CreateFrame("Frame",nil,parent,"BackdropTemplate"); control.menu=menu
+  menu:SetPoint("TOPLEFT",control,"BOTTOMLEFT",0,-2); menu:SetFrameStrata("TOOLTIP"); menu:SetClampedToScreen(true)
+  menu:SetBackdrop({bgFile="Interface\\Buttons\\WHITE8X8",edgeFile="Interface\\Buttons\\WHITE8X8",edgeSize=1})
+  menu:SetBackdropColor(.04,.05,.06,1); menu:SetBackdropBorderColor(.48,.40,.25,1); menu.rows={}; menu:Hide()
+  parent:HookScript("OnHide",function() menu:Hide() end)
+  return control
+end
+local function selectorArrow(control)
+  local arrow=control:CreateTexture(nil,"OVERLAY"); arrow:SetSize(16,16); arrow:SetPoint("RIGHT",-4,0)
+  arrow:SetTexture("Interface\\ChatFrame\\UI-ChatIcon-ScrollDown-Up"); control.arrow=arrow
+end
+
 local function check(parent,text,x,y,fn)
   local c=CreateFrame("CheckButton",nil,parent,"UICheckButtonTemplate")
   c:SetSize(24,24); c:SetPoint("TOPLEFT",x,y); c.Text:SetText(L(text)); c:SetScript("OnClick",fn)
@@ -80,7 +115,7 @@ end
 
 local function panel(parent)
   local f=CreateFrame("Frame",nil,parent,"BackdropTemplate")
-  f:SetPoint("TOPLEFT",18,-124); f:SetPoint("BOTTOMRIGHT",-18,18)
+  f:SetPoint("TOPLEFT",18,-144); f:SetPoint("BOTTOMRIGHT",-18,32)
   f:SetBackdrop({bgFile="Interface\\Buttons\\WHITE8X8",edgeFile="Interface\\Buttons\\WHITE8X8",edgeSize=1})
   f:SetBackdropColor(0.035,0.045,0.05,0.98); f:SetBackdropBorderColor(0.44,0.36,0.20,0.8)
   return f
@@ -151,9 +186,27 @@ local function spellLabel(def)
   return def.name
 end
 
+local function validIcon(icon)
+  return (A.Number(icon) and icon>0 and icon~=134400)
+    or (A.Text(icon) and not icon:lower():find("inv_misc_questionmark",1,true))
+end
+local function learnedSpell(def)
+  for _,id in ipairs(def and def.ranks or {}) do if A.Known(id) then return true end end
+  return false
+end
+local function unlearnedText()
+  return "|cffff6666"..L("not learned").."|r"
+end
 local function buffIcon(def)
-  local action=B:Resolve(def,"player")
-  return action and action.icon or 134400
+  if not def then return 134400 end
+  -- Display metadata does not require the character to know or cast the spell.
+  for _,id in ipairs(def.ranks or {}) do
+    local icon=A.Call(C_Spell and C_Spell.GetSpellTexture,id)
+    if validIcon(icon) then return icon end
+    local info=A.Call(C_Spell and C_Spell.GetSpellInfo,id)
+    if A.Public(info) and type(info)=="table" and validIcon(info.iconID) then return info.iconID end
+  end
+  return validIcon(def.icon) and def.icon or 134400
 end
 
 
@@ -166,7 +219,7 @@ end
 local function blessingIcon(key)
   local def=B:FindBuff(key)
   if not def then return 134400 end
-  return A.Call(C_Spell and C_Spell.GetSpellTexture,def.ranks[1]) or buffIcon(def)
+  return buffIcon(def)
 end
 local function prioritySummary(order)
   local names={}
@@ -176,23 +229,23 @@ end
 local function showBlessingPriorityMenu(menu,control)
   menu.owner=control
   for _,row in ipairs(menu.rows) do row:Hide() end
-  menu:SetSize(380,260)
+  menu:SetSize(380,280)
   menu.priorityRows=menu.priorityRows or {}
   if not menu.priorityTitle then
     menu.priorityTitle=label(menu,"",10,-10,"GameFontNormal",360)
     menu.priorityHelp=label(menu,"",10,-30,"GameFontDisableSmall",360)
-    menu.priorityAutomatic=button(menu,"Automatic",8,-222,116,function()
+    menu.priorityAutomatic=button(menu,"Automatic",8,-242,116,function()
       if A.Combat() or not menu.owner or menu.owner.disabled then return end
       menu.owner.setChoice(nil); menu:Hide(); B:InvalidateAura(); B:RequestRefresh("blessing automatic",0); B:Options()
     end)
-    menu.prioritySkip=button(menu,"Skip class",130,-222,116,function()
+    menu.prioritySkip=button(menu,"Skip class",130,-242,116,function()
       if A.Combat() or not menu.owner or menu.owner.disabled then return end
       menu.owner.setChoice("skip"); menu:Hide(); B:InvalidateAura(); B:RequestRefresh("blessing skip",0); B:Options()
     end)
-    menu.priorityDone=button(menu,"Done",252,-222,116,function() menu:Hide() end)
+    menu.priorityDone=button(menu,"Done",252,-242,116,function() menu:Hide() end)
   end
   menu.priorityTitle:SetText(L("Blessing priorities: %s",((LOCALIZED_CLASS_NAMES_MALE and LOCALIZED_CLASS_NAMES_MALE[control.priorityClass]) or control.priorityClass:sub(1,1)..control.priorityClass:sub(2):lower())))
-  menu.priorityHelp:SetText(L("Check to include. Use arrows to order; 1 is first."))
+  menu.priorityHelp:SetText(L("Only checked blessings are used. Use arrows to order; 1 is first."))
   menu.priorityAutomatic:SetText(L(control.priorityTarget and "Automatic" or "Buff settings"))
   for _,t in ipairs(menu.separators or {}) do t:Hide() end
   menu.priorityTitle:Show(); menu.priorityHelp:Show(); menu.priorityAutomatic:Show(); menu.prioritySkip:Show(); menu.priorityDone:Show()
@@ -207,7 +260,7 @@ local function showBlessingPriorityMenu(menu,control)
   control.editorOrder=order
   if mode~="priority" then
     local name=mode=="skip" and L("Skip class") or mode and L("Fixed: %s",blessingName(mode)) or L(control.priorityTarget and "Automatic" or "Buff settings")
-    menu.priorityHelp:SetText(name..". "..L("Change checks or arrows to customize."))
+    menu.priorityHelp:SetText(name..". "..L(mode and "Edit checks or arrows to customize." or "Uses enabled Buffs in order, filtered for this class. Edit below to customize."))
   end
   local keys,seen={},{}
   for _,key in ipairs(order) do keys[#keys+1]=key; seen[key]=true end
@@ -221,7 +274,7 @@ local function showBlessingPriorityMenu(menu,control)
   for i,key in ipairs(keys) do
     local row=menu.priorityRows[i]
     if not row then
-      row=CreateFrame("Frame",nil,menu); row:SetSize(364,30); row:SetPoint("TOPLEFT",8,-54-(i-1)*32)
+      row=CreateFrame("Frame",nil,menu); row:SetSize(364,30); row:SetPoint("TOPLEFT",8,-74-(i-1)*32)
       row.toggle=check(row,"",0,0,function(c)
         local owner=menu.owner
         if A.Combat() or not owner or owner.disabled then return end
@@ -253,8 +306,9 @@ local function showBlessingPriorityMenu(menu,control)
     for j,v in ipairs(order) do if v==key then index=j; break end end
     row.toggle.key=key; row.toggle:SetChecked(index~=nil)
     row.icon:SetTexture(blessingIcon(key)); row.name:SetText((index and tostring(index)..". " or "")..blessingName(key))
-    local note=not index and "Not included" or not B:BlessingLearned(key) and "not learned" or "Use arrows to reorder"
-    row.note:SetText(L(note))
+    local note=not index and L("Not included") or L("Use arrows to reorder")
+    if not B:BlessingLearned(key) then note=(not index and L("Not included").." · " or "")..unlearnedText() end
+    row.note:SetText(note)
     row.up.index=index; row.down.index=index
     row.up:SetEnabled(index~=nil and index>1); row.down:SetEnabled(index~=nil and index<#order)
     row:Show()
@@ -303,7 +357,7 @@ local function blessingPick(parent,x,y,width,getChoice,setChoice,player)
       option:Show(); option.key=key
       local name=key=="inherit" and (player=="target" and L("Automatic: class + priority") or (player and L("Inherit class") or L("Follow buff settings"))) or (key=="skip" and player==true and L("Skip this player") or blessingName(key))
       local def=B:FindBuff(key); local learned=not def or B:BlessingLearned(key)
-      option:SetText(name..(learned and "" or (" ("..L("not learned")..")")))
+      option:SetText(name..(learned and "" or (" ("..unlearnedText()..")")))
       option.icon:SetTexture(def and blessingIcon(key) or (key=="skip" and "Interface\\Buttons\\UI-GroupLoot-Pass-Up" or "Interface\\Buttons\\UI-OptionsButton")); option.icon:Show()
       option.selected:SetShown((control.getChoice() or "inherit")==key); fitButtonText(option,262)
       addHelp(option,name,player=="target" and "Choose a blessing for this target class. Automatic follows enabled target priorities and class suitability. A selected first choice is enabled for targets independently of personal buffs. Unlearned choices fall back to Automatic; Skip offers no blessing. Group assignments take precedence for group members." or learned and "Sets the blessing this Paladin maintains. Each application still needs your input." or "This choice stays saved, but BuffTap cannot apply it until you learn it. No silent substitution.")
@@ -352,7 +406,7 @@ function B:BuildBlessingOptions(parent)
     end)
     addHelp(f.blessingGroups[i],"Raid group "..i,"Sets the shared raid group selection. Party members use G1. A Greater Blessing cannot safely bypass an excluded member of the same class.")
   end
-  label(p,"Greater at",18,-124,"GameFontHighlightSmall",100)
+  label(p,"Greater at",18,-144,"GameFontHighlightSmall",100)
   f.blessingThreshold=compactSlider(p,2,5,1,150,function(v) return tostring(v).."+" end,function(_,v)
     B.db.blessingNeed=v; B:NormalizeGroupNeeds(); B:RequestRefresh("blessing threshold",0.08)
   end); f.blessingThreshold:SetPoint("TOPLEFT",120,-121)
@@ -536,6 +590,7 @@ function B:BuildSupplyOptions(parent)
     addHelp(row.minimum,"Warn below","Alert when usable stock falls below this number. Zero stock always warns. Press Enter to save.")
     addHelp(row.target,L("Desired stock"),"Your personal target quantity. Missing shows how many more usable items would reach it. BuffTap does not buy them. Press Enter to save.")
     f.supplyRows[i]=row
+    label(row,L("Enter to save"),366,-31,"GameFontDisableSmall",144)
   end
   f.supplyEmpty=label(p,"",18,-190,"GameFontHighlightSmall",665)
   f.supplySnooze=button(p,L("Snooze 10 min"),18,-468,122,function() B:SnoozeSupplies() end)
@@ -730,6 +785,7 @@ function B:BuildHelperPage(parent)
     if A.Combat() then return end
     f.demonMenu:SetShown(not f.demonMenu:IsShown())
   end)
+  selectorArrow(f.demonChoice)
   f.demonChoice.icon=f.demonChoice:CreateTexture(nil,"ARTWORK")
   f.demonChoice.icon:SetSize(20,20); f.demonChoice.icon:SetPoint("LEFT",3,0)
   f.demonMenu=CreateFrame("Frame",nil,r,"BackdropTemplate")
@@ -1009,14 +1065,16 @@ function B:Options()
     end
     f.closeButton:SetNormalFontObject("GameFontNormalSmall")
     f.closeButton:SetSize(100,28)
-    f.debugButton=button(f,L("Debug"),538,-42,90,function() B:Status(true) end); f.debugButton:SetSize(90,28)
+    f.statusText=label(f,"",24,-72,"GameFontHighlightSmall",706); f.statusText:SetWordWrap(false)
+    f.saveHint=label(f,L("Checkboxes, lists and sliders save immediately. Numeric fields: Enter to save; Escape to cancel."),18,-786,"GameFontDisableSmall",706)
     f.enable=check(f,L("Enable BuffTap"),360,-44,function(c) setAndRefresh("enabled",c:GetChecked()==true) end)
-    line(f,-76)
+    line(f,-98)
 
     f.tabs={}; f.pages={}
     local names=TAB_NAMES
     local function setTab(index)
       f.activeTab=index
+      if f.activeSelector then f.activeSelector:Hide() end
       if f.resetConfirm then f.resetConfirm:Hide() end
       if B.appearancePreview then B.appearancePreview:Hide() end
       if f.blessingMenu then f.blessingMenu:Hide() end
@@ -1030,7 +1088,7 @@ function B:Options()
     for i,name in ipairs(names) do
       local idx=i
       local width=TAB_WIDTHS[i]
-      local t=button(f,name,tabX,-84,width,function() setTab(idx) end)
+      local t=button(f,name,tabX,-104,width,function() setTab(idx) end)
       t:SetSize(width,30); f.tabs[i]=t
       tabX=tabX+width+6
     end
@@ -1053,8 +1111,8 @@ function B:Options()
     f.weaponRetry=button(weapons,L("Retry reminders"),528,-16,154,function() B:RetryConsumableReminders(); B:Options() end)
     addHelp(f.weaponRetry,L("Retry reminders"),L("Restarts item loading and paused consumable reminders. Changed item effects remain blocked."))
     f.weaponEnable=check(weapons,L("Enable weapon reminders"),18,-72,function(c) setAndRefresh("weaponReminder",c:GetChecked()==true); B:Options() end)
-    f.weaponApply=check(weapons,L("Apply through scroll / click"),330,-72,function(c) setAndRefresh("weaponApply",c:GetChecked()==true); B:Options() end)
-    addHelp(f.weaponApply,"Weapon application","Choose preferences below. Scroll application works out of combat. Rogue poisons and Mage scrolls use bag items; Shamans use learned imbues. Oils and stones remain separate.")
+    f.weaponApply=selector(weapons,"",330,-72,350,function() return {{key=false,name="Remind only"},{key=true,name="Remind and apply"}} end,function(value) setAndRefresh("weaponApply",value) end)
+    addHelp(f.weaponApply,"Weapon mode","Remind only shows missing weapon buffs without preparing an application. Remind and apply prepares your selected spell or item for your next scroll or click, out of combat. Every application still requires your input.")
     f.weaponSectionHeading=label(weapons,L("Poisons / class imbues"),18,-100,"GameFontNormalSmall")
     f.weaponMain=check(weapons,L("Main hand"),18,-116,function(c) setAndRefresh("weaponMainHand",c:GetChecked()==true); B:Options() end)
     f.weaponOff=check(weapons,L("Off hand"),18,-166,function(c) setAndRefresh("weaponOffHand",c:GetChecked()==true); B:Options() end)
@@ -1067,6 +1125,7 @@ function B:Options()
         for _,other in pairs(f.coatingPickers or {}) do other.menu:Hide() end
         local menu=control.menu; menu:SetShown(not menu:IsShown())
       end)
+      selectorArrow(pick)
       pick.icon=pick:CreateTexture(nil,"ARTWORK"); pick.icon:SetSize(22,22); pick.icon:SetPoint("LEFT",4,0)
       local menu=CreateFrame("Frame",nil,weapons,"BackdropTemplate"); pick.menu=menu
       menu:SetSize(470,242); menu:SetPoint("TOPLEFT",pick,"BOTTOMLEFT",0,-2); menu:SetFrameStrata("TOOLTIP")
@@ -1086,6 +1145,7 @@ function B:Options()
         for _,other in pairs(f.coatingPickers) do if other~=control then other.menu:Hide() end end
         control.menu:SetShown(not control.menu:IsShown())
       end)
+      selectorArrow(pick)
       pick.icon=pick:CreateTexture(nil,"ARTWORK"); pick.icon:SetSize(22,22); pick.icon:SetPoint("LEFT",4,0)
       local menu=CreateFrame("Frame",nil,weapons,"BackdropTemplate"); pick.menu=menu
       menu:SetSize(470,242); menu:SetPoint("TOPLEFT",pick,"BOTTOMLEFT",0,-2); menu:SetFrameStrata("TOOLTIP")
@@ -1101,6 +1161,7 @@ function B:Options()
     addHelp(f.weaponReplace,"Replacing an existing weapon buff","Off by default. Enable only if you want your preferred buff to replace another recognized buff. Unknown coating data always uses a manual fallback.")
     f.weaponPoisonHint=label(weapons,"Poison ranks: highest carried usable rank. Preferences stay saved when out of stock.",18,-486,"GameFontDisableSmall",660)
     f.weaponHandsHint=label(weapons,"Oils and stones use a separate temporary-enchant slot. Only compatible melee weapons are eligible; shields, held items, ranged weapons and fishing poles are excluded.",18,-520,"GameFontDisableSmall",660)
+    f.weaponModeHint=label(weapons,"",18,-552,"GameFontDisableSmall",660)
     f.weaponStatus=label(weapons,"",18,-578,"GameFontHighlightSmall",660)
     f.weaponUnavailable=label(weapons,"Class imbues are available to Rogues, Shamans and Mages.",18,-72,"GameFontDisableSmall",660)
     local timingLabel=buffs:CreateFontString(nil,"OVERLAY","GameFontNormal")
@@ -1202,8 +1263,8 @@ function B:Options()
     line(header,0)
     label(header,"Spell availability & refresh timing",18,-18,"GameFontNormal")
     header:EnableMouse(true)
-    addHelp(header,"Spell availability & refresh timing","Allow controls which spells friendly-target mode may offer, including custom blessing lists. Refresh timing applies to that spell across recipient classes. Custom priorities choose the order; this section does not add another blessing assignment. Leaving custom timing off uses the default target refresh above.")
-    label(header,"Spell switches and timing apply across all target classes, including custom priorities.",18,-34,"GameFontDisableSmall",680)
+    addHelp(header,"Spell availability & refresh timing","Allow controls which spells unrestricted friendly-target mode may offer. Refresh timing applies to that spell across recipient classes. Custom priorities choose the order; this section does not add another blessing assignment. Leaving custom timing off uses the default target refresh above.")
+    label(header,"Choose allowed spells and optional refresh overrides for friendly targets.",18,-34,"GameFontDisableSmall",680)
     label(header,L("Allow"),18,-56,"GameFontDisableSmall",48)
     label(header,L("Buff"),82,-56,"GameFontDisableSmall",160)
     label(header,L("Override timing"),276,-56,"GameFontDisableSmall",100)
@@ -1261,8 +1322,7 @@ function B:Options()
       row.prev=button(row,L("Choose"),584,-8,86,function(btn) B:ChooseConsumable(btn:GetParent().family,btn) end)
       row.inventory=label(row,"",450,-11,"GameFontHighlightSmall",120)
       label(row,family.protectPresent and "Preserve active elixirs; remind after expiry" or "Rebuff at",42,-52,"GameFontDisableSmall",family.protectPresent and 390 or 62)
-      addHelp(row.enable,"Allow on friendly targets","This spell must be allowed here and enabled on Buffs to appear in target recommendations, including custom blessing priorities. This is an availability filter, not another priority list.")
-      addHelp(row.custom,"Override target refresh timing","Use a different refresh threshold for this spell across all target classes. Leave unchecked to use the default target refresh above.")
+      addHelp(row.enable,"Maintain this consumable buff","Enable this family to receive reminders for your selected food, flask or elixir. Enable consumable reminders above too. Preferences remain saved when supplies run out.")
       row.threshold=compactSlider(row,30,1800,30,230,formatSeconds,function(slider,value)
         local fam=slider:GetParent().family
         if fam then B:SetConsumableThreshold(fam,value); B:InvalidateAura("player"); B:RequestRefresh("consumable threshold",0.08) end
@@ -1289,18 +1349,18 @@ function B:Options()
     button(app,L("Clear"),436,-42,82,function() if not A.Combat() then B.db.keys={}; B.appearance=nil; B:RequestRefresh("clear binding",0); B:Options() end end)
     label(app,"The override binding is active only while BuffTap has a valid buff action ready.",18,-73,"GameFontDisableSmall",650)
     line(app,-105)
-    label(app,L("Buff icon"),18,-126,"GameFontNormalLarge")
+    label(app,L("Reminder appearance"),18,-126,"GameFontNormalLarge")
     label(app,L("Size"),18,-160,"GameFontHighlight"); f.sizeEdit=editbox(app,62,-156,58,true); label(app,"px",126,-160,"GameFontDisableSmall")
-    label(app,L("Opacity"),176,-160,"GameFontHighlight"); f.opacityEdit=editbox(app,238,-156,58,false)
+    label(app,L("Opacity"),176,-160,"GameFontHighlight"); f.opacityEdit=editbox(app,238,-156,58,true); label(app,"%",300,-160,"GameFontDisableSmall")
     label(app,"X",326,-160,"GameFontHighlight"); f.xEdit=editbox(app,344,-156,64,false)
     label(app,"Y",430,-160,"GameFontHighlight"); f.yEdit=editbox(app,448,-156,64,false)
     button(app,L("Apply"),540,-156,72,function()
       if A.Combat() then return end
       local size,opacity,x,y=tonumber(f.sizeEdit:GetText()),tonumber(f.opacityEdit:GetText()),tonumber(f.xEdit:GetText()),tonumber(f.yEdit:GetText())
-      if size then B.db.size=size end; if opacity then B.db.opacity=opacity end; if x then B.db.x=x end; if y then B.db.y=y end
+      if size then B.db.size=size end; if opacity then B.db.opacity=math.max(0,math.min(100,opacity))/100 end; if x then B.db.x=x end; if y then B.db.y=y end
       B:InitDB(); B.appearance=nil; B:RequestRefresh("appearance",0); B:Options()
     end)
-    f.soundCheck=check(app,L("Sound"),18,-204,function(s) setAndRefresh("sound",s:GetChecked()==true) end)
+    f.soundCheck=check(app,L("Enable reminder sound"),18,-488,function(s) setAndRefresh("sound",s:GetChecked()==true) end)
     f.glowCheck=check(app,L("Glow"),122,-204,function(s) setAndRefresh("glow",s:GetChecked()==true) end)
     f.pulseCheck=check(app,L("Pulse"),220,-204,function(s) setAndRefresh("pulse",s:GetChecked()==true) end)
     f.buffNameCheck=check(app,L("Show buff name"),18,-238,function(s) setAndRefresh("showBuffName",s:GetChecked()==true) end)
@@ -1315,29 +1375,22 @@ function B:Options()
     button(app,L("Reset look"),236,-318,100,function()
       if not A.Combat() then B.db.size=64; B.db.opacity=1; B.db.x=0; B.db.y=-180; B.db.glow=true; B.db.pulse=false; B.db.showBuffName=false; B.db.showTargetName=true; B.db.showTimer=false; B.db.showGroupBadge=true; B.appearance=nil; B:RequestRefresh("reset look",0); B:Options() end
     end)
-    label(app,L("Move icon opens a safe preview that cannot cast spells."),18,-354,"GameFontDisableSmall",500)
+    label(app,L("Numeric fields: press Enter to save one, or Apply to save all. Move icon opens a safe preview."),18,-354,"GameFontDisableSmall",500)
     button(app,L("Preview appearance"),348,-318,150,function() B:PreviewAppearance() end)
     line(app,-382)
-    label(app,L("Sound"),18,-392,"GameFontNormal")
+    label(app,L("Sounds"),18,-392,"GameFontNormal")
     local function soundControl(kind,y)
       label(app,kind=="supply" and L("Supply sound") or L("Reminder sound"),18,y-5,"GameFontHighlightSmall",112)
       local key=kind=="supply" and "supplySound" or "reminderSound"
-      local choice=button(app,"",138,y,180,function()
-        if A.Combat() then return end
-        local choices=B:SoundChoices(); local index=1
-        for i,item in ipairs(choices) do if item.key==B.db[key] then index=i; break end end
-        B.db[key]=choices[index%#choices+1].key; B:Options()
-      end)
+      local choice=selector(app,"",138,y,180,function() return B:SoundChoices() end,function(value) B.db[key]=value end)
       button(app,L("Preview"),326,y,90,function() if not B:PlayAlert(kind,true) then B.Print(L("Sound preview unavailable.")) end end)
-      addHelp(choice,L("Sound"),L("Click to cycle available sounds.").."\n"..L("Only verified client sound choices are offered. Preview ignores the alert toggle."))
+      addHelp(choice,L("Sound"),L("Open the list to choose a sound.").."\n"..L("Only verified client sound choices are offered. Preview ignores the alert toggle."))
       return choice
     end
     f.reminderSoundButton=soundControl("reminder",-416)
     f.supplySoundButton=soundControl("supply",-450)
     label(app,L("Audio channel"),436,-420,"GameFontHighlightSmall",116)
-    f.channelButton=button(app,"",550,-416,132,function()
-      if not A.Combat() then B.db.soundChannel=B.db.soundChannel=="Master" and "SFX" or "Master"; B:Options() end
-    end)
+    f.channelButton=selector(app,"",550,-416,132,function() return {{key="Master",name="Master"},{key="SFX",name="Sound effects"}} end,function(value) B.db.soundChannel=value end)
     addHelp(f.channelButton,L("Audio channel"),L("Choose a sound and preview it. Master follows master volume; Sound effects follows effects volume."))
     label(app,L("Minimum interval"),436,-454,"GameFontHighlightSmall",116)
     f.soundInterval=compactSlider(app,5,60,5,80,formatSeconds,function(_,value) setAndRefresh("soundInterval",value) end)
@@ -1395,12 +1448,13 @@ function B:Options()
     self:BuildHelperPage(f)
 
     local function acceptEdit(e,key)
-      e:SetScript("OnEnterPressed",function(s) local v=tonumber(s:GetText()); if v and not A.Combat() then setAndRefresh(key,v) end; s:ClearFocus(); B:Options() end)
+      e:SetScript("OnEnterPressed",function(s) local v=tonumber(s:GetText()); if v and not A.Combat() then if key=="opacity" then v=math.max(0,math.min(100,v))/100 end; setAndRefresh(key,v) end; s:ClearFocus(); B:Options() end)
       e:SetScript("OnEscapePressed",function(s) s:ClearFocus(); B:Options() end)
     end
     acceptEdit(f.sizeEdit,"size"); acceptEdit(f.opacityEdit,"opacity"); acceptEdit(f.xEdit,"x"); acceptEdit(f.yEdit,"y")
 
     f:SetScript("OnHide",function()
+      if f.activeSelector then f.activeSelector:Hide() end
       if B.itemPicker then B.itemPicker:Hide() end
       if f.blessingMenu then f.blessingMenu:Hide() end
       if f.resetConfirm then f.resetConfirm:Hide() end
@@ -1424,7 +1478,7 @@ function B:Options()
   f.targetBlessingPanel:SetShown(paladin); f.targetClassAware:SetChecked(self.db.targetClassBlessings)
   f.targetBlessingFallback:SetChecked(self.db.targetBlessingFallback)
   for _,pick in ipairs(f.targetBlessingPicks) do pick:Update(); pick:SetAvailable(self.db.targetClassBlessings and self.db.friendlyTarget) end
-  f.targetBlessingInstruction:SetText(L(not self.db.friendlyTarget and "Enable friendly target buffing to use these class choices." or not self.db.targetClassBlessings and "Enable class-aware target blessings to customize each class." or "Open a class to check and order blessings. All use the refresh above. Automatic follows Buffs settings."))
+  f.targetBlessingInstruction:SetText(L(not self.db.friendlyTarget and "Enable friendly target buffing to use these class choices." or not self.db.targetClassBlessings and "Enable class-aware target blessings to customize each class." or "Open a class to check and order blessings. All use the refresh above. Automatic uses enabled Buffs and their order, filtered for this class."))
   local simplePal=paladin and self.db.targetClassBlessings
   f.targetHeaders:SetShown(not simplePal); f.targetScroll:SetShown(not simplePal)
   f.targetHeaders:ClearAllPoints(); f.targetHeaders:SetPoint("TOPLEFT",0,paladin and -396 or -204)
@@ -1552,6 +1606,8 @@ function B:Options()
           B:InvalidateAura("target"); B:RequestRefresh("target custom timing",0); B:Options()
         end
       end)
+      addHelp(row.enable,"Allow on friendly targets","Offer this spell to friendly targets when it is also enabled on Buffs. This filter is separate from personal buffing.")
+      addHelp(row.custom,"Override target refresh timing","Use a different refresh threshold for this spell. Leave unchecked to use the default target refresh above.")
       row.threshold=compactSlider(row,30,1800,30,150,formatSeconds,function(slider,value)
         local def=slider:GetParent().def
         if def and B.db.targetBuffSeconds[def.key]~=nil then
@@ -1563,7 +1619,7 @@ function B:Options()
     end
     row.def=b; row:ClearAllPoints(); row:SetPoint("TOPLEFT",0,-(rowIndex-1)*52); row:Show()
     row.enable:SetChecked(self:TargetBuffEnabled(b)); row.icon:SetTexture(buffIcon(b)); row.name:SetText(spellLabel(b))
-    row.detail:SetText(self:Enabled(b) and "Single-target spell" or "Disabled on Buffs tab")
+    row.detail:SetText(not learnedSpell(b) and unlearnedText() or self:Enabled(b) and L("Single-target spell") or L("Disabled on Buffs tab"))
     local custom=self.db.targetBuffSeconds[b.key]~=nil
     row.custom:SetChecked(custom)
     local seconds=self:TargetRebuffSeconds(b)
@@ -1620,7 +1676,7 @@ function B:Options()
   end
 
   f.bindingText:SetText("Current: "..(#self.db.keys>0 and table.concat(self.db.keys,", ") or "none"))
-  f.sizeEdit:SetText(tostring(self.db.size)); f.opacityEdit:SetText(string.format("%.2f",self.db.opacity)); f.xEdit:SetText(tostring(math.floor(self.db.x+0.5))); f.yEdit:SetText(tostring(math.floor(self.db.y+0.5)))
+  f.sizeEdit:SetText(tostring(self.db.size)); f.opacityEdit:SetText(tostring(math.floor(self.db.opacity*100+0.5))); f.xEdit:SetText(tostring(math.floor(self.db.x+0.5))); f.yEdit:SetText(tostring(math.floor(self.db.y+0.5)))
   for _,choice in ipairs(self:SoundChoices()) do
     if choice.key==self.db.reminderSound then f.reminderSoundButton:SetText(L(choice.name)) end
     if choice.key==self.db.supplySound then f.supplySoundButton:SetText(L(choice.name)) end
@@ -1629,7 +1685,7 @@ function B:Options()
   f.minimapCheck:SetChecked(not self.db.minimap.hide)
   f.brokerCheck:SetChecked(self.db.brokerEnabled)
   f.soundInterval.silent=true; f.soundInterval:SetValue(self.db.soundInterval); f.soundInterval.silent=false
-  f.friendlyStatus:SetText(self:FriendlyStatus())
+  f.friendlyStatus:SetText(self:FriendlyStatus()); f.statusText:SetText(self:FriendlyStatus())
   if self.appearancePreview and self.appearancePreview:IsShown() then self:PreviewAppearance() end
   f.soundCheck:SetChecked(self.db.sound); f.glowCheck:SetChecked(self.db.glow); f.pulseCheck:SetChecked(self.db.pulse)
   f.buffNameCheck:SetChecked(self.db.showBuffName); f.targetNameCheck:SetChecked(self.db.showTargetName)
@@ -1644,7 +1700,8 @@ function B:Options()
   for _,control in ipairs({f.weaponHint,f.weaponEnable,f.weaponApply,f.weaponMain,f.weaponOff,f.weaponTimingLabel,f.weaponTiming,f.weaponReplace,f.weaponStatus,f.weaponHandsHint}) do control:Show() end
   for _,pick in pairs(f.weaponPickers) do pick:SetShown(weaponClass~=nil); pick.menu:Hide() end
   if true then
-    f.weaponEnable:SetChecked(self.db.weaponReminder==true); f.weaponApply:SetChecked(self.db.weaponApply==true)
+    f.weaponEnable:SetChecked(self.db.weaponReminder==true); f.weaponApply:SetText(L(self.db.weaponApply and "Remind and apply" or "Remind only"))
+    f.weaponModeHint:SetText(L(self.db.weaponApply and "Your scroll or click applies the selected weapon buff, out of combat." or "Alerts only: apply weapon buffs manually. Your preferences remain saved."))
     f.weaponMain:SetChecked(self.db.weaponMainHand~=false); f.weaponOff:SetChecked(self.db.weaponOffHand~=false)
     f.weaponReplace:SetChecked(self.db.weaponReplace==true)
     f.weaponOff:SetShown(weaponClass=="ROGUE" or not weaponClass)
@@ -1767,6 +1824,11 @@ function B:Options()
       row.groupIcon:Hide(); row.detail:ClearAllPoints(); row.detail:SetPoint("TOPLEFT",84,-28)
       row.detail:SetText(b.kind=="self" and L("Self buff") or L("Single-target buff"))
     end
+    if not learnedSpell(b) then
+      row.groupIcon:Hide(); row.detail:ClearAllPoints(); row.detail:SetPoint("TOPLEFT",84,-28); row.detail:SetText(unlearnedText())
+    elseif b.groupKey and not learnedSpell(self:FindBuff(b.groupKey)) then
+      row.detail:SetText(L("group spell").." · "..unlearnedText())
+    end
     row.up:SetEnabled(visible>1); row.down:SetEnabled(visible<#list)
     row.order:SetText(tostring(self.db.priorities[b.key] or b.order))
     local threshold=self:RebuffSeconds(b)
@@ -1852,7 +1914,7 @@ function B:RegisterOptionsCategory()
   local logo=p:CreateTexture(nil,"ARTWORK"); logo:SetSize(82,82); logo:SetPoint("TOPLEFT",16,-16); logo:SetTexture(ICON_PATH)
   local title=label(p,"BuffTap",116,-24,"GameFontNormalLarge")
   label(p,"One-tap buff maintenance for WoW Forever.",116,-52,"GameFontHighlightSmall",500)
-  label(p,"Open BuffTap to manage class buffs, group assignments, friendly-target buffing, consumable reminders, timing, and the reminder icon.",18,-124,"GameFontHighlight",620)
+  label(p,"Open BuffTap to manage class buffs, group assignments, friendly-target buffing, consumable reminders, timing, and the reminder icon.",18,-144,"GameFontHighlight",620)
   local open=button(p,"Open BuffTap",18,-184,132,function()
     if A.Combat() then if B.Print then B.Print("Settings are available after combat.") end; return end
     hideSettingsPanel(); B:Options()

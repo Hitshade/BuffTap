@@ -4,7 +4,7 @@
 
 local _, B = ...
 _G.BuffTap = B
-B.version = "1.10.2"
+B.version = "1.11.0"
 B.API = {}
 local A = B.API
 
@@ -97,7 +97,7 @@ function B:InitDB()
   end
   if type(self.db.raidGroups) ~= "table" then self.db.raidGroups = {true,true,true,true,true,true,true,true} end
   for i=1,8 do if type(self.db.raidGroups[i]) ~= "boolean" then self.db.raidGroups[i] = true end end
-  for k,limits in pairs({size={24,160}, opacity={0.1,1}, x={-4000,4000}, y={-4000,4000}, seconds={15,180}, targetSeconds={30,1800}, groupNeed={2,5}, blessingNeed={2,5}}) do
+  for k,limits in pairs({size={24,160}, opacity={0,1}, x={-4000,4000}, y={-4000,4000}, seconds={15,180}, targetSeconds={30,1800}, groupNeed={2,5}, blessingNeed={2,5}}) do
     local v = self.db[k]
     if v ~= v then v = defaults[k] end
     self.db[k] = math.max(limits[1], math.min(limits[2], v))

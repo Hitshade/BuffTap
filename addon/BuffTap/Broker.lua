@@ -13,6 +13,7 @@ local function tooltip(t)
   t:AddLine(B:Text("Click to open settings. Drag the minimap button to move it."),.8,.8,.8,true)
 end
 function B:UpdateBroker()
+  if self.options and self.options:IsShown() and self.options.statusText then self.options.statusText:SetText(self:FriendlyStatus()) end
   local obj=self.brokerObject
   if not obj then return end
   local text=self.db.brokerEnabled and self:FriendlyStatus() or self:Text("Broker disabled — reload UI")

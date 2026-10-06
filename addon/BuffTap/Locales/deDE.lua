@@ -270,3 +270,12 @@ B.Locales["deDE"]={
   ["Check to include. Use arrows to order; 1 is first."]="Auswählen und mit Pfeilen sortieren; 1 kommt zuerst.",
   ["Use arrows to reorder"]="Mit Pfeilen sortieren",
 }
+
+B.Locales.deDE["Customization"]="Anpassung"
+B.Locales.deDE["Remind only"]="Nur erinnern"
+B.Locales.deDE["Remind and apply"]="Erinnern und anwenden"
+B.Locales.deDE["Reminder appearance"]="Darstellung der Erinnerung"
+B.Locales.deDE["Sounds"]="Klänge"
+B.Locales.deDE["Enable reminder sound"]="Erinnerungston aktivieren"
+B.Locales.deDE["Enter to save"]="Enter zum Speichern"
+B.Locales.deDE["Only checked blessings are used. Use arrows to order; 1 is first."]="Nur markierte Segen werden verwendet. Mit Pfeilen ordnen; 1 ist zuerst."

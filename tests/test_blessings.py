@@ -64,7 +64,7 @@ CreateFrame=function(...)
  return frame
 end
 BuffTap:Options(); local f=BuffTap.options; f.expandedBlessing='WARRIOR'; BuffTap:Options()
-assert(f.height==766 and f.blessingDetail.height==78)
+assert(f.height==806 and f.blessingDetail.height==78)
 for _,row in ipairs(f.blessingRows) do assert(-row.points[3]+row.height<574) end
 assert(#f.blessingPlayerRows==2)
 ''')
@@ -99,7 +99,7 @@ for _,tab in ipairs(f.tabs) do
  previousRight=x+tab.width
 end
 assert(f.tabs[4].width>f.tabs[1].width and f.tabs[6].width>f.tabs[5].width)
-assert(f.height-124-18==624) -- Preserve the existing page area.
+assert(f.height-144-32==630) -- Preserve the existing page area.
 """)
 test('Header Close hides options and all tabs still select their own page',setup+"""
 BuffTap:Options(); local f=BuffTap.options
@@ -111,7 +111,7 @@ UIParent.GetWidth=function() return 700 end; UIParent.GetHeight=function() retur
 local original=CreateFrame
 CreateFrame=function(...) local f=original(...); f.SetScale=function(self,s) self.scale=s end; return f end
 BuffTap:Options(); local f=BuffTap.options
-assert(f.scale*760<=668 and f.scale*766<=618)
+assert(f.scale*760<=668 and f.scale*806<=618)
 """)
 
 print(f'ALL {len(tests)} SCENARIOS PASSED')

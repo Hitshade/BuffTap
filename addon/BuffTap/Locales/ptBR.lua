@@ -270,3 +270,12 @@ B.Locales["ptBR"]={
   ["Check to include. Use arrows to order; 1 is first."]="Marque para incluir. Use as setas; 1 vem primeiro.",
   ["Use arrows to reorder"]="Use as setas para reordenar",
 }
+
+B.Locales.ptBR["Customization"]="Personalização"
+B.Locales.ptBR["Remind only"]="Apenas lembrar"
+B.Locales.ptBR["Remind and apply"]="Lembrar e aplicar"
+B.Locales.ptBR["Reminder appearance"]="Aparência do lembrete"
+B.Locales.ptBR["Sounds"]="Sons"
+B.Locales.ptBR["Enable reminder sound"]="Ativar som do lembrete"
+B.Locales.ptBR["Enter to save"]="Enter para salvar"
+B.Locales.ptBR["Only checked blessings are used. Use arrows to order; 1 is first."]="Somente bênçãos marcadas são usadas. Ordene com as setas; 1 vem primeiro."
