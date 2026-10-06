@@ -4,7 +4,8 @@
 
 local ADDON,B = ...
 local A = B.API
-local function say(s) if DEFAULT_CHAT_FRAME then DEFAULT_CHAT_FRAME:AddMessage("|cff59d6b2BuffTap|r " .. s) end end
+local function L(key,...) return B:Text(key,...) end
+local function say(s) if DEFAULT_CHAT_FRAME then DEFAULT_CHAT_FRAME:AddMessage("|cff59d6b2BuffTap|r " .. L(s)) end end
 B.Print = say
 
 local function publicError(err)
@@ -70,6 +71,7 @@ function B:CancelOverlayTimer()
 end
 
 function B:UpdateOverlay()
+  if self.UpdateBroker then self:UpdateBroker() end
   local b=self.button
   if not b then return end
   self:CancelOverlayTimer()
@@ -169,13 +171,13 @@ function B:CreateButton()
     if action.source=="weapon-reminder" then
       GameTooltip:SetText(action.name,1,0.82,0.1)
       GameTooltip:AddLine(action.targetName,0.4,1,0.8)
-      GameTooltip:AddLine(action.reason,0.85,0.85,0.85,true)
-      GameTooltip:AddLine(action.manual and "Manual reminder only; no binding is installed." or "Scroll or click to apply your preferred weapon buff.",0.75,0.75,0.75,true)
+      GameTooltip:AddLine(L(action.reason),0.85,0.85,0.85,true)
+      GameTooltip:AddLine(action.manual and L("Manual reminder only; no binding is installed.") or L("Scroll or click to apply your preferred weapon buff."),0.75,0.75,0.75,true)
     elseif action.source=="readiness" then
       if not action.manual and GameTooltip.SetSpellByID then GameTooltip:SetSpellByID(action.id)
       else GameTooltip:SetText(action.name,1,0.82,0.1) end
-      GameTooltip:AddLine(action.reason,0.85,0.85,0.85,true)
-      GameTooltip:AddLine(action.manual and "Manual reminder only; no click action or key binding." or "Click or use your BuffTap binding to cast.",0.4,1,0.8,true)
+      GameTooltip:AddLine(L(action.reason),0.85,0.85,0.85,true)
+      GameTooltip:AddLine(action.manual and L("Manual reminder only; no click action or key binding.") or L("Click or use your BuffTap binding to cast."),0.4,1,0.8,true)
     elseif action.source=="consumable" then
       GameTooltip:SetText(action.name,1,0.82,0.1)
       GameTooltip:AddLine("Personal consumable | item "..tostring(action.itemID),0.4,1,0.8)
@@ -186,7 +188,7 @@ function B:CreateButton()
       GameTooltip:AddLine("Rank: " .. (action.rank~="" and action.rank or "not exposed") .. " | ID " .. action.id,1,1,1)
       if action.rangeSource then GameTooltip:AddLine("Range check: "..action.rangeSource,0.75,0.75,0.75) end
     end
-    if B:HelperEnabled("helperDismiss") then GameTooltip:AddLine("Right-click: dismiss until zone change (restore in Helpers).",0.8,0.8,0.8,true) end
+    if B:HelperEnabled("helperDismiss") then GameTooltip:AddLine(L("Right-click: dismiss until zone change (restore in Helpers)."),0.8,0.8,0.8,true) end
     if B:HelperEnabled("helperQuick") and action.source=="consumable" then B:ShowQuickChoices(action) end
     GameTooltip:AddLine(table.concat(B.db.keys,", "),0.8,0.8,0.8)
     GameTooltip:Show()
@@ -290,6 +292,7 @@ function B:Commit(action,reason)
   b:Hide()
   b:SetAttribute("type1",nil); b:SetAttribute("spell",nil); b:SetAttribute("item",nil); b:SetAttribute("unit",nil); b:SetAttribute("target-slot",nil)
   self.action=nil; self.reason=reason
+  if self.UpdateBroker then self:UpdateBroker() end
   if type(ClearOverrideBindings)~="function" then self.setupError="override binding API unavailable"; return end
   local cleared=pcall(ClearOverrideBindings,b)
   if not cleared then self.setupError="could not clear override bindings"; return end
@@ -309,8 +312,8 @@ function B:Commit(action,reason)
     b.label:SetText(self.db.showTargetName and action.targetName or "")
     self.action=action; self.reason=reason; b:Show()
     self:UpdateOverlay(); self:UpdatePulse()
-    if self.db.sound and (not previous or previous.key~=action.key) and GetTime()-(self.lastSound or -100)>5 then
-      if PlaySound then pcall(PlaySound,12867,"Master") end
+    if self.db.sound and (not previous or previous.key~=action.key) and GetTime()-(self.lastSound or -100)>=(self.db.soundInterval or 5) then
+      self:PlayAlert("reminder")
       self.lastSound=GetTime()
     end
     return
@@ -348,8 +351,8 @@ function B:Commit(action,reason)
   b:Show()
   self:UpdateOverlay(); self:UpdatePulse()
   if self.db.sound and (not previous or previous.key~=action.key or previous.target~=action.target)
-    and GetTime()-(self.lastSound or -100)>5 then
-    if PlaySound then pcall(PlaySound,12867,"Master") end
+    and GetTime()-(self.lastSound or -100)>=(self.db.soundInterval or 5) then
+    self:PlayAlert("reminder")
     self.lastSound=GetTime()
   end
 end
@@ -702,6 +705,13 @@ local castEvents={UNIT_SPELLCAST_SUCCEEDED=true,UNIT_SPELLCAST_FAILED=true,UNIT_
 local function handleEvent(_,event,arg,castGUID,spellID)
   if event=="ADDON_LOADED" then if arg==ADDON then B:InitDB() end; return end
   if not B.db then return end
+    if event=="PLAYER_REGEN_DISABLED" and B.SuspendItemDataRetries then B:SuspendItemDataRetries() end
+  if event=="PLAYER_REGEN_ENABLED" and B.ResumeItemDataRetries then B:ResumeItemDataRetries() end
+local itemRequested=event=="ITEM_DATA_LOAD_RESULT" and A.Number(arg) and ((B.itemRequests and B.itemRequests[arg]) or (B.itemRequestState and B.itemRequestState[arg]))
+  if itemRequested and B.ItemDataResult then
+    B:ItemDataResult(arg,castGUID)
+    B.readinessInventory=nil -- Item completion also releases cached Healthstone metadata.
+  end
   if B.SuppliesEvent and B:SuppliesEvent(event,arg) then return end
   if B.ReadinessEvent then
     local ok,handled=pcall(B.ReadinessEvent,B,event,arg,castGUID,spellID)
@@ -733,10 +743,9 @@ local function handleEvent(_,event,arg,castGUID,spellID)
       if B.options and B.options:IsShown() then B:Options() end
       if B.itemPicker and B.itemPicker:IsShown() then B:UpdateConsumablePicker() end
     end
-    if not B.db.consumablesEnabled and not B.db.group and not B.powerBlocked and not (B.db.weaponApply and B:WeaponReminderClass()=="ROGUE") then return end
+    if not B.db.consumablesEnabled and not B.db.group and not B.powerBlocked and not (B.WeaponInventoryRelevant and B:WeaponInventoryRelevant()) then return end
   elseif event=="ITEM_DATA_LOAD_RESULT" then
-    if not A.Number(arg) or not (B.itemRequests and B.itemRequests[arg]) then return end
-    B.itemRequests[arg]=nil
+    if not itemRequested then return end
     if B.InvalidateConsumables then B:InvalidateConsumables(arg) end
   elseif event=="UNIT_AURA" then
     if not B:IsWatchedUnit(arg) and not (B:HelperEnabled("helperCoverage") and A.Text(arg) and arg:match("^party[1-4]$")) then return end
@@ -744,6 +753,8 @@ local function handleEvent(_,event,arg,castGUID,spellID)
   elseif event=="UNIT_CONNECTION" then
     if A.Text(arg) then B:InvalidateAura(arg) end
   elseif event=="GROUP_ROSTER_UPDATE" then
+    local n=A.Call(GetNumSubgroupMembers)
+    if A.Call(IsInRaid)==false and A.Number(n) and n==0 then B.blessingPlayers=nil end
     B:InvalidateRoster(); B:InvalidateAura()
   elseif event=="PLAYER_ENTERING_WORLD" or event=="ZONE_CHANGED_NEW_AREA" then
     B:InvalidateRoster(); B:InvalidateAura(); if B.InvalidateConsumables then B:InvalidateConsumables() end
@@ -765,6 +776,7 @@ local function handleEvent(_,event,arg,castGUID,spellID)
     B:CancelRefreshTimer(); B:CancelWakeTimer(); B:CancelRangeTimer(); B:CancelOverlayTimer(); B.targetSettleToken=(B.targetSettleToken or 0)+1
     B:CancelTimer("target0.18"); B:CancelTimer("target0.65")
     B.action=nil; B.reason="combat: suspended"
+    if B.UpdateBroker then B:UpdateBroker() end
     if GameTooltip then GameTooltip:Hide() end
     return
   end

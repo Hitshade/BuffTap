@@ -1,4 +1,5 @@
 from pathlib import Path
+import json
 try:
  from lupa.lua51 import LuaRuntime
 except ImportError as exc:
@@ -6,11 +7,12 @@ except ImportError as exc:
 ROOT=Path(__file__).resolve().parents[1]
 ADDON=ROOT/'addon/BuffTap'
 tests=[]
-def test(name,code):
+def test(name,code,locale=None):
  lua=LuaRuntime(unpack_returned_tuples=True)
  lua.execute((ROOT/'tests/mock.lua').read_text())
+ if locale: lua.execute("GetLocale=function() return "+json.dumps(locale)+" end")
  ns=lua.table()
- for f in ['Catalog.lua','Engine.lua','ConsumableData.lua','Consumables.lua','WeaponCoatings.lua','Supplies.lua','BuffTap.lua','Helpers.lua','Readiness.lua','Options.lua']:
+ for f in [line.strip() for line in (ADDON/'BuffTap.toc').read_text().splitlines() if line.strip().endswith('.lua')]:
   lua.execute((ADDON/f).read_text(encoding='utf-8-sig'),'BuffTap',ns)
  lua.execute('BuffTap:InitDB(); BuffTap:Refresh()')
  lua.execute(code)
@@ -66,7 +68,7 @@ test('New Aspect and Seal IDs remain known-spell gated', "playerClass='PALADIN';
 test('No permanent OnUpdate on supported client', "assert(BuffTap.events.scripts.OnUpdate==nil)")
 
 test('Group reagent missing falls back to single', "spell(21849,'Gift of the Wild',50); bags[17021]=0; BuffTap.db.group=true; UnitLevel=function() return 60 end; refresh(); assert(BuffTap.action.id==5232)")
-test('Confirmed flask use without effect is quarantined after settling', "stock(13510,17626); consumables('flask'); refresh(); BuffTap.button.scripts.PreClick(nil,'LeftButton',false); bags[13510]=4; BuffTap.button.scripts.PostClick(nil,'LeftButton',false); advance(6); assert(BuffTap.itemQuarantine[13510]); assert(not BuffTap.action)")
+test('Confirmed flask use pauses after bounded second observation', "stock(13510,17626); consumables('flask'); refresh(); BuffTap.button.scripts.PreClick(nil,'LeftButton',false); bags[13510]=4; BuffTap.button.scripts.PostClick(nil,'LeftButton',false); advance(11); assert(BuffTap.effectPauses[13510] and not BuffTap.itemQuarantine[13510]); assert(not BuffTap.action)")
 test('Confirmed flask with effect does not quarantine', "stock(13510,17626); consumables('flask'); refresh(); BuffTap.button.scripts.PreClick(nil,'LeftButton',false); bags[13510]=4; BuffTap.button.scripts.PostClick(nil,'LeftButton',false); aura('player',17626,'Titans',3600,7200); advance(6); assert(not BuffTap.itemQuarantine[13510] and not BuffTap.action)")
 test('Saved per-buff group overrides retain mixed state', "local b=BuffTap:FindBuff('motw'); local map=BuffTap:EnsureBuffGroups(b); map[2]=false; BuffTap:InitDB(); assert(BuffTap:GroupColumnState(2)=='mixed'); BuffTap:SetRaidGroupColumn(2,true); assert(BuffTap:GroupColumnState(2)=='on' and BuffTap.db.buffGroups.motw==nil)")
 test('Greater blessing never replaces higher-priority owned family', "playerClass='PALADIN'; spells={}; book={}; spell(20217,'Blessing of Kings',20); spell(25898,'Greater Blessing of Kings',60); spell(19740,'Blessing of Might',4); spell(25782,'Greater Blessing of Might',52); UnitLevel=function() return 60 end; BuffTap.db.group=true; BuffTap.db.buffs.bom=true; for _,u in ipairs({'player','party1','party2'}) do aura(u,20217,'Blessing of Kings') end; refresh(); assert(not BuffTap.action)")

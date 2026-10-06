@@ -60,7 +60,7 @@ function methods:SetShown(v) if v then self:Show() else self:Hide() end end
 function methods:IsShown() return self.shown end
 function methods:SetScript(k,v) self.scripts[k]=v end
 function methods:RegisterEvent(e) self.registered[e]=true end
-function methods:CreateTexture() return visual() end
+function methods:CreateTexture() local v=visual(); v.GetParent=function() return self end; v.GetVertexColor=function() return 1,1,1 end; return v end
 function methods:CreateFontString() return visual() end
 function methods:ClearBindings() bindings={} end
 function methods:SetText(s) self.text=s end
@@ -68,6 +68,7 @@ function methods:GetText() return self.text end
 function methods:SetChecked(v) self.checked=v end
 function methods:GetChecked() return self.checked end
 function methods:GetParent() return self.parent end
+function methods:GetFrameLevel() return 1 end
 function methods:GetCenter() return 500,500 end
 function methods:SetSize() assert(not combat or not self.protected,'protected resize') end
 function methods:SetPoint() assert(not combat or not self.protected,'protected move') end
@@ -155,3 +156,15 @@ function consumables(family)
 end
 
 function methods:UnregisterEvent(e) self.registered[e]=nil end
+
+function securecallfunction(fn,...) return fn(...) end
+Minimap=CreateFrame('Frame')
+function Minimap:GetWidth() return 140 end
+function Minimap:GetHeight() return 140 end
+function Minimap:GetEffectiveScale() return 1 end
+function methods:CreateAnimationGroup()
+ local g=setmetatable({}, {__index=function() return function() end end})
+ function g:CreateAnimation() return setmetatable({}, {__index=function() return function() end end}) end
+ return g
+end
+strmatch=string.match; wipe=function(t) for k in pairs(t) do t[k]=nil end return t end

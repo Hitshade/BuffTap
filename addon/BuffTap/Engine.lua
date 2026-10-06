@@ -4,7 +4,7 @@
 
 local _, B = ...
 _G.BuffTap = B
-B.version = "1.3.0"
+B.version = "1.8.0"
 B.API = {}
 local A = B.API
 
@@ -55,13 +55,13 @@ function B:InitDB()
   if type(self.db.showGroupBadge)~="boolean" and type(self.db.showGroupIndicator)=="boolean" then self.db.showGroupBadge=self.db.showGroupIndicator end
   self.db.showRemaining=nil; self.db.showGroupIndicator=nil
   local defaults = {enabled=true, size=64, opacity=1, x=0, y=-180,
-    seconds=45, rebuffVersion=1, sound=false, glow=true, pulse=false, group=false, smartGroup=true,
+    seconds=45, rebuffVersion=1, sound=false, reminderSound="default", supplySound="default", soundChannel="Master", soundInterval=5, glow=true, pulse=false, group=false, smartGroup=true,
     groupNeed=3, blessingNeed=2, friendlyTarget=false, targetSeconds=300, keys={"MOUSEWHEELDOWN"}, buffs={}, priorities={}, buffSeconds={},
-    buffGroups={}, buffClasses={}, buffGroupNeed={}, targetBuffs={}, targetBuffSeconds={}, showBuffName=false, showTargetName=true, showTimer=false, showGroupBadge=true,
+    blessingAssignments=false, blessingClasses={}, buffGroups={}, buffClasses={}, buffGroupNeed={}, targetBuffs={}, targetBuffSeconds={}, showBuffName=false, showTargetName=true, showTimer=false, showGroupBadge=true,
     consumablesEnabled=false, consumableFamilies={}, consumableChoices={}, consumableSeconds={},
     suppliesEnabled=false, suppliesChat=false, suppliesSound=false, suppliesReadyCheck=false, supplySettings={},
     weaponReminder=true, weaponMainHand=true, weaponOffHand=true,
-    weaponApply=false, weaponReplace=false, weaponChoices={}, weaponSeconds=60,
+    weaponApply=false, weaponReplace=false, weaponChoices={}, weaponCoatings={}, weaponSeconds=60,
     helperDismiss=false, helperBounce=false, helperTracking=false, helperCoverage=false,
     helperDiscovery=false, helperThanks=false, helperQuick=false, helperTracker=0, helperPet=false, helperHealthstone=false, helperDemon=0,
     raidGroups={true,true,true,true,true,true,true,true}}
@@ -70,6 +70,10 @@ function B:InitDB()
   end
   if not A.Number(self.db.helperTracker) or (self.db.helperTracker~=2383 and self.db.helperTracker~=2580 and self.db.helperTracker~=43308) then self.db.helperTracker=0 end
   if not A.Number(self.db.helperDemon) or (self.db.helperDemon~=688 and self.db.helperDemon~=697 and self.db.helperDemon~=712 and self.db.helperDemon~=713 and self.db.helperDemon~=691) then self.db.helperDemon=0 end
+  if self.NormalizeAlerts then self:NormalizeAlerts() end
+  if self.NormalizeCoatings then self:NormalizeCoatings() end
+  if self.SyncBroker then self:SyncBroker() end
+  if self.NormalizeBlessingAssignments then self:NormalizeBlessingAssignments() end
   if self.SyncReadiness then self:SyncReadiness() end
   -- Validate catalog keys without deleting preferences while class data is loading.
   local class=self.WeaponReminderClass and self:WeaponReminderClass()
@@ -691,6 +695,7 @@ function B:Validate(action)
     return self:ValidateConsumable(action,false)
   end
   if not action then return false,"no action" end
+  if not self:BlessingActionAllowed(action) then return false,"blessing assignment changed" end
   if not A.Known(action.id) then return false,"spell no longer known" end
   local eligible,why=self:TargetEligible(action,true)
   if not eligible then
@@ -790,6 +795,86 @@ function B:FriendlyTargetEntry()
   return {unit="target",group=0,class=class,selected=true,rosterOrder=-1,quickTarget=true}
 end
 
+
+-- Explicit assignments resolve BEFORE aura coverage; family priority never changes
+-- a player's chosen blessing. Player exceptions belong to this session/group only.
+B.BlessingFamilies={"bok","bom","bow","bos","bol"}
+function B:NormalizeBlessingAssignments()
+  local valid={skip=true}; for _,key in ipairs(self.BlessingFamilies) do valid[key]=true end
+  local classes={WARRIOR=true,PALADIN=true,HUNTER=true,ROGUE=true,PRIEST=true,SHAMAN=true,MAGE=true,WARLOCK=true,DRUID=true}
+  for class,key in pairs(self.db.blessingClasses) do
+    if not classes[class] or type(key)~="string" or not valid[key] then self.db.blessingClasses[class]=nil end
+  end
+end
+function B:BlessingGroupNeed(def)
+  if def and def.kind=="blessing" and self:BlessingAssignmentsActive() then return self.db.blessingNeed end
+  return self:GroupNeed(def)
+end
+function B:BlessingLearned(key)
+  local def=self:FindBuff(key)
+  if def then for _,id in ipairs(def.ranks or {}) do if A.Known(id) then return true end end end
+  return false
+end
+function B:BlessingAssignmentsActive()
+  if not (self.db and self.db.blessingAssignments and self.db.group) then return false end
+  local class=A.Call(function() local _,token=UnitClass("player"); return token end)
+  if class~="PALADIN" then return false end
+  local count=A.Call(GetNumSubgroupMembers)
+  return A.Call(IsInRaid)==true or (A.Number(count) and count>0) or false
+end
+function B:BlessingGroupAllowed(entry)
+  return entry and A.Number(entry.group) and self.db.raidGroups[entry.group]==true
+end
+function B:BlessingChoice(entry)
+  if not self:BlessingAssignmentsActive() then return nil end
+  if not self:BlessingGroupAllowed(entry) then return "skip" end
+  local guid=A.Call(UnitGUID,entry.unit)
+  local override=A.Text(guid) and self.blessingPlayers and self.blessingPlayers[guid]
+  local key=override and override.choice or self.db.blessingClasses[entry.class]
+  if not key then
+    -- Legacy fallback is deterministic: first enabled, class-allowed family.
+    for _,def in ipairs(self.blessingClassList or self:ClassList()) do
+      if def.kind=="blessing" and not def.singleKey and self:Enabled(def) and self:Resolve(def,entry.unit) and
+        (entry.unit=="player" or (self:GroupSelected(def,entry.group) and self:GroupClassAllowed(def,entry.class))) then
+        key=def.key; break
+      end
+    end
+    key=key or "skip"
+  end
+  if key=="bos" and override and override.neverSalvation then return "skip" end
+  return key
+end
+function B:SetBlessingPlayer(entry,key,neverSalvation)
+  if A.Combat() then return end
+  local guid=entry and A.Call(UnitGUID,entry.unit)
+  if not A.Text(guid) then return end
+  self.blessingPlayers=self.blessingPlayers or {}
+  if key==nil and not neverSalvation then self.blessingPlayers[guid]=nil
+  else self.blessingPlayers[guid]={choice=key,neverSalvation=neverSalvation==true} end
+  self:InvalidateAura(); self:RequestRefresh("blessing player choice",0)
+end
+function B:BlessingGreaterSafe(key,class,roster)
+  for _,entry in ipairs(roster) do
+    -- Unknown class cannot establish the full affected set safely.
+    if not entry.class then return false end
+    if entry.class==class and self:BlessingChoice(entry)~=key then return false end
+  end
+  return true
+end
+function B:BlessingActionAllowed(action)
+  local def=action and self:FindBuff(action.key)
+  if not def or def.kind~="blessing" then return true end
+  if not self:BlessingAssignmentsActive() then return not action.blessingAssigned end
+  local roster=self:Roster(); local target
+  for _,entry in ipairs(roster) do
+    if A.Call(UnitIsUnit,entry.unit,action.target)==true or A.Call(UnitGUID,entry.unit)==action.targetGUID then target=entry; break end
+  end
+  if not target then return not action.blessingAssigned end
+  local key=def.singleKey or def.key
+  if self:BlessingChoice(target)~=key then return false end
+  return not action.groupCast or self:BlessingGreaterSafe(key,target.class,roster)
+end
+
 B.RecipientClasses={"WARRIOR","PALADIN","HUNTER","ROGUE","PRIEST","SHAMAN","MAGE","WARLOCK","DRUID"}
 function B:GroupClassAllowed(b,class)
   local root=self:FindBuff(self:RootKey(b)) or b
@@ -802,6 +887,9 @@ end
 
 function B:RecipientAllowed(b,entry)
   -- Explicit targets and personal maintenance are independent of group assignments.
+  if b.kind=="blessing" and self:BlessingAssignmentsActive() and (not entry.quickTarget or entry.blessingAssigned) then
+    return self:BlessingChoice(entry)==(b.singleKey or b.key)
+  end
   return entry.quickTarget or entry.unit=="player" or self:GroupClassAllowed(b,entry.class)
 end
 
@@ -881,7 +969,11 @@ function B:Select()
   end
   local list,err=self:ClassList()
   if err then return nil,err end
+  self.blessingClassList=list
   local roster=self:Roster()
+  local blessingPlan=self:BlessingAssignmentsActive()
+  local groupCount=A.Call(GetNumSubgroupMembers)
+  if A.Call(IsInRaid)==false and A.Number(groupCount) and groupCount==0 then self.blessingPlayers=nil end
   local scans,scanErrors={},{}
 
   -- Optional quick-target pass. This intentionally uses only single-target buff
@@ -889,11 +981,19 @@ function B:Select()
   -- spell or alter raid assignment behavior. The current target takes priority
   -- while this option is enabled, then normal self/group selection resumes.
   local quick=self:FriendlyTargetEntry()
+  if quick and blessingPlan then
+    local guid=A.Call(UnitGUID,quick.unit)
+    for _,entry in ipairs(roster) do
+      if A.Text(guid) and A.Call(UnitGUID,entry.unit)==guid then
+        quick.group=entry.group; quick.blessingAssigned=true; break
+      end
+    end
+  end
   if quick then
     local blessingOwned=false
     for _,b in ipairs(list) do
       local supported,why=self:Supported(b)
-      if self:Enabled(b) and self:TargetBuffEnabled(b) and supported and not b.singleKey and (b.kind=="single" or b.kind=="blessing")
+      if (self:Enabled(b) or (blessingPlan and quick.blessingAssigned and b.kind=="blessing")) and (self:TargetBuffEnabled(b) or (blessingPlan and quick.blessingAssigned and b.kind=="blessing")) and supported and not b.singleKey and (b.kind=="single" or b.kind=="blessing")
         and not (b.kind=="blessing" and blessingOwned) then
         local targetThreshold=self:TargetRebuffSeconds(b)
         local missing=self:ScanMissing(b,{quick},scans,scanErrors,targetThreshold)
@@ -901,6 +1001,7 @@ function B:Select()
           if b.kind=="blessing" then blessingOwned=true end
           local need=missing[1]
           local action=need.action
+          action.blessingAssigned=quick.blessingAssigned and b.kind=="blessing" or nil
           action.reason="friendly target: "..tostring(need.reason)
           action.threshold=need.threshold; action.needState=need.reason; action.remaining=need.remaining
           action.quickTarget=true
@@ -928,13 +1029,13 @@ function B:Select()
   local exclusive={}
   for _,b in ipairs(list) do
     local supported,why=self:Supported(b)
-    if self:Enabled(b) and supported and not b.singleKey then
+    if (self:Enabled(b) or (blessingPlan and b.kind=="blessing")) and supported and not b.singleKey then
       local entries
       if b.kind=="single" or b.kind=="blessing" then entries=roster else entries={roster[1]} end
 
       local candidates={}
       for _,entry in ipairs(entries) do
-        local assigned = entry.unit=="player" or self:GroupSelected(b,entry.group or 1)
+        local assigned = (blessingPlan and b.kind=="blessing" and self:BlessingGroupAllowed(entry)) or entry.unit=="player" or self:GroupSelected(b,entry.group or 1)
         local group=b.kind=="blessing" and ("blessing:" .. entry.unit) or nil
         if assigned and self:RecipientAllowed(b,entry) and (not group or not exclusive[group]) then
           candidates[#candidates+1]=entry
@@ -944,11 +1045,11 @@ function B:Select()
       -- Count only verified, in-range group-rank recipients. Restrict Greater
       -- Blessings to a class whose assigned members all belong to this family.
       local groupDef=b.groupKey and self:FindBuff(b.groupKey)
-      if self.db.group and self.db.smartGroup and groupDef and self:Enabled(groupDef) then
+      if self.db.group and self.db.smartGroup and groupDef and (self:Enabled(groupDef) or (blessingPlan and b.kind=="blessing")) then
         local buckets={}
         for _,need in ipairs(missing) do
           local entry=need.entry
-          if self:GroupSelected(b,entry.group) and self:GroupClassAllowed(b,entry.class) then
+          if (blessingPlan and b.kind=="blessing" and self:BlessingChoice(entry)==b.key) or (not (blessingPlan and b.kind=="blessing") and self:GroupSelected(b,entry.group) and self:GroupClassAllowed(b,entry.class)) then
             local ga=self:Resolve(groupDef,entry.unit)
             if ga then
               local eligible,why=self:TargetEligible(ga,true)
@@ -969,9 +1070,10 @@ function B:Select()
             local affected=b.kind=="blessing" and entry.class==key or b.kind~="blessing" and entry.group==key
             if affected and self.HelperSuppressed and self:HelperSuppressed({key=b.key,target=entry.unit,targetGUID=A.Call(UnitGUID,entry.unit)}) then safe=false end
           end
+          if blessingPlan and b.kind=="blessing" and not self:BlessingGreaterSafe(b.key,key,roster) then safe=false end
           if b.kind=="blessing" then
             for _,entry in ipairs(roster) do
-              if entry.class==key and (exclusive["blessing:"..entry.unit] or not self:GroupSelected(b,entry.group) or not self:GroupClassAllowed(b,entry.class)) then safe=false end
+              if entry.class==key and (exclusive["blessing:"..entry.unit] or (not blessingPlan and (not self:GroupSelected(b,entry.group) or not self:GroupClassAllowed(b,entry.class)))) then safe=false end
             end
           end
           if b.kind~="blessing" then
@@ -979,7 +1081,7 @@ function B:Select()
               if entry.group==key and not self:GroupClassAllowed(b,entry.class) then safe=false end
             end
           end
-          if safe and #bucket>=self:GroupNeed(groupDef) then
+          if safe and #bucket>=self:BlessingGroupNeed(groupDef) then
             local rankCounts={}
             for _,candidate in ipairs(bucket) do rankCounts[candidate.action.id]=(rankCounts[candidate.action.id] or 0)+1 end
             for _,candidate in ipairs(bucket) do
@@ -987,9 +1089,9 @@ function B:Select()
               -- Different target levels can resolve different group ranks. Only
               -- recipients verified for this exact rank justify its reagent cost.
               local verified=rankCounts[ga.id] or 0
-              if verified>=self:GroupNeed(groupDef) and self:Validate(ga) then
+              if verified>=self:BlessingGroupNeed(groupDef) and self:Validate(ga) then
                 ga.reason=tostring(verified).." verified recipients need "..b.name
-                ga.needState=need.reason; ga.remaining=need.remaining; ga.groupCast=true; ga.groupCount=verified
+                ga.needState=need.reason; ga.remaining=need.remaining; ga.groupCast=true; ga.blessingAssigned=blessingPlan and b.kind=="blessing" or nil; ga.groupCount=verified
                 ga.selectedAt=GetTime(); return ga,"ready"
               end
             end
@@ -1001,6 +1103,7 @@ function B:Select()
         if not group or not exclusive[group] then
           if group then exclusive[group]=true end
           local action=need.action
+          action.blessingAssigned=blessingPlan and b.kind=="blessing" or nil
           action.reason,action.threshold=need.reason,need.threshold
           action.needState,action.remaining=need.reason,need.remaining
           local valid,fail=self:Validate(action)

@@ -1,3 +1,80 @@
+# BuffTap 1.8.0
+
+- Added 15 verified Mage imbue scroll choices in Weapons, with compatible staff, dagger or sword checks. Main-hand only; preferences start at None.
+- Scrolls use your existing BuffTap click/scroll binding and stay separate from oils/stones. Optional Supplies warnings include the selected compatible Mage scroll.
+- Added Crippling Poison II, including highest usable carried rank selection and enchant recognition.
+- Fixed bag updates for selected oils/stones on every class and Mage scrolls, including restocking an idle reminder.
+- Bounded item-data loading to three attempts with backoff. Retries suspend during combat; successful loads release cached metadata.
+- Added Retry reminders in Consumables and Weapons. An unobserved flask/elixir effect gets a second check before its family pauses, preventing Auto from offering another item. Retry restores reminders without reloading; changed item mappings remain blocked.
+- Bounded the class weapon picker, added translated retry controls, and removed an overwritten food-aura table.
+- Includes the prepared minimap button, opt-in broker display, and all-class oils/stones from 1.6.0–1.7.0.
+
+475 mocked Lua 5.1 scenarios passed. Prepared locally; not published. In-game Mage scroll application and visual checks remain pending. Spellbreak remains excluded because its name and live mapping disagree.
+
+# BuffTap 1.7.0
+
+- Added separate per-hand oil and stone preferences in Weapons for every class, alongside existing Rogue poisons and Shaman imbues.
+- Supports Wizard/Mana Oils, leveling sharpening stones and weightstones, Elemental Sharpening Stone, Frost Oil and Shadow Oil.
+- Reuses the normal scroll/click binding, missing/expiry reminders and safe replacement controls. New preferences default to None.
+- Enforces client weapon restrictions and preserves separate enchant categories. Unknown effects are never overwritten automatically.
+- Optional Supplies warnings track selected oils/stones; multi-use oils count remaining applications. Shared hand choices count once.
+- Includes the previously prepared minimap button and opt-in broker display from 1.6.0.
+
+444 mocked Lua 5.1 checks passed. Live weapon application/stacking and layout verification remain pending. This build is prepared locally and not published.
+
+# BuffTap 1.6.0
+
+- Added a draggable minimap settings button, enabled by default, with saved positioning and standard LibDBIcon support.
+- Added an optional LibDataBroker display, disabled by default. Shows the next queued reminder and its recipient using existing cached status, without additional buff scans.
+- Independent controls in Appearance → Quick access allow either display, both or neither. Broker bars require a separate display addon; disabling an already registered broker requires a UI reload.
+- Clicking either display opens settings; neither casts spells. Settings remain unavailable during combat.
+- Bundled upstream LibStub, CallbackHandler, LibDataBroker and LibDBIcon with their original notices.
+- BuffTap remains uncategorized in the addon menu.
+
+Validation: 420 mocked Lua 5.1 scenarios passed. Live placement, translated layout and compatibility with minimap managers and broker bars still require in-game verification. Not published.
+
+# BuffTap 1.5.0 — Alerts and localization
+
+- Groups clearly separates Shared group settings from Per-buff customization, with recipient-scope guidance and a labeled buff selector. Casting and assignment behavior are unchanged.
+- Automatic client-language detection and first-pass Spanish (Spain/Latin America), German, French and Brazilian Portuguese translations. 212 messages per language; missing translations and technical diagnostics retain English. No language selector or added library dependency.
+- Client-provided spell and item names in options when available; item picker searches localized names as well as catalog names and IDs. Catalog IDs, saved keys, aura matching and casting decisions remain unchanged.
+- Independent buff-reminder and low-stock sound choices, using supported client sound constants. Click the sound name to cycle choices, then Preview to listen. Defaults preserve the existing sound and disabled sound toggles.
+- Master / sound-effects channel selection and a 5–60-second shared minimum audio interval. Previews ignore alert toggles and do not consume live alert cooldowns. Supply warnings still notify on shortage episodes rather than recurring polling.
+- Safe appearance preview for size, opacity, labels, timers, group count, glow and pulse. Click it to close; changing tabs, closing options or entering combat also closes it. It cannot cast or install bindings.
+- Confirmation before resetting all settings through the options interface. Cancel, closing options or changing tabs preserves preferences. The explicitly typed /bt reset command remains direct.
+- Plain-language status summary and Check now action on Diagnostics; no speculative explanation of why an individual recipient was excluded.
+- Includes the prepared 1.4.0 Paladin assignments and shared UI refinements.
+
+Validation: 412 mocked Lua 5.1 scenarios passed. This includes format checks across all four dictionaries, Spanish locale aliases, unknown-locale fallback, localized names/search, audio throttling, preview isolation, reset protection and layout bounds. Client sound availability/playback, translated text rendering and native-speaker review remain pending. Prepared locally; not published.
+
+---
+
+# BuffTap 1.4.0 — Blessings made clearer
+
+## New
+- Paladin class blessing assignments inside Groups: choose a blessing for each recipient class, inherit existing settings, or skip a class.
+- Expand a class for individual player choices and a Never Salvation safeguard. Exceptions use player identity and last until you leave the group or reload.
+- Clear casting status explains when Greater Blessings are allowed, assignments conflict, or the chosen spell is unavailable. Learned game spells and native class/spell icons are used.
+- Explicit class assignments start disabled, preserving existing settings. Solo personal settings and ungrouped target preferences remain independent; grouped targets follow enabled assignments.
+
+## Safety and efficiency
+- Greater Blessings require matching choices across affected same-class group members. Mixed choices, skipped/excluded members, and protected Salvation recipients use individual blessings.
+- Group need thresholds still count verified recipients of the same spell rank; click validation cancels an outdated suggestion instead of substituting a spell on that input.
+- Healthy matching blessings from other Paladins count as coverage. No automatic spec guessing, inspection, shared assignments or chat coordination.
+- Uses existing event-driven roster and aura caches; no new recurring polling.
+
+## Interface
+- Refined header: left-aligned logo/title, aligned controls, native red Close artwork, roomier tabs sized for their labels; preserves the page area and screen scaling.
+- Consistent dark cards, subdued gold borders, clearer buttons and compact rows throughout the options pages and item picker.
+- Shared group settings remain visible above the buff editor. Paladins can still access existing buff filters.
+- Weapons remains before Appearance; Helpers precedes Diagnostics.
+- Class rows stay visible with one inline exception section open. Large class rosters page two players at a time within that section.
+- Window scales to smaller screens.
+
+Validation: 383 mocked Lua 5.1 scenarios passed, including 38 assignment/UI cases and three header regressions and layout-bound checks. Actual client visuals, blessing overwrite behavior, and secure casting still require in-game verification. Prepared locally; not published.
+
+---
+
 # BuffTap changelog
 
 ## 1.3.0 â€” Supply warnings and smarter group recasts

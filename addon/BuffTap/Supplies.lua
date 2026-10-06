@@ -2,6 +2,7 @@
 -- License, v. 2.0. See LICENSE-MPL-2.0.txt.
 local _,B=...
 local A=B.API
+local function L(key,...) return B:Text(key,...) end
 
 -- Informational only. This module never prepares casts, changes bindings,
 -- buys items, or reads bank/alt stock. Counts are refreshed on inventory events.
@@ -13,8 +14,9 @@ function B:InitSupplies()
   local db=self.db
   local valid={}
   for _,choice in ipairs(self.WeaponChoices or {}) do
-    if choice.class=="ROGUE" then valid["poison:"..choice.key]=true end
+    if choice.class=="ROGUE" or choice.class=="MAGE" then valid[(choice.class=="MAGE" and "imbue:" or "poison:")..choice.key]=true end
   end
+  for _,choice in ipairs(self.CoatingChoices or {}) do valid["coating:"..choice.key]=true end
   for _,family in ipairs(self.ConsumableFamilies or {}) do valid["consumable:"..family.key]=true end
   for key,settings in pairs(db.supplySettings) do
     if not valid[key] or type(settings)~="table" then db.supplySettings[key]=nil
@@ -71,17 +73,32 @@ end
 
 function B:SupplyDefinitions()
   local entries,seen={},{}
-  if self.db.weaponReminder and self:WeaponReminderClass()=="ROGUE" then
+  if self.db.weaponReminder and (self:WeaponReminderClass()=="ROGUE" or self:WeaponReminderClass()=="MAGE") then
     for _,hand in ipairs({"main","off"}) do
       local active=hand=="main" and self.db.weaponMainHand or hand=="off" and self.db.weaponOffHand
+      if self:WeaponReminderClass()=="MAGE" and hand=="off" then active=false end
       local choice=active and self:WeaponPreference(hand)
       local slot=hand=="main" and 16 or 17
       -- Use equipment identity only; stock checks need no enchant/aura scans.
       local weapon=self:EquippedBuffWeapon(slot)==true
-      if choice and weapon and not seen[choice.key] then
+      if choice and weapon and (choice.class~="MAGE" or self:CoatingWeaponMatches(slot,choice)==true) and not seen[choice.key] then
         local ids,effects={},{}; for _,pair in ipairs(choice.items) do ids[#ids+1]=pair[1]; effects[pair[1]]=pair[2] end
-        entries[#entries+1]={key="poison:"..choice.key,name=choice.name,kind="poison",ids=ids,effects=effects,
-          icon="Interface\\Icons\\Ability_Poisons",detail="Usable ranks combined; the same poison selected for both hands is counted once."}
+        entries[#entries+1]={key=(choice.class=="MAGE" and "imbue:" or "poison:")..choice.key,name=choice.name,kind=choice.class=="MAGE" and "imbue" or "poison",ids=ids,effects=effects,
+          icon=(choice.class=="MAGE" and A.Call(C_Spell and C_Spell.GetSpellTexture,choice.ranks[1])) or "Interface\\Icons\\Ability_Poisons",detail=choice.class=="MAGE" and "Selected Mage scroll stock for the compatible main-hand weapon." or "Usable ranks combined; the same poison selected for both hands is counted once."}
+        seen[choice.key]=true
+      end
+    end
+  end
+  if self.db.weaponReminder then
+    for _,hand in ipairs({"main","off"}) do
+      local choice=self:CoatingPreference(hand)
+      local slot=hand=="main" and 16 or 17
+      local active=self.db[hand=="main" and "weaponMainHand" or "weaponOffHand"]~=false
+      if active and choice and self:CoatingWeaponMatches(slot,choice)==true and not seen[choice.key] then
+        local ids,effects={},{}
+        for _,pair in ipairs(choice.items) do ids[#ids+1]=pair[1]; effects[pair[1]]=pair[2] end
+        entries[#entries+1]={key="coating:"..choice.key,name=choice.name,kind="coating",ids=ids,effects=effects,uses=choice.uses,
+          detail="Remaining applications; shared hand choices count once. Compatible carried ranks are combined."}
         seen[choice.key]=true
       end
     end
@@ -113,17 +130,18 @@ function B:SupplyDefinitions()
   return entries
 end
 
-function B:SupplyCount(itemID)
+function B:SupplyCount(itemID,uses)
   self.supplyCounts=self.supplyCounts or {}
-  local cached=self.supplyCounts[itemID]
+  local cacheKey=uses and "uses:"..itemID or itemID
+  local cached=self.supplyCounts[cacheKey]
   if cached~=nil then return cached~=false and cached or nil end
   local count
   local cache=self.consumableCache
-  if cache and not self.consumableDirty and cache.counts then count=cache.counts[itemID] end
-  if not A.Number(count) then count=A.Call(C_Item and C_Item.GetItemCount,itemID,false,false,false,false) end
-  if not A.Number(count) or count<0 then self.supplyCounts[itemID]=false; return nil end
+  if not uses and cache and not self.consumableDirty and cache.counts then count=cache.counts[itemID] end
+  if not A.Number(count) then count=A.Call(C_Item and C_Item.GetItemCount,itemID,false,uses==true,false,false) end
+  if not A.Number(count) or count<0 then self.supplyCounts[cacheKey]=false; return nil end
   count=math.floor(count)
-  self.supplyCounts[itemID]=count
+  self.supplyCounts[cacheKey]=count
   return count
 end
 
@@ -132,7 +150,7 @@ function B:SupplyEntryState(entry)
   local unknown,unknownCount=false,false
   if not self.supplyInventoryReady then entry.state="loading"; entry.count=nil; entry.carried=nil; return end
   for _,itemID in ipairs(entry.ids) do
-    local count=self:SupplyCount(itemID)
+    local count=self:SupplyCount(itemID,entry.uses)
     if count==nil then unknown=true; unknownCount=true
     else
       entry.carried=entry.carried+count
@@ -159,8 +177,8 @@ function B:SupplyEntryState(entry)
 end
 
 function B:SupplyWarningText(entry)
-  if entry.state=="unusable" then return entry.name..": "..entry.carried.." carried, none usable" end
-  return entry.name..": "..tostring(entry.count).."/"..entry.settings.target
+  if entry.state=="unusable" then return L("%s: %d carried, none usable",L(entry.name),entry.carried) end
+  return L(entry.name)..": "..tostring(entry.count).."/"..entry.settings.target
 end
 
 function B:SupplySnoozed()
@@ -198,9 +216,9 @@ function B:SyncSupplies(silent)
   if #newWarnings>0 and not silent then
     if self.db.suppliesChat then
       local parts={}; for _,entry in ipairs(newWarnings) do parts[#parts+1]=self:SupplyWarningText(entry) end
-      self.Print("Low supplies: "..table.concat(parts,"; "))
+      self.Print(self:Text(L("Low supplies: %s"),table.concat(parts,"; ")))
     end
-    if self.db.suppliesSound then pcall(PlaySound,self.SOUNDKIT_REMIND or 12867,"Master") end
+    if self.db.suppliesSound then self:PlayAlert("supply") end
   end
   self:UpdateSupplyBadge()
   return entries
@@ -223,9 +241,9 @@ function B:CreateSupplyBadge()
   end)
   f:SetScript("OnEnter",function()
     if A.Combat() or not GameTooltip then return end
-    GameTooltip:SetOwner(f,"ANCHOR_RIGHT"); GameTooltip:SetText("Low supplies",1,0.82,0.1)
+    GameTooltip:SetOwner(f,"ANCHOR_RIGHT"); GameTooltip:SetText(L("Low supplies"),1,0.82,0.1)
     for _,entry in ipairs(B.supplyWarnings or {}) do GameTooltip:AddLine(B:SupplyWarningText(entry),1,0.8,0.4,true) end
-    GameTooltip:AddLine("Left-click: Supplies options. Right-click: snooze for 10 minutes.",0.8,0.8,0.8,true)
+    GameTooltip:AddLine(L("Left-click: Supplies options. Right-click: snooze for 10 minutes."),0.8,0.8,0.8,true)
     GameTooltip:Show()
   end)
   f:SetScript("OnLeave",function() if GameTooltip then GameTooltip:Hide() end end)

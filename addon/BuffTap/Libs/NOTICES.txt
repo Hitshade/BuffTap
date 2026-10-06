@@ -1,0 +1,7 @@
+Embedded libraries are unchanged copies from the official LibDBIcon v12.0.3 release:
+https://repos.wowace.com/wow/libdbicon-1-0/tags/v12.0.3/
+LibStub: public domain (see source header).
+CallbackHandler and LibDBIcon: Ace3-style BSD (see LICENSE-Ace3.txt).
+LibDataBroker: copyright its authors; embedded as instructed by its official project.
+https://www.wowace.com/projects/libdatabroker-1-1
+See included upstream README and original source notices. These libraries are not covered by BuffTap's MPL 2.0 license.

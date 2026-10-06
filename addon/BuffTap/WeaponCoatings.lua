@@ -61,10 +61,31 @@ B.WeaponChoices={
   {key="rockbiter",class="SHAMAN",name="Rockbiter Weapon",ranks={16316,16315,16314,10399,8019,8018,8017},enchants={6,29,1,503,683,1663,1664},items={}},
   {key="instant-poison",class="ROGUE",name="Instant Poison",ranks={11340,11339,11338,8688,8686,8679},enchants={325,323,324,625,623,624},items={{8928,11340},{8927,11339},{8926,11338},{6950,8688},{6949,8686},{6947,8679}}},
   {key="deadly-poison",class="ROGUE",name="Deadly Poison",ranks={25351,11356,11355,2824,2823},enchants={7,8,627,626,2630},items={{20844,25351},{8985,11356},{8984,11355},{2893,2824},{2892,2823}}},
-  {key="crippling-poison",class="ROGUE",name="Crippling Poison",ranks={3408},enchants={22},items={{3775,3408}}},
+  {key="crippling-poison",class="ROGUE",name="Crippling Poison",ranks={11202,3408},enchants={603,22},items={{3776,11202},{3775,3408}}},
   {key="mind-poison",class="ROGUE",name="Mind-numbing Poison",ranks={11399,8693,5761},enchants={35,23,643},items={{9186,11399},{6951,8693},{5237,5761}}},
   {key="wound-poison",class="ROGUE",name="Wound Poison",ranks={13227,13226,13225,13219},enchants={704,705,706,703},items={{10922,13227},{10921,13226},{10920,13225},{10918,13219}}},
 }
+
+-- Verified Mage scrolls; Spellbreak is excluded because its effect mapping is ambiguous.
+-- Verified Mage scrolls: research/mage-and-coating-review-1.7.0/mage-scroll-candidates.json.
+-- Spellbreak is intentionally excluded because its live tooltip mapping is ambiguous.
+for _,choice in ipairs({
+  {key="mage-imbue-lesser-flame",class="MAGE",name="Scroll of Imbue Lesser Flame",ranks={1295720},enchants={8700},items={{274947,1295720}},subclasses=1024,invTypes=0},
+  {key="mage-imbue-chillknife",class="MAGE",name="Scroll of Imbue Chillknife",ranks={1296225},enchants={8698},items={{275067,1296225}},subclasses=32768,invTypes=0},
+  {key="mage-imbue-frost",class="MAGE",name="Scroll of Imbue Frost",ranks={1302283},enchants={8709},items={{277485,1302283}},subclasses=1024,invTypes=0},
+  {key="mage-imbue-striking",class="MAGE",name="Scroll of Imbue Striking",ranks={1302217},enchants={8708},items={{277486,1302217}},subclasses=1024,invTypes=0},
+  {key="mage-imbue-baleflame",class="MAGE",name="Scroll of Imbue Baleflame",ranks={1302219},enchants={8706},items={{277487,1302219}},subclasses=1024,invTypes=0},
+  {key="mage-imbue-iceknife",class="MAGE",name="Scroll of Imbue Iceknife",ranks={1302284},enchants={8710},items={{277488,1302284}},subclasses=32768,invTypes=0},
+  {key="mage-imbue-spark",class="MAGE",name="Scroll of Imbue Spark",ranks={1302227},enchants={8707},items={{277489,1302227}},subclasses=128,invTypes=0},
+  {key="mage-imbue-accuracy",class="MAGE",name="Scroll of Imbue Accuracy",ranks={1302306},enchants={8711},items={{277494,1302306}},subclasses=1024,invTypes=0},
+  {key="mage-imbue-quickening",class="MAGE",name="Scroll of Imbue Quickening",ranks={1302307},enchants={8712},items={{277495,1302307}},subclasses=1024,invTypes=0},
+  {key="mage-imbue-balefrost",class="MAGE",name="Scroll of Imbue Balefrost",ranks={1302305},enchants={8714},items={{277496,1302305}},subclasses=1024,invTypes=0},
+  {key="mage-imbue-flame",class="MAGE",name="Scroll of Imbue Flame",ranks={1302304},enchants={8713},items={{277497,1302304}},subclasses=1024,invTypes=0},
+  {key="mage-imbue-manablade",class="MAGE",name="Scroll of Imbue Manablade",ranks={1302308},enchants={8715},items={{277498,1302308}},subclasses=32768,invTypes=0},
+  {key="mage-imbue-greater-flame",class="MAGE",name="Scroll of Imbue Greater Flame",ranks={1302311},enchants={8716},items={{277500,1302311}},subclasses=1024,invTypes=0},
+  {key="mage-imbue-greater-frost",class="MAGE",name="Scroll of Imbue Greater Frost",ranks={1302312},enchants={8717},items={{277501,1302312}},subclasses=1024,invTypes=0},
+  {key="mage-imbue-precision",class="MAGE",name="Scroll of Imbue Precision",ranks={1302310},enchants={8718},items={{277502,1302310}},subclasses=1024,invTypes=0},
+}) do B.WeaponChoices[#B.WeaponChoices+1]=choice end
 
 -- Read all weapon-enchant categories. Inventory slots (16/17) are NOT the
 -- WeaponSlot enum values (0/1). Permanent enchants never satisfy a reminder.
@@ -100,14 +121,18 @@ local function modernEnchant(slot)
         end
         -- Rogue oils/stones are a different family; unknown temporary effects
         -- are retained conservatively, while recognized poisons are actionable.
-        if class=="SHAMAN" or key then
-          if class=="SHAMAN" and not key then state.unknownImbue=true end
+        if class=="SHAMAN" or class=="MAGE" or key then
+          if (class=="SHAMAN" or class=="MAGE") and not key then state.unknownImbue=true end
           local entry={key=key,id=info.enchantID,remaining=info.timeLeft/1000}
           state.entries[#state.entries+1]=entry
           state.hasEnchant=true; state.enchantID=entry.id
           state.remaining=state.remaining and math.min(state.remaining,entry.remaining) or entry.remaining
         elseif class=="ROGUE" then
-          state.unknownTemporary=true
+          local recognized=false
+          for _,coating in ipairs(B.CoatingChoices or {}) do
+            for _,id in ipairs(coating.enchants) do if id==info.enchantID then recognized=true; break end end
+          end
+          state.unknownTemporary=state.unknownTemporary or not recognized
         end
       end
     end
@@ -118,12 +143,13 @@ end
 
 function B:WeaponReminderClass()
   local class=playerClass()
-  if class=="ROGUE" or class=="SHAMAN" then return class end
+  if class=="ROGUE" or class=="SHAMAN" or class=="MAGE" then return class end
 end
 
 function B:WeaponReminderAvailable()
   local class=self:WeaponReminderClass()
   if not class then return false end
+  if class=="MAGE" then return self:WeaponPreference("main")~=nil end
   -- Do not warn characters that have not learned any supported poison/imbue.
   for _,def in ipairs(self.Buffs or {}) do
     if def.class==class and def.kind=="weapon" then
@@ -154,7 +180,7 @@ end
 local function selectManualReminder(self)
   if not (self.db and self.db.weaponReminder) then return nil,"weapon reminders disabled" end
   local class=self:WeaponReminderClass()
-  if not class or not self:WeaponReminderAvailable() then return nil,"no learned coating ability" end
+  if not class or class=="MAGE" or not self:WeaponReminderAvailable() then return nil,"no learned coating ability" end
   local enabled={main=self.db.weaponMainHand~=false,off=class=="ROGUE" and self.db.weaponOffHand~=false}
   local unreadableReason
   for _,hand in ipairs(HANDS) do
@@ -188,7 +214,7 @@ local function validateManualReminder(self,action)
   return state.known and state.weapon and not state.hasEnchant
 end
 
-function B:WeaponReminderSummary()
+function B:ImbueReminderSummary()
   if not self:WeaponReminderClass() then return "not applicable" end
   if not (self.db and self.db.weaponReminder) then return "disabled" end
   if not self.db.weaponApply and not self:WeaponReminderAvailable() then return "waiting for a learned poison or imbue" end
@@ -228,25 +254,25 @@ function B:WeaponChoiceSource(choice)
     end
     return nil,"Preferred imbue not learned."
   end
-  -- Only supported consumable poison IDs can become item actions. Highest
+  -- Only catalogued weapon consumable IDs can become item actions. Highest
   -- carried usable rank wins; preferences remain saved when stock runs out.
   local carried,unknown=0,false
   for _,pair in ipairs(choice.items) do
     local id=pair[1]
-    local count=A.Call(C_Item and C_Item.GetItemCount,id,false,false,false,false)
+    local count=A.Call(C_Item and C_Item.GetItemCount,id,false,choice.uses==true,false,false)
     if A.Number(count) then carried=carried+math.max(0,count) else unknown=true end
     local usable=count and A.Number(count) and count>0 and A.Call(C_Item and C_Item.IsUsableItem,id)
     if A.Number(count) and count>0 and usable~=true and usable~=false then unknown=true end
     if A.Number(count) and count>0 and usable==true then
       local spellFn=C_Item and C_Item.GetItemSpell
-      if type(spellFn)~="function" then return nil,"Poison item spell API unavailable." end
+      if type(spellFn)~="function" then return nil,"Weapon consumable spell API unavailable." end
       local spellOK,spellName,spellID=pcall(spellFn,id)
       if spellOK and spellID==nil and spellName==nil then
         self:RequestItemData(id)
-        return nil,"Preferred poison item data is loading."
+        return nil,"Preferred weapon consumable item data is loading."
       end
       if not spellOK or not A.Number(spellID) or spellID~=pair[2] then
-        return nil,"Poison item effect differs from the supported catalog."
+        return nil,"Weapon consumable effect differs from the supported catalog."
       end
       local fn=C_Item and C_Item.GetItemInfo
       if type(fn)=="function" then
@@ -255,13 +281,13 @@ function B:WeaponChoiceSource(choice)
           return {id=pair[2],itemID=id,itemToken="item:"..id,name=name,icon=icon,count=count,secureType="item"}
         end
         self:RequestItemData(id)
-        return nil,"Preferred poison item data is loading."
+        return nil,"Preferred weapon consumable item data is loading."
       end
     end
   end
-  if unknown then return nil,"Preferred poison inventory or usability data is unavailable." end
-  if carried>0 then return nil,"Preferred poison is carried, but no carried rank is usable." end
-  return nil,"Preferred poison is out of stock."
+  if unknown then return nil,"Preferred weapon consumable inventory or usability data is unavailable." end
+  if carried>0 then return nil,"Preferred weapon consumable is carried, but no carried rank is usable." end
+  return nil,"Preferred weapon consumable is out of stock."
 end
 
 function B:WeaponNeed(state,choice)
@@ -280,19 +306,24 @@ function B:WeaponNeed(state,choice)
 end
 
 function B:WeaponActionFor(hand)
-  local state=self:WeaponCoatingState(hand.slot)
-  local choice=self:WeaponPreference(hand.key)
+  local choice=hand.coating and self:CoatingPreference(hand.key) or self:WeaponPreference(hand.key)
+  if hand.coating and not choice then return nil end
+  if hand.coating and self:CoatingWeaponMatches(hand.slot,choice)~=true then return nil,"Selected coating does not match this weapon." end
+  local state=hand.coating and self:TemporaryCoatingState(hand.slot) or self:WeaponCoatingState(hand.slot)
   local needed,need,remaining=self:WeaponNeed(state,choice)
   if not needed then return nil,state.reason end
+  if choice and choice.class=="MAGE" and (hand.slot~=16 or self:CoatingWeaponMatches(hand.slot,choice)~=true) then return nil,"Mage scroll does not match the equipped main-hand weapon." end
   local source,why=self:WeaponChoiceSource(choice)
-  local action={source="weapon-reminder",valid=true,key="weapon-"..hand.key,slot=hand.slot,
+  local action={source="weapon-reminder",valid=true,key=(hand.coating and "coating-" or "weapon-")..hand.key,slot=hand.slot,coating=hand.coating,
     target="player",targetName=hand.label,name=choice and choice.name or "Weapon buff missing",
     icon=state.icon or 136026,needState=need,remaining=remaining,preference=choice and choice.key,
     weaponID=A.Call(GetInventoryItemID,"player",hand.slot),selectedAt=GetTime()}
   if source then for k,v in pairs(source) do action[k]=v end end
   -- Effect 360 imbues are assigned by the client. Do not pretend target-slot
   -- can force a dual-wield Shaman hand or silently swap the player's weapons.
-  if source and choice.class=="SHAMAN" and equippedWeapon(17)==true then
+  if hand.coating and state.unknownTemporary then
+    why="An unrecognized temporary coating is active; apply your preference manually."
+  elseif source and choice.class=="SHAMAN" and equippedWeapon(17)==true then
     why="Shaman dual wield: apply this hand manually; the client chooses the imbue hand."
   elseif source and not state.modern then
     why="Weapon effect category cannot be verified on this client."
@@ -310,21 +341,23 @@ function B:WeaponActionFor(hand)
       if not self:Validate(action) then return nil,"imbue not ready" end
     else
       local fn=C_Item and C_Item.GetItemCooldown
-      if type(fn)~="function" then action.manual=true; why="Poison cooldown API unavailable."
+      if type(fn)~="function" then action.manual=true; why="Weapon consumable cooldown API unavailable."
       else
         local ok,start,duration,enabled=pcall(fn,source.itemID)
         if not ok or not A.Number(start) or not A.Number(duration) or not A.Public(enabled) or (enabled~=true and enabled~=1) then
-          action.manual=true; why="Poison cooldown unavailable."
+          action.manual=true; why="Weapon consumable cooldown unavailable."
         elseif duration>0 and start+duration>GetTime() then self:ConsiderWake(start+duration-GetTime()+0.03); return nil,"poison cooldown" end
       end
     end
   else action.manual=true end
+  if (hand.coating or (choice and choice.class=="MAGE")) and not self.db.weaponApply then action.manual=true; why="Apply your selected weapon consumable manually, or enable scroll / click application." end
   action.reason=why or (need=="different" and "Replace the different weapon buff you chose to replace." or "Apply your preferred weapon buff.")
   return action
 end
 
-function B:SelectWeaponReminder()
-  if not self.db.weaponApply then return selectManualReminder(self) end
+function B:SelectImbueReminder()
+  if not self.db.weaponApply and self:WeaponReminderClass()~="MAGE" then return selectManualReminder(self) end
+  if self:WeaponReminderClass()=="MAGE" and not self:WeaponPreference("main") then return nil,"no learned coating ability" end
   if not self.db.weaponReminder or not self:WeaponReminderClass() then return nil,"weapon reminders disabled" end
   local fallback,why
   for _,hand in ipairs(HANDS) do
@@ -341,7 +374,14 @@ function B:SelectWeaponReminder()
 end
 
 function B:ValidateWeaponReminder(action)
-  if not self.db.weaponApply then return action.manual and validateManualReminder(self,action) end
+  if action.coating then
+    if not self.db.weaponReminder then return false end
+    local hand=action.slot==16 and {slot=16,key="main",coating=true} or action.slot==17 and {slot=17,key="off",coating=true}
+    if not hand or self.db[hand.key=="main" and "weaponMainHand" or "weaponOffHand"]==false then return false end
+    local fresh=self:WeaponActionFor(hand)
+    return fresh~=nil and fresh.manual==action.manual and fresh.preference==action.preference and fresh.weaponID==action.weaponID and fresh.itemID==action.itemID and fresh.id==action.id
+  end
+  if not self.db.weaponApply and self:WeaponReminderClass()~="MAGE" then return action.manual and validateManualReminder(self,action) end
   if not self.db.weaponReminder then return false end
   local hand=action.slot==16 and HANDS[1] or action.slot==17 and HANDS[2]
   if action.slot==17 and self:WeaponReminderClass()~="ROGUE" then return false end
@@ -355,4 +395,105 @@ function B:AfterWeaponClick(action,down)
   if not action or action.manual or down==false or A.Combat() then return end
   self.weaponPending={untilTime=GetTime()+5}
   self:ConsiderWake(5)
+end
+
+-- Temporary consumables are independent of class imbues and remain opt-in.
+function B:CoatingChoice(key)
+  for _,choice in ipairs(self.CoatingChoices or {}) do if choice.key==key then return choice end end
+end
+function B:CoatingPreference(hand) return self:CoatingChoice(self.db.weaponCoatings[hand]) end
+function B:NormalizeCoatings()
+  for hand,key in pairs(self.db.weaponCoatings) do
+    if (hand~="main" and hand~="off") or not A.Text(key) or not self:CoatingChoice(key) then self.db.weaponCoatings[hand]=nil end
+  end
+end
+local inventoryTypes={INVTYPE_WEAPON=13,INVTYPE_2HWEAPON=17,INVTYPE_WEAPONMAINHAND=21,INVTYPE_WEAPONOFFHAND=22}
+local function maskAllows(mask,index)
+  return mask==0 or (A.Number(index) and math.floor(mask/2^index)%2==1)
+end
+function B:CoatingWeaponMatches(slot,choice)
+  if not choice or equippedWeapon(slot)~=true then return false end
+  local id=A.Call(GetInventoryItemID,"player",slot)
+  local fn=(C_Item and C_Item.GetItemInfoInstant) or GetItemInfoInstant
+  if type(fn)~="function" then return nil end
+  local ok,_,_,_,loc,_,class,subclass=pcall(fn,id)
+  if not ok or not A.Public(loc) or not A.Number(class) or not A.Number(subclass) then return nil end
+  return class==2 and inventoryTypes[loc]~=nil and maskAllows(choice.subclasses,subclass) and maskAllows(choice.invTypes,inventoryTypes[loc])
+end
+function B:TemporaryCoatingState(slot)
+  if equippedWeapon(slot)~=true then return {known=false,weapon=false} end
+  local enums=Enum and Enum.WeaponSlot
+  local kind=Enum and Enum.ItemEnchantType and Enum.ItemEnchantType.Temporary
+  local index=enums and (slot==16 and enums.MainHand or enums.OffHand)
+  if not A.Number(kind) or not A.Number(index) or not (C_Item and C_Item.GetWeaponEnchantInfo) then
+    return {known=false,weapon=true,reason="Temporary coating categories are unavailable."}
+  end
+  local list=A.Call(C_Item.GetWeaponEnchantInfo,index)
+  if type(list)~="table" then return {known=false,weapon=true,reason="Temporary coating data is unavailable."} end
+  local state={known=true,weapon=true,modern=true,hasEnchant=false,entries={},icon=A.Call(GetInventoryItemTexture,"player",slot)}
+  for _,info in pairs(list) do
+    if not A.Public(info) or type(info)~="table" or not A.Public(info.enchantType) or not A.Public(info.hasEnchant) then return {known=false,weapon=true} end
+    if info.enchantType==kind and info.hasEnchant==true then
+      if not A.Number(info.enchantID) or not A.Number(info.timeLeft) then return {known=false,weapon=true} end
+      if info.timeLeft>0 then
+        local key
+        for _,choice in ipairs(self.CoatingChoices) do
+          for _,id in ipairs(choice.enchants) do if id==info.enchantID then key=choice.key; break end end
+          if key then break end
+        end
+        local remaining=info.timeLeft/1000
+        state.entries[#state.entries+1]={key=key,id=info.enchantID,remaining=remaining}
+        state.hasEnchant=true
+        if not key then state.unknownTemporary=true end
+        state.remaining=state.remaining and math.min(state.remaining,remaining) or remaining
+        self:ConsiderWake(remaining)
+      end
+    end
+  end
+  return state
+end
+function B:SelectWeaponReminder()
+  local action,why=self:SelectImbueReminder()
+  if action and not action.manual then return action end
+  if not self.db.weaponReminder then return action,why end
+  local fallback=action
+  for _,hand in ipairs(HANDS) do
+    if self.db[hand.key=="main" and "weaponMainHand" or "weaponOffHand"]~=false and self:CoatingPreference(hand.key) then
+      local candidate,err=self:WeaponActionFor({slot=hand.slot,key=hand.key,coating=true})
+      if candidate and not (self.HelperSuppressed and self:HelperSuppressed(candidate)) then
+        if not candidate.manual then return candidate end
+        fallback=fallback or candidate
+      end
+      why=why or err
+    end
+  end
+  return fallback,why or "weapon coatings present"
+end
+
+function B:WeaponReminderSummary()
+  if not self.db.weaponReminder then return "disabled" end
+  local parts={}
+  if self:WeaponReminderClass() then parts[#parts+1]=self:ImbueReminderSummary() end
+  for _,hand in ipairs(HANDS) do
+    local choice=self:CoatingPreference(hand.key)
+    if choice and self.db[hand.key=="main" and "weaponMainHand" or "weaponOffHand"]~=false then
+      local matched=self:CoatingWeaponMatches(hand.slot,choice)
+      local state=matched and self:TemporaryCoatingState(hand.slot)
+      local need,reason
+      if state then need,reason=self:WeaponNeed(state,choice) end
+      local status=matched~=true and "incompatible weapon" or not state.known and "unavailable" or need and reason or state.hasEnchant and "coated" or "missing"
+      parts[#parts+1]=hand.label.." oil/stone: "..choice.name.." — "..status
+    end
+  end
+  return #parts>0 and table.concat(parts," | ") or "No oil or stone selected."
+end
+
+function B:WeaponInventoryRelevant()
+  if not self.db.weaponReminder then return false end
+  if self:WeaponReminderClass()=="ROGUE" and self.db.weaponApply then return true end
+  if self:WeaponReminderClass()=="MAGE" and self.db.weaponMainHand~=false and self:WeaponPreference("main") then return true end
+  for _,hand in ipairs(HANDS) do
+    if self.db[hand.key=="main" and "weaponMainHand" or "weaponOffHand"]~=false and self:CoatingPreference(hand.key) then return true end
+  end
+  return false
 end

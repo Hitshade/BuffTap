@@ -7,7 +7,6 @@ local _,B=...
 -- Curated Forever maintenance consumables. This is intentionally small and
 -- whitelist-only: unknown consumables never become secure actions.
 B.ForeverDataBuild = "1.60.1.70009"
-B.EatingSpellIDs = {[1131]=true,[1248400]=true,[1248401]=true}
 B.CampBenefitsSpellID = 1229741
 -- Exact hidden auras used by Forever's Camp Benefits tooltip. These are
 -- recognition-only; similar stats do not suppress class-buff reminders.

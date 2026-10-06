@@ -1,0 +1,402 @@
+[
+  {
+    "itemID": 274947,
+    "spellID": 1295720,
+    "name": "Imbue Lesser Flame",
+    "charges": "-1",
+    "effects": [
+      {
+        "effect": 360,
+        "enchantID": 8700,
+        "base": "0"
+      }
+    ],
+    "equipment": {
+      "ID": "256249",
+      "SpellID": "1295720",
+      "EquippedItemClass": "2",
+      "EquippedItemInvTypes": "0",
+      "EquippedItemSubclass": "1024"
+    },
+    "currentItemName": "Scroll of Imbue Lesser Flame",
+    "tooltipUseSpellMatches": true,
+    "allowedWeapon": "Staff",
+    "enchantDuration": "3600",
+    "status": "Verified data; candidate for Mage-only mainhand selector"
+  },
+  {
+    "itemID": 275067,
+    "spellID": 1296225,
+    "name": "Imbue Chillknife",
+    "charges": "-1",
+    "effects": [
+      {
+        "effect": 360,
+        "enchantID": 8698,
+        "base": "0"
+      }
+    ],
+    "equipment": {
+      "ID": "256256",
+      "SpellID": "1296225",
+      "EquippedItemClass": "2",
+      "EquippedItemInvTypes": "0",
+      "EquippedItemSubclass": "32768"
+    },
+    "currentItemName": "Scroll of Imbue Chillknife",
+    "tooltipUseSpellMatches": true,
+    "allowedWeapon": "Dagger",
+    "enchantDuration": "0",
+    "status": "Verified data; candidate for Mage-only mainhand selector"
+  },
+  {
+    "itemID": 277485,
+    "spellID": 1302283,
+    "name": "Imbue Frost",
+    "charges": "-1",
+    "effects": [
+      {
+        "effect": 360,
+        "enchantID": 8709,
+        "base": "0"
+      }
+    ],
+    "equipment": {
+      "ID": "256477",
+      "SpellID": "1302283",
+      "EquippedItemClass": "2",
+      "EquippedItemInvTypes": "0",
+      "EquippedItemSubclass": "1024"
+    },
+    "currentItemName": "Scroll of Imbue Frost",
+    "tooltipUseSpellMatches": true,
+    "allowedWeapon": "Staff",
+    "enchantDuration": "3600",
+    "status": "Verified data; candidate for Mage-only mainhand selector"
+  },
+  {
+    "itemID": 277486,
+    "spellID": 1302217,
+    "name": "Imbue Striking",
+    "charges": "-1",
+    "effects": [
+      {
+        "effect": 360,
+        "enchantID": 8708,
+        "base": "0"
+      }
+    ],
+    "equipment": {
+      "ID": "256471",
+      "SpellID": "1302217",
+      "EquippedItemClass": "2",
+      "EquippedItemInvTypes": "0",
+      "EquippedItemSubclass": "1024"
+    },
+    "currentItemName": "Scroll of Imbue Striking",
+    "tooltipUseSpellMatches": true,
+    "allowedWeapon": "Staff",
+    "enchantDuration": "3600",
+    "status": "Verified data; candidate for Mage-only mainhand selector"
+  },
+  {
+    "itemID": 277487,
+    "spellID": 1302219,
+    "name": "Imbue Baleflame",
+    "charges": "-1",
+    "effects": [
+      {
+        "effect": 360,
+        "enchantID": 8706,
+        "base": "0"
+      }
+    ],
+    "equipment": {
+      "ID": "256472",
+      "SpellID": "1302219",
+      "EquippedItemClass": "2",
+      "EquippedItemInvTypes": "0",
+      "EquippedItemSubclass": "1024"
+    },
+    "currentItemName": "Scroll of Imbue Baleflame",
+    "tooltipUseSpellMatches": true,
+    "allowedWeapon": "Staff",
+    "enchantDuration": "3600",
+    "status": "Verified data; candidate for Mage-only mainhand selector"
+  },
+  {
+    "itemID": 277488,
+    "spellID": 1302284,
+    "name": "Imbue Iceknife",
+    "charges": "-1",
+    "effects": [
+      {
+        "effect": 360,
+        "enchantID": 8710,
+        "base": "0"
+      }
+    ],
+    "equipment": {
+      "ID": "256478",
+      "SpellID": "1302284",
+      "EquippedItemClass": "2",
+      "EquippedItemInvTypes": "0",
+      "EquippedItemSubclass": "32768"
+    },
+    "currentItemName": "Scroll of Imbue Iceknife",
+    "tooltipUseSpellMatches": true,
+    "allowedWeapon": "Dagger",
+    "enchantDuration": "3600",
+    "status": "Verified data; candidate for Mage-only mainhand selector"
+  },
+  {
+    "itemID": 277489,
+    "spellID": 1302227,
+    "name": "Imbue Spark",
+    "charges": "-1",
+    "effects": [
+      {
+        "effect": 360,
+        "enchantID": 8707,
+        "base": "0"
+      }
+    ],
+    "equipment": {
+      "ID": "256473",
+      "SpellID": "1302227",
+      "EquippedItemClass": "2",
+      "EquippedItemInvTypes": "0",
+      "EquippedItemSubclass": "128"
+    },
+    "currentItemName": "Scroll of Imbue Spark",
+    "tooltipUseSpellMatches": true,
+    "allowedWeapon": "Sword",
+    "enchantDuration": "3600",
+    "status": "Verified data; candidate for Mage-only mainhand selector"
+  },
+  {
+    "itemID": 277494,
+    "spellID": 1302306,
+    "name": "Imbue Accuracy",
+    "charges": "-1",
+    "effects": [
+      {
+        "effect": 360,
+        "enchantID": 8711,
+        "base": "0"
+      }
+    ],
+    "equipment": {
+      "ID": "256481",
+      "SpellID": "1302306",
+      "EquippedItemClass": "2",
+      "EquippedItemInvTypes": "0",
+      "EquippedItemSubclass": "1024"
+    },
+    "currentItemName": "Scroll of Imbue Accuracy",
+    "tooltipUseSpellMatches": true,
+    "allowedWeapon": "Staff",
+    "enchantDuration": "3600",
+    "status": "Verified data; candidate for Mage-only mainhand selector"
+  },
+  {
+    "itemID": 277495,
+    "spellID": 1302307,
+    "name": "Imbue Quickening",
+    "charges": "-1",
+    "effects": [
+      {
+        "effect": 360,
+        "enchantID": 8712,
+        "base": "0"
+      }
+    ],
+    "equipment": {
+      "ID": "256482",
+      "SpellID": "1302307",
+      "EquippedItemClass": "2",
+      "EquippedItemInvTypes": "0",
+      "EquippedItemSubclass": "1024"
+    },
+    "currentItemName": "Scroll of Imbue Quickening",
+    "tooltipUseSpellMatches": true,
+    "allowedWeapon": "Staff",
+    "enchantDuration": "3600",
+    "status": "Verified data; candidate for Mage-only mainhand selector"
+  },
+  {
+    "itemID": 277496,
+    "spellID": 1302305,
+    "name": "Imbue Balefrost",
+    "charges": "-1",
+    "effects": [
+      {
+        "effect": 360,
+        "enchantID": 8714,
+        "base": "0"
+      }
+    ],
+    "equipment": {
+      "ID": "256480",
+      "SpellID": "1302305",
+      "EquippedItemClass": "2",
+      "EquippedItemInvTypes": "0",
+      "EquippedItemSubclass": "1024"
+    },
+    "currentItemName": "Scroll of Imbue Balefrost",
+    "tooltipUseSpellMatches": true,
+    "allowedWeapon": "Staff",
+    "enchantDuration": "3600",
+    "status": "Verified data; candidate for Mage-only mainhand selector"
+  },
+  {
+    "itemID": 277497,
+    "spellID": 1302304,
+    "name": "Imbue Flame",
+    "charges": "-1",
+    "effects": [
+      {
+        "effect": 360,
+        "enchantID": 8713,
+        "base": "0"
+      }
+    ],
+    "equipment": {
+      "ID": "256479",
+      "SpellID": "1302304",
+      "EquippedItemClass": "2",
+      "EquippedItemInvTypes": "0",
+      "EquippedItemSubclass": "1024"
+    },
+    "currentItemName": "Scroll of Imbue Flame",
+    "tooltipUseSpellMatches": true,
+    "allowedWeapon": "Staff",
+    "enchantDuration": "3600",
+    "status": "Verified data; candidate for Mage-only mainhand selector"
+  },
+  {
+    "itemID": 277498,
+    "spellID": 1302308,
+    "name": "Imbue Manablade",
+    "charges": "-1",
+    "effects": [
+      {
+        "effect": 360,
+        "enchantID": 8715,
+        "base": "0"
+      }
+    ],
+    "equipment": {
+      "ID": "256483",
+      "SpellID": "1302308",
+      "EquippedItemClass": "2",
+      "EquippedItemInvTypes": "0",
+      "EquippedItemSubclass": "32768"
+    },
+    "currentItemName": "Scroll of Imbue Manablade",
+    "tooltipUseSpellMatches": true,
+    "allowedWeapon": "Dagger",
+    "enchantDuration": "3600",
+    "status": "Verified data; candidate for Mage-only mainhand selector"
+  },
+  {
+    "itemID": 277500,
+    "spellID": 1302311,
+    "name": "Imbue Greater Flame",
+    "charges": "-1",
+    "effects": [
+      {
+        "effect": 360,
+        "enchantID": 8716,
+        "base": "0"
+      }
+    ],
+    "equipment": {
+      "ID": "256486",
+      "SpellID": "1302311",
+      "EquippedItemClass": "2",
+      "EquippedItemInvTypes": "0",
+      "EquippedItemSubclass": "1024"
+    },
+    "currentItemName": "Scroll of Imbue Greater Flame",
+    "tooltipUseSpellMatches": true,
+    "allowedWeapon": "Staff",
+    "enchantDuration": "3600",
+    "status": "Verified data; candidate for Mage-only mainhand selector"
+  },
+  {
+    "itemID": 277501,
+    "spellID": 1302312,
+    "name": "Imbue Greater Frost",
+    "charges": "-1",
+    "effects": [
+      {
+        "effect": 360,
+        "enchantID": 8717,
+        "base": "0"
+      }
+    ],
+    "equipment": {
+      "ID": "256487",
+      "SpellID": "1302312",
+      "EquippedItemClass": "2",
+      "EquippedItemInvTypes": "0",
+      "EquippedItemSubclass": "1024"
+    },
+    "currentItemName": "Scroll of Imbue Greater Frost",
+    "tooltipUseSpellMatches": true,
+    "allowedWeapon": "Staff",
+    "enchantDuration": "3600",
+    "status": "Verified data; candidate for Mage-only mainhand selector"
+  },
+  {
+    "itemID": 277502,
+    "spellID": 1302310,
+    "name": "Imbue Precision",
+    "charges": "-1",
+    "effects": [
+      {
+        "effect": 360,
+        "enchantID": 8718,
+        "base": "0"
+      }
+    ],
+    "equipment": {
+      "ID": "256485",
+      "SpellID": "1302310",
+      "EquippedItemClass": "2",
+      "EquippedItemInvTypes": "0",
+      "EquippedItemSubclass": "1024"
+    },
+    "currentItemName": "Scroll of Imbue Precision",
+    "tooltipUseSpellMatches": true,
+    "allowedWeapon": "Staff",
+    "enchantDuration": "3600",
+    "status": "Verified data; candidate for Mage-only mainhand selector"
+  },
+  {
+    "itemID": 277503,
+    "spellID": 1295720,
+    "name": "Imbue Lesser Flame",
+    "charges": "-1",
+    "effects": [
+      {
+        "effect": 360,
+        "enchantID": 8700,
+        "base": "0"
+      }
+    ],
+    "equipment": {
+      "ID": "256249",
+      "SpellID": "1295720",
+      "EquippedItemClass": "2",
+      "EquippedItemInvTypes": "0",
+      "EquippedItemSubclass": "1024"
+    },
+    "currentItemName": "Scroll of Imbue Spellbreak",
+    "tooltipUseSpellMatches": true,
+    "allowedWeapon": "Staff",
+    "enchantDuration": "3600",
+    "status": "Hold: Spellbreak points to Lesser Flame effect"
+  }
+]

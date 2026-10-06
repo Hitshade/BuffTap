@@ -149,17 +149,62 @@ function B:InvalidateConsumables(itemID)
   if A.Number(itemID) and self.itemMeta then self.itemMeta[itemID]=nil end
 end
 
--- Shared metadata requests use timestamps, never boolean sentinels.
+-- Bounded retries handle native failures and requests that never return a result.
 function B:RequestItemData(itemID)
-  if not A.Number(itemID) or not (C_Item and type(C_Item.RequestLoadItemDataByID)=="function") then return end
-  self.itemRequests=self.itemRequests or {}
-  local now=GetTime(); local requested=self.itemRequests[itemID]
-  if not A.Number(requested) or now-requested>10 then
-    self.itemRequests[itemID]=now
-    local ok=pcall(C_Item.RequestLoadItemDataByID,itemID)
-    if not ok then self.itemRequests[itemID]=nil end
-    if ok and self.stats then self.stats.itemInfoLoads=(self.stats.itemInfoLoads or 0)+1 end
+  if A.Combat() or not A.Number(itemID) or not (C_Item and type(C_Item.RequestLoadItemDataByID)=="function") then return end
+  self.itemRequests=self.itemRequests or {}; self.itemRequestState=self.itemRequestState or {}
+  local now=GetTime(); local state=self.itemRequestState[itemID]
+  if not state then state={attempts=0,nextAt=0}; self.itemRequestState[itemID]=state end
+  if state.attempts>=3 or now<state.nextAt then return end
+  state.attempts=state.attempts+1
+  state.nextAt=now+({10,30,60})[state.attempts]
+  self.itemRequests[itemID]=now
+  local ok=pcall(C_Item.RequestLoadItemDataByID,itemID)
+  if not ok then self.itemRequests[itemID]=nil end
+  if ok and self.stats then self.stats.itemInfoLoads=(self.stats.itemInfoLoads or 0)+1 end
+  if self.itemRequestState[itemID]~=state then return end
+  if self.StartTimer then self:StartTimer("item-data:"..itemID,state.nextAt-now,function()
+    if B.itemRequestState and B.itemRequestState[itemID]==state and not A.Combat() then
+      B:RequestItemData(itemID)
+    end
+  end) end
+end
+function B:ItemDataResult(itemID,success)
+  if A.Public(success) and success==true then
+    if self.itemRequests then self.itemRequests[itemID]=nil end
+    if self.itemRequestState then self.itemRequestState[itemID]=nil end
+    self:CancelTimer("item-data:"..itemID)
+  elseif self.itemRequestState and self.itemRequestState[itemID] and self.itemRequestState[itemID].attempts>=3 then
+    self:CancelTimer("item-data:"..itemID)
   end
+end
+function B:SuspendItemDataRetries()
+  for id in pairs(self.itemRequestState or {}) do self:CancelTimer("item-data:"..id) end
+end
+function B:ResumeItemDataRetries()
+  if A.Combat() then return end
+  for id,state in pairs(self.itemRequestState or {}) do
+    if state.attempts<3 then
+      local itemID,pending=id,state
+      self:StartTimer("item-data:"..itemID,math.max(0.05,pending.nextAt-GetTime()),function()
+        if B.itemRequestState and B.itemRequestState[itemID]==pending and not A.Combat() then
+          B:RequestItemData(itemID)
+    
+        end
+      end)
+    end
+  end
+end
+function B:RetryConsumableReminders()
+  if A.Combat() then return end
+  self.effectPauses={}; self.confirmedItems={}; self.confirmedChecks={}
+  for id in pairs(self.itemRequestState or {}) do
+    self:CancelTimer("item-data:"..id)
+    if self.itemMeta then self.itemMeta[id]=nil end
+  end
+  self.itemRequestState={}; self.itemRequests={}
+  self:InvalidateConsumables(); self:InvalidateAura("player")
+  self:RequestRefresh("retry consumable reminders",0)
 end
 
 function B:ConsumableItemInfo(itemID,static)
@@ -293,6 +338,11 @@ function B:ValidateConsumable(action,forceAura,forceInventory)
   if not static then return false,"item not whitelisted" end
   self.itemQuarantine=self.itemQuarantine or {}
   if self.itemQuarantine[action.itemID] then return false,self.itemQuarantine[action.itemID] end
+  -- Pause the whole family, including Auto alternatives, until an explicit retry.
+  -- Otherwise an unobserved flask could silently advance to another carried flask.
+  for _,candidate in ipairs(family.items or {}) do
+    if self.effectPauses and self.effectPauses[candidate.id] then return false,"effect not observed; use Retry reminders in Consumables" end
+  end
   local info=self:ConsumableItemInfo(action.itemID,static)
   if not info or not info.loaded or not info.spellID or not info.texture or info.texture==134400 then
     return false,"item metadata loading or unavailable"
@@ -328,11 +378,18 @@ function B:ValidateConsumable(action,forceAura,forceInventory)
   local missing,state,threshold,remaining,wake=self:ConsumableFamilyState(family,auras)
   local used=self.confirmedItems and self.confirmedItems[family.key]
   if used then
-    self.confirmedItems[family.key]=nil
     if missing==true and family.key~="food" then
-      self.itemQuarantine=self.itemQuarantine or {}
-      self.itemQuarantine[used]="effect not observed after confirmed use; disabled until reload"
-      if used==action.itemID then return false,self.itemQuarantine[used] end
+      self.confirmedChecks=self.confirmedChecks or {}
+      local at=self.confirmedChecks[family.key]
+      if not at then at=GetTime()+5; self.confirmedChecks[family.key]=at end
+      if GetTime()<at then self:ConsiderWake(at-GetTime()+0.03); return false,"waiting for a second effect check" end
+      self.effectPauses=self.effectPauses or {}; self.effectPauses[used]=true
+      self.confirmedItems[family.key]=nil; self.confirmedChecks[family.key]=nil
+      self.Print(self:Text("Consumable reminder paused: effect not observed. Use Retry reminders in Consumables to try again."))
+      return false,"effect not observed; reminder paused"
+    else
+      self.confirmedItems[family.key]=nil
+      if self.confirmedChecks then self.confirmedChecks[family.key]=nil end
     end
   end
   self:ConsiderWake(wake)
@@ -425,6 +482,7 @@ function B:ObserveConsumableUse(spellID)
     self.consumablePending=self.consumablePending or {}
     self.consumablePending[attempt.family]=GetTime()+math.max(5,attempt.delay)
     self.confirmedItems=self.confirmedItems or {}; self.confirmedItems[attempt.family]=attempt.id
+    if self.confirmedChecks then self.confirmedChecks[attempt.family]=nil end
     self.itemAttempt=nil
     self:InvalidateConsumables(); self:InvalidateAura("player")
     self:RequestRefresh("confirmed item use",0.05)

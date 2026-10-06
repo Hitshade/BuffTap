@@ -167,7 +167,7 @@ C_Item.GetItemInfo=function() return nil end
 C_Item.RequestLoadItemDataByID=function() requests=requests+1 end
 BuffTap:DiscoverConsumables(); assert(requests==1)
 BuffTap.events.scripts.OnEvent(nil,'ITEM_DATA_LOAD_RESULT',999001,false); advance(.2)
-assert(requests==1 and liveTimers()==0)
+assert(requests==1); advance(101); assert(requests<=3 and liveTimers()==0)
 ''')
 test('Unrelated item loads do not schedule discovery', '''
 BuffTap.db.helperDiscovery=true; BuffTap:ResetStats()
@@ -188,20 +188,20 @@ assert(BuffTap.action.slot==17 and not BuffTap.button.attrs.type1 and not next(b
 print('HELPER REGRESSIONS COMPLETE')
 test('Helpers opens the main options tab without a second window', '''
 BuffTap:HelperOptions()
-assert(BuffTap.options:IsShown() and BuffTap.options.activeTab==8)
+assert(BuffTap.options:IsShown() and BuffTap.options.activeTab==7)
 assert(BuffTap.helperWindow:GetParent()==BuffTap.options)
-assert(BuffTapHelperOptions==nil and BuffTap.options.pages[8]==BuffTap.helperWindow)
+assert(BuffTapHelperOptions==nil and BuffTap.options.pages[7]==BuffTap.helperWindow)
 for key in pairs(BuffTap.helperWindow.checks) do assert(#BuffTap.helperWindow.descriptions[key].text>40) end
 BuffTap.options.selectTab(1); assert(not BuffTap.helperWindow:IsShown())
 ''')
 test('Helper setting preserves selected tab and existing buff choices', '''
 BuffTap.db.buffSeconds.motw=90; BuffTap:HelperOptions()
 local c=BuffTap.helperWindow.checks.helperQuick; c:SetChecked(true); c.scripts.OnClick(c)
-assert(BuffTap.options.activeTab==8 and BuffTap.db.helperQuick and BuffTap.db.buffSeconds.motw==90)
+assert(BuffTap.options.activeTab==7 and BuffTap.db.helperQuick and BuffTap.db.buffSeconds.motw==90)
 ''')
 test('Discovery report is inside Diagnostics and disabled scan is explained', '''
 BuffTap:HelperOptions(); BuffTap:ShowDiscoveryReport()
-assert(BuffTap.options.activeTab==7 and BuffTap.options.discoveryScroll:IsShown())
+assert(BuffTap.options.activeTab==8 and BuffTap.options.discoveryScroll:IsShown())
 assert(not BuffTap.helperWindow:IsShown() and not BuffTap.options.diagText:IsShown())
 assert(BuffTap.options.discoveryReport:GetText():find('Enable Find unrecognized'))
 ''')
@@ -210,7 +210,7 @@ assert(BuffTap.options.discoveryReport:GetText():find('Enable Find unrecognized'
 
 
 test('Upgrade removes only retired potion settings', "BuffTap.db.consumableFamilies['potion-stock']=true; BuffTap.db.consumableChoices['potion-stock']=118; BuffTap.db.consumableSeconds['potion-stock']=120; BuffTap.db.consumableChoices.food=6888; BuffTap.db.consumableFamilies.food=true; BuffTap.db.helperThanks=true; BuffTap:InitDB(); assert(BuffTap.db.consumableFamilies['potion-stock']==nil and BuffTap.db.consumableChoices['potion-stock']==nil and BuffTap.db.consumableSeconds['potion-stock']==nil); assert(BuffTap.db.consumableChoices.food==6888 and BuffTap.db.consumableFamilies.food and BuffTap.db.helperThanks)")
-test('Consumable options have only maintainable buff families', "BuffTap:Options(); assert(#BuffTap.ConsumableFamilies==3 and #BuffTap.options.consumableRows==3); for _,family in ipairs(BuffTap.ConsumableFamilies) do assert(not family.stockOnly and family.key~='potion-stock'); for _,item in ipairs(family.items) do assert(item.id~=118) end end; assert(BuffTap.version=='1.3.0')")
+test('Consumable options have only maintainable buff families', "BuffTap:Options(); assert(#BuffTap.ConsumableFamilies==3 and #BuffTap.options.consumableRows==3); for _,family in ipairs(BuffTap.ConsumableFamilies) do assert(not family.stockOnly and family.key~='potion-stock'); for _,item in ipairs(family.items) do assert(item.id~=118) end end; assert(BuffTap.version=='1.8.0')")
 
 test('Bounce requires matching failure and reason in either order', """
 BuffTap.db.helperBounce=true; SPELL_FAILED_AURA_BOUNCED='Stronger effect'
