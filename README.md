@@ -1,8 +1,6 @@
-# BuffTap
+![BuffTap — Less buff management. More adventure. For all classes in WoW Forever.](docs/bufftap-banner.png)
 
-### Less buff management. More adventure.
-
-**Smart buff reminders and effortless mouse-wheel buffing for WoW Forever.**
+**Smart buff reminders and effortless mouse-wheel buffing for all classes in WoW Forever.**
 
 BuffTap detects missing or expiring buffs, follows your priorities, and prepares the next spell or item. **Scroll to buff, then keep adventuring.** Prefer a different control? Use a custom keybind, mouse button, or the clickable reminder.
 
@@ -54,3 +52,4 @@ Found a problem? Include your class, addon version, game build, and steps to rep
 ---
 
 **MPL 2.0.** See bundled license notices. Game data and artwork belong to their respective owners. Developed with AI-assisted coding and review.
+

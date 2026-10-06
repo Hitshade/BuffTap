@@ -210,7 +210,7 @@ assert(BuffTap.options.discoveryReport:GetText():find('Enable Find unrecognized'
 
 
 test('Upgrade removes only retired potion settings', "BuffTap.db.consumableFamilies['potion-stock']=true; BuffTap.db.consumableChoices['potion-stock']=118; BuffTap.db.consumableSeconds['potion-stock']=120; BuffTap.db.consumableChoices.food=6888; BuffTap.db.consumableFamilies.food=true; BuffTap.db.helperThanks=true; BuffTap:InitDB(); assert(BuffTap.db.consumableFamilies['potion-stock']==nil and BuffTap.db.consumableChoices['potion-stock']==nil and BuffTap.db.consumableSeconds['potion-stock']==nil); assert(BuffTap.db.consumableChoices.food==6888 and BuffTap.db.consumableFamilies.food and BuffTap.db.helperThanks)")
-test('Consumable options have only maintainable buff families', "BuffTap:Options(); assert(#BuffTap.ConsumableFamilies==3 and #BuffTap.options.consumableRows==3); for _,family in ipairs(BuffTap.ConsumableFamilies) do assert(not family.stockOnly and family.key~='potion-stock'); for _,item in ipairs(family.items) do assert(item.id~=118) end end; assert(BuffTap.version=='1.8.0')")
+test('Consumable options have only maintainable buff families', "BuffTap:Options(); assert(#BuffTap.ConsumableFamilies==3 and #BuffTap.options.consumableRows==3); for _,family in ipairs(BuffTap.ConsumableFamilies) do assert(not family.stockOnly and family.key~='potion-stock'); for _,item in ipairs(family.items) do assert(item.id~=118) end end; assert(BuffTap.version=='1.8.1')")
 
 test('Bounce requires matching failure and reason in either order', """
 BuffTap.db.helperBounce=true; SPELL_FAILED_AURA_BOUNCED='Stronger effect'
@@ -251,3 +251,4 @@ refresh(); assert(table.concat(BuffTap:CoverageLines(),';'):find('Shadow Protect
 for _,u in ipairs({'player','party1','party2'}) do aura(u,976,'Shadow Protection') end
 refresh(); assert(not table.concat(BuffTap:CoverageLines(),';'):find('Shadow Protection'))
 """)
+

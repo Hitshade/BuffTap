@@ -579,7 +579,7 @@ function B:DiagnosticsLines()
   out[#out+1]="State: " .. (A.Combat() and "combat / secure suspension" or (self.reason or "initializing"))
   local a=self.action
   if a then
-    out[#out+1]="Next: "..a.name.." -> "..a.targetName.." ["..a.target.."]"
+    out[#out+1]="Next: "..tostring(a.name or "Unknown action").." -> "..tostring(a.targetName or a.target or "Unknown target").." ["..tostring(a.target or "unknown").."]"
     out[#out+1]="Reason: "..tostring(a.reason).." | range: "..tostring(a.rangeSource or "not checked")
   else out[#out+1]="Next: none" end
   if self.refreshDue then out[#out+1]="Next event scan: "..string.format("%.1fs",math.max(0,self.refreshDue-GetTime())).." ("..tostring(self.refreshReason or "scheduled")..")" end
@@ -912,3 +912,4 @@ SlashCmdList.BUFFTAP=function(text)
   B.appearance=nil
   B:Refresh(false); B:Status(false)
 end
+

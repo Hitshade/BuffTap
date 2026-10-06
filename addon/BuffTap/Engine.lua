@@ -4,7 +4,7 @@
 
 local _, B = ...
 _G.BuffTap = B
-B.version = "1.8.0"
+B.version = "1.8.1"
 B.API = {}
 local A = B.API
 
@@ -1175,3 +1175,4 @@ function B:RevalidateGroupAction(action)
   if valid then action.groupCount=fresh.groupCount; action.reason=fresh.reason end
   return valid==true
 end
+

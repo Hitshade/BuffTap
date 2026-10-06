@@ -315,7 +315,7 @@ function B:WeaponActionFor(hand)
   if choice and choice.class=="MAGE" and (hand.slot~=16 or self:CoatingWeaponMatches(hand.slot,choice)~=true) then return nil,"Mage scroll does not match the equipped main-hand weapon." end
   local source,why=self:WeaponChoiceSource(choice)
   local action={source="weapon-reminder",valid=true,key=(hand.coating and "coating-" or "weapon-")..hand.key,slot=hand.slot,coating=hand.coating,
-    target="player",targetName=hand.label,name=choice and choice.name or "Weapon buff missing",
+    target="player",targetName=hand.label or (hand.slot==16 and "Main hand" or "Off hand"),name=choice and choice.name or "Weapon buff missing",
     icon=state.icon or 136026,needState=need,remaining=remaining,preference=choice and choice.key,
     weaponID=A.Call(GetInventoryItemID,"player",hand.slot),selectedAt=GetTime()}
   if source then for k,v in pairs(source) do action[k]=v end end
@@ -497,3 +497,4 @@ function B:WeaponInventoryRelevant()
   end
   return false
 end
+
