@@ -1,102 +1,56 @@
 # BuffTap
 
-### ⚡ Less buff management. More adventure.
+### Less buff management. More adventure.
 
-**Smart buff reminders, one-tap rebuffing, and optional quality-of-life automation for WoW Forever.**
+**Smart buff reminders and effortless mouse-wheel buffing for WoW Forever.**
 
-BuffTap watches your buffs, works out what needs attention, and prepares the next action for you. Click the icon or press your chosen key to keep moving through missing buffs—without hunting through spellbooks, action bars, or bags.
+BuffTap detects missing or expiring buffs, follows your priorities, and prepares the next spell or item. **Scroll to buff, then keep adventuring.** Prefer a different control? Use a custom keybind, mouse button, or the clickable reminder.
 
-**Automate the reminders and preparation. Stay in control of every cast.** BuffTap automatically detects, prioritizes, and updates its suggestions; casting spells and using items still require your click or keypress.
+BuffTap automates detection and preparation; every cast or item use still requires your input. Designed for out-of-combat maintenance, with event-driven updates and cached information.
 
-**Version 1.8.0.** Optional conveniences are available in the main **Helpers** tab and start disabled, so you can choose exactly how much assistance you want.
+## 🛡️ Buff yourself, your party, or your raid
 
-## 🔊 Alerts that suit you
+Choose what to maintain, who receives it, and when to refresh it.
 
-Choose separate reminder and low-stock sounds, preview them, select Master or sound-effects audio, and adjust the minimum alert interval. The sound choices use available client sounds. Appearance preview lets you check the reminder without waiting for a missing buff, and resetting all options requires confirmation.
+- **Personal and friendly-target buffing** with independent settings.
+- **Per-buff raid-group and class filters**, priorities, and refresh thresholds.
+- **Smart group spells** that check who still needs the buff before spending reagents.
+- **Paladin blessing assignments** by recipient class, with individual player exceptions and optional Salvation protection.
 
-BuffTap automatically follows your client language. Initial Spanish, German, French and Brazilian Portuguese translations cover common controls, helper descriptions and messages; untranslated text uses English. Translations welcome native-speaker corrections. Spell and item names come from the client when available.
+## ⚔️ Keep your weapons ready
 
-## One tap, your priorities
+Maintain **Rogue poisons, Shaman imbues, supported Mage imbue scrolls, oils, sharpening stones, and weightstones** through the same convenient binding.
 
-- **Automatic buff reminders:** Catch missing and expiring supported buffs, then advance to the next action after applying them.
-- **Your preferred binding:** Use a keyboard key, mouse wheel, middle/side mouse button, or the clickable icon. Mouse buttons support Shift/Ctrl/Alt; left/right click requires a modifier.
-- **Class-aware buffing:** Maintain learned class buffs with configurable priorities and refresh timing.
-- **Friendly-target buffing:** Quickly buff another player using settings independent of your party and raid assignments.
-- **Smart group spells:** Prefer group versions when enough eligible players need the buff, with configurable thresholds.
-- **Paladin blessings:** Choose a blessing per recipient class, with individual player exceptions and optional Salvation protection. Conflicting assignments use individual blessings.
+Choose poisons and compatible oils/stones independently for each hand; Shaman imbues and Mage scrolls use the main hand. Set your refresh timing and decide whether different existing effects may be replaced. Preferences remain saved when supplies run out.
 
-## Party and raid buff management
-
-Set recipients **per buff, raid group, and class**. Maintain broader coverage for Mark of the Wild while limiting group Thorns to the classes you choose. Class filters are choices, not automatic tank-role detection; open-world friendly-target buffing remains independent.
-
-The optional **party coverage panel** highlights missing buffs another party member's class may provide. It is informational, does not send chat messages, and currently covers five-player parties. The suggested provider's actual spellbook is not assumed known.
+Weapon application is optional and starts disabled.
 
 ## 🧪 Consumables without the bag search
 
-Choose supported **food buffs, flasks, and an elixir** to maintain. Search by name, filter to items in your bags, and keep a preferred item selected even when it runs out. Consumable reminders are optional and start disabled.
+Select supported **food buffs, flasks, and elixirs** using a searchable picker with an in-bags filter. Keep a preferred item selected or use supported automatic choices.
 
-- **Quick choices:** Hover a consumable reminder to select another supported item from your bags, then use the main icon to apply it.
-- **Predictable preferences:** Keep explicit selections and see when they are out of stock.
-- **Respect existing effects:** Food and elixir checks help prevent unnecessary replacement prompts.
-- **Discovery report:** Optionally list unknown bag consumables for review. Discovery does not automatically enable or use unverified items.
+Optional **low-stock warnings** cover selected buff and weapon consumables, with configurable thresholds, private alerts, sounds, and ready-check summaries. Consumable management and stock warnings start disabled.
 
-## 🐾 Ready for the next pull
+## ✨ Helpful extras, when you want them
 
-Enable **pet readiness** or **personal Healthstone preparation** in Helpers when you want them. Both start off, and ordinary buffing keeps its place ahead of these extras.
+Enable **Hunter/Warlock pet readiness, personal Healthstone creation, gathering-tracker reminders, or party buff-coverage information**. Dismiss unwanted reminders, reduce repeated stronger-effect errors, or optionally thank players who buff you while questing solo.
 
-- **Warlocks:** Pick a learned preferred demon. BuffTap offers its summon when no living pet is present, respects Demonic Sacrifice, and never replaces a living demon just to match your preference.
-- **Hunters:** One-tap Revive for a visible dead pet. An absent assigned pet gets a manual call/revive reminder when BuffTap cannot verify which recovery is needed.
-- **Personal Healthstones:** Offers your highest learned Create Healthstone spell when you carry none. Any supported rank or improved version satisfies the check. Creation requires a Soul Shard and verified general bag space; the button never consumes a Healthstone.
+Helpers are opt-in, so you choose how much assistance you want.
 
-These helpers wait through mount and pet transitions and offer casts only while stationary, out of combat, and otherwise ready to act. Missing or unreadable client data suppresses an action rather than guessing.
+## 🎨 Make it your own
 
-## Small conveniences that add up
+Move and resize the reminder, adjust opacity, labels, timers, glow, and pulse. Choose separate reminder and low-stock sounds, preview them, and control alert frequency.
 
-- **Dismiss for now:** Right-click an unwanted reminder until your next zone change, or restore reminders immediately.
-- **Fewer repeated errors:** Optionally suppress a recent BuffTap action when the game rejects it because a stronger effect is already active. Restore it manually or on zone change.
-- **Gathering reminders:** Choose a learned Find Herbs, Find Minerals, or Find Fish tracker and get a one-tap reminder when it is off. BuffTap does not cycle between trackers.
-- **Automatic solo thanks:** Opt in to a targeted `/thank` when another identifiable player gives you a supported buff while you are solo in the open world. Disabled in parties, raids, instances, and combat; limited to once per minute overall and once per ten minutes per player. If the caster cannot be verified, BuffTap stays quiet.
-- **Scroll-to-apply weapon buffs:** Opt in to maintain your preferred learned Shaman imbue or carried Rogue poisons through the normal BuffTap binding. Choose each Rogue hand separately, set refresh timing, and decide whether a different existing buff may be replaced. Shamans maintain the main-hand weapon; shields and held off-hand items are excluded. Out-of-stock poisons retain their saved preference and show a manual reminder. Separate oil, stone and supported Mage scroll preferences are available in Weapons.
-
-## Make it fit your UI
-
-Move and resize the reminder, adjust opacity, show buff and target names, add remaining-time labels, or enable an optional glow, pulse, and sound. Native game icons, a searchable item picker, and compact assignment controls keep your choices readable.
-
-BuffTap uses event-driven updates and cached information. Optional discovery runs on inventory changes rather than repeatedly scanning bags during ordinary aura updates.
+Open settings from the **draggable minimap button** or enable an optional **LibDataBroker display** alongside—or in place of—the standard reminder. Native game icons and automatic Spanish, German, French, and Brazilian Portuguese localization keep the interface familiar; untranslated text falls back to English.
 
 ## Get started
 
-1. Install the **BuffTap** folder inside your Forever client's `Interface/AddOns` folder.
-2. Type **`/bt`** to choose your buffs, binding, and appearance.
-3. Enable party, friendly-target, or consumable features as needed.
-4. Open the **Helpers tab** in the main options or type **`/bt helpers`** to choose the new conveniences. Use **`/bt restore`** to restore dismissed reminders.
+Install **BuffTap** in your client's `Interface/AddOns` folder, open **`/bt`**, choose your buffs, and start scrolling.
 
-BuffTap is built for **WoW Forever** and out-of-combat maintenance. It suspends its casting actions in combat. Supported abilities depend on your learned spells and the information the client exposes.
+[Download on CurseForge](https://www.curseforge.com/wow/addons/bufftap) · [Source code and support](https://github.com/Hitshade/BuffTap)
 
-
-
-### Oils, stones and weapon buffs
-
-Keep your weapons ready with separate per-hand choices for **Wizard and Mana Oils, sharpening stones, weightstones, Elemental Sharpening Stone, Frost Oil and Shadow Oil**. Available to every class, alongside Rogue poisons, Shaman imbues and supported Mage scrolls. Choose your preferences in **Weapons**, then use your usual BuffTap scroll/click binding to apply supported items. New oil/stone choices start off.
-
-BuffTap checks weapon compatibility, warns when selected effects are missing or nearing expiry, and preserves other enchant categories. Different recognized coatings are replaced only when you enable replacement. Optional **Consumables → Supplies** warnings track your selected items, counting remaining applications for multi-use oils.
-
-### Mage imbue scrolls
-
-Choose a supported **Mage imbue scroll** in **Weapons** and apply it with your usual click or scroll binding. BuffTap checks your main-hand staff, dagger or sword, tracks the selected imbue independently of oils/stones, and can include its stock in optional supply warnings. Scroll preferences start at **None**.
-
-If a consumed flask or elixir’s effect cannot be confirmed after a second check, BuffTap pauses that family instead of offering another item. Use **Retry reminders** in Consumables to try again. The same control in Weapons restarts failed item loading.
-
-### Quick access
-
-Open settings from the draggable minimap button, or enable a LibDataBroker display in **Appearance → Quick access**. The minimap button starts on; the broker starts off. Use either, both or neither. Broker bars show the next queued reminder and require a separate broker display addon. Turning the broker off takes effect after a UI reload. `/bt` remains available.
-
-## Feedback and support
-
-Include your class, addon version, game build, and steps to reproduce the issue. **`/bt debug`** provides diagnostics; optional profiling is available through **`/bt profile on`** and **`/bt profile off`**.
-
-[Download on CurseForge](https://www.curseforge.com/wow/addons/bufftap) · [Source and issue reports](https://github.com/Hitshade/BuffTap)
+Found a problem? Include your class, addon version, game build, and steps to reproduce it.
 
 ---
 
-**License:** BuffTap source is offered under **MPL 2.0**; see the bundled license notices. The class catalog is generated from WoW Forever client data. Game data and artwork remain their respective owners'. Developed with AI-assisted coding and review.
+**MPL 2.0.** See bundled license notices. Game data and artwork belong to their respective owners. Developed with AI-assisted coding and review.
