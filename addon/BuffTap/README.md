@@ -31,7 +31,7 @@ Optional **low-stock warnings** cover selected buff and weapon consumables, with
 
 ## ✨ Helpful extras, when you want them
 
-Enable **Hunter/Warlock pet readiness, personal Healthstone creation, gathering-tracker reminders, or party buff-coverage information**. Dismiss unwanted reminders, reduce repeated stronger-effect errors, or optionally thank players who buff you while questing solo.
+Enable **Hunter/Warlock pet readiness, personal Healthstone creation, gathering-tracker reminders, or party buff-coverage information**. Dismiss unwanted reminders, reduce repeated stronger-effect errors, or optionally respond to players who buff you while questing solo with a chosen directed emote.
 
 Helpers are opt-in, so you choose how much assistance you want.
 

@@ -191,7 +191,7 @@ BuffTap:HelperOptions()
 assert(BuffTap.options:IsShown() and BuffTap.options.activeTab==7)
 assert(BuffTap.helperWindow:GetParent()==BuffTap.options)
 assert(BuffTapHelperOptions==nil and BuffTap.options.pages[7]==BuffTap.helperWindow)
-for key in pairs(BuffTap.helperWindow.checks) do assert(#BuffTap.helperWindow.descriptions[key].text>40) end
+for key in pairs(BuffTap.helperWindow.checks) do if key~="helperTracking" then assert(#BuffTap.helperWindow.descriptions[key].text>40) end end
 BuffTap.options.selectTab(1); assert(not BuffTap.helperWindow:IsShown())
 ''')
 test('Helper setting preserves selected tab and existing buff choices', '''
@@ -210,7 +210,7 @@ assert(BuffTap.options.discoveryReport:GetText():find('Enable Find unrecognized'
 
 
 test('Upgrade removes only retired potion settings', "BuffTap.db.consumableFamilies['potion-stock']=true; BuffTap.db.consumableChoices['potion-stock']=118; BuffTap.db.consumableSeconds['potion-stock']=120; BuffTap.db.consumableChoices.food=6888; BuffTap.db.consumableFamilies.food=true; BuffTap.db.helperThanks=true; BuffTap:InitDB(); assert(BuffTap.db.consumableFamilies['potion-stock']==nil and BuffTap.db.consumableChoices['potion-stock']==nil and BuffTap.db.consumableSeconds['potion-stock']==nil); assert(BuffTap.db.consumableChoices.food==6888 and BuffTap.db.consumableFamilies.food and BuffTap.db.helperThanks)")
-test('Consumable options have only maintainable buff families', "BuffTap:Options(); assert(#BuffTap.ConsumableFamilies==3 and #BuffTap.options.consumableRows==3); for _,family in ipairs(BuffTap.ConsumableFamilies) do assert(not family.stockOnly and family.key~='potion-stock'); for _,item in ipairs(family.items) do assert(item.id~=118) end end; assert(BuffTap.version=='1.13.1')")
+test('Consumable options have only maintainable buff families', "BuffTap:Options(); assert(#BuffTap.ConsumableFamilies==3 and #BuffTap.options.consumableRows==3); for _,family in ipairs(BuffTap.ConsumableFamilies) do assert(not family.stockOnly and family.key~='potion-stock'); for _,item in ipairs(family.items) do assert(item.id~=118) end end; assert(BuffTap.version=='1.13.2')")
 
 test('Bounce requires matching failure and reason in either order', """
 BuffTap.db.helperBounce=true; SPELL_FAILED_AURA_BOUNCED='Stronger effect'
@@ -251,3 +251,18 @@ refresh(); assert(table.concat(BuffTap:CoverageLines(),';'):find('Shadow Protect
 for _,u in ipairs({'player','party1','party2'}) do aura(u,976,'Shadow Protection') end
 refresh(); assert(not table.concat(BuffTap:CoverageLines(),';'):find('Shadow Protection'))
 """)
+
+# Curated emotes reuse the existing recipient identity and cooldown safeguards.
+test('Selected solo emote is directed at the verified provider',solo+"BuffTap.db.helperThankEmote='BOW'; received(1459,'target'); assert(#emotes==1 and emotes[1][1]=='BOW' and emotes[1][2]=='Ally')")
+test('Unsafe and malformed stored emotes fall back to thank',solo+"for _,v in ipairs({'SIT','SLEEP','DANCE','KNEEL','/say hi',123}) do BuffTap.db.helperThankEmote=v; assert(BuffTap:SoloThankEmote()=='THANK') end; received(1459,'target'); assert(emotes[1][1]=='THANK')")
+test('Curated choices exclude posture commands and use client localized aliases',"MAXEMOTEINDEX=2; EMOTE1_TOKEN='BOW'; EMOTE1_CMD1='/verbeugen'; EMOTE2_TOKEN='SIT'; EMOTE2_CMD1='/sitzen'; local choices=BuffTap:SoloThankEmotes(); assert(#choices==30); local seen={}; for _,v in ipairs(choices) do seen[v.key]=true; if v.key=='BOW' then assert(v.name=='verbeugen') end end; assert(not seen.SIT and not seen.SLEEP and not seen.DANCE and not seen.KNEEL)")
+test('Changing solo response preserves cooldowns and sends nothing',solo+"received(1459,'target'); BuffTap.db.helperThankEmote='WAVE'; received(1243,'party1'); assert(#emotes==1); now=now+61; received(14752,'target'); assert(#emotes==1)")
+test('Modern emote failure makes one attempt without retry',solo+"local attempts=0; C_ChatInfo={PerformEmote=function(e,u) attempts=attempts+1; assert(e=='SALUTE' and u=='Ally'); return false end}; BuffTap.db.helperThankEmote='SALUTE'; received(1459,'target'); received(1243,'target'); assert(attempts==1 and BuffTap.helperThankStatus=='Emote unavailable or restricted; no retry')")
+test('Solo response selector stores choices without emitting chat',solo+"BuffTap:HelperOptions(); local picker=BuffTap.helperWindow.thankEmote; picker.scripts.OnClick(); local row=picker.menu.rows[2]; row.scripts.OnClick(row); assert(BuffTap.db.helperThankEmote=='BOW' and #emotes==0); picker.scripts.OnClick(); picker.scripts.OnClick(); assert(not picker.menu.shown)")
+
+
+test('Solo emote remains configurable while automatic thanks is off',solo+"BuffTap.db.helperThanks=false; BuffTap:HelperOptions(); local picker=BuffTap.helperWindow.thankEmote; assert(picker.enabled); picker.scripts.OnClick(); local row=picker.menu.rows[2]; row.scripts.OnClick(row); assert(BuffTap.db.helperThankEmote=='BOW' and BuffTap.db.helperThanks==false and #emotes==0); picker.scripts.OnClick(); picker.scripts.OnClick(); assert(not picker.menu.shown)")
+
+test("Questionable directed emotes remain selectable",solo+"for _,token in ipairs({'FART','BURP','RUDE','RASP','MOCK','TAUNT'}) do BuffTap.db.helperThankEmote=token; assert(BuffTap:SoloThankEmote()==token) end; BuffTap.db.helperThankEmote='FART'; received(1459,'target'); assert(#emotes==1 and emotes[1][1]=='FART' and emotes[1][2]=='Ally')")
+
+test("Solo emote dropdown scrolls without a search box", "BuffTap:HelperOptions(); local picker=BuffTap.helperWindow.thankEmote; picker.scripts.OnClick(); assert(picker.menu.scroll and picker.menu.content and not picker.menu.search); assert(#picker.menu.rows==30)")

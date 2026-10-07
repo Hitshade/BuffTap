@@ -4,7 +4,7 @@
 
 local _, B = ...
 _G.BuffTap = B
-B.version = "1.13.1"
+B.version = "1.13.2"
 B.API = {}
 local A = B.API
 
@@ -63,7 +63,7 @@ function B:InitDB()
     weaponReminder=true, weaponMainHand=true, weaponOffHand=true,
     weaponApply=false, weaponReplace=false, weaponChoices={}, weaponCoatings={}, weaponSeconds=60,
     helperDismiss=false, helperBounce=false, helperTracking=false, helperCoverage=false,
-    helperDiscovery=false, helperThanks=false, helperQuick=false, helperTracker=0, helperPet=false, helperHealthstone=false, helperDemon=0,
+    helperDiscovery=false, helperThanks=false, helperThankEmote="THANK", helperQuick=false, helperTracker=0, helperPet=false, helperHealthstone=false, helperDemon=0,
     raidGroups={true,true,true,true,true,true,true,true}}
   for k,v in pairs(defaults) do
     if type(self.db[k]) ~= type(v) then self.db[k] = v end

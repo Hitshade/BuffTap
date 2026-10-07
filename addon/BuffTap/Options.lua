@@ -69,6 +69,8 @@ end
 
 -- One selector convention: explicit choices, a visible arrow and toggle-to-close.
 local function selector(parent,text,x,y,width,choices,onSelect,searchable)
+  local scrollable=searchable==true or searchable=="scroll"
+  searchable=searchable==true
   local control,menu,render
   control=flatButton(parent,text,x,y,width,function()
     if A.Combat() then return end
@@ -91,15 +93,15 @@ local function selector(parent,text,x,y,width,choices,onSelect,searchable)
     for _,entry in ipairs(all) do if query=="" or string.find(string.lower(entry.name),query,1,true) then entries[#entries+1]=entry end end
     local count=#entries
     local top=searchable and 34 or 4
-    menu:SetSize(searchable and 340 or width,top+(searchable and math.max(28,math.min(7,count)*28) or count*28)+4)
-    if searchable then
+    menu:SetSize(scrollable and 340 or width,top+(scrollable and math.max(28,math.min(7,count)*28) or count*28)+4)
+    if scrollable then
       menu.content:SetHeight(math.max(1,count*28)); menu.scroll:SetVerticalScroll(0)
       menu.empty:SetShown(count==0)
     end
     for _,row in ipairs(menu.rows) do row:Hide() end
     for i=1,count do
       local entry=entries[i]; local row=menu.rows[i]
-      if not row then row=flatButton(searchable and menu.content or menu,"",4,-(searchable and 0 or top)-(i-1)*28,(searchable and 312 or width)-8,function(btn)
+      if not row then row=flatButton(scrollable and menu.content or menu,"",4,-(scrollable and 0 or top)-(i-1)*28,(scrollable and 312 or width)-8,function(btn)
         if A.Combat() then return end
         onSelect(btn.choice); menu:Hide(); B:Options()
       end); menu.rows[i]=row end
@@ -111,8 +113,10 @@ local function selector(parent,text,x,y,width,choices,onSelect,searchable)
     menu.search=CreateFrame("EditBox",nil,menu,"InputBoxTemplate"); menu.search:SetSize(256,22); menu.search:SetPoint("TOPLEFT",68,-5); menu.search:SetAutoFocus(false)
     menu.search:SetScript("OnTextChanged",function() render() end)
     menu.search:SetScript("OnEscapePressed",function(box) box:ClearFocus(); menu:Hide() end)
+  end
+  if scrollable then
     menu.scroll=CreateFrame("ScrollFrame",nil,menu,"UIPanelScrollFrameTemplate")
-    menu.scroll:SetPoint("TOPLEFT",4,-34); menu.scroll:SetPoint("BOTTOMRIGHT",-28,4)
+    menu.scroll:SetPoint("TOPLEFT",4,searchable and -34 or -4); menu.scroll:SetPoint("BOTTOMRIGHT",-28,4)
     menu.content=CreateFrame("Frame",nil,menu.scroll); menu.content:SetSize(308,1); menu.scroll:SetScrollChild(menu.content)
     menu.empty=label(menu.content,L("No matches"),8,-6,"GameFontDisableSmall"); menu.empty:Hide()
   end
@@ -774,8 +778,6 @@ function B:BuildHelperPage(parent)
     {"helperBounce",L("Stop repeated stronger-buff errors"),L("If your BuffTap click fails because a stronger buff is active, hide that reminder until a zone change or manual restore.")},
     {"helperQuick",L("Choose consumables from the icon"),L("Hover a food, flask or elixir reminder to pick another supported item in your bags. Click the main icon to use your choice.")},
     {"helperCoverage",L("Show missing party buffs"),L("Shows buffs your five-player party may be missing and who might provide them. Information only: no casting or chat messages.")},
-    {"helperTracking",L("Remind me to enable tracking"),L("Choose Herbs, Minerals or Fish below. When that tracker is off, BuffTap offers a one-tap reminder to turn it on.")},
-    {"helperThanks",L("Thank players who buff me solo"),L("Thanks an identified solo buff provider. Never in groups, instances or combat. Limited to once a minute and once per player per 10 minutes.")},
     {"helperDiscovery",L("Find unrecognized consumables"),L("Lists bag consumables missing from BuffTap's supported list for review. It does not add or use them. View the report in Diagnostics.")},
   }
   for i,spec in ipairs(settings) do
@@ -793,32 +795,50 @@ function B:BuildHelperPage(parent)
     f.descriptions[key]=label(f,spec[3],x+4,y-27,"GameFontDisableSmall",326)
     addHelp(f.checks[key],spec[2],spec[3])
   end
-  card(f,364,-275,336,86)
-  label(f,"Reminder behavior",372,-281,"GameFontNormal")
-  parent.pauseResting=check(f,"Pause reminders while resting",368,-300,function(c)
+  card(f,364,-205,336,78)
+  label(f,"Reminder behavior",372,-211,"GameFontNormal")
+  parent.pauseResting=check(f,"Pause reminders while resting",368,-233,function(c)
     if A.Combat() then return end
     setAndRefresh("pauseResting",c:GetChecked()==true); B:InvalidateSupplies(false); B:Refresh(false); B:Options()
   end)
-  label(f,"Hide buff reminders and quiet automatic stock alerts in cities and inns. Settings remain accessible.",372,-327,"GameFontDisableSmall",320)
+  label(f,L("Pause reminders and stock alerts in cities and inns."),372,-258,"GameFontDisableSmall",320)
   addHelp(parent.pauseResting,"Pause reminders while resting","Hide buff reminders and quiet automatic stock alerts in cities and inns. Settings remain accessible.")
-  button(f,L("View discovery report"),368,-569,204,function() B:ShowDiscoveryReport() end)
-  line(f,-374)
-  f.trackerHeading=label(f,L("Preferred gathering tracker"),18,-386,"GameFontNormal")
-  f.emptyTracker=label(f,L("No learned gathering tracker is available on this character."),18,-412,"GameFontDisableSmall",670)
+  line(f,-286)
+  label(f,L("Solo thanks"),18,-299,"GameFontNormalLarge")
+  f.checks.helperThanks=check(f,L("Thank players who buff me solo"),18,-323,function(c)
+    if A.Combat() then return end
+    B.db.helperThanks=c:GetChecked()==true; B.helperThankSeen=nil; B:ObserveSoloThanks(true)
+    B:RequestRefresh("solo thanks",0); B:Options()
+  end)
+  f.descriptions.helperThanks=label(f,L("Thanks an identified solo buff provider. Never in groups, instances or combat. Limited to once a minute and once per player per 10 minutes."),22,-349,"GameFontDisableSmall",670)
+  label(f,L("Solo response emote"),22,-383,"GameFontNormal",180)
+  f.thankEmote=selector(f,"",210,-375,270,function() return B:SoloThankEmotes() end,function(choice)
+    B.db.helperThankEmote=choice
+    -- Configuration only: never sends an emote or resets cooldowns.
+  end,"scroll")
+  addHelp(f.thankEmote,L("Solo response emote"),L("Directed reactions only. No sitting, sleeping or looping animations. Changing this never sends an emote."))
+  line(f,-413)
+  f.trackerHeading=label(f,L("Gathering tracker"),18,-426,"GameFontNormal")
+  f.checks.helperTracking=check(f,L("Remind me to enable tracking"),18,-450,function(c)
+    if A.Combat() then return end
+    B.db.helperTracking=c:GetChecked()==true; B:RequestRefresh("tracking reminder",0); B:Options()
+  end)
+  addHelp(f.checks.helperTracking,L("Remind me to enable tracking"),L("Choose Herbs, Minerals or Fish below. When that tracker is off, BuffTap offers a one-tap reminder to turn it on."))
+  f.emptyTracker=label(f,L("No learned gathering tracker is available on this character."),254,-458,"GameFontDisableSmall",440)
   f.readiness=CreateFrame("Frame",nil,f); f.readiness:SetAllPoints(f)
   local r=f.readiness
-  label(r,L("Class readiness"),18,-438,"GameFontNormal")
-  f.petCheck=check(r,L("Keep my pet ready"),18,-458,function(c)
+  label(r,L("Class readiness"),18,-478,"GameFontNormal")
+  f.petCheck=check(r,L("Keep my pet ready"),18,-498,function(c)
     if A.Combat() then return end
     B.db.helperPet=c:GetChecked()==true; B:SyncReadiness(); B:RequestRefresh("pet helper",0); B:Options()
   end)
-  f.petDescription=label(r,"",22,-484,"GameFontDisableSmall",326)
-  f.stoneCheck=check(r,L("Prepare a personal Healthstone"),364,-458,function(c)
+  f.petDescription=label(r,"",22,-524,"GameFontDisableSmall",326)
+  f.stoneCheck=check(r,L("Prepare a personal Healthstone"),364,-498,function(c)
     if A.Combat() then return end
     B.db.helperHealthstone=c:GetChecked()==true; B:SyncReadiness(); B:RequestRefresh("Healthstone helper",0); B:Options()
   end)
-  f.stoneDescription=label(r,L("Offers Create Healthstone when none is in your bags. Requires a Soul Shard and free space. Never uses the stone."),368,-484,"GameFontDisableSmall",326)
-  f.demonChoice=flatButton(r,"Choose preferred demon",18,-531,326,function()
+  f.stoneDescription=label(r,L("Offers Create Healthstone when none is in your bags. Requires a Soul Shard and free space. Never uses the stone."),368,-524,"GameFontDisableSmall",326)
+  f.demonChoice=flatButton(r,"Choose preferred demon",18,-566,326,function()
     if A.Combat() then return end
     f.demonMenu:SetShown(not f.demonMenu:IsShown())
   end)
@@ -831,8 +851,8 @@ function B:BuildHelperPage(parent)
   menu:SetBackdrop({bgFile="Interface\\Buttons\\WHITE8X8",edgeFile="Interface\\Tooltips\\UI-Tooltip-Border",edgeSize=12})
   menu:SetBackdropColor(.04,.04,.04,1); menu.rows={}; menu:Hide()
   f:SetScript("OnHide",function() menu:Hide() end)
-  button(f,L("Restore reminders"),18,-569,154,function() B:RestoreHelpers(); B:Options() end)
-  label(f,"Brings back skipped reminders, including stronger-effect errors.",184,-605,"GameFontDisableSmall",500)
+  button(f,L("Restore reminders"),18,-602,154,function() B:RestoreHelpers(); B:Options() end)
+  button(f,L("View discovery report"),368,-602,204,function() B:ShowDiscoveryReport() end)
 end
 
 function B:UpdateHelperOptions()
@@ -865,16 +885,20 @@ function B:UpdateHelperOptions()
   f.demonChoice:SetText(chosen and ("    "..chosen.name.."  v") or (#demons>0 and "Choose preferred demon  v" or "No learned summon available"))
   f.demonChoice.icon:SetTexture(chosen and chosen.icon or nil)
   if #demons>0 then f.demonChoice:Enable() else f.demonChoice:Disable() end
+  local emote=self:SoloThankEmote()
+  for _,entry in ipairs(self:SoloThankEmotes()) do if entry.key==emote then f.thankEmote:SetText(entry.name); break end end
+  -- Players may configure a response before enabling automatic solo thanks.
+  f.thankEmote:Enable()
   for key,c in pairs(f.checks) do c:SetChecked(self:HelperEnabled(key)) end
   for _,t in ipairs(f.trackers) do t:Hide() end
   local trackers=self:GatheringTrackers(); f.emptyTracker:SetShown(#trackers==0)
   local selected=false
   for _,entry in ipairs(trackers) do if entry.id==self.db.helperTracker then selected=true end end
-  f.trackerHeading:SetText(selected and L("Preferred gathering tracker") or "Preferred gathering tracker - choose one below")
+  f.trackerHeading:SetText(L("Gathering tracker"))
   for i,entry in ipairs(trackers) do
     local t=f.trackers[i]
     if not t then
-      t=flatButton(f,"",18+(i-1)*226,-408,218,function(control)
+      t=flatButton(f,"",254+(i-1)*148,-448,140,function(control)
         if A.Combat() then return end
         B.db.helperTracker=control.trackerID; B:RequestRefresh("tracking preference",0); B:Options()
       end)

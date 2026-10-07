@@ -199,6 +199,32 @@ function B:DiscoverConsumables()
   self.helperDiscoveryStatus=#self.helperDiscoveries.." unknown consumables; "..pending.." awaiting item data. Informational only."
 end
 
+-- Directed reactions only; no persistent posture or looping animation commands.
+local soloEmotes={
+  {key="THANK",name="Thank"},{key="BOW",name="Bow"},{key="SALUTE",name="Salute"},
+  {key="WAVE",name="Wave"},{key="CHEER",name="Cheer"},{key="APPLAUD",name="Applaud"},
+  {key="SMILE",name="Smile"},{key="GRIN",name="Grin"},{key="HUG",name="Hug"},{key="KISS",name="Kiss"},
+  {key="FART",name="Fart"},{key="BURP",name="Burp"},{key="RUDE",name="Rude"},{key="RASP",name="Rasp"},{key="MOCK",name="Mock"},{key="TAUNT",name="Taunt"},{key="TEASE",name="Tease"},{key="BONK",name="Bonk"},{key="POKE",name="Poke"},{key="TICKLE",name="Tickle"},{key="WINK",name="Wink"},{key="NOD",name="Nod"},{key="WELCOME",name="Welcome"},{key="CONGRATULATE",name="Congratulate"},{key="FLIRT",name="Flirt"},{key="LAUGH",name="Laugh"},{key="CHUCKLE",name="Chuckle"},{key="GIGGLE",name="Giggle"},{key="CACKLE",name="Cackle"},{key="GREET",name="Greet"},
+}
+function B:SoloThankEmotes()
+  local localized={}
+  local count=A.Number(MAXEMOTEINDEX) and math.min(MAXEMOTEINDEX,1000) or 0
+  for i=1,count do
+    local token,command=_G["EMOTE"..i.."_TOKEN"],_G["EMOTE"..i.."_CMD1"]
+    if A.Text(token) and A.Text(command) then localized[token]=command:gsub("^/","") end
+  end
+  local out={}
+  for _,entry in ipairs(soloEmotes) do
+    out[#out+1]={key=entry.key,name=localized[entry.key] or self:Text(entry.name)}
+  end
+  return out
+end
+function B:SoloThankEmote()
+  local choice=self.db and self.db.helperThankEmote
+  for _,entry in ipairs(soloEmotes) do if choice==entry.key then return entry.key end end
+  return "THANK"
+end
+
 function B:SoloThanksAllowed()
   return self:HelperEnabled("helperThanks") and self.db.enabled and not A.Combat() and not self:ReminderPauseReason()
     and A.Call(IsInGroup)==false and A.Call(IsInRaid)==false and A.Call(IsInInstance)==false
@@ -243,7 +269,7 @@ function B:ObserveSoloThanks(baseline)
   end
   if not A.Text(name) then return end
   self.helperLastThank=now; self.helperThankCooldowns[candidate.guid]=now
-  local ok,result=pcall(emote,"THANK",name)
+  local ok,result=pcall(emote,self:SoloThankEmote(),name)
   self.helperThankStatus=ok and A.Public(result) and result~=false and "Thank emote requested" or "Emote unavailable or restricted; no retry"
 end
 
