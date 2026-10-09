@@ -14,7 +14,7 @@ function B:InitSupplies()
   local db=self.db
   local valid={}
   for _,choice in ipairs(self.WeaponChoices or {}) do
-    if choice.class=="ROGUE" or choice.class=="MAGE" then valid[(choice.class=="MAGE" and "imbue:" or "poison:")..choice.key]=true end
+    if choice.class=="ROGUE" or B:ItemImbueClass(choice.class) then valid[(B:ItemImbueClass(choice.class) and "imbue:" or "poison:")..choice.key]=true end
   end
   for _,choice in ipairs(self.CoatingChoices or {}) do valid["coating:"..choice.key]=true end
   for _,family in ipairs(self.ConsumableFamilies or {}) do valid["consumable:"..family.key]=true end
@@ -73,18 +73,18 @@ end
 
 function B:SupplyDefinitions()
   local entries,seen={},{}
-  if self.db.weaponReminder and (self:WeaponReminderClass()=="ROGUE" or self:WeaponReminderClass()=="MAGE") then
+  if self.db.weaponReminder and (self:WeaponReminderClass()=="ROGUE" or self:ItemImbueClass(self:WeaponReminderClass())) then
     for _,hand in ipairs({"main","off"}) do
       local active=hand=="main" and self.db.weaponMainHand or hand=="off" and self.db.weaponOffHand
-      if self:WeaponReminderClass()=="MAGE" and hand=="off" then active=false end
+      if self:ItemImbueClass(self:WeaponReminderClass()) and hand=="off" then active=false end
       local choice=active and self:WeaponPreference(hand)
       local slot=hand=="main" and 16 or 17
       -- Use equipment identity only; stock checks need no enchant/aura scans.
       local weapon=self:EquippedBuffWeapon(slot)==true
-      if choice and weapon and (choice.class~="MAGE" or self:CoatingWeaponMatches(slot,choice)==true) and not seen[choice.key] then
+      if choice and weapon and (not self:ItemImbueClass(choice.class) or self:CoatingWeaponMatches(slot,choice)==true) and not seen[choice.key] then
         local ids,effects={},{}; for _,pair in ipairs(choice.items) do ids[#ids+1]=pair[1]; effects[pair[1]]=pair[2] end
-        entries[#entries+1]={key=(choice.class=="MAGE" and "imbue:" or "poison:")..choice.key,name=choice.name,kind=choice.class=="MAGE" and "imbue" or "poison",ids=ids,effects=effects,
-          icon=(choice.class=="MAGE" and A.Call(C_Spell and C_Spell.GetSpellTexture,choice.ranks[1])) or "Interface\\Icons\\Ability_Poisons",detail=choice.class=="MAGE" and "Selected Mage scroll stock for the compatible main-hand weapon." or "Usable ranks combined; the same poison selected for both hands is counted once."}
+        entries[#entries+1]={key=(self:ItemImbueClass(choice.class) and "imbue:" or "poison:")..choice.key,name=choice.name,kind=self:ItemImbueClass(choice.class) and "imbue" or "poison",ids=ids,effects=effects,
+          icon=(self:ItemImbueClass(choice.class) and A.Call(C_Spell and C_Spell.GetSpellTexture,choice.ranks[1])) or "Interface\\Icons\\Ability_Poisons",detail=choice.class=="WARLOCK" and "Selected Warlock stone stock for the compatible main-hand weapon." or choice.class=="MAGE" and "Selected Mage scroll stock for the compatible main-hand weapon." or "Usable ranks combined; the same poison selected for both hands is counted once."}
         seen[choice.key]=true
       end
     end

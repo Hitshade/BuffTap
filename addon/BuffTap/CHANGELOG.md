@@ -1,3 +1,12 @@
+# Unreleased - Warlock stones and Soulstone
+
+- Choose Firestone or Spellstone for your main hand. In Remind and apply mode, missing stones can be created before a separate click applies them. Existing oils and stones remain independent.
+- Optional Soulstone upkeep supports party healer/self/assigned targets and raid reminder/assigned targets. All casts and item uses require player input, out of combat.
+- Integration safeguards suppress actions when ownership or group data is unreadable, distinguish Forever surnames, and reject ambiguous assignments. Weapon Remind only mode never prepares creation or application.
+- Contribution by **kristofdenolf1985-arch**, [PR #2](https://github.com/Hitshade/BuffTap/pull/2). Original contributor commits are preserved; see CREDITS.md.
+
+Validation: 820 mocked Lua 5.1 scenarios passed. Live Warlock verification remains necessary for weapon enchant reporting, Soulstone item range/secure targeting, and creation hand-off.
+
 # BuffTap 1.13.2 — Solo response emotes
 
 - Choose from 30 built-in directed emotes, including Thank, Bow, Salute, Fart, Burp and Mock. Thank remains the default.

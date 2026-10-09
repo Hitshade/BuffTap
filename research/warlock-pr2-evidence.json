@@ -1,0 +1,125 @@
+{
+  "build": "1.60.1.70009",
+  "source": "Archived Blizzard DB2 exports through wago.tools; independently checked against PR #2 mappings claimed from 1.60.1.70124",
+  "imbues": [
+    [
+      1254,
+      758,
+      1803
+    ],
+    [
+      13699,
+      17945,
+      1823
+    ],
+    [
+      13700,
+      17947,
+      1824
+    ],
+    [
+      13701,
+      17949,
+      1825
+    ],
+    [
+      5522,
+      1237152,
+      8059
+    ],
+    [
+      13602,
+      1237156,
+      8060
+    ],
+    [
+      13603,
+      1237159,
+      8061
+    ]
+  ],
+  "creation": [
+    [
+      6366,
+      1254
+    ],
+    [
+      17951,
+      13699
+    ],
+    [
+      17952,
+      13700
+    ],
+    [
+      17953,
+      13701
+    ],
+    [
+      2362,
+      5522
+    ],
+    [
+      17727,
+      13602
+    ],
+    [
+      17728,
+      13603
+    ],
+    [
+      693,
+      5232
+    ],
+    [
+      20752,
+      16892
+    ],
+    [
+      20755,
+      16893
+    ],
+    [
+      20756,
+      16895
+    ],
+    [
+      20757,
+      16896
+    ]
+  ],
+  "soulstones": [
+    [
+      5232,
+      20707
+    ],
+    [
+      16892,
+      20762
+    ],
+    [
+      16893,
+      20763
+    ],
+    [
+      16895,
+      20764
+    ],
+    [
+      16896,
+      20765
+    ]
+  ],
+  "checks": [
+    "7 weapon item/use/enchant mappings and equipped masks",
+    "12 creation outputs and Soul Shard reagent requirements",
+    "5 Soulstone item/use/dummy-aura mappings"
+  ],
+  "hashes": {
+    "SpellEffect.csv": "fdecddfd93a3c27b48d7bbbebc8cc733a502fa8d58de623646550f9a5cffeb00",
+    "SpellEquippedItems.csv": "78ad227937fa056a6e2a14d5d723335a2f29773d55efacb2d47dbc9cb0ee633b",
+    "ItemEffect.csv": "32cf4dcb80040f3fba801ff42c9bff169129bcd9c7784d2b182e944393d677c3",
+    "ItemXItemEffect.csv": "3ffd488837e141ee3a6a5db9b961b0e72d186a2d5d16e0525ff0eeb7d2bdffbf",
+    "SpellReagents.csv": "059ef7298300109f6351b537ab672fa3c7581780879ec6c3ccd03207915d4b1e"
+  }
+}

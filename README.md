@@ -17,9 +17,9 @@ Choose what to maintain, who receives it, and when to refresh it.
 
 ## ⚔️ Keep your weapons ready
 
-Maintain **Rogue poisons, Shaman imbues, supported Mage imbue scrolls, oils, sharpening stones, and weightstones** through the same convenient binding.
+Maintain **Rogue poisons, Shaman imbues, supported Mage imbue scrolls, Warlock Firestones and Spellstones, oils, sharpening stones, and weightstones** through the same convenient binding.
 
-Choose poisons and compatible oils/stones independently for each hand; Shaman imbues and Mage scrolls use the main hand. Set your refresh timing and decide whether different existing effects may be replaced. Preferences remain saved when supplies run out.
+Choose poisons and compatible oils/stones independently for each hand; Shaman imbues, Mage scrolls and Warlock stones use the main hand. Set your refresh timing and decide whether different existing effects may be replaced. Preferences remain saved when supplies run out.
 
 Weapon application is optional and starts disabled.
 
@@ -31,7 +31,7 @@ Optional **low-stock warnings** cover selected buff and weapon consumables, with
 
 ## ✨ Helpful extras, when you want them
 
-Enable **Hunter/Warlock pet readiness, personal Healthstone creation, gathering-tracker reminders, or party buff-coverage information**. Dismiss unwanted reminders, reduce repeated stronger-effect errors, or optionally thank players who buff you while questing solo.
+Enable **Hunter/Warlock pet readiness, personal Healthstone creation, Soulstone upkeep for you or your group's healer, gathering-tracker reminders, or party buff-coverage information**. Dismiss unwanted reminders, reduce repeated stronger-effect errors, or optionally thank players who buff you while questing solo.
 
 Helpers are opt-in, so you choose how much assistance you want.
 
