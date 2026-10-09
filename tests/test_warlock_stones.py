@@ -72,4 +72,33 @@ test('Soulstone placed by someone else before click clears the action',soul+"ref
 test('Soulstone placement rejects movement',soul+"speed=4; refresh(); assert(not BuffTap.action); speed=0; event('PLAYER_STOPPED_MOVING'); advance(.1); assert(BuffTap.action.key=='soulstone')")
 test('Soulstone use holds while the cast settles',soul+"refresh(); BuffTap:AfterReadinessClick(BuffTap.action,true); event('UNIT_SPELLCAST_START','player','c',20765); refresh(); assert(not BuffTap.action); event('UNIT_SPELLCAST_SUCCEEDED','player','c',20765); aura('player',20765,'Soulstone Resurrection'); advance(3); assert(not BuffTap.readinessPending and not BuffTap.action)")
 test('Soulstone options toggle and tooltip render',soul+"refresh(); BuffTap.button.scripts.OnEnter(); BuffTap:Options()")
+
+create=lock+"""
+bags[13699]=0; bags[6265]=2; speed=0; GetUnitSpeed=function() return speed end; UnitInVehicle=function() return false end
+function event(e,...) BuffTap.events.scripts.OnEvent(nil,e,...) end
+NUM_BAG_SLOTS=4; freeSlots=4; bagFamily=0; bagContents={}
+C_Container={
+ GetContainerNumSlots=function(b) return b==0 and 4 or 0 end,
+ GetContainerNumFreeSlots=function(b) return freeSlots,bagFamily end,
+ GetContainerItemID=function(b,s) return bagContents[s] end,
+ GetContainerItemInfo=function(b,s) return bagContents[s] and {itemID=bagContents[s],stackCount=1} end,
+}
+spell(6366,'Create Firestone'); spell(17951,'Create Firestone')
+"""
+test('Missing Firestone is created first with a plain self cast',create+"refresh(); local a=BuffTap.action; assert(a.source=='readiness' and a.key=='weaponstone' and a.id==17951); assert(BuffTap.button.attrs.type1=='spell' and BuffTap.button.attrs.spell==17951 and BuffTap.button.attrs.unit=='player' and not BuffTap.button.attrs['target-slot'] and not BuffTap.button.attrs.item)")
+test('Created Firestone is then applied to the main hand',create+"refresh(); BuffTap:AfterReadinessClick(BuffTap.action,true); event('UNIT_SPELLCAST_START','player','c',17951); event('UNIT_SPELLCAST_SUCCEEDED','player','c',17951); bags[13699]=1; event('BAG_UPDATE_DELAYED'); advance(3); local a=BuffTap.action; assert(a and a.source=='weapon-reminder' and a.itemID==13699 and not a.manual and BuffTap.button.attrs['target-slot']==16)")
+test('Highest learned Create Firestone rank is used',create+"spell(17953,'Create Firestone'); stock(13701,17949); bags[13701]=0; refresh(); assert(BuffTap.action.id==17953)")
+test('Missing Spellstone is created first',create+"BuffTap.db.weaponChoices.main='warlock-spellstone'; spell(2362,'Create Spellstone'); stock(5522,1237152); bags[5522]=0; refresh(); assert(BuffTap.action.key=='weaponstone' and BuffTap.action.id==2362)")
+test('Active preferred stone needs no creation',create+"coat(0,1823,3600,3); refresh(); assert(not BuffTap.action)")
+test('Expiring stone with none carried is created ahead of time',create+"coat(0,1823,30,3); refresh(); assert(BuffTap.action.key=='weaponstone')")
+test('Other stone kept without replacement creates nothing',create+"coat(0,8059,3600,3); refresh(); assert(not BuffTap.action)")
+test('Unknown imbue blocks creation',create+"coat(0,99999,3600,3); refresh(); assert(not BuffTap.action or BuffTap.action.key~='weaponstone')")
+test('No Soul Shard falls back to the manual out-of-stock reminder',create+"bags[6265]=0; refresh(); assert(BuffTap.action.source=='weapon-reminder' and BuffTap.action.manual and not next(bindings))")
+test('Full bags fall back to the manual out-of-stock reminder',create+"freeSlots=0; refresh(); assert(BuffTap.action.source=='weapon-reminder' and BuffTap.action.manual)")
+test('Unlearned Create Firestone falls back to the manual reminder',create+"spells[6366].known=false; spells[17951].known=false; refresh(); assert(BuffTap.action.source=='weapon-reminder' and BuffTap.action.manual)")
+test('Incompatible main hand never creates a stone',create+"local instant=C_Item.GetItemInfoInstant; C_Item.GetItemInfoInstant=function(id) if id==9001 then return id,'Weapon','','INVTYPE_WEAPONOFFHAND',135274,2,15 end return instant(id) end; refresh(); assert(not BuffTap.action)")
+test('Stone creation waits while moving',create+"speed=3; refresh(); assert(not BuffTap.action or BuffTap.action.key~='weaponstone'); speed=0; event('PLAYER_STOPPED_MOVING'); advance(.1); assert(BuffTap.action.key=='weaponstone')")
+test('Stone arriving before click cancels creation',create+"refresh(); bags[13699]=1; BuffTap.button.scripts.PreClick(nil,'LeftButton',true); assert(not BuffTap.action or BuffTap.action.key~='weaponstone')")
+test('Main hand disabled creates nothing',create+"BuffTap.db.weaponMainHand=false; refresh(); assert(not BuffTap.action)")
+test('Remind-only mode still creates, then reminds to apply',create+"BuffTap.db.weaponApply=false; refresh(); assert(BuffTap.action.key=='weaponstone'); bags[13699]=1; event('BAG_UPDATE_DELAYED'); advance(.3); assert(BuffTap.action.source=='weapon-reminder' and BuffTap.action.manual)")
 print('ALL',len(tests),'SCENARIOS PASSED')

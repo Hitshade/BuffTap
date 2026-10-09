@@ -1,10 +1,11 @@
 # Unreleased — Warlock stones and Soulstone
 
 - Warlocks can choose **Firestone** or **Spellstone** as their main-hand weapon buff (Weapons). They work like Mage scrolls: the highest carried rank is used on a compatible one-handed, two-handed or main-hand weapon. Any rank of the chosen stone satisfies the reminder; the other stone is kept unless replacement is allowed. Both are Imbue-category effects (effect 360), so they coexist with oils and sharpening stones.
+- **Create, then apply:** when the main hand needs your chosen stone and none is carried, BuffTap first offers the highest learned Create Firestone/Create Spellstone (Soul Shard and a free bag slot required). Once the stone is in your bags, the next click applies it. Without a shard, bag space or the spell, you get the manual out-of-stock reminder instead.
 - New opt-in Warlock helper, **Keep a Soulstone up**. When neither you nor anyone in your party or raid has Soulstone Resurrection, it places a carried Soulstone on the first healer (Priest, Druid, Shaman or Paladin) who is in item range, otherwise on you. With no stone in your bags it offers the highest learned Create Soulstone, which needs a Soul Shard and a free bag slot. It respects the Soulstone cooldown, wakes when a Soulstone expires, and rechecks stock, coverage, range and target before each click.
 - Data: Forever 1.60.1.70124 client records (item use spells, enchant IDs 1803/1823–1825 and 8059–8061, Soulstone Resurrection 20707/20762–20765).
 
-Validation: 770 mocked Lua 5.1 scenarios passed (42 new). Live client verification is still needed: stone imbue category and IDs, Soulstone use on a party member through the secure item button, and item range checks.
+Validation: 786 mocked Lua 5.1 scenarios passed (58 new). Live client verification is still needed: stone imbue category and IDs, Soulstone use on a party member through the secure item button, and item range checks.
 
 # BuffTap 1.13.2 — Solo response emotes
 

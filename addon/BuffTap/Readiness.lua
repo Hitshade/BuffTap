@@ -8,7 +8,8 @@ local A=B.API
 local demons={688,697,712,713,691}
 local shardSpells={[697]=true,[712]=true,[713]=true,[691]=true,
   [6201]=true,[6202]=true,[5699]=true,[11729]=true,[11730]=true,
-  [693]=true,[20752]=true,[20755]=true,[20756]=true,[20757]=true}
+  [693]=true,[20752]=true,[20755]=true,[20756]=true,[20757]=true,
+  [6366]=true,[17951]=true,[17952]=true,[17953]=true,[2362]=true,[17727]=true,[17728]=true}
 local stones={
   [5512]=6262,[19004]=23468,[19005]=23469,
   [5511]=6263,[19006]=23470,[19007]=23471,
@@ -24,6 +25,14 @@ local soulstoneOrder={16896,16895,16893,16892,5232}
 local soulCreation={{693,5232},{20752,16892},{20755,16893},{20756,16895},{20757,16896}}
 local soulAuras={[20707]=true,[20762]=true,[20763]=true,[20764]=true,[20765]=true}
 local healerClasses={PRIEST=true,DRUID=true,SHAMAN=true,PALADIN=true}
+-- Weapon stones: creation spell -> created item, lowest rank first. The item's
+-- use spell comes from the matching B.WeaponChoices entry.
+local stoneCreation={
+  ["warlock-firestone"]={{6366,1254},{17951,13699},{17952,13700},{17953,13701}},
+  ["warlock-spellstone"]={{2362,5522},{17727,13602},{17728,13603}},
+}
+local weaponStoneItems={}
+for _,ranks in pairs(stoneCreation) do for _,entry in ipairs(ranks) do weaponStoneItems[entry[2]]=true end end
 local sacrifice={[18789]=true,[18790]=true,[18791]=true,[18792]=true}
 local commonEvents={"UNIT_SPELLCAST_START","UNIT_SPELLCAST_STOP","UNIT_SPELLCAST_DELAYED",
   "UNIT_SPELLCAST_CHANNEL_START","UNIT_SPELLCAST_CHANNEL_STOP","UNIT_ENTERED_VEHICLE","UNIT_EXITED_VEHICLE",
@@ -52,11 +61,17 @@ function B:ReadinessEnabled(key)
   elseif key=="soulstone" then
     if db.helperSoulstone~=true then return false end
     return self:ReadinessClass()=="WARLOCK"
+  elseif key=="weaponstone" then
+    -- Implied by choosing Firestone/Spellstone for the main hand.
+    -- Preferences are class-filtered, so a Warlock stone implies a Warlock.
+    if not db.weaponReminder or db.weaponMainHand==false then return false end
+    local choice=self.WeaponPreference and self:WeaponPreference("main")
+    return choice~=nil and choice.class=="WARLOCK" and stoneCreation[choice.key]~=nil
   end
   return false
 end
 function B:AnyReadinessEnabled()
-  return self:ReadinessEnabled("pet") or self:ReadinessEnabled("healthstone") or self:ReadinessEnabled("soulstone")
+  return self:ReadinessEnabled("pet") or self:ReadinessEnabled("healthstone") or self:ReadinessEnabled("soulstone") or self:ReadinessEnabled("weaponstone")
 end
 function B:ReadinessDemons()
   local result={}
@@ -101,8 +116,8 @@ function B:ExpireReadiness()
   self:ScheduleReadinessWake()
 end
 function B:SyncReadiness()
-  local pets=self:ReadinessEnabled("pet"); local hs=self:ReadinessEnabled("healthstone") or self:ReadinessEnabled("soulstone")
-  local state=tostring(pets)..":"..tostring(self:ReadinessEnabled("healthstone"))..":"..tostring(self:ReadinessEnabled("soulstone"))
+  local pets=self:ReadinessEnabled("pet"); local hs=self:ReadinessEnabled("healthstone") or self:ReadinessEnabled("soulstone") or self:ReadinessEnabled("weaponstone")
+  local state=tostring(pets)..":"..tostring(self:ReadinessEnabled("healthstone"))..":"..tostring(self:ReadinessEnabled("soulstone"))..":"..tostring(self:ReadinessEnabled("weaponstone"))
   if state==self.readinessRegistration then return end
   self.readinessRegistration=state
   local wanted={}
@@ -266,6 +281,11 @@ for id in pairs(stones) do stoneOrder[#stoneOrder+1]=id end
 table.sort(stoneOrder)
 function B:HealthstoneInventory() return stoneInventory(self,"healthstone",stones,stoneOrder,"Healthstone") end
 function B:SoulstoneInventory() return stoneInventory(self,"soulstone",soulstones,soulstoneOrder,"Soulstone") end
+function B:WeaponStoneInventory(choice)
+  local set,order={},{}
+  for _,pair in ipairs(choice.items) do set[pair[1]]=pair[2]; order[#order+1]=pair[1] end
+  return stoneInventory(self,choice.key,set,order,choice.name)
+end
 function B:HealthstoneCandidate()
   if not self:ReadinessEnabled("healthstone") then return nil,"Healthstone helper off" end
   local inventory=self:HealthstoneInventory()
@@ -374,6 +394,31 @@ function B:SoulstoneCandidate()
   result.targetName=target=="player" and "Soulstone • self" or "Soulstone • "..name
   return result
 end
+-- Create the preferred Firestone/Spellstone when the main hand needs it and
+-- none is carried. Applying the created stone stays with the weapon reminder.
+function B:WeaponStoneCandidate()
+  if not self:ReadinessEnabled("weaponstone") then return nil,"no Warlock stone preference" end
+  local choice=self:WeaponPreference("main")
+  if self:CoatingWeaponMatches(16,choice)~=true then return nil,"main-hand weapon cannot take "..choice.name end
+  local state=self:WeaponCoatingState(16)
+  if state.unknownImbue then return nil,"unrecognized imbue active" end
+  if not self:WeaponNeed(state,choice) then return nil,choice.name.." not needed" end
+  local inventory=self:WeaponStoneInventory(choice)
+  if inventory.hasStone~=false then return nil,inventory.hasStone and choice.name.." carried" or inventory.reason end
+  if inventory.capacity~=true then return nil,inventory.reason end
+  local spellFor={}
+  for _,pair in ipairs(choice.items) do spellFor[pair[1]]=pair[2] end
+  local ranks=stoneCreation[choice.key]
+  for i=#ranks,1,-1 do
+    local entry=ranks[i]
+    if A.Known(entry[1]) then
+      local info=self:ConsumableItemInfo(entry[2])
+      if not info.loaded or info.spellID~=spellFor[entry[2]] then return nil,choice.name.." output metadata unavailable or changed" end
+      return self:ReadinessSpell("weaponstone",entry[1],"create a "..choice.name.."; BuffTap then offers to apply it")
+    end
+  end
+  return nil,"Create "..choice.name.." not learned"
+end
 function B:ReadinessCandidate(key)
   if not self:ReadinessEnabled(key) then return nil,"helper off" end
   self:ExpireReadiness()
@@ -383,6 +428,7 @@ function B:ReadinessCandidate(key)
   if key=="pet" then return self:PetReadinessCandidate() end
   if key=="healthstone" then return self:HealthstoneCandidate() end
   if key=="soulstone" then return self:SoulstoneCandidate() end
+  if key=="weaponstone" then return self:WeaponStoneCandidate() end
   return nil,"unknown readiness family"
 end
 function B:ReadinessStillNeeded(previous)
@@ -404,7 +450,7 @@ function B:ReadinessStillNeeded(previous)
 end
 function B:SelectReadiness()
   local manual
-  for _,key in ipairs({"pet","healthstone","soulstone"}) do
+  for _,key in ipairs({"pet","healthstone","soulstone","weaponstone"}) do
     if self:ReadinessEnabled(key) then
       local ok,result,why=pcall(function()
         local candidate,reason=self:ReadinessCandidate(key)
@@ -435,7 +481,7 @@ function B:AfterReadinessClick(action,down)
   self:ScheduleReadinessWake()
 end
 function B:ReadinessEvent(event,unit,castGUID,spellID)
-  local pets=self:ReadinessEnabled("pet"); local hs=self:ReadinessEnabled("healthstone") or self:ReadinessEnabled("soulstone")
+  local pets=self:ReadinessEnabled("pet"); local hs=self:ReadinessEnabled("healthstone") or self:ReadinessEnabled("soulstone") or self:ReadinessEnabled("weaponstone")
   if not pets and not hs then return extraEvents[event] end
   if event=="PLAYER_REGEN_DISABLED" then self.readinessPending=nil; self:CancelReadinessWake(); return end
   if event=="PLAYER_REGEN_ENABLED" then self:ExpireReadiness() end
@@ -451,7 +497,7 @@ function B:ReadinessEvent(event,unit,castGUID,spellID)
     self.readinessInventory=nil
     if not A.Combat() then self:RequestRefresh("readiness inventory",.15) end
   elseif event=="ITEM_DATA_LOAD_RESULT" then
-    if hs and A.Number(unit) and (stones[unit] or soulstones[unit]) and self.itemRequests and self.itemRequests[unit] then
+    if hs and A.Number(unit) and (stones[unit] or soulstones[unit] or weaponStoneItems[unit]) and self.itemRequests and self.itemRequests[unit] then
       self.readinessInventory=nil
       if not A.Combat() then self:RequestRefresh("readiness item metadata",.15) end
     end

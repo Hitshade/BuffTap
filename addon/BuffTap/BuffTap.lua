@@ -206,7 +206,7 @@ function B:CreateButton()
     if not action then return end
     if B:HelperSuppressed(action) then B:Commit(nil,"dismissed"); return end
     if action.source=="readiness" then
-      if action.key=="healthstone" or action.key=="soulstone" then B.readinessInventory=nil end -- explicit click: recheck carried stock/capacity
+      if action.key=="healthstone" or action.key=="soulstone" or action.key=="weaponstone" then B.readinessInventory=nil end -- explicit click: recheck carried stock/capacity
       if action.key=="soulstone" then B:InvalidateAura() end -- and fresh Soulstone coverage
       if not B:Validate(action) then B:Commit(nil,"readiness changed before click") end
       return
