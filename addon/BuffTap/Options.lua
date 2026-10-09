@@ -842,6 +842,41 @@ function B:BuildHelperPage(parent)
     if A.Combat() then return end
     B.db.helperSoulstone=c:GetChecked()==true; B:SyncReadiness(); B:RequestRefresh("Soulstone helper",0); B:Options()
   end)
+  f.soulTarget=flatButton(r,"Target",560,-562,128,function()
+    if A.Combat() then return end
+    f.soulMenu:SetShown(not f.soulMenu:IsShown())
+  end)
+  selectorArrow(f.soulTarget)
+  f.soulMenu=CreateFrame("Frame",nil,r,"BackdropTemplate")
+  local sm=f.soulMenu; sm:SetSize(330,262); sm:SetPoint("BOTTOMRIGHT",f.soulTarget,"TOPRIGHT",0,2)
+  sm:SetFrameStrata("DIALOG"); sm:EnableMouse(true)
+  sm:SetBackdrop({bgFile="Interface\\Buttons\\WHITE8X8",edgeFile="Interface\\Tooltips\\UI-Tooltip-Border",edgeSize=12})
+  sm:SetBackdropColor(.04,.04,.04,1); sm:Hide()
+  local function setSoul(field,value)
+    if A.Combat() then return end
+    B.db[field]=value; B.readinessPending=nil; B:RequestRefresh("Soulstone target",0); B:Options()
+  end
+  label(sm,L("In a party"),12,-10,"GameFontNormal")
+  sm.party={
+    healer=check(sm,L("Healer (role, else healing class)"),12,-30,function() setSoul("soulstoneParty","healer") end),
+    self=check(sm,L("Me"),12,-54,function() setSoul("soulstoneParty","self") end),
+    assigned=check(sm,L("Assigned player"),12,-78,function() setSoul("soulstoneParty","assigned") end),
+  }
+  label(sm,L("In a raid"),12,-110,"GameFontNormal")
+  sm.raid={
+    remind=check(sm,L("Remind only"),12,-130,function() setSoul("soulstoneRaid","remind") end),
+    assigned=check(sm,L("Assigned player"),12,-154,function() setSoul("soulstoneRaid","assigned") end),
+  }
+  sm.assignedLabel=label(sm,"",12,-188,"GameFontHighlightSmall",306)
+  sm.useTarget=flatButton(sm,"Use current target",12,-222,180,function()
+    if A.Combat() then return end
+    if B:SetSoulstoneAssignedFromTarget() then B:RequestRefresh("Soulstone assignment",0) end
+    B:Options()
+  end)
+  sm.clear=flatButton(sm,"Clear",200,-222,118,function()
+    if A.Combat() then return end
+    B.db.soulstoneAssigned=""; B:RequestRefresh("Soulstone assignment",0); B:Options()
+  end)
   f.demonChoice=flatButton(r,"Choose preferred demon",18,-566,326,function()
     if A.Combat() then return end
     f.demonMenu:SetShown(not f.demonMenu:IsShown())
@@ -854,7 +889,7 @@ function B:BuildHelperPage(parent)
   menu:SetFrameStrata("DIALOG"); menu:EnableMouse(true)
   menu:SetBackdrop({bgFile="Interface\\Buttons\\WHITE8X8",edgeFile="Interface\\Tooltips\\UI-Tooltip-Border",edgeSize=12})
   menu:SetBackdropColor(.04,.04,.04,1); menu.rows={}; menu:Hide()
-  f:SetScript("OnHide",function() menu:Hide() end)
+  f:SetScript("OnHide",function() menu:Hide(); f.soulMenu:Hide() end)
   button(f,L("Restore reminders"),18,-602,154,function() B:RestoreHelpers(); B:Options() end)
   button(f,L("View discovery report"),368,-602,204,function() B:ShowDiscoveryReport() end)
 end
@@ -865,11 +900,17 @@ function B:UpdateHelperOptions()
   f.readiness:SetShown(warlock or class=="HUNTER"); f.demonMenu:Hide()
   f.petCheck:SetChecked(self.db.helperPet==true); f.stoneCheck:SetChecked(self.db.helperHealthstone==true)
   f.soulCheck:SetChecked(self.db.helperSoulstone==true)
+  f.soulTarget:SetShown(warlock)
+  local sm=f.soulMenu
+  for key,c in pairs(sm.party) do c:SetChecked(self.db.soulstoneParty==key) end
+  for key,c in pairs(sm.raid) do c:SetChecked(self.db.soulstoneRaid==key) end
+  sm.assignedLabel:SetText(L("Assigned player: ")..(self.db.soulstoneAssigned~="" and self.db.soulstoneAssigned or L("none")))
+  addHelp(f.soulTarget,L("Soulstone target"),L("Party: Healer, yourself, or an assigned player (falls back to a healer, then you). Raid: remind only, or place it on your assigned player. Target a friendly player and press Use current target to assign them."))
   f.stoneCheck:SetShown(warlock); f.stoneDescription:SetShown(warlock); f.soulCheck:SetShown(warlock); f.demonChoice:SetShown(warlock)
   f.petDescription:SetText(warlock and "Offers your chosen summon if no living pet is present. Respects Demonic Sacrifice; never replaces a living pet."
     or "Offers Revive for a visible dead pet. If your assigned pet is absent, reminds you to call or revive it manually.")
   addHelp(f.petCheck,L("Pet readiness"),"Offers recovery only out of combat, while stationary and unmounted. Any living pet satisfies this reminder.")
-  addHelp(f.soulCheck,L("Keep a Soulstone up"),L("When nobody in your group has Soulstone Resurrection, places a carried Soulstone on a healer in range, otherwise on you. With no stone in your bags it offers Create Soulstone first (Soul Shard and free space)."))
+  addHelp(f.soulCheck,L("Keep a Soulstone up"),L("When nobody in your party has Soulstone Resurrection (in a raid: none of yours), places a carried Soulstone on the target chosen under Target. With no stone in your bags it offers Create Soulstone first (Soul Shard and free space)."))
   addHelp(f.stoneCheck,"Personal Healthstone","Creates one personal stone with a click. Any supported carried Healthstone satisfies the reminder, regardless of cooldown. Bank stock does not count.")
   local demons=self:ReadinessDemons(); local chosen
   for _,row in ipairs(f.demonMenu.rows) do row:Hide() end

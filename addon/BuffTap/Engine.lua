@@ -63,12 +63,15 @@ function B:InitDB()
     weaponReminder=true, weaponMainHand=true, weaponOffHand=true,
     weaponApply=false, weaponReplace=false, weaponChoices={}, weaponCoatings={}, weaponSeconds=60,
     helperDismiss=false, helperBounce=false, helperTracking=false, helperCoverage=false,
-    helperDiscovery=false, helperThanks=false, helperThankEmote="THANK", helperQuick=false, helperTracker=0, helperPet=false, helperHealthstone=false, helperSoulstone=false, helperDemon=0,
+    helperDiscovery=false, helperThanks=false, helperThankEmote="THANK", helperQuick=false, helperTracker=0, helperPet=false, helperHealthstone=false, helperSoulstone=false, soulstoneParty="healer", soulstoneRaid="remind", soulstoneAssigned="", helperDemon=0,
     raidGroups={true,true,true,true,true,true,true,true}}
   for k,v in pairs(defaults) do
     if type(self.db[k]) ~= type(v) then self.db[k] = v end
   end
   if not A.Number(self.db.helperTracker) or (self.db.helperTracker~=2383 and self.db.helperTracker~=2580 and self.db.helperTracker~=43308) then self.db.helperTracker=0 end
+  if self.db.soulstoneParty~="healer" and self.db.soulstoneParty~="self" and self.db.soulstoneParty~="assigned" then self.db.soulstoneParty="healer" end
+  if self.db.soulstoneRaid~="remind" and self.db.soulstoneRaid~="assigned" then self.db.soulstoneRaid="remind" end
+  if #self.db.soulstoneAssigned>64 then self.db.soulstoneAssigned="" end
   if not A.Number(self.db.helperDemon) or (self.db.helperDemon~=688 and self.db.helperDemon~=697 and self.db.helperDemon~=712 and self.db.helperDemon~=713 and self.db.helperDemon~=691) then self.db.helperDemon=0 end
   if self.NormalizeConvenience then self:NormalizeConvenience() end
   if self.NormalizeAlerts then self:NormalizeAlerts() end

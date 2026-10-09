@@ -331,26 +331,78 @@ local function itemInRange(itemID,unit)
   if value==false or value==0 then return false end
   return nil
 end
--- Healer first (group order), else yourself. Only verified, visible, in-range
--- living players qualify; anything unreadable falls back to you.
-function B:SoulstoneTarget(itemID,units)
+local function unitRole(unit)
+  if type(UnitGroupRolesAssigned)~="function" then return nil end
+  local role=A.Call(UnitGroupRolesAssigned,unit)
+  return A.Text(role) and role~="NONE" and role or nil
+end
+-- Party only. First member with the Healer group role (group order); when
+-- nobody has a role set, the first healing class instead. Tanks and damage
+-- dealers are never chosen. Only verified, visible, in-range living players
+-- qualify; otherwise you.
+local function stoneEligible(unit,itemID)
+  return A.Call(UnitIsPlayer,unit)==true and A.Call(UnitIsConnected,unit)==true
+    and A.Call(UnitIsDeadOrGhost,unit)==false and A.Call(UnitCanAssist,"player",unit)==true
+    and (type(UnitIsVisible)~="function" or A.Call(UnitIsVisible,unit)==true)
+    and itemInRange(itemID,unit)==true
+end
+function B:SoulstoneHealer(itemID,units)
+  local roles=false
+  for _,unit in ipairs(units) do if unitRole(unit) then roles=true; break end end
   for _,unit in ipairs(units) do
-    if unit~="player" and healerClasses[unitClass(unit) or ""]
-      and A.Call(UnitIsPlayer,unit)==true and A.Call(UnitIsConnected,unit)==true
-      and A.Call(UnitIsDeadOrGhost,unit)==false and A.Call(UnitCanAssist,"player",unit)==true
-      and (type(UnitIsVisible)~="function" or A.Call(UnitIsVisible,unit)==true)
-      and itemInRange(itemID,unit)==true then
-      return unit
+    local healer
+    if roles then healer=unitRole(unit)=="HEALER" else healer=healerClasses[unitClass(unit) or ""]==true end
+    if unit~="player" and healer and stoneEligible(unit,itemID) then return unit end
+  end
+end
+-- Saved name ("Name" or "Name-Realm"), case-insensitive; a name without realm
+-- matches any realm. Returns the group unit, or nil plus why it is unusable.
+local function unitFullName(unit)
+  local ok,name,realm=pcall(UnitName,unit)
+  if not ok or not A.Text(name) then return nil end
+  return name,(A.Text(realm) and realm~="" and realm or nil)
+end
+function B:SoulstoneAssignedUnit(itemID,units)
+  local wanted=self.db.soulstoneAssigned
+  if not A.Text(wanted) or wanted=="" then return nil,"no assigned player" end
+  local wantName,wantRealm=wanted:lower():match("^([^%-]+)%-?(.*)$")
+  for _,unit in ipairs(units) do
+    if unit~="player" then
+      local name,realm=unitFullName(unit)
+      if name and name:lower()==wantName and (wantRealm=="" or (realm or ""):lower()==wantRealm) then
+        if stoneEligible(unit,itemID) then return unit end
+        return nil,wanted.." is dead, offline or out of range"
+      end
     end
   end
-  return "player"
+  return nil,wanted.." is not in your group"
 end
-function B:SoulstoneCoverage(units)
+function B:SetSoulstoneAssignedFromTarget()
+  if A.Call(UnitExists,"target")~=true or A.Call(UnitIsPlayer,"target")~=true or A.Call(UnitCanAssist,"player","target")~=true
+    or A.Call(UnitIsUnit,"target","player")==true then return false end
+  local name,realm=unitFullName("target")
+  if not name then return false end
+  self.db.soulstoneAssigned=realm and (name.."-"..realm) or name
+  return true
+end
+-- Party: Healer (default), Me, or Assigned player (falls back to Healer, then you).
+function B:SoulstoneTarget(itemID,units)
+  local mode=self.db.soulstoneParty
+  if mode=="self" then return "player" end
+  if mode=="assigned" then
+    local unit=self:SoulstoneAssignedUnit(itemID,units)
+    if unit then return unit end
+  end
+  return self:SoulstoneHealer(itemID,units) or "player"
+end
+-- mineOnly (raids): only a Soulstone you cast counts; other Warlocks keep their own.
+function B:SoulstoneCoverage(units,mineOnly)
   for _,unit in ipairs(units) do
     local auras=self:GetAuras(unit,false)
     if not auras then return nil,(unit=="player" and "your" or unit).." auras unreadable" end
     for _,aura in ipairs(auras) do
-      if A.Number(aura.spellId) and soulAuras[aura.spellId] then
+      local mine=not mineOnly or (A.Text(aura.sourceUnit) and A.Call(UnitIsUnit,aura.sourceUnit,"player")==true)
+      if mine and A.Number(aura.spellId) and soulAuras[aura.spellId] then
         if A.Number(aura.expirationTime) and aura.expirationTime>GetTime() then self:ConsiderWake(aura.expirationTime-GetTime()+.1) end
         return true,"Soulstone active on "..(A.Call(UnitName,unit) or unit)
       end
@@ -361,7 +413,8 @@ end
 function B:SoulstoneCandidate()
   if not self:ReadinessEnabled("soulstone") then return nil,"Soulstone helper off" end
   local units=soulstoneUnits()
-  local covered,why=self:SoulstoneCoverage(units)
+  local raid=A.Call(IsInRaid)==true
+  local covered,why=self:SoulstoneCoverage(units,raid)
   if covered~=false then return nil,why end
   local inventory=self:SoulstoneInventory()
   if inventory.hasStone==nil then return nil,inventory.reason end
@@ -386,7 +439,18 @@ function B:SoulstoneCandidate()
   if not ok or not A.Number(start) or not A.Number(duration) or not A.Public(enabled) or (enabled~=true and enabled~=1) then return nil,"Soulstone cooldown unreadable" end
   if duration>0 and start+duration>GetTime() then self:ConsiderWake(start+duration-GetTime()+.05); return nil,"Soulstone on cooldown" end
   if A.Call(C_Item and C_Item.IsUsableItem,itemID)~=true then return nil,"Soulstone not usable" end
-  local target=self:SoulstoneTarget(itemID,units)
+  local target
+  if raid then
+    -- Raids assign Soulstones deliberately: only an assigned player, never a guess.
+    local why
+    if self.db.soulstoneRaid=="assigned" then target,why=self:SoulstoneAssignedUnit(itemID,units) end
+    if not target then
+      local result=action("soulstone",0,"Soulstone not placed",info.texture,
+        "Raid: place your Soulstone on your assigned target"..(why and " ("..why..")" or "")..".",true)
+      result.targetName="Soulstone • raid"
+      return result
+    end
+  else target=self:SoulstoneTarget(itemID,units) end
   local name=A.Call(UnitName,target) or target
   local result=action("soulstone",soulstones[itemID],info.name,info.texture,"place a Soulstone on "..(target=="player" and "yourself" or name))
   result.secureType="item"; result.itemID=itemID; result.itemToken="item:"..itemID

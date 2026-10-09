@@ -101,4 +101,34 @@ test('Stone creation waits while moving',create+"speed=3; refresh(); assert(not 
 test('Stone arriving before click cancels creation',create+"refresh(); bags[13699]=1; BuffTap.button.scripts.PreClick(nil,'LeftButton',true); assert(not BuffTap.action or BuffTap.action.key~='weaponstone')")
 test('Main hand disabled creates nothing',create+"BuffTap.db.weaponMainHand=false; refresh(); assert(not BuffTap.action)")
 test('Remind-only mode still creates, then reminds to apply',create+"BuffTap.db.weaponApply=false; refresh(); assert(BuffTap.action.key=='weaponstone'); bags[13699]=1; event('BAG_UPDATE_DELAYED'); advance(.3); assert(BuffTap.action.source=='weapon-reminder' and BuffTap.action.manual)")
+
+roles=soul+"roles={}; UnitGroupRolesAssigned=function(u) return roles[u] or 'NONE' end\n"
+raid=soul+"""
+IsInRaid=function() return true end; GetNumGroupMembers=function() return 3 end
+local exists=UnitExists; UnitExists=function(u) if u=='raid1' or u=='raid2' or u=='raid3' then return true end return exists(u) end
+UnitIsUnit=function(a,b) return a==b or (a=='raid1' and b=='player') or (a=='player' and b=='raid1') end
+classes.raid2='PRIEST'; classes.raid3='WARLOCK'; inRange.raid2=true
+"""
+test('Soulstone prefers the Healer role over healing classes',roles+"classes.party1='PRIEST'; roles.party1='DAMAGER'; inRange.party1=true; classes.party2='WARRIOR'; roles.party2='HEALER'; inRange.party2=true; refresh(); assert(BuffTap.action.target=='party2')")
+test('Soulstone never picks a tanking or damage healer class when roles are set',roles+"classes.party1='PALADIN'; roles.party1='TANK'; inRange.party1=true; classes.party2='SHAMAN'; roles.party2='DAMAGER'; inRange.party2=true; refresh(); assert(BuffTap.action.target=='player')")
+test('Soulstone falls back to healing class when no roles are set',roles+"classes.party2='PRIEST'; inRange.party2=true; refresh(); assert(BuffTap.action.target=='party2')")
+test('Raid Soulstone gives a manual reminder without a target or binding',raid+"refresh(); local a=BuffTap.action; assert(a.key=='soulstone' and a.manual and a.targetName=='Soulstone • raid'); assert(not BuffTap.button.attrs.type1 and not BuffTap.button.attrs.unit and not next(bindings))")
+test('Raid Soulstone from another Warlock does not count',raid+"auras.raid2={{spellId=20765,name='Soulstone Resurrection',duration=1800,expirationTime=now+1800,sourceUnit='raid3'}}; refresh(); assert(BuffTap.action and BuffTap.action.manual)")
+test('Raid Soulstone you cast satisfies the helper',raid+"auras.raid2={{spellId=20765,name='Soulstone Resurrection',duration=1800,expirationTime=now+1800,sourceUnit='player'}}; refresh(); assert(not BuffTap.action); auras.raid2[1].sourceUnit='raid1'; refresh(); assert(not BuffTap.action)")
+test('Raid still offers Create Soulstone when none is carried',raid+"bags[16896]=0; spell(20757,'Create Soulstone'); refresh(); assert(BuffTap.action.id==20757 and not BuffTap.action.manual)")
+
+named=roles+"names={party1={'Bob'},party2={'Carol','Realm'}}; UnitName=function(u) if u=='player' then return 'Tester' end local n=names[u]; if n then return n[1],n[2] end return 'Ally' end; classes.party1='PRIEST'; inRange.party1=true; inRange.party2=true\n"
+test('Soulstone settings default to Healer in party and reminder in raid',"assert(BuffTap.db.soulstoneParty=='healer' and BuffTap.db.soulstoneRaid=='remind' and BuffTap.db.soulstoneAssigned=='')")
+test('Invalid Soulstone settings are reset',"BuffTapDB.soulstoneParty='x'; BuffTapDB.soulstoneRaid=5; BuffTapDB.soulstoneAssigned=string.rep('a',80); BuffTap:InitDB(); assert(BuffTap.db.soulstoneParty=='healer' and BuffTap.db.soulstoneRaid=='remind' and BuffTap.db.soulstoneAssigned=='')")
+test('Party mode Me ignores healers',named+"BuffTap.db.soulstoneParty='self'; refresh(); assert(BuffTap.action.target=='player')")
+test('Party mode Assigned player targets them by name',named+"BuffTap.db.soulstoneParty='assigned'; BuffTap.db.soulstoneAssigned='carol'; refresh(); assert(BuffTap.action.target=='party2' and BuffTap.button.attrs.unit=='party2')")
+test('Assigned name with realm must match the realm',named+"BuffTap.db.soulstoneParty='assigned'; BuffTap.db.soulstoneAssigned='Carol-Realm'; refresh(); assert(BuffTap.action.target=='party2'); BuffTap.db.soulstoneAssigned='Carol-Other'; refresh(); assert(BuffTap.action.target=='party1')")
+test('Assigned player missing falls back to the healer',named+"BuffTap.db.soulstoneParty='assigned'; BuffTap.db.soulstoneAssigned='Dave'; refresh(); assert(BuffTap.action.target=='party1')")
+test('Assigned player out of range falls back to healer then you',named+"BuffTap.db.soulstoneParty='assigned'; BuffTap.db.soulstoneAssigned='Carol'; inRange.party2=false; refresh(); assert(BuffTap.action.target=='party1'); inRange.party1=false; refresh(); assert(BuffTap.action.target=='player')")
+test('Raid assigned player gets the Soulstone',raid+"UnitName=function(u) if u=='raid2' then return 'Carol' end return u=='player' and 'Tester' or 'Ally' end; BuffTap.db.soulstoneRaid='assigned'; BuffTap.db.soulstoneAssigned='Carol'; refresh(); assert(BuffTap.action.target=='raid2' and not BuffTap.action.manual and BuffTap.button.attrs.unit=='raid2')")
+test('Raid assigned player out of range gives a manual reminder naming them',raid+"UnitName=function(u) if u=='raid2' then return 'Carol' end return u=='player' and 'Tester' or 'Ally' end; BuffTap.db.soulstoneRaid='assigned'; BuffTap.db.soulstoneAssigned='Carol'; inRange.raid2=false; refresh(); assert(BuffTap.action.manual and BuffTap.action.reason:find('Carol') and not next(bindings))")
+test('Raid assigned mode with nobody assigned stays a reminder',raid+"BuffTap.db.soulstoneRaid='assigned'; refresh(); assert(BuffTap.action.manual)")
+test('Use current target saves a friendly player name with realm',soul+"UnitName=function(u) if u=='target' then return 'Carol','Realm' end return 'Tester' end; assert(BuffTap:SetSoulstoneAssignedFromTarget() and BuffTap.db.soulstoneAssigned=='Carol-Realm')")
+test('Use current target rejects non-players',soul+"UnitIsPlayer=function(u) return u~='target' end; assert(not BuffTap:SetSoulstoneAssignedFromTarget() and BuffTap.db.soulstoneAssigned=='')")
+test('Soulstone target popup reflects saved settings',soul+"BuffTap.db.soulstoneParty='assigned'; BuffTap.db.soulstoneRaid='assigned'; BuffTap.db.soulstoneAssigned='Carol'; BuffTap:Options(); local f=BuffTap.helperWindow; assert(f.soulTarget.shown); local sm=f.soulMenu; assert(sm.party.assigned.checked and not sm.party.healer.checked and sm.raid.assigned.checked and not sm.raid.remind.checked); assert(sm.assignedLabel.text:find('Carol')); sm.party.self.scripts.OnClick(sm.party.self); assert(BuffTap.db.soulstoneParty=='self'); sm.clear.scripts.OnClick(sm.clear); assert(BuffTap.db.soulstoneAssigned=='')")
 print('ALL',len(tests),'SCENARIOS PASSED')
