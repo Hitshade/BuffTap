@@ -174,10 +174,11 @@ function B:CreateButton()
       GameTooltip:AddLine(L(action.reason),0.85,0.85,0.85,true)
       GameTooltip:AddLine(action.manual and L("Manual reminder only; no binding is installed.") or L("Scroll or click to apply your preferred weapon buff."),0.75,0.75,0.75,true)
     elseif action.source=="readiness" then
-      if not action.manual and GameTooltip.SetSpellByID then GameTooltip:SetSpellByID(action.id)
+      if action.secureType=="item" and GameTooltip.SetItemByID then GameTooltip:SetItemByID(action.itemID); GameTooltip:AddLine(action.targetName,0.4,1,0.8)
+      elseif not action.manual and GameTooltip.SetSpellByID then GameTooltip:SetSpellByID(action.id)
       else GameTooltip:SetText(action.name,1,0.82,0.1) end
       GameTooltip:AddLine(L(action.reason),0.85,0.85,0.85,true)
-      GameTooltip:AddLine(action.manual and L("Manual reminder only; no click action or key binding.") or L("Click or use your BuffTap binding to cast."),0.4,1,0.8,true)
+      GameTooltip:AddLine(action.manual and L("Manual reminder only; no click action or key binding.") or action.secureType=="item" and L("Click or use your BuffTap binding to use it.") or L("Click or use your BuffTap binding to cast."),0.4,1,0.8,true)
     elseif action.source=="consumable" then
       GameTooltip:SetText(action.name,1,0.82,0.1)
       GameTooltip:AddLine("Personal consumable | item "..tostring(action.itemID),0.4,1,0.8)
@@ -205,7 +206,8 @@ function B:CreateButton()
     if not action then return end
     if B:HelperSuppressed(action) then B:Commit(nil,"dismissed"); return end
     if action.source=="readiness" then
-      if action.key=="healthstone" then B.readinessInventory=nil end -- explicit click: recheck carried stock/capacity
+      if action.key=="healthstone" or action.key=="soulstone" then B.readinessInventory=nil end -- explicit click: recheck carried stock/capacity
+      if action.key=="soulstone" then B:InvalidateAura() end -- and fresh Soulstone coverage
       if not B:Validate(action) then B:Commit(nil,"readiness changed before click") end
       return
     end
@@ -275,6 +277,8 @@ function B:Commit(action,reason)
       secureMatches=action.key==previous.key and action.slot==previous.slot
         and b:GetAttribute("type1")==nil and b:GetAttribute("spell")==nil
         and b:GetAttribute("item")==nil and b:GetAttribute("unit")==nil
+    elseif action.source=="readiness" and action.secureType=="item" then
+      secureMatches=b:GetAttribute("type1")=="item" and b:GetAttribute("item")==action.itemToken and b:GetAttribute("unit")==action.target
     elseif action.source=="consumable" or (action.source=="weapon-reminder" and action.secureType=="item") then
       secureMatches=b:GetAttribute("type1")=="item" and b:GetAttribute("item")==action.itemToken
     else
@@ -324,7 +328,15 @@ function B:Commit(action,reason)
   end
 
   if action.source=="weapon-reminder" then b:SetAttribute("target-slot",action.slot) end
-  if action.source=="consumable" or (action.source=="weapon-reminder" and action.secureType=="item") then
+  if action.source=="readiness" and action.secureType=="item" then
+    -- Item used on an explicit unit (Soulstone). Never relies on the current target.
+    b:SetAttribute("item",action.itemToken)
+    b:SetAttribute("unit",action.target)
+    b:SetAttribute("type1","item")
+    if b:GetAttribute("item")~=action.itemToken or b:GetAttribute("unit")~=action.target or b:GetAttribute("type1")~="item" then
+      b:SetAttribute("type1",nil); b:SetAttribute("item",nil); b:SetAttribute("unit",nil); self.reason="secure item attribute verification failed"; return
+    end
+  elseif action.source=="consumable" or (action.source=="weapon-reminder" and action.secureType=="item") then
     b:SetAttribute("item",action.itemToken)
     b:SetAttribute("type1","item")
     if b:GetAttribute("item")~=action.itemToken or b:GetAttribute("type1")~="item" then
@@ -566,7 +578,7 @@ end
 function B:IsWatchedUnit(unit)
   if not A.Public(unit) or type(unit)~="string" then return false end
   if unit=="player" then return true end
-  if self.db and self.db.group and (unit:match("^party%d+$") or unit:match("^raid%d+$")) then return true end
+  if self.db and (self.db.group or (self.ReadinessEnabled and self:ReadinessEnabled("soulstone"))) and (unit:match("^party%d+$") or unit:match("^raid%d+$")) then return true end
   if unit=="target" and self.db and self.db.friendlyTarget then
     return A.Call(UnitExists,"target")==true and A.Call(UnitCanAssist,"player","target")==true
   end

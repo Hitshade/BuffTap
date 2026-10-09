@@ -87,6 +87,21 @@ for _,choice in ipairs({
   {key="mage-imbue-precision",class="MAGE",name="Scroll of Imbue Precision",ranks={1302310},enchants={8718},items={{277502,1302310}},subclasses=1024,invTypes=0},
 }) do B.WeaponChoices[#B.WeaponChoices+1]=choice end
 
+-- Warlock stones: Forever 1.60.1.70124 client records. Effect 360 (imbue), so
+-- they share the Imbue category with Mage scrolls. "Use on: a one-handed,
+-- two-handed or main-hand weapon": any subclass, INVTYPE 13/17/21, main hand.
+local stoneSlots=2^13+2^17+2^21
+for _,choice in ipairs({
+  {key="warlock-firestone",class="WARLOCK",name="Firestone",ranks={17949,17947,17945,758},enchants={1825,1824,1823,1803},
+    items={{13701,17949},{13700,17947},{13699,17945},{1254,758}},subclasses=0,invTypes=stoneSlots},
+  {key="warlock-spellstone",class="WARLOCK",name="Spellstone",ranks={1237159,1237156,1237152},enchants={8061,8060,8059},
+    items={{13603,1237159},{13602,1237156},{5522,1237152}},subclasses=0,invTypes=stoneSlots},
+}) do B.WeaponChoices[#B.WeaponChoices+1]=choice end
+
+-- Classes whose weapon buffs are carried main-hand items with a saved preference.
+local itemImbueClasses={MAGE=true,WARLOCK=true}
+function B:ItemImbueClass(class) return class~=nil and itemImbueClasses[class]==true end
+
 -- Read all weapon-enchant categories. Inventory slots (16/17) are NOT the
 -- WeaponSlot enum values (0/1). Permanent enchants never satisfy a reminder.
 local function modernEnchant(slot)
@@ -121,8 +136,8 @@ local function modernEnchant(slot)
         end
         -- Rogue oils/stones are a different family; unknown temporary effects
         -- are retained conservatively, while recognized poisons are actionable.
-        if class=="SHAMAN" or class=="MAGE" or key then
-          if (class=="SHAMAN" or class=="MAGE") and not key then state.unknownImbue=true end
+        if class=="SHAMAN" or itemImbueClasses[class] or key then
+          if (class=="SHAMAN" or itemImbueClasses[class]) and not key then state.unknownImbue=true end
           local entry={key=key,id=info.enchantID,remaining=info.timeLeft/1000}
           state.entries[#state.entries+1]=entry
           state.hasEnchant=true; state.enchantID=entry.id
@@ -143,13 +158,13 @@ end
 
 function B:WeaponReminderClass()
   local class=playerClass()
-  if class=="ROGUE" or class=="SHAMAN" or class=="MAGE" then return class end
+  if class=="ROGUE" or class=="SHAMAN" or itemImbueClasses[class] then return class end
 end
 
 function B:WeaponReminderAvailable()
   local class=self:WeaponReminderClass()
   if not class then return false end
-  if class=="MAGE" then return self:WeaponPreference("main")~=nil end
+  if itemImbueClasses[class] then return self:WeaponPreference("main")~=nil end
   -- Do not warn characters that have not learned any supported poison/imbue.
   for _,def in ipairs(self.Buffs or {}) do
     if def.class==class and def.kind=="weapon" then
@@ -180,7 +195,7 @@ end
 local function selectManualReminder(self)
   if not (self.db and self.db.weaponReminder) then return nil,"weapon reminders disabled" end
   local class=self:WeaponReminderClass()
-  if not class or class=="MAGE" or not self:WeaponReminderAvailable() then return nil,"no learned coating ability" end
+  if not class or itemImbueClasses[class] or not self:WeaponReminderAvailable() then return nil,"no learned coating ability" end
   local enabled={main=self.db.weaponMainHand~=false,off=class=="ROGUE" and self.db.weaponOffHand~=false}
   local unreadableReason
   for _,hand in ipairs(HANDS) do
@@ -312,7 +327,7 @@ function B:WeaponActionFor(hand)
   local state=hand.coating and self:TemporaryCoatingState(hand.slot) or self:WeaponCoatingState(hand.slot)
   local needed,need,remaining=self:WeaponNeed(state,choice)
   if not needed then return nil,state.reason end
-  if choice and choice.class=="MAGE" and (hand.slot~=16 or self:CoatingWeaponMatches(hand.slot,choice)~=true) then return nil,"Mage scroll does not match the equipped main-hand weapon." end
+  if choice and itemImbueClasses[choice.class] and (hand.slot~=16 or self:CoatingWeaponMatches(hand.slot,choice)~=true) then return nil,(choice.class=="MAGE" and "Mage scroll" or choice.name).." does not match the equipped main-hand weapon." end
   local source,why=self:WeaponChoiceSource(choice)
   local action={source="weapon-reminder",valid=true,key=(hand.coating and "coating-" or "weapon-")..hand.key,slot=hand.slot,coating=hand.coating,
     target="player",targetName=hand.label or (hand.slot==16 and "Main hand" or "Off hand"),name=choice and choice.name or "Weapon buff missing",
@@ -350,14 +365,14 @@ function B:WeaponActionFor(hand)
       end
     end
   else action.manual=true end
-  if (hand.coating or (choice and choice.class=="MAGE")) and not self.db.weaponApply then action.manual=true; why="Apply your selected weapon consumable manually, or enable scroll / click application." end
+  if (hand.coating or (choice and itemImbueClasses[choice.class])) and not self.db.weaponApply then action.manual=true; why="Apply your selected weapon consumable manually, or enable scroll / click application." end
   action.reason=why or (need=="different" and "Replace the different weapon buff you chose to replace." or "Apply your preferred weapon buff.")
   return action
 end
 
 function B:SelectImbueReminder()
-  if not self.db.weaponApply and self:WeaponReminderClass()~="MAGE" then return selectManualReminder(self) end
-  if self:WeaponReminderClass()=="MAGE" and not self:WeaponPreference("main") then return nil,"no learned coating ability" end
+  if not self.db.weaponApply and not itemImbueClasses[self:WeaponReminderClass()] then return selectManualReminder(self) end
+  if itemImbueClasses[self:WeaponReminderClass()] and not self:WeaponPreference("main") then return nil,"no learned coating ability" end
   if not self.db.weaponReminder or not self:WeaponReminderClass() then return nil,"weapon reminders disabled" end
   local fallback,why
   for _,hand in ipairs(HANDS) do
@@ -381,7 +396,7 @@ function B:ValidateWeaponReminder(action)
     local fresh=self:WeaponActionFor(hand)
     return fresh~=nil and fresh.manual==action.manual and fresh.preference==action.preference and fresh.weaponID==action.weaponID and fresh.itemID==action.itemID and fresh.id==action.id
   end
-  if not self.db.weaponApply and self:WeaponReminderClass()~="MAGE" then return action.manual and validateManualReminder(self,action) end
+  if not self.db.weaponApply and not itemImbueClasses[self:WeaponReminderClass()] then return action.manual and validateManualReminder(self,action) end
   if not self.db.weaponReminder then return false end
   local hand=action.slot==16 and HANDS[1] or action.slot==17 and HANDS[2]
   if action.slot==17 and self:WeaponReminderClass()~="ROGUE" then return false end
@@ -491,7 +506,7 @@ end
 function B:WeaponInventoryRelevant()
   if not self.db.weaponReminder then return false end
   if self:WeaponReminderClass()=="ROGUE" and self.db.weaponApply then return true end
-  if self:WeaponReminderClass()=="MAGE" and self.db.weaponMainHand~=false and self:WeaponPreference("main") then return true end
+  if itemImbueClasses[self:WeaponReminderClass()] and self.db.weaponMainHand~=false and self:WeaponPreference("main") then return true end
   for _,hand in ipairs(HANDS) do
     if self.db[hand.key=="main" and "weaponMainHand" or "weaponOffHand"]~=false and self:CoatingPreference(hand.key) then return true end
   end

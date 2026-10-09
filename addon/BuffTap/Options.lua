@@ -838,6 +838,10 @@ function B:BuildHelperPage(parent)
     B.db.helperHealthstone=c:GetChecked()==true; B:SyncReadiness(); B:RequestRefresh("Healthstone helper",0); B:Options()
   end)
   f.stoneDescription=label(r,L("Offers Create Healthstone when none is in your bags. Requires a Soul Shard and free space. Never uses the stone."),368,-524,"GameFontDisableSmall",326)
+  f.soulCheck=check(r,L("Keep a Soulstone up"),364,-562,function(c)
+    if A.Combat() then return end
+    B.db.helperSoulstone=c:GetChecked()==true; B:SyncReadiness(); B:RequestRefresh("Soulstone helper",0); B:Options()
+  end)
   f.demonChoice=flatButton(r,"Choose preferred demon",18,-566,326,function()
     if A.Combat() then return end
     f.demonMenu:SetShown(not f.demonMenu:IsShown())
@@ -860,10 +864,12 @@ function B:UpdateHelperOptions()
   local class=self:ReadinessClass(); local warlock=class=="WARLOCK"
   f.readiness:SetShown(warlock or class=="HUNTER"); f.demonMenu:Hide()
   f.petCheck:SetChecked(self.db.helperPet==true); f.stoneCheck:SetChecked(self.db.helperHealthstone==true)
-  f.stoneCheck:SetShown(warlock); f.stoneDescription:SetShown(warlock); f.demonChoice:SetShown(warlock)
+  f.soulCheck:SetChecked(self.db.helperSoulstone==true)
+  f.stoneCheck:SetShown(warlock); f.stoneDescription:SetShown(warlock); f.soulCheck:SetShown(warlock); f.demonChoice:SetShown(warlock)
   f.petDescription:SetText(warlock and "Offers your chosen summon if no living pet is present. Respects Demonic Sacrifice; never replaces a living pet."
     or "Offers Revive for a visible dead pet. If your assigned pet is absent, reminds you to call or revive it manually.")
   addHelp(f.petCheck,L("Pet readiness"),"Offers recovery only out of combat, while stationary and unmounted. Any living pet satisfies this reminder.")
+  addHelp(f.soulCheck,L("Keep a Soulstone up"),L("When nobody in your group has Soulstone Resurrection, places a carried Soulstone on a healer in range, otherwise on you. With no stone in your bags it offers Create Soulstone first (Soul Shard and free space)."))
   addHelp(f.stoneCheck,"Personal Healthstone","Creates one personal stone with a click. Any supported carried Healthstone satisfies the reminder, regardless of cooldown. Bank stock does not count.")
   local demons=self:ReadinessDemons(); local chosen
   for _,row in ipairs(f.demonMenu.rows) do row:Hide() end
@@ -1789,7 +1795,7 @@ function B:Options()
       local preferredIcon=selected and A.Call(C_Spell and C_Spell.GetSpellTexture,selected.ranks[#selected.ranks])
       pick.icon:SetTexture(src and src.icon or preferredIcon or "Interface\\Icons\\INV_Misc_QuestionMark")
       for _,row in ipairs(pick.menu.rows) do row:Hide() end
-      local choices={{name=weaponClass=="MAGE" and L("None") or "None (manual missing-buff alert)"}}
+      local choices={{name=B:ItemImbueClass(weaponClass) and L("None") or "None (manual missing-buff alert)"}}
       for _,choice in ipairs(self.WeaponChoices) do if choice.class==weaponClass then choices[#choices+1]=choice end end
       for i,choice in ipairs(choices) do
         local choiceKey=choice.key
@@ -1802,7 +1808,7 @@ function B:Options()
         local source,why=self:WeaponChoiceSource(choiceKey and choice or nil)
         local icon=source and source.icon or (choiceKey and A.Call(C_Spell and C_Spell.GetSpellTexture,choice.ranks[#choice.ranks]))
         row.icon:SetTexture(icon or "Interface\\Icons\\INV_Misc_QuestionMark")
-        local incompatible=choiceKey and choice.class=="MAGE" and B:CoatingWeaponMatches(16,choice)~=true
+        local incompatible=choiceKey and B:ItemImbueClass(choice.class) and B:CoatingWeaponMatches(16,choice)~=true
         row:SetText(choice.name..(choiceKey and (incompatible and " (incompatible weapon)" or source and (source.count and " (in bags: "..source.count..")" or " (learned)") or " (unavailable)") or "")); fitButtonText(row,420); row:Show()
         addHelp(row,choice.name,why or "Select this buff for this hand. Highest available rank is used.")
       end
