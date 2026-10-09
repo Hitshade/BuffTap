@@ -16,4 +16,4 @@ Evidence: `warlock-pr2-evidence.json` records independent assertions against arc
 
 Validation: 820 isolated mocked Lua 5.1 scenarios, including 79 contributor scenarios and 13 integration safeguards. Run `python tests/test_warlock_review.py`.
 
-Live client checks remain: reported enchant category/IDs, item range and secure Soulstone targeting, creation hand-off, and actual Helpers layout. New option strings retain English fallback in other locales. Version remains 1.13.2 with an Unreleased changelog; no release upload is part of this integration.
+Live client checks remain: reported enchant category/IDs, item range and secure Soulstone targeting, creation hand-off, and actual Helpers layout. New option strings retain English fallback in other locales. Packaged as 1.14.0 on 2026-10-09; no release upload has been made.

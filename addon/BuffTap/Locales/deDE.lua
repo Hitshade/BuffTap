@@ -331,3 +331,16 @@ B.Locales.deDE["Kiss"]="Küssen"
 B.Locales.deDE["Solo thanks"]="Solo-Dank"
 B.Locales.deDE["Gathering tracker"]="Sammeltracking"
 B.Locales.deDE["Pause reminders and stock alerts in cities and inns."]="Erinnerungen und Vorratswarnungen in Städten und Gasthäusern pausieren."
+
+-- Compact Helpers descriptions; detailed help remains in tooltips.
+B.Locales.deDE["Skip until a zone change, or restore the reminder below."]="Bis zum Gebietswechsel ausblenden oder unten wiederherstellen."
+B.Locales.deDE["Hide reminders after a stronger-buff error until a zone change or manual restore."]="Nach einem stärkeren Buff bis zum Gebietswechsel oder Zurücksetzen ausblenden."
+B.Locales.deDE["Choose supported food, flasks or elixirs from the reminder icon."]="Nahrung, Fläschchen oder Elixiere am Erinnerungssymbol auswählen."
+B.Locales.deDE["Shows missing party buffs. Information only; no casting or chat."]="Zeigt fehlende Gruppenbuffs. Nur Informationen; keine Zauber oder Nachrichten."
+B.Locales.deDE["Lists unsupported bag consumables in Diagnostics. Never uses them."]="Listet unbekannte Verbrauchsgüter in Diagnose auf. Verwendet sie nie."
+B.Locales.deDE["Thanks solo buff providers, at most once a minute. Never in groups, instances or combat."]="Bedankt sich solo höchstens einmal pro Minute. Nie in Gruppen, Instanzen oder im Kampf."
+B.Locales.deDE["Creates a missing Healthstone. Requires a Soul Shard and free bag space."]="Erstellt einen fehlenden Gesundheitsstein. Benötigt Seelensplitter und Taschenplatz."
+B.Locales.deDE["Summons your chosen demon when no pet is alive. Respects Demonic Sacrifice."]="Beschwört den gewählten Dämon, wenn kein Begleiter lebt. Beachtet Dämonische Opferung."
+B.Locales.deDE["Revives a dead pet, or reminds you to call an absent pet manually."]="Belebt einen toten Begleiter oder erinnert daran, einen fehlenden manuell zu rufen."
+
+B.Locales.deDE["Solo: always yourself"]="Solo: immer auf dich selbst"

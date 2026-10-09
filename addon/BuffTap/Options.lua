@@ -23,6 +23,7 @@ end
 local function line(parent,y)
   local t=parent:CreateTexture(nil,"ARTWORK")
   t:SetColorTexture(0.55,0.44,0.23,0.45); t:SetPoint("TOPLEFT",18,y); t:SetPoint("TOPRIGHT",-18,y); t:SetHeight(1)
+  return t
 end
 
 local function card(parent,x,y,width,height)
@@ -766,8 +767,8 @@ local function consumableChoiceLabel(family)
   return L("Auto (none in bags)"),134400
 end
 
--- Helpers share the main window and tab lifecycle. Long discovery output lives
--- on Diagnostics so every helper setting remains visible without scrolling.
+-- Helpers share the main window and tab lifecycle. Compact descriptions keep
+-- the separated sections visible together; detailed help stays in tooltips.
 function B:BuildHelperPage(parent)
   local f=panel(parent); parent.pages[TAB.Helpers]=f; self.helperWindow=f
   label(f,L("Everyday conveniences"),18,-16,"GameFontNormalLarge")
@@ -780,9 +781,16 @@ function B:BuildHelperPage(parent)
     {"helperCoverage",L("Show missing party buffs"),L("Shows buffs your five-player party may be missing and who might provide them. Information only: no casting or chat messages.")},
     {"helperDiscovery",L("Find unrecognized consumables"),L("Lists bag consumables missing from BuffTap's supported list for review. It does not add or use them. View the report in Diagnostics.")},
   }
+  local descriptions={
+    L("Skip until a zone change, or restore the reminder below."),
+    L("Hide reminders after a stronger-buff error until a zone change or manual restore."),
+    L("Choose supported food, flasks or elixirs from the reminder icon."),
+    L("Shows missing party buffs. Information only; no casting or chat."),
+    L("Lists unsupported bag consumables in Diagnostics. Never uses them."),
+  }
   for i,spec in ipairs(settings) do
-    local x=18+((i-1)%2)*346; local y=-67-math.floor((i-1)/2)*70
-    card(f,x-4,y+2,336,66)
+    local x=18+((i-1)%2)*346; local y=-67-math.floor((i-1)/2)*62
+    card(f,x-4,y+2,336,58)
     local key=spec[1]
     f.checks[key]=check(f,spec[2],x,y,function(c)
       if A.Combat() then return end
@@ -792,123 +800,167 @@ function B:BuildHelperPage(parent)
       if key=="helperDismiss" or key=="helperBounce" then B:RestoreHelpers() end
       B:RequestRefresh("helper setting",0); B:Options()
     end)
-    f.descriptions[key]=label(f,spec[3],x+4,y-27,"GameFontDisableSmall",326)
+    f.descriptions[key]=label(f,descriptions[i],x+4,y-27,"GameFontDisableSmall",326)
     addHelp(f.checks[key],spec[2],spec[3])
   end
-  card(f,364,-205,336,78)
-  label(f,"Reminder behavior",372,-211,"GameFontNormal")
-  parent.pauseResting=check(f,"Pause reminders while resting",368,-233,function(c)
+  card(f,364,-189,336,58)
+  parent.pauseResting=check(f,"Pause reminders while resting",368,-191,function(c)
     if A.Combat() then return end
     setAndRefresh("pauseResting",c:GetChecked()==true); B:InvalidateSupplies(false); B:Refresh(false); B:Options()
   end)
-  label(f,L("Pause reminders and stock alerts in cities and inns."),372,-258,"GameFontDisableSmall",320)
+  label(f,L("Pause reminders and stock alerts in cities and inns."),372,-218,"GameFontDisableSmall",320)
   addHelp(parent.pauseResting,"Pause reminders while resting","Hide buff reminders and quiet automatic stock alerts in cities and inns. Settings remain accessible.")
-  line(f,-286)
-  label(f,L("Solo thanks"),18,-299,"GameFontNormalLarge")
-  f.checks.helperThanks=check(f,L("Thank players who buff me solo"),18,-323,function(c)
+  line(f,-262)
+  label(f,L("Solo thanks"),18,-275,"GameFontNormalLarge")
+  f.checks.helperThanks=check(f,L("Thank players who buff me solo"),18,-305,function(c)
     if A.Combat() then return end
     B.db.helperThanks=c:GetChecked()==true; B.helperThankSeen=nil; B:ObserveSoloThanks(true)
     B:RequestRefresh("solo thanks",0); B:Options()
   end)
-  f.descriptions.helperThanks=label(f,L("Thanks an identified solo buff provider. Never in groups, instances or combat. Limited to once a minute and once per player per 10 minutes."),22,-349,"GameFontDisableSmall",670)
-  label(f,L("Solo response emote"),22,-383,"GameFontNormal",180)
-  f.thankEmote=selector(f,"",210,-375,270,function() return B:SoloThankEmotes() end,function(choice)
+  addHelp(f.checks.helperThanks,L("Solo thanks"),L("Thanks an identified solo buff provider. Never in groups, instances or combat. Limited to once a minute and once per player per 10 minutes."))
+  f.descriptions.helperThanks=label(f,L("Thanks solo buff providers, at most once a minute. Never in groups, instances or combat."),22,-333,"GameFontDisableSmall",326)
+  label(f,L("Solo response emote"),368,-279,"GameFontNormal",320)
+  f.thankEmote=selector(f,"",364,-303,324,function() return B:SoloThankEmotes() end,function(choice)
     B.db.helperThankEmote=choice
     -- Configuration only: never sends an emote or resets cooldowns.
   end,"scroll")
   addHelp(f.thankEmote,L("Solo response emote"),L("Directed reactions only. No sitting, sleeping or looping animations. Changing this never sends an emote."))
-  line(f,-413)
-  f.trackerHeading=label(f,L("Gathering tracker"),18,-426,"GameFontNormal")
-  f.checks.helperTracking=check(f,L("Remind me to enable tracking"),18,-450,function(c)
-    if A.Combat() then return end
-    B.db.helperTracking=c:GetChecked()==true; B:RequestRefresh("tracking reminder",0); B:Options()
-  end)
-  addHelp(f.checks.helperTracking,L("Remind me to enable tracking"),L("Choose Herbs, Minerals or Fish below. When that tracker is off, BuffTap offers a one-tap reminder to turn it on."))
-  f.emptyTracker=label(f,L("No learned gathering tracker is available on this character."),254,-458,"GameFontDisableSmall",440)
   f.readiness=CreateFrame("Frame",nil,f); f.readiness:SetAllPoints(f)
   local r=f.readiness
-  label(r,L("Class readiness"),18,-478,"GameFontNormal")
-  f.petCheck=check(r,L("Keep my pet ready"),18,-498,function(c)
+  line(r,-369)
+  f.readinessIcon=r:CreateTexture(nil,"ARTWORK")
+  f.readinessIcon:SetSize(24,24); f.readinessIcon:SetPoint("TOPLEFT",18,-378)
+  f.readinessIcon:SetTexture("Interface\\GLUES\\CHARACTERCREATE\\UI-CHARACTERCREATE-CLASSES")
+  label(r,L("Class readiness"),52,-382,"GameFontNormalLarge")
+  f.petCheck=check(r,L("Keep my pet ready"),18,-414,function(c)
     if A.Combat() then return end
     B.db.helperPet=c:GetChecked()==true; B:SyncReadiness(); B:RequestRefresh("pet helper",0); B:Options()
   end)
-  f.petDescription=label(r,"",22,-524,"GameFontDisableSmall",326)
-  f.stoneCheck=check(r,L("Prepare a personal Healthstone"),364,-498,function(c)
+  f.petDescription=label(r,"",22,-440,"GameFontDisableSmall",326)
+  f.stoneCheck=check(r,L("Prepare a personal Healthstone"),364,-414,function(c)
     if A.Combat() then return end
     B.db.helperHealthstone=c:GetChecked()==true; B:SyncReadiness(); B:RequestRefresh("Healthstone helper",0); B:Options()
   end)
-  f.stoneDescription=label(r,L("Offers Create Healthstone when none is in your bags. Requires a Soul Shard and free space. Never uses the stone."),368,-524,"GameFontDisableSmall",326)
-  f.soulCheck=check(r,L("Keep a Soulstone up"),364,-562,function(c)
+  f.stoneDescription=label(r,L("Creates a missing Healthstone. Requires a Soul Shard and free bag space."),368,-440,"GameFontDisableSmall",326)
+  f.soulCheck=check(r,L("Keep a Soulstone up"),364,-480,function(c)
     if A.Combat() then return end
     B.db.helperSoulstone=c:GetChecked()==true; B:SyncReadiness(); B:RequestRefresh("Soulstone helper",0); B:Options()
   end)
-  f.soulTarget=flatButton(r,"Target",560,-562,128,function()
+  f.soulTarget=flatButton(r,"Target",560,-480,128,function()
     if A.Combat() then return end
-    f.soulMenu:SetShown(not f.soulMenu:IsShown())
+    local menu=f.soulMenu
+    f.demonMenu:Hide(); f.thankEmote.menu:Hide()
+    menu.feedback:SetText(L("Target a friendly player in-game, then click Use current target. This enables Assigned player for your current party or raid."))
+    menu.feedback:SetTextColor(.73,.73,.70)
+    menu:SetShown(not menu:IsShown())
+    if menu:IsShown() then menu:Raise() end
   end)
   selectorArrow(f.soulTarget)
-  f.soulMenu=CreateFrame("Frame",nil,r,"BackdropTemplate")
-  local sm=f.soulMenu; sm:SetSize(330,262); sm:SetPoint("BOTTOMRIGHT",f.soulTarget,"TOPRIGHT",0,2)
-  sm:SetFrameStrata("DIALOG"); sm:EnableMouse(true)
+  f.soulMenu=CreateFrame("Frame",nil,f,"BackdropTemplate")
+  local sm=f.soulMenu; sm:SetSize(400,394); sm:SetPoint("BOTTOMRIGHT",f.soulTarget,"TOPRIGHT",0,2)
+  sm:SetFrameStrata("FULLSCREEN_DIALOG"); sm:SetFrameLevel(f:GetFrameLevel()+20); sm:SetClampedToScreen(true); sm:EnableMouse(true)
   sm:SetBackdrop({bgFile="Interface\\Buttons\\WHITE8X8",edgeFile="Interface\\Tooltips\\UI-Tooltip-Border",edgeSize=12})
   sm:SetBackdropColor(.04,.04,.04,1); sm:Hide()
+  sm:EnableKeyboard(true); sm:SetPropagateKeyboardInput(true)
+  sm:SetScript("OnKeyDown",function(control,key)
+    control:SetPropagateKeyboardInput(key~="ESCAPE")
+    if key=="ESCAPE" then control:Hide() end
+  end)
+  sm:HookScript("OnShow",function() sm:SetPropagateKeyboardInput(true) end)
   local function setSoul(field,value)
     if A.Combat() then return end
     B.db[field]=value; B.readinessPending=nil; B:RequestRefresh("Soulstone target",0); B:Options()
+    if value=="assigned" and B.db.soulstoneAssigned=="" then
+      sm.feedback:SetText(L("Use current target below to save a friendly player."))
+      sm.feedback:SetTextColor(1,.82,.1)
+    end
   end
-  label(sm,L("In a party"),12,-10,"GameFontNormal")
+  label(sm,L("Soulstone target"),16,-14,"GameFontNormalLarge")
+  label(sm,L("Solo: always yourself"),16,-36,"GameFontDisableSmall",368)
+  label(sm,L("In a party"),16,-58,"GameFontNormal")
   sm.party={
-    healer=check(sm,L("Healer role"),12,-30,function() setSoul("soulstoneParty","healer") end),
-    self=check(sm,L("Me"),12,-54,function() setSoul("soulstoneParty","self") end),
-    assigned=check(sm,L("Assigned player"),12,-78,function() setSoul("soulstoneParty","assigned") end),
+    healer=check(sm,L("Healer role"),16,-72,function() setSoul("soulstoneParty","healer") end),
+    self=check(sm,L("Me"),16,-100,function() setSoul("soulstoneParty","self") end),
+    assigned=check(sm,L("Assigned player"),16,-128,function() setSoul("soulstoneParty","assigned") end),
   }
-  label(sm,L("In a raid"),12,-110,"GameFontNormal")
+  line(sm,-162)
+  label(sm,L("In a raid"),16,-176,"GameFontNormal")
   sm.raid={
-    remind=check(sm,L("Remind only"),12,-130,function() setSoul("soulstoneRaid","remind") end),
-    assigned=check(sm,L("Assigned player"),12,-154,function() setSoul("soulstoneRaid","assigned") end),
+    remind=check(sm,L("Remind only"),16,-200,function() setSoul("soulstoneRaid","remind") end),
+    assigned=check(sm,L("Assigned player"),16,-228,function() setSoul("soulstoneRaid","assigned") end),
   }
-  sm.assignedLabel=label(sm,"",12,-188,"GameFontHighlightSmall",306)
-  sm.useTarget=flatButton(sm,"Use current target",12,-222,180,function()
+  line(sm,-262)
+  sm.assignedLabel=label(sm,"",16,-276,"GameFontHighlightSmall",368)
+  sm.feedback=label(sm,L("Target a friendly player in-game, then click Use current target. This enables Assigned player for your current party or raid."),16,-300,"GameFontDisableSmall",368)
+  sm.useTarget=button(sm,"Use current target",16,-356,172,function()
     if A.Combat() then return end
-    if B:SetSoulstoneAssignedFromTarget() then B:RequestRefresh("Soulstone assignment",0) end
+    local raid=A.Call(IsInRaid)
+    local saved=(raid==true or raid==false) and B:SetSoulstoneAssignedFromTarget()
+    if saved then
+      B.db[raid and "soulstoneRaid" or "soulstoneParty"]="assigned"
+      B.readinessPending=nil; B:RequestRefresh("Soulstone assignment",0)
+      sm.feedback:SetText(L(raid and "Saved for your raid." or "Saved for your party."))
+      sm.feedback:SetTextColor(.4,1,.6)
+    else
+      sm.feedback:SetText(L("Select a friendly player other than yourself, then try again."))
+      sm.feedback:SetTextColor(1,.35,.3)
+    end
     B:Options()
   end)
-  sm.clear=flatButton(sm,"Clear",200,-222,118,function()
+  sm.clear=button(sm,"Clear",196,-356,84,function()
     if A.Combat() then return end
-    B.db.soulstoneAssigned=""; B:RequestRefresh("Soulstone assignment",0); B:Options()
+    B.db.soulstoneAssigned=""
+    if B.db.soulstoneParty=="assigned" then B.db.soulstoneParty="healer" end
+    if B.db.soulstoneRaid=="assigned" then B.db.soulstoneRaid="remind" end
+    B.readinessPending=nil; B:RequestRefresh("Soulstone assignment",0); B:Options()
+    sm.feedback:SetText(L("Assignment cleared.")); sm.feedback:SetTextColor(.73,.73,.70)
   end)
-  f.demonChoice=flatButton(r,"Choose preferred demon",18,-566,326,function()
+  sm.done=button(sm,"Done",288,-356,96,function() sm:Hide() end)
+  f.demonChoice=flatButton(r,"Choose preferred demon",18,-480,326,function()
     if A.Combat() then return end
     f.demonMenu:SetShown(not f.demonMenu:IsShown())
   end)
   selectorArrow(f.demonChoice)
   f.demonChoice.icon=f.demonChoice:CreateTexture(nil,"ARTWORK")
   f.demonChoice.icon:SetSize(20,20); f.demonChoice.icon:SetPoint("LEFT",3,0)
-  f.demonMenu=CreateFrame("Frame",nil,r,"BackdropTemplate")
+  f.demonMenu=CreateFrame("Frame",nil,f,"BackdropTemplate")
   local menu=f.demonMenu; menu:SetSize(326,158); menu:SetPoint("BOTTOMLEFT",f.demonChoice,"TOPLEFT",0,2)
-  menu:SetFrameStrata("DIALOG"); menu:EnableMouse(true)
+  menu:SetFrameStrata("FULLSCREEN_DIALOG"); menu:SetFrameLevel(f:GetFrameLevel()+20); menu:SetClampedToScreen(true); menu:EnableMouse(true)
   menu:SetBackdrop({bgFile="Interface\\Buttons\\WHITE8X8",edgeFile="Interface\\Tooltips\\UI-Tooltip-Border",edgeSize=12})
   menu:SetBackdropColor(.04,.04,.04,1); menu.rows={}; menu:Hide()
   f:SetScript("OnHide",function() menu:Hide(); f.soulMenu:Hide() end)
-  button(f,L("Restore reminders"),18,-602,154,function() B:RestoreHelpers(); B:Options() end)
-  button(f,L("View discovery report"),368,-602,204,function() B:ShowDiscoveryReport() end)
+  f.trackerLine=line(f,-516)
+  f.trackerHeading=label(f,L("Gathering tracker"),18,-529,"GameFontNormalLarge")
+  f.checks.helperTracking=check(f,L("Remind me to enable tracking"),18,-557,function(c)
+    if A.Combat() then return end
+    B.db.helperTracking=c:GetChecked()==true; B:RequestRefresh("tracking reminder",0); B:Options()
+  end)
+  addHelp(f.checks.helperTracking,L("Remind me to enable tracking"),L("Choose Herbs, Minerals or Fish below. When that tracker is off, BuffTap offers a one-tap reminder to turn it on."))
+  f.emptyTracker=label(f,L("No learned gathering tracker is available on this character."),254,-565,"GameFontDisableSmall",440)
+  button(f,L("Restore reminders"),24,-590,154,function() B:RestoreHelpers(); B:Options() end)
+  button(f,L("View discovery report"),490,-590,204,function() B:ShowDiscoveryReport() end)
 end
 
 function B:UpdateHelperOptions()
   local f=self.helperWindow; if not f then return end
   local class=self:ReadinessClass(); local warlock=class=="WARLOCK"
   f.readiness:SetShown(warlock or class=="HUNTER"); f.demonMenu:Hide()
+  local classCoords=CLASS_ICON_TCOORDS and CLASS_ICON_TCOORDS[class]
+    or (warlock and {.75,1,.25,.5} or class=="HUNTER" and {0,.25,.25,.5})
+  if classCoords then f.readinessIcon:SetTexCoord(unpack(classCoords)) end
   f.petCheck:SetChecked(self.db.helperPet==true); f.stoneCheck:SetChecked(self.db.helperHealthstone==true)
   f.soulCheck:SetChecked(self.db.helperSoulstone==true)
   f.soulTarget:SetShown(warlock)
+  if not warlock then f.soulMenu:Hide() end
   local sm=f.soulMenu
   for key,c in pairs(sm.party) do c:SetChecked(self.db.soulstoneParty==key) end
   for key,c in pairs(sm.raid) do c:SetChecked(self.db.soulstoneRaid==key) end
   sm.assignedLabel:SetText(L("Assigned player: ")..(self.db.soulstoneAssigned~="" and self.db.soulstoneAssigned or L("none")))
+  sm.assignedLabel:SetTextColor(self.db.soulstoneAssigned~="" and .4 or 1,self.db.soulstoneAssigned~="" and 1 or .65,self.db.soulstoneAssigned~="" and .6 or .35)
   addHelp(f.soulTarget,L("Soulstone target"),L("Party: the member with the Healer group role, yourself, or an assigned player (falls back to the Healer role, then you). Raid: remind only, or place it on your assigned player. Target a friendly player and press Use current target to assign them."))
   f.stoneCheck:SetShown(warlock); f.stoneDescription:SetShown(warlock); f.soulCheck:SetShown(warlock); f.demonChoice:SetShown(warlock)
-  f.petDescription:SetText(warlock and "Offers your chosen summon if no living pet is present. Respects Demonic Sacrifice; never replaces a living pet."
-    or "Offers Revive for a visible dead pet. If your assigned pet is absent, reminds you to call or revive it manually.")
+  f.petDescription:SetText(warlock and L("Summons your chosen demon when no pet is alive. Respects Demonic Sacrifice.")
+    or L("Revives a dead pet, or reminds you to call an absent pet manually."))
   addHelp(f.petCheck,L("Pet readiness"),"Offers recovery only out of combat, while stationary and unmounted. Any living pet satisfies this reminder.")
   addHelp(f.soulCheck,L("Keep a Soulstone up"),L("When nobody in your party has Soulstone Resurrection (in a raid: none of yours), places a carried Soulstone on the target chosen under Target. With no stone in your bags it offers Create Soulstone first (Soul Shard and free space)."))
   addHelp(f.stoneCheck,"Personal Healthstone","Creates one personal stone with a click. Any supported carried Healthstone satisfies the reminder, regardless of cooldown. Bank stock does not count.")
@@ -942,16 +994,22 @@ function B:UpdateHelperOptions()
   local selected=false
   for _,entry in ipairs(trackers) do if entry.id==self.db.helperTracker then selected=true end end
   f.trackerHeading:SetText(L("Gathering tracker"))
+  local trackerY=(warlock or class=="HUNTER") and -529 or -382
+  f.trackerLine:ClearAllPoints(); f.trackerLine:SetPoint("TOPLEFT",18,trackerY+13); f.trackerLine:SetPoint("TOPRIGHT",-18,trackerY+13)
+  f.trackerHeading:ClearAllPoints(); f.trackerHeading:SetPoint("TOPLEFT",18,trackerY)
+  f.checks.helperTracking:ClearAllPoints(); f.checks.helperTracking:SetPoint("TOPLEFT",18,trackerY-28)
+  f.emptyTracker:ClearAllPoints(); f.emptyTracker:SetPoint("TOPLEFT",254,trackerY-36)
   for i,entry in ipairs(trackers) do
     local t=f.trackers[i]
     if not t then
-      t=flatButton(f,"",254+(i-1)*148,-448,140,function(control)
+      t=flatButton(f,"",254+(i-1)*148,trackerY-26,140,function(control)
         if A.Combat() then return end
         B.db.helperTracker=control.trackerID; B:RequestRefresh("tracking preference",0); B:Options()
       end)
       t.icon=t:CreateTexture(nil,"ARTWORK"); t.icon:SetSize(20,20); t.icon:SetPoint("LEFT",3,0)
       f.trackers[i]=t
     end
+    t:ClearAllPoints(); t:SetPoint("TOPLEFT",254+(i-1)*148,trackerY-26)
     t.trackerID=entry.id; t.icon:SetTexture(entry.icon)
     t:SetText((self.db.helperTracker==entry.id and "    > " or "    ")..entry.name)
     if self:HelperEnabled("helperTracking") then t:Enable(); t:SetAlpha(1) else t:Disable(); t:SetAlpha(.45) end
@@ -1528,6 +1586,8 @@ function B:Options()
     -- DIAGNOSTICS PAGE
     local diag=panel(f); f.pages[TAB.Diagnostics]=diag
     label(diag,L("Diagnostics & performance"),18,-16,"GameFontNormalLarge")
+    f.diagVersion=label(diag,"",550,-20,"GameFontHighlightSmall",144)
+    f.diagVersion:SetJustifyH("RIGHT")
     f.friendlyStatus=label(diag,"",18,-468,"GameFontHighlightSmall",670)
     button(diag,L("Check now"),18,-530,116,function() if not A.Combat() then B:Refresh(true); B:Options() end end)
     label(diag,"Core scanning is event-driven. Profiling is optional and lasts only for this game session.",18,-42,"GameFontDisableSmall",680)
@@ -1958,6 +2018,7 @@ function B:Options()
   end
   f.emptyBuffs:SetShown(visible==0)
   f.buffChild:SetHeight(math.max(1,visible*58))
+  if f.diagVersion then f.diagVersion:SetText("BuffTap v"..tostring(self.version or "unknown")) end
   if f.diagText then f.diagText:SetText(table.concat(self:DiagnosticsLines(),"\n\n")) end
   f:Show(); f:Raise()
 end

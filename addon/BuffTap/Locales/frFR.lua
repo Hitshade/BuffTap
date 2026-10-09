@@ -331,3 +331,16 @@ B.Locales.frFR["Kiss"]="Embrasser"
 B.Locales.frFR["Solo thanks"]="Remerciements en solo"
 B.Locales.frFR["Gathering tracker"]="Pistage de récolte"
 B.Locales.frFR["Pause reminders and stock alerts in cities and inns."]="Suspend les rappels et alertes de stock en ville et dans les auberges."
+
+-- Compact Helpers descriptions; detailed help remains in tooltips.
+B.Locales.frFR["Skip until a zone change, or restore the reminder below."]="Masque le rappel jusqu’au changement de zone ou à sa restauration ci-dessous."
+B.Locales.frFR["Hide reminders after a stronger-buff error until a zone change or manual restore."]="Masque le rappel après une erreur de buff supérieur, jusqu’au changement de zone ou à la restauration."
+B.Locales.frFR["Choose supported food, flasks or elixirs from the reminder icon."]="Choisissez nourriture, flacons ou élixirs depuis l’icône du rappel."
+B.Locales.frFR["Shows missing party buffs. Information only; no casting or chat."]="Affiche les buffs manquants du groupe. Informations uniquement ; aucun sort ni message."
+B.Locales.frFR["Lists unsupported bag consumables in Diagnostics. Never uses them."]="Liste les consommables non reconnus dans Diagnostics. Ne les utilise jamais."
+B.Locales.frFR["Thanks solo buff providers, at most once a minute. Never in groups, instances or combat."]="Remercie en solo au plus une fois par minute. Jamais en groupe, en instance ou en combat."
+B.Locales.frFR["Creates a missing Healthstone. Requires a Soul Shard and free bag space."]="Crée une Pierre de soins manquante. Nécessite un Fragment d’âme et une place libre."
+B.Locales.frFR["Summons your chosen demon when no pet is alive. Respects Demonic Sacrifice."]="Invoque le démon choisi si aucun familier ne vit. Respecte Sacrifice démoniaque."
+B.Locales.frFR["Revives a dead pet, or reminds you to call an absent pet manually."]="Ressuscite un familier mort ou rappelle de faire revenir manuellement un familier absent."
+
+B.Locales.frFR["Solo: always yourself"]="En solo : toujours sur vous-même"
