@@ -69,7 +69,7 @@ end
 
 -- Only known, spell-backed gathering trackers are candidates. One explicit
 -- preference prevents Herbs and Minerals from repeatedly replacing each other.
-function B:GatheringTrackers()
+function B:GatheringTrackers(includeTreasure)
   local out={}
   local api=C_Minimap or {}
   local count=A.Call(api.GetNumTrackingTypes or GetNumTrackingTypes)
@@ -81,7 +81,7 @@ function B:GatheringTrackers()
     if ok and A.Public(info) then
       if type(info)~="table" then info={name=info,texture=texture,active=active,type=kind,spellID=spellID} end
       local id=info.spellID
-      if A.Number(id) and (id==2383 or id==2580 or id==43308) and A.Text(info.name)
+      if A.Number(id) and (id==2383 or id==2580 or id==43308 or (includeTreasure and id==2481)) and A.Text(info.name)
         and A.Public(info.active) and A.Public(info.type) and info.type=="spell" and A.Known(id) then
         out[#out+1]={id=id,name=info.name,icon=A.Number(info.texture) and info.texture or 134400,
           active=info.active==true or info.active==1}
@@ -91,18 +91,21 @@ function B:GatheringTrackers()
   return out
 end
 function B:TrackingAction()
-  if not self:HelperEnabled("helperTracking") then return end
-  for _,entry in ipairs(self:GatheringTrackers()) do
-    if entry.id==self.db.helperTracker and not entry.active then
+  if not self:HelperEnabled("helperTracking") and not self:HelperEnabled("helperTreasure") then return end
+  for _,entry in ipairs(self:GatheringTrackers(true)) do
+    local wanted=entry.id==2481 and self:HelperEnabled("helperTreasure") or (entry.id~=2481 and self:HelperEnabled("helperTracking") and entry.id==self.db.helperTracker)
+    if wanted and not entry.active then
       local action={source="tracking",id=entry.id,key="gathering-"..entry.id,name=entry.name,icon=entry.icon,
-        target="player",targetGUID=A.Call(UnitGUID,"player"),targetName="Tracking",rank="",reason="selected gathering tracker is off",secureType="spell"}
+        target="player",targetGUID=A.Call(UnitGUID,"player"),targetName="Tracking",rank="",reason="selected tracker is off",secureType="spell"}
       if not self:HelperSuppressed(action) and self:Validate(action) then return action end
     end
   end
 end
 function B:TrackingStillNeeded(action)
-  if not self:HelperEnabled("helperTracking") or self.db.helperTracker~=action.id then return false end
-  for _,entry in ipairs(self:GatheringTrackers()) do if entry.id==action.id then return not entry.active end end
+  if action.id==2481 then
+    if not self:HelperEnabled("helperTreasure") then return false end
+  elseif not self:HelperEnabled("helperTracking") or self.db.helperTracker~=action.id then return false end
+  for _,entry in ipairs(self:GatheringTrackers(true)) do if entry.id==action.id then return not entry.active end end
   return false
 end
 

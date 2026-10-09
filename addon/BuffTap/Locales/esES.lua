@@ -344,3 +344,7 @@ B.Locales.esES["Summons your chosen demon when no pet is alive. Respects Demonic
 B.Locales.esES["Revives a dead pet, or reminds you to call an absent pet manually."]="Revive una mascota muerta o recuerda llamar manualmente a una mascota ausente."
 
 B.Locales.esES["Solo: always yourself"]="En solitario: siempre sobre ti"
+
+B.Locales.esES["Tracking"]="Rastreo"
+B.Locales.esES["Keep Find Treasure active"]="Mantener Buscar tesoro activo"
+B.Locales.esES["Restore Dwarf treasure tracking through your normal binding. Independent of your gathering tracker."]="Restaura el rastreo de tesoros enano con tu tecla habitual, independientemente del rastreo de recolección."

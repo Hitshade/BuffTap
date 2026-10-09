@@ -344,3 +344,7 @@ B.Locales.frFR["Summons your chosen demon when no pet is alive. Respects Demonic
 B.Locales.frFR["Revives a dead pet, or reminds you to call an absent pet manually."]="Ressuscite un familier mort ou rappelle de faire revenir manuellement un familier absent."
 
 B.Locales.frFR["Solo: always yourself"]="En solo : toujours sur vous-même"
+
+B.Locales.frFR["Tracking"]="Pistage"
+B.Locales.frFR["Keep Find Treasure active"]="Maintenir la découverte de trésors"
+B.Locales.frFR["Restore Dwarf treasure tracking through your normal binding. Independent of your gathering tracker."]="Rétablit le pistage des trésors nains via votre raccourci habituel, indépendamment du pistage de collecte."

@@ -344,3 +344,7 @@ B.Locales.deDE["Summons your chosen demon when no pet is alive. Respects Demonic
 B.Locales.deDE["Revives a dead pet, or reminds you to call an absent pet manually."]="Belebt einen toten Begleiter oder erinnert daran, einen fehlenden manuell zu rufen."
 
 B.Locales.deDE["Solo: always yourself"]="Solo: immer auf dich selbst"
+
+B.Locales.deDE["Tracking"]="Tracking"
+B.Locales.deDE["Keep Find Treasure active"]="Schatzsuche aktiv halten"
+B.Locales.deDE["Restore Dwarf treasure tracking through your normal binding. Independent of your gathering tracker."]="Stellt die Schatzsuche der Zwerge über eure normale Tastenbelegung wieder her. Unabhängig vom Sammeltracker."

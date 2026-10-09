@@ -1,6 +1,6 @@
 # BuffTap development
 
-Current local version: **1.14.0**. Runtime: `addon/BuffTap`. Latest publication is 1.13.2; 1.14.0 is packaged locally and has not been uploaded. 
+Current local version: **1.14.1**. Runtime: `addon/BuffTap`. Latest publication is 1.13.2; 1.14.0 is packaged locally and has not been uploaded. 
 
 Install `requirements-dev.txt`, then run `python tests/test_warlock_review.py` for all 825 isolated mocked Lua 5.1 scenarios. This entry point imports all earlier suites. Run `python tools/verify_mage_catalog.py` to cross-check Mage scroll evidence.
 
@@ -19,3 +19,5 @@ Optional SharedMedia integration reads the sound registry when opening/searching
 Convenience.lua owns session pause, first-use guidance, label styling and a guarded Edit Mode preview. No LibEditMode dependency or Blizzard-system registration; one shared per-character position. Native Edit Mode still needs live verification.
 
 Banner artwork is embedded as a shared 512×256 RGB TGA. Source/prompt: research/mini-banner-asset-1.13.1.md. Banner texture coordinates preserve the source aspect ratio while removing dark padding. The native options page area remains 630 units high.
+
+1.14.1 adds independent Dwarf Find Treasure tracking. Test entry: tests/test_tracking.py; 834 scenarios passed. Prepared locally, not published.
