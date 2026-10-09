@@ -24,7 +24,6 @@ local soulstones={[16896]=20765,[16895]=20764,[16893]=20763,[16892]=20762,[5232]
 local soulstoneOrder={16896,16895,16893,16892,5232}
 local soulCreation={{693,5232},{20752,16892},{20755,16893},{20756,16895},{20757,16896}}
 local soulAuras={[20707]=true,[20762]=true,[20763]=true,[20764]=true,[20765]=true}
-local healerClasses={PRIEST=true,DRUID=true,SHAMAN=true,PALADIN=true}
 -- Weapon stones: creation spell -> created item, lowest rank first. The item's
 -- use spell comes from the matching B.WeaponChoices entry.
 local stoneCreation={
@@ -320,10 +319,6 @@ local function soulstoneUnits()
   end
   return units
 end
-local function unitClass(unit)
-  local class=A.Call(function() local _,c=UnitClass(unit); return c end)
-  return A.Text(class) and class or nil
-end
 local function itemInRange(itemID,unit)
   local fn=(C_Item and C_Item.IsItemInRange) or IsItemInRange
   local value=A.Call(fn,itemID,unit)
@@ -336,10 +331,9 @@ local function unitRole(unit)
   local role=A.Call(UnitGroupRolesAssigned,unit)
   return A.Text(role) and role~="NONE" and role or nil
 end
--- Party only. First member with the Healer group role (group order); when
--- nobody has a role set, the first healing class instead. Tanks and damage
--- dealers are never chosen. Only verified, visible, in-range living players
--- qualify; otherwise you.
+-- Party only. First member with the Healer group role (group order). Class is
+-- never used: without a Healer role, assign a player or the stone goes to you.
+-- Only verified, visible, in-range living players qualify.
 local function stoneEligible(unit,itemID)
   return A.Call(UnitIsPlayer,unit)==true and A.Call(UnitIsConnected,unit)==true
     and A.Call(UnitIsDeadOrGhost,unit)==false and A.Call(UnitCanAssist,"player",unit)==true
@@ -347,12 +341,8 @@ local function stoneEligible(unit,itemID)
     and itemInRange(itemID,unit)==true
 end
 function B:SoulstoneHealer(itemID,units)
-  local roles=false
-  for _,unit in ipairs(units) do if unitRole(unit) then roles=true; break end end
   for _,unit in ipairs(units) do
-    local healer
-    if roles then healer=unitRole(unit)=="HEALER" else healer=healerClasses[unitClass(unit) or ""]==true end
-    if unit~="player" and healer and stoneEligible(unit,itemID) then return unit end
+    if unit~="player" and unitRole(unit)=="HEALER" and stoneEligible(unit,itemID) then return unit end
   end
 end
 -- Saved name ("Name" or "Name-Realm"), case-insensitive; a name without realm

@@ -46,15 +46,16 @@ inRange={}
 C_Item.IsItemInRange=function(id,u) return inRange[u] end
 classes={party1='WARRIOR',party2='MAGE'}
 UnitClass=function(u) return 'Class',u=='player' and 'WARLOCK' or classes[u] end
+roles={}; UnitGroupRolesAssigned=function(u) return roles[u] or 'NONE' end
 """
-healer=soul+"classes.party2='PRIEST'; inRange.party2=true\n"
+healer=soul+"classes.party2='PRIEST'; roles.party2='HEALER'; inRange.party2=true\n"
 test('Soulstone helper is off by default',"assert(BuffTap.db.helperSoulstone==false)")
 test('Soulstone helper is Warlock-only',soul+"playerClass='MAGE'; BuffTap.readinessClassToken=nil; UnitClass=function() return 'Class','MAGE' end; refresh(); assert(not BuffTap.action)")
-test('Soulstone without healer uses carried stone on yourself',soul+"refresh(); local a=BuffTap.action; assert(a.key=='soulstone' and a.itemID==16896 and a.id==20765 and a.target=='player'); assert(BuffTap.button.attrs.type1=='item' and BuffTap.button.attrs.item=='item:16896' and BuffTap.button.attrs.unit=='player' and not BuffTap.button.attrs.spell); assert(next(bindings))")
+test('Soulstone without healer uses carried stone on yourself',soul+"classes.party1='PRIEST'; inRange.party1=true; refresh(); local a=BuffTap.action; assert(a.key=='soulstone' and a.itemID==16896 and a.id==20765 and a.target=='player'); assert(BuffTap.button.attrs.type1=='item' and BuffTap.button.attrs.item=='item:16896' and BuffTap.button.attrs.unit=='player' and not BuffTap.button.attrs.spell); assert(next(bindings))")
 test('Soulstone prefers an in-range healer',healer+"refresh(); assert(BuffTap.action.target=='party2' and BuffTap.button.attrs.unit=='party2')")
 test('Soulstone skips healers out of range or with unknown range',healer+"inRange.party2=false; refresh(); assert(BuffTap.action.target=='player'); inRange.party2=nil; refresh(); assert(BuffTap.action.target=='player')")
 test('Soulstone skips a dead healer',healer+"UnitIsDeadOrGhost=function(u) if u=='party2' then return true end return false end; refresh(); assert(BuffTap.action.target=='player')")
-test('First healer in group order wins',healer+"classes.party1='DRUID'; inRange.party1=true; refresh(); assert(BuffTap.action.target=='party1')")
+test('First healer in group order wins',healer+"classes.party1='DRUID'; roles.party1='HEALER'; inRange.party1=true; refresh(); assert(BuffTap.action.target=='party1')")
 test('Soulstone on yourself satisfies the helper',soul+"aura('player',20765,'Soulstone Resurrection'); refresh(); assert(not BuffTap.action)")
 test('Soulstone on any group member satisfies the helper',soul+"for _,id in ipairs({20707,20762,20763,20764,20765}) do auras={}; aura('party1',id,'Soulstone Resurrection'); refresh(); assert(not BuffTap.action,id) end")
 test('Soulstone expiry wakes the helper without polling',soul+"aura('party1',20765,'Soulstone Resurrection',100); refresh(); assert(not BuffTap.action); now=now+50; auras={}; advance(51); assert(BuffTap.action and BuffTap.action.key=='soulstone')")
@@ -102,7 +103,7 @@ test('Stone arriving before click cancels creation',create+"refresh(); bags[1369
 test('Main hand disabled creates nothing',create+"BuffTap.db.weaponMainHand=false; refresh(); assert(not BuffTap.action)")
 test('Remind-only mode still creates, then reminds to apply',create+"BuffTap.db.weaponApply=false; refresh(); assert(BuffTap.action.key=='weaponstone'); bags[13699]=1; event('BAG_UPDATE_DELAYED'); advance(.3); assert(BuffTap.action.source=='weapon-reminder' and BuffTap.action.manual)")
 
-roles=soul+"roles={}; UnitGroupRolesAssigned=function(u) return roles[u] or 'NONE' end\n"
+roles=soul
 raid=soul+"""
 IsInRaid=function() return true end; GetNumGroupMembers=function() return 3 end
 local exists=UnitExists; UnitExists=function(u) if u=='raid1' or u=='raid2' or u=='raid3' then return true end return exists(u) end
@@ -111,13 +112,14 @@ classes.raid2='PRIEST'; classes.raid3='WARLOCK'; inRange.raid2=true
 """
 test('Soulstone prefers the Healer role over healing classes',roles+"classes.party1='PRIEST'; roles.party1='DAMAGER'; inRange.party1=true; classes.party2='WARRIOR'; roles.party2='HEALER'; inRange.party2=true; refresh(); assert(BuffTap.action.target=='party2')")
 test('Soulstone never picks a tanking or damage healer class when roles are set',roles+"classes.party1='PALADIN'; roles.party1='TANK'; inRange.party1=true; classes.party2='SHAMAN'; roles.party2='DAMAGER'; inRange.party2=true; refresh(); assert(BuffTap.action.target=='player')")
-test('Soulstone falls back to healing class when no roles are set',roles+"classes.party2='PRIEST'; inRange.party2=true; refresh(); assert(BuffTap.action.target=='party2')")
+test('Healing classes without the Healer role are never chosen',roles+"classes.party1='PRIEST'; classes.party2='DRUID'; inRange.party1=true; inRange.party2=true; refresh(); assert(BuffTap.action.target=='player')")
+test('Missing role API targets you',roles+"UnitGroupRolesAssigned=nil; classes.party2='PRIEST'; inRange.party2=true; refresh(); assert(BuffTap.action.target=='player')")
 test('Raid Soulstone gives a manual reminder without a target or binding',raid+"refresh(); local a=BuffTap.action; assert(a.key=='soulstone' and a.manual and a.targetName=='Soulstone • raid'); assert(not BuffTap.button.attrs.type1 and not BuffTap.button.attrs.unit and not next(bindings))")
 test('Raid Soulstone from another Warlock does not count',raid+"auras.raid2={{spellId=20765,name='Soulstone Resurrection',duration=1800,expirationTime=now+1800,sourceUnit='raid3'}}; refresh(); assert(BuffTap.action and BuffTap.action.manual)")
 test('Raid Soulstone you cast satisfies the helper',raid+"auras.raid2={{spellId=20765,name='Soulstone Resurrection',duration=1800,expirationTime=now+1800,sourceUnit='player'}}; refresh(); assert(not BuffTap.action); auras.raid2[1].sourceUnit='raid1'; refresh(); assert(not BuffTap.action)")
 test('Raid still offers Create Soulstone when none is carried',raid+"bags[16896]=0; spell(20757,'Create Soulstone'); refresh(); assert(BuffTap.action.id==20757 and not BuffTap.action.manual)")
 
-named=roles+"names={party1={'Bob'},party2={'Carol','Realm'}}; UnitName=function(u) if u=='player' then return 'Tester' end local n=names[u]; if n then return n[1],n[2] end return 'Ally' end; classes.party1='PRIEST'; inRange.party1=true; inRange.party2=true\n"
+named=roles+"names={party1={'Bob'},party2={'Carol','Realm'}}; UnitName=function(u) if u=='player' then return 'Tester' end local n=names[u]; if n then return n[1],n[2] end return 'Ally' end; classes.party1='PRIEST'; roles.party1='HEALER'; inRange.party1=true; inRange.party2=true\n"
 test('Soulstone settings default to Healer in party and reminder in raid',"assert(BuffTap.db.soulstoneParty=='healer' and BuffTap.db.soulstoneRaid=='remind' and BuffTap.db.soulstoneAssigned=='')")
 test('Invalid Soulstone settings are reset',"BuffTapDB.soulstoneParty='x'; BuffTapDB.soulstoneRaid=5; BuffTapDB.soulstoneAssigned=string.rep('a',80); BuffTap:InitDB(); assert(BuffTap.db.soulstoneParty=='healer' and BuffTap.db.soulstoneRaid=='remind' and BuffTap.db.soulstoneAssigned=='')")
 test('Party mode Me ignores healers',named+"BuffTap.db.soulstoneParty='self'; refresh(); assert(BuffTap.action.target=='player')")

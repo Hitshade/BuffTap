@@ -858,7 +858,7 @@ function B:BuildHelperPage(parent)
   end
   label(sm,L("In a party"),12,-10,"GameFontNormal")
   sm.party={
-    healer=check(sm,L("Healer (role, else healing class)"),12,-30,function() setSoul("soulstoneParty","healer") end),
+    healer=check(sm,L("Healer role"),12,-30,function() setSoul("soulstoneParty","healer") end),
     self=check(sm,L("Me"),12,-54,function() setSoul("soulstoneParty","self") end),
     assigned=check(sm,L("Assigned player"),12,-78,function() setSoul("soulstoneParty","assigned") end),
   }
@@ -905,7 +905,7 @@ function B:UpdateHelperOptions()
   for key,c in pairs(sm.party) do c:SetChecked(self.db.soulstoneParty==key) end
   for key,c in pairs(sm.raid) do c:SetChecked(self.db.soulstoneRaid==key) end
   sm.assignedLabel:SetText(L("Assigned player: ")..(self.db.soulstoneAssigned~="" and self.db.soulstoneAssigned or L("none")))
-  addHelp(f.soulTarget,L("Soulstone target"),L("Party: Healer, yourself, or an assigned player (falls back to a healer, then you). Raid: remind only, or place it on your assigned player. Target a friendly player and press Use current target to assign them."))
+  addHelp(f.soulTarget,L("Soulstone target"),L("Party: the member with the Healer group role, yourself, or an assigned player (falls back to the Healer role, then you). Raid: remind only, or place it on your assigned player. Target a friendly player and press Use current target to assign them."))
   f.stoneCheck:SetShown(warlock); f.stoneDescription:SetShown(warlock); f.soulCheck:SetShown(warlock); f.demonChoice:SetShown(warlock)
   f.petDescription:SetText(warlock and "Offers your chosen summon if no living pet is present. Respects Demonic Sacrifice; never replaces a living pet."
     or "Offers Revive for a visible dead pet. If your assigned pet is absent, reminds you to call or revive it manually.")
