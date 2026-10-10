@@ -486,15 +486,21 @@ function B:BuildBlessingOptions(parent)
     row.players.arrow=row.players:CreateTexture(nil,"ARTWORK"); row.players.arrow:SetSize(18,18); row.players.arrow:SetPoint("LEFT",3,0)
     row.class=token; f.blessingRows[index]=row
   end
-  local detail=CreateFrame("Frame",nil,p,"BackdropTemplate"); detail:SetSize(668,106); f.blessingDetail=detail
+  local detail=CreateFrame("Frame","BuffTapPlayerExceptions",p,"BackdropTemplate"); detail:SetSize(668,202); f.blessingDetail=detail
+  detail:SetFrameStrata("DIALOG"); detail:SetFrameLevel(p:GetFrameLevel()+30); detail:EnableMouse(true); detail:EnableMouseWheel(true); detail:SetClampedToScreen(true)
+  detail:SetScript("OnMouseWheel",function(_,delta)
+    f.blessingPlayerOffset=math.max(0,math.min(f.blessingPlayerMaxOffset or 0,(f.blessingPlayerOffset or 0)-delta*3)); B:Options()
+  end)
+  detail:SetScript("OnHide",function() if not f.updatingBlessingDetail then f.expandedBlessing=nil; if f.blessingMenu then f.blessingMenu:Hide() end end end)
+  if UISpecialFrames then table.insert(UISpecialFrames,"BuffTapPlayerExceptions") end
   detail:SetBackdrop({bgFile="Interface\\Buttons\\WHITE8X8",edgeFile="Interface\\Buttons\\WHITE8X8",edgeSize=1})
   detail:SetBackdropColor(0.065,0.085,0.10,1); detail:SetBackdropBorderColor(0.22,0.32,0.38,1)
-  label(detail,"Player exceptions",12,-6,"GameFontNormalSmall")
+  f.blessingDetailTitle=label(detail,"Player exceptions",12,-6,"GameFontNormalSmall",560)
   f.blessingCollapse=arrowButton(detail,"",634,-2,26,function() f.expandedBlessing=nil; B:Options() end)
   local collapse=f.blessingCollapse:CreateTexture(nil,"ARTWORK"); collapse:SetAllPoints(); collapse:SetTexture("Interface\\ChatFrame\\UI-ChatIcon-ScrollUp-Up")
   f.blessingPlayerRows={}
-  for i=1,2 do
-    local row=CreateFrame("Frame",nil,detail); row:SetSize(660,26); row:SetPoint("TOPLEFT",4,-26-(i-1)*27)
+  for i=1,5 do
+    local row=CreateFrame("Frame",nil,detail); row:SetSize(626,26); row:SetPoint("TOPLEFT",4,-26-(i-1)*27)
     row.name=label(row,"",8,-7,"GameFontHighlightSmall",190)
     row.pick=blessingPick(row,210,0,190,function()
       local v=B.blessingPlayers and B.blessingPlayers[row.guid]; return v and v.choice
@@ -511,9 +517,16 @@ function B:BuildBlessingOptions(parent)
     addHelp(row.protect,L("Never Salvation"),"Blocks Salvation for this player and any Greater Salvation that would affect them. Choose another individual blessing if needed. No role or spec guessing.")
     f.blessingPlayerRows[i]=row
   end
-  f.blessingPageText=label(detail,"",12,-85,"GameFontDisableSmall",380)
-  f.blessingPrevious=button(detail,L("Previous"),444,-80,98,function() f.blessingPlayerOffset=math.max(0,(f.blessingPlayerOffset or 0)-2); B:Options() end)
-  f.blessingNext=button(detail,L("Next"),548,-80,98,function() f.blessingPlayerOffset=(f.blessingPlayerOffset or 0)+2; B:Options() end)
+  f.blessingPageText=label(detail,"",12,-179,"GameFontDisableSmall",440)
+  f.blessingScroll=CreateFrame("Slider",nil,detail,"OptionsSliderTemplate"); local scroll=f.blessingScroll
+  scroll:SetOrientation("VERTICAL"); scroll:SetSize(16,128); scroll:SetPoint("TOPLEFT",642,-28); scroll:SetMinMaxValues(0,1); scroll:SetValueStep(1)
+  if scroll.SetObeyStepOnDrag then scroll:SetObeyStepOnDrag(true) end
+  if scroll.Text then scroll.Text:Hide() end; if scroll.Low then scroll.Low:Hide() end; if scroll.High then scroll.High:Hide() end
+  scroll:SetScript("OnValueChanged",function(self,value)
+    if self.silent then return end
+    f.blessingPlayerOffset=math.floor(value+0.5); B:Options()
+  end)
+  button(detail,L("Done"),548,-170,98,function() f.expandedBlessing=nil; B:Options() end)
   f.blessingFooter=label(p,"Mixed choices use individual blessings. Player exceptions last for this group session.",18,-602,"GameFontDisableSmall",686)
   button(p,"Existing buff filters",18,-574,160,function() f.blessingLegacy=true; B:Options() end)
   label(p,"Follow buff settings uses your enabled buffs, priorities and filters.",192,-581,"GameFontDisableSmall",510)
@@ -531,7 +544,7 @@ function B:UpdateBlessingOptions()
   local editable=self.db.blessingAssignments and self.db.group
   f.blessingInstruction:SetText(L(not self.db.blessingAssignments and "Enable class assignments to choose a blessing for each class." or not self.db.group and "Enable party / raid to use these class assignments." or "Open a class to select and order blessings. Player exceptions take precedence."))
   if not editable then f.expandedBlessing=nil end
-  f.blessingDetail:Hide()
+  f.updatingBlessingDetail=true; f.blessingDetail:Hide()
   for _,r in ipairs(f.blessingPlayerRows) do r:Hide(); r.entry=nil; r.guid=nil end
   for _,row in ipairs(f.blessingRows) do
     row:ClearAllPoints(); row:SetPoint("TOPLEFT",18,y); row.pick:Update()
@@ -557,8 +570,8 @@ function B:UpdateBlessingOptions()
     end
     row.status:SetText(status); addHelp(row.players,"Player exceptions",L(status).."\n"..L("Click to expand or collapse individual player choices.")); y=y-26
     if f.expandedBlessing==row.class and #entries>0 then
-      local offset=math.min(f.blessingPlayerOffset or 0,math.floor((#entries-1)/2)*2); f.blessingPlayerOffset=offset
-      f.blessingDetail:ClearAllPoints(); f.blessingDetail:SetPoint("TOPLEFT",36,y); f.blessingDetail:Show()
+      local maxOffset=math.max(0,#entries-5); local offset=math.max(0,math.min(f.blessingPlayerOffset or 0,maxOffset)); f.blessingPlayerOffset=offset; f.blessingPlayerMaxOffset=maxOffset
+      f.blessingDetail:ClearAllPoints(); f.blessingDetail:SetPoint("TOPLEFT",36,math.max(y,-370)); f.blessingDetail:Show(); f.blessingDetailTitle:SetText(L("Player exceptions")..": "..L(row.class:sub(1,1)..row.class:sub(2):lower()))
       for i,r in ipairs(f.blessingPlayerRows) do
         local entry=entries[offset+i]
         if entry then
@@ -567,15 +580,13 @@ function B:UpdateBlessingOptions()
           local v=self.blessingPlayers and self.blessingPlayers[r.guid]; r.protect:SetChecked(v and v.neverSalvation or false); r.protect:SetEnabled(self.db.blessingAssignments); r:Show()
         end
       end
-      f.blessingPageText:SetText("Players "..(offset+1).."–"..math.min(offset+2,#entries).." / "..#entries.." · choices override class")
-      local paged=#entries>2; f.blessingPrevious:SetShown(paged); f.blessingNext:SetShown(paged)
-      f.blessingPrevious:SetEnabled(offset>0); f.blessingNext:SetEnabled(offset+2<#entries)
-      local height=paged and 106 or (#entries==1 and 78 or 106)
-      f.blessingDetail:SetHeight(height)
-      f.blessingPageText:ClearAllPoints(); f.blessingPageText:SetPoint("TOPLEFT",12,height==78 and -59 or -85)
-      y=y-height-2
+      f.blessingPageText:SetText("Players "..(offset+1).."-"..math.min(offset+5,#entries).." / "..#entries.." - "..L("Player exceptions take precedence."))
+      f.blessingScroll.silent=true; f.blessingScroll:SetMinMaxValues(0,math.max(1,maxOffset)); f.blessingScroll:SetValue(offset); f.blessingScroll:SetShown(maxOffset>0); f.blessingScroll.silent=false
+      f.blessingDetail:SetHeight(202)
+
     end
   end
+  f.updatingBlessingDetail=false
 end
 
 function B:BuildSupplyOptions(parent)

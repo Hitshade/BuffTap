@@ -4,7 +4,7 @@
 
 local _, B = ...
 _G.BuffTap = B
-B.version = "1.14.1"
+B.version = "1.14.2"
 B.API = {}
 local A = B.API
 
@@ -1149,7 +1149,12 @@ function B:Select()
   local roster=self:Roster()
   local blessingPlan=self:BlessingAssignmentsActive()
   local groupCount=A.Call(GetNumSubgroupMembers)
-  if A.Call(IsInRaid)==false and A.Number(groupCount) and groupCount==0 then self.blessingPlayers=nil end
+  if A.Call(IsInRaid)==false and A.Number(groupCount) and groupCount==0 and self.blessingPlayers then
+    -- Keep a solo player's planned group exception; other players remain session-only.
+    local guid=A.Call(UnitGUID,"player")
+    local own=A.Text(guid) and self.blessingPlayers[guid]
+    self.blessingPlayers=own and {[guid]=own} or nil
+  end
   local scans,scanErrors={},{}
 
   -- Optional quick-target pass. This intentionally uses only single-target buff
