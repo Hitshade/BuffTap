@@ -64,9 +64,9 @@ CreateFrame=function(...)
  return frame
 end
 BuffTap:Options(); local f=BuffTap.options; f.expandedBlessing='WARRIOR'; BuffTap:Options()
-assert(f.height==868 and f.blessingDetail.height==78)
+assert(f.height==868 and f.blessingDetail.height==202)
 for _,row in ipairs(f.blessingRows) do assert(-row.points[3]+row.height<574) end
-assert(#f.blessingPlayerRows==2)
+assert(#f.blessingPlayerRows==5)
 ''')
 test('Large class roster pages all players inside fixed expansion',setup+'''
 IsInRaid=function() return true end; GetNumGroupMembers=function() return 10 end
@@ -78,7 +78,7 @@ UnitClass=function(u) return 'Class',u=='player' or u=='raid1' and 'PALADIN' or 
 UnitClass=function(u) if u=='player' or u=='raid1' then return 'Paladin','PALADIN' end; return 'Shaman','SHAMAN' end
 BuffTap.db.blessingClasses.SHAMAN='bok'; BuffTap:InvalidateRoster(); BuffTap:Options()
 local f=BuffTap.options; f.expandedBlessing='SHAMAN'; f.blessingPlayerOffset=100; BuffTap:Options()
-assert(f.blessingPlayerOffset==8 and f.blessingPlayerRows[1].entry.unit=='raid10' and not f.blessingPlayerRows[2].shown)
+assert(f.blessingPlayerOffset==4 and f.blessingPlayerRows[1].entry.unit=='raid6' and f.blessingPlayerRows[5].entry.unit=='raid10')
 ''')
 
 test('Header navigation fits between borders and stays above page content',setup+"""

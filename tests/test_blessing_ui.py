@@ -8,7 +8,7 @@ test('Opening another dropdown changes menu owner',setup+"BuffTap:Options(); loc
 test('Class editor opens directly and checks retain saved fixed choice',setup+"BuffTap:Options(); local f=BuffTap.options; local p=f.blessingRows[1].pick; p.scripts.OnClick(p); assert(f.blessingMenu.priorityRows[1].toggle.checked and BuffTap.db.blessingClasses.WARRIOR=='bom'); local k=f.blessingMenu.priorityRows[2].toggle; k.scripts.OnClick(k); assert(BuffTap.db.blessingClasses.WARRIOR=='priority' and #BuffTap.db.groupBlessingPriorities.WARRIOR==2 and f.blessingMenu.shown)")
 test('Inactive group assignment controls cannot open or change',setup+"BuffTap.db.blessingAssignments=false; BuffTap:Options(); local f=BuffTap.options; local p=f.blessingRows[1].pick; assert(p.disabled); p.scripts.OnClick(p); assert(not f.blessingMenu or not f.blessingMenu.shown); f.blessingRows[1].players.scripts.OnClick(); assert(not f.expandedBlessing)")
 test('Party switch also disables class assignment controls',setup+"BuffTap.db.group=false; BuffTap:Options(); assert(BuffTap.options.blessingRows[1].pick.disabled)")
-test('One player expansion hides unnecessary paging',setup+"BuffTap:Options(); BuffTap.options.expandedBlessing='WARRIOR'; BuffTap:Options(); assert(not BuffTap.options.blessingPrevious.shown and not BuffTap.options.blessingNext.shown)")
+test('One player expansion hides unnecessary paging',setup+"BuffTap:Options(); BuffTap.options.expandedBlessing='WARRIOR'; BuffTap:Options(); assert(not BuffTap.options.blessingScroll.shown)")
 test('Target picker shares proper arrow and selected row behavior',solo+"BuffTap:Options(); local f=BuffTap.options; local p=f.targetBlessingPicks[5]; assert(p.arrow.texture and not p:GetText():find(' v')); p.scripts.OnClick(p); assert(f.blessingMenu.priorityRows[1].shown and not next(BuffTap.db.targetBlessingPriorities)); p.scripts.OnClick(p); assert(not f.blessingMenu.shown)")
 test('Target picker inactive when friendly-target mode disabled',solo+"BuffTap.db.friendlyTarget=false; BuffTap:Options(); local p=BuffTap.options.targetBlessingPicks[5]; p.scripts.OnClick(p); assert(p.disabled and (not BuffTap.options.blessingMenu or not BuffTap.options.blessingMenu.shown))")
 test('Target picker inactive when class-aware mode disabled',solo+"BuffTap.db.targetClassBlessings=false; BuffTap:Options(); assert(BuffTap.options.targetBlessingPicks[5].disabled)")
@@ -26,9 +26,9 @@ CreateFrame=function(...)
  return f
 end
 BuffTap:Options(); local f=BuffTap.options; f.expandedBlessing='WARRIOR'; BuffTap:Options()
-assert(f.blessingDetail.height==106)
+assert(f.blessingDetail.height==202)
 for _,row in ipairs(f.blessingRows) do assert(-row.points[3]+row.height<574) end
-assert(not f.blessingPrevious.shown and not f.blessingNext.shown)
+assert(not f.blessingScroll.shown)
 """)
 test('Every Paladin seal is opt-in by default',"playerClass='PALADIN'; for _,def in ipairs(BuffTap:ClassList()) do if def.kind=='seal' then assert(not def.defaultOn and not BuffTap:Enabled(def),def.key) end end")
 test('An explicitly enabled seal remains supported',"playerClass='PALADIN'; spells={}; book={}; spell(21084,'Seal of Righteousness',1); BuffTap.db.buffs['seal-righteousness']=true; refresh(); assert(BuffTap.action.key=='seal-righteousness'); BuffTap:InitDB(); assert(BuffTap.db.buffs['seal-righteousness']==true)")
