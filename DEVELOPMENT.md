@@ -1,6 +1,6 @@
 # BuffTap development
 
-Current local version: **1.14.1**. Runtime: `addon/BuffTap`. Latest publication is 1.13.2; 1.14.0 is packaged locally and has not been uploaded. 
+Current local version: **1.14.2**. Runtime: `addon/BuffTap`. Release 1.14.2 fixes solo exception retention and replaces player paging with a five-row scrolling editor.
 
 Install `requirements-dev.txt`, then run `python tests/test_warlock_review.py` for all 825 isolated mocked Lua 5.1 scenarios. This entry point imports all earlier suites. Run `python tools/verify_mage_catalog.py` to cross-check Mage scroll evidence.
 
@@ -21,3 +21,5 @@ Convenience.lua owns session pause, first-use guidance, label styling and a guar
 Banner artwork is embedded as a shared 512×256 RGB TGA. Source/prompt: research/mini-banner-asset-1.13.1.md. Banner texture coordinates preserve the source aspect ratio while removing dark padding. The native options page area remains 630 units high.
 
 1.14.1 adds independent Dwarf Find Treasure tracking. Test entry: tests/test_tracking.py; 834 scenarios passed. Prepared locally, not published.
+
+1.14.2 validation: tests/test_player_exceptions.py; 840 mocked Lua 5.1 scenarios passed. Individual exceptions remain session-only. Live editor verification remains pending.
