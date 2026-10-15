@@ -5,9 +5,9 @@
 local ADDON,B=...
 local A=B.API
 local function L(key,...) return B:Text(key,...) end
-local TAB={Buffs=1,Groups=2,Target=3,Consumables=4,Weapons=5,Appearance=6,Helpers=7,Diagnostics=8}
-local TAB_NAMES={L("Buffs"),L("Groups"),L("Target"),L("Consumables"),L("Weapons"),L("Customization"),L("Helpers"),L("Diagnostics")}
-local TAB_WIDTHS={62,66,66,108,80,116,74,94}
+local TAB={Buffs=1,Groups=2,Target=3,Consumables=4,Weapons=5,Appearance=6,Helpers=7,Profiles=8,Diagnostics=9}
+local TAB_NAMES={L("Buffs"),L("Groups"),L("Target"),L("Consumables"),L("Weapons"),L("Customization"),L("Helpers"),L("Profiles"),L("Diagnostics")}
+local TAB_WIDTHS={62,58,54,94,70,100,64,66,80}
 local OPTIONS_WIDTH,OPTIONS_HEIGHT=760,868
 local ICON_PATH="Interface\\AddOns\\BuffTap\\Media\\BuffTapIcon"
 
@@ -1597,9 +1597,12 @@ function B:Options()
     label(f.resetConfirm,L("Reset all settings? This removes your saved preferences and assignments."),10,-6,"GameFontHighlightSmall",660)
     button(f.resetConfirm,L("Cancel"),488,-40,90,function() f.resetConfirm:Hide() end)
     f.confirmResetButton=button(f.resetConfirm,L("Confirm reset"),340,-40,140,function()
-      if not A.Combat() then f.resetConfirm:Hide(); BuffTapDB=nil; B.blessingPlayers=nil; B:InitDB(); B.helperDismissed={}; B.helperThankSeen=nil; B.bookDirty=true; B.resolveCache=nil; B.rankChoiceCache=nil; B.coverCache=nil; B:InvalidateRoster(); B:InvalidateAura(); B.appearance=nil; B:RequestRefresh("reset settings",0); B:Options() end
+      if not A.Combat() then f.resetConfirm:Hide(); B:ResetCharacterSettings(); B.helperDismissed={}; B.helperThankSeen=nil; B.bookDirty=true; B.resolveCache=nil; B.rankChoiceCache=nil; B.coverCache=nil; B:InvalidateRoster(); B:InvalidateAura(); B.appearance=nil; B:RequestRefresh("reset settings",0); B:Options() end
     end)
     f.resetConfirm:Hide()
+
+    local profiles=panel(f); f.pages[TAB.Profiles]=profiles
+    self:BuildProfileOptions(profiles,{label=label,button=button,check=check,selector=selector})
 
     -- DIAGNOSTICS PAGE
     local diag=panel(f); f.pages[TAB.Diagnostics]=diag
@@ -1665,6 +1668,7 @@ function B:Options()
   local width,height=UIParent:GetWidth(),UIParent:GetHeight()
   if A.Number(width) and A.Number(height) then f:SetScale(math.min(1,(width-32)/OPTIONS_WIDTH,(height-32)/OPTIONS_HEIGHT)) end
   self:UpdateHelperOptions()
+  self:UpdateProfileOptions()
   self:UpdateSupplyOptions()
   local paladin=A.Call(function() local _,token=UnitClass("player"); return token end)=="PALADIN"
   f.targetBlessingPanel:SetShown(paladin); f.targetClassAware:SetChecked(self.db.targetClassBlessings)

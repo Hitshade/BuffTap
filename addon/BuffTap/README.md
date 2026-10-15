@@ -41,6 +41,10 @@ Open **Customization** to adjust your binding, appearance, sounds and quick acce
 
 Use first-use guidance to get started, and right-click the minimap icon for quick controls or a temporary pause. Open settings from the **draggable minimap button** or enable an optional **LibDataBroker display** alongside—or in place of—the standard reminder. Native game icons and automatic Spanish, German, French, and Brazilian Portuguese localization keep the interface familiar; untranslated text falls back to English.
 
+## Named profiles
+
+Use **Profiles** to share bindings, appearance, sounds and general preferences across characters. Buff and class settings remain on each character when switching profiles. **Copy from profile** optionally imports a saved setup from a same-class character; incompatible classes are not offered. Characters using one profile share subsequent general preference changes. Create a separate profile with **Copy current preferences** to keep independent settings.
+
 ## Get started
 
 Install **BuffTap** in your client's `Interface/AddOns` folder, open **`/bt`**, choose your buffs, and start scrolling.

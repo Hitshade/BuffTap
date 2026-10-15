@@ -4,7 +4,7 @@
 
 local _, B = ...
 _G.BuffTap = B
-B.version = "1.14.2"
+B.version = "1.15.1"
 B.API = {}
 local A = B.API
 
@@ -47,7 +47,7 @@ end
 
 function B:InitDB()
   if type(BuffTapDB) ~= "table" then BuffTapDB = {} end
-  self.db = BuffTapDB
+  self.db = self:ProfileSettings(BuffTapDB)
   local hadSeconds = type(self.db.seconds) == "number"
   local hadRebuffVersion = type(self.db.rebuffVersion) == "number"
   -- Migrate the short-lived 0.5.x overlay key names before defaults are applied.

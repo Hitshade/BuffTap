@@ -1,6 +1,6 @@
 # BuffTap development
 
-Current local version: **1.14.2**. Runtime: `addon/BuffTap`. Release 1.14.2 fixes solo exception retention and replaces player paging with a five-row scrolling editor.
+Current local version: **1.15.1**. Runtime: `addon/BuffTap`. Named profiles prepared for testing; published stable remains 1.14.2.
 
 Install `requirements-dev.txt`, then run `python tests/test_warlock_review.py` for all 825 isolated mocked Lua 5.1 scenarios. This entry point imports all earlier suites. Run `python tools/verify_mage_catalog.py` to cross-check Mage scroll evidence.
 
@@ -23,3 +23,7 @@ Banner artwork is embedded as a shared 512×256 RGB TGA. Source/prompt: research
 1.14.1 adds independent Dwarf Find Treasure tracking. Test entry: tests/test_tracking.py; 834 scenarios passed. Prepared locally, not published.
 
 1.14.2 validation: tests/test_player_exceptions.py; 840 mocked Lua 5.1 scenarios passed. Individual exceptions remain session-only. Live editor verification remains pending.
+
+1.15.0: embedded AceDB-3.0 minor 39 with an explicit shared-key facade over the character settings. Profiles/ProfileOptions own profile operations and UI. Test entry: tests/test_profile_persistence.py; 876 scenarios. Source class snapshots are profile-specific, keyed by character and never applied on profile switch. Optional copy validates class identity before any mutation.
+
+1.15.1: embedded AceDB-3.0 minor 39 with an explicit shared-key facade over the character settings. Profiles/ProfileOptions own profile operations and UI. Test entry: tests/test_profile_persistence.py; 882 scenarios. Source class snapshots are profile-specific, keyed by character and never applied on profile switch. Optional copy validates class identity before any mutation.

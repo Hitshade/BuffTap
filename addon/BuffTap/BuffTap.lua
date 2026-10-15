@@ -861,7 +861,7 @@ SlashCmdList.BUFFTAP=function(text)
     if arg=="" then B:CaptureBinding(); return end
     local keys={}; for key in arg:upper():gmatch("[^,%s]+") do keys[#keys+1]=key end; B.db.keys=B:NormalizeBindings(keys)
   elseif cmd=="unbind" then B.db.keys={}
-  elseif cmd=="reset" then BuffTapDB=nil; B:InitDB(); B.helperDismissed={}; B.helperThankSeen=nil; B.bookDirty=true; B.resolveCache=nil; B.rankChoiceCache=nil; B.coverCache=nil; B:InvalidateRoster(); B:InvalidateAura(); if B.options then B.options:Hide() end
+  elseif cmd=="reset" then B:ResetCharacterSettings(); B.helperDismissed={}; B.helperThankSeen=nil; B.bookDirty=true; B.resolveCache=nil; B.rankChoiceCache=nil; B.coverCache=nil; B:InvalidateRoster(); B:InvalidateAura(); if B.options then B.options:Hide() end
   elseif cmd=="toggle" then B.db.enabled=not B.db.enabled
   elseif cmd=="refresh" then B.bookDirty=true
   elseif cmd=="enable" or cmd=="disable" then

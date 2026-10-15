@@ -170,7 +170,7 @@ assert(BuffTap.db.supplySettings['poison:instant-poison'].minimum==999 and BuffT
 ''')
 test('Supplies view is integrated and preserves all eight main tabs', flask+'''
 BuffTap:ShowSuppliesOptions(); local f=BuffTap.options
-assert(#f.pages==8 and f.activeTab==4 and f.supplyBody.shown and not f.consumableBody.shown)
+assert(#f.pages==9 and f.activeTab==4 and f.supplyBody.shown and not f.consumableBody.shown)
 assert(f.supplyRows[1].shown and not f.supplyRows[2].shown and f.supplyRows[1].icon.texture==12345)
 f.selectConsumableView(false); assert(f.consumableBody.shown and not f.supplyBody.shown)
 ''')

@@ -6,7 +6,7 @@ for locale,close in [('esES','Cerrar'),('esMX','Cerrar'),('deDE','Schließen'),(
 local oldAction=BuffTap.action
 assert(BuffTap:Text('Close')=='{close}')
 BuffTap:Options(); local f=BuffTap.options
-assert(f.closeButton.text=='{close}' and #f.tabs==8 and BuffTap.action==oldAction)
+assert(f.closeButton.text=='{close}' and #f.tabs==9 and BuffTap.action==oldAction)
 assert(not f.languageSelector)
 f.channelButton.scripts.OnClick(); local c=f.channelButton.menu.rows[2]; c.scripts.OnClick(c); assert(BuffTap.db.soundChannel=='SFX')
 f.channelButton.scripts.OnClick(); local c=f.channelButton.menu.rows[1]; c.scripts.OnClick(c); assert(BuffTap.db.soundChannel=='Master')

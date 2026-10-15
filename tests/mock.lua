@@ -168,3 +168,13 @@ function methods:CreateAnimationGroup()
  return g
 end
 strmatch=string.match; wipe=function(t) for k in pairs(t) do t[k]=nil end return t end
+
+-- Account identity used by the bundled, unmodified AceDB library.
+function UnitFactionGroup() return 'Alliance' end
+function UnitRace() return 'Night Elf','NightElf' end
+function UnitNameUnmodified(u) return UnitName(u) end
+function GetRealmName() return 'Test Realm' end
+function GetCurrentRegionName() return 'US' end
+function GetCurrentRegion() return 1 end
+function strlenutf8(s) return #s end
+function GetLocale() return 'enUS' end
