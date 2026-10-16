@@ -8,8 +8,8 @@ local shared={keys=true,size=true,opacity=true,x=true,y=true,glow=true,pulse=tru
   pauseResting=true,helperDismiss=true,helperBounce=true,helperThanks=true,helperThankEmote=true,
   helperQuick=true,helperDiscovery=true,minimap=true,brokerEnabled=true}
 local classKeys={"seconds","rebuffVersion","buffs","priorities","buffSeconds","group","smartGroup","groupNeed","blessingNeed",
-  "friendlyTarget","targetSeconds","targetClassBlessings","targetBlessingFallback","targetBlessingClasses","targetBlessingPriorities",
-  "groupBlessingPriorities","blessingAssignments","blessingClasses","buffGroups","buffClasses","buffGroupNeed","targetBuffs","targetBuffSeconds","raidGroups",
+  "salvationVersion","salvationMigration","friendlyTarget","targetSeconds","targetClassBlessings","targetBlessingFallback","targetBlessingClasses","targetBlessingPriorities",
+  "blessingGroupOverrides","blessingRaidDefaults","blessingPartyMode","blessingPartyUniform","blessingPartyExcluded","salvationGroup","groupBlessingPriorities","blessingAssignments","blessingClasses","buffGroups","buffClasses","buffGroupNeed","targetBuffs","targetBuffSeconds","raidGroups",
   "consumablesEnabled","consumableFamilies","consumableChoices","consumableSeconds","suppliesEnabled","suppliesChat","suppliesSound","suppliesReadyCheck","supplySettings",
   "weaponReminder","weaponMainHand","weaponOffHand","weaponApply","weaponReplace","weaponChoices","weaponCoatings","weaponSeconds",
   "helperTracking","helperTreasure","helperTracker","helperCoverage","helperPet","helperHealthstone","helperSoulstone","helperDemon","soulstoneParty","soulstoneRaid","soulstoneAssigned"}

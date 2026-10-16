@@ -13,7 +13,7 @@ Choose what to maintain, who receives it, and when to refresh it.
 - **Personal and friendly-target buffing** with independent settings and class-aware Paladin target choices.
 - **Per-buff raid-group and class filters**, priorities, and refresh thresholds.
 - **Smart group spells** that check who still needs the buff before spending reagents.
-- **Paladin blessing assignments and ordered priorities** for targets and groups, with individual player exceptions and optional Salvation protection.
+- **Paladin blessing assignments and ordered priorities** with separate party/raid plans, uniform or per-class choices, subgroup overrides, visual assignment icons, player exceptions and independent Salvation protection.
 
 ## ⚔️ Keep your weapons ready
 
@@ -40,6 +40,12 @@ Helpers are opt-in, so you choose how much assistance you want.
 Open **Customization** to adjust your binding, appearance, sounds and quick access. Use arrows to arrange buff priorities. Move and resize the reminder—including alongside Blizzard Edit Mode—and adjust opacity, label fonts/colors, timers, glow, and pulse. Choose separate reminder and low-stock sounds from game assets or installed SharedMedia packs, search and preview them, and control alert frequency. Reminders pause while mounted; optionally pause them in cities and inns too.
 
 Use first-use guidance to get started, and right-click the minimap icon for quick controls or a temporary pause. Open settings from the **draggable minimap button** or enable an optional **LibDataBroker display** alongside—or in place of—the standard reminder. Native game icons and automatic Spanish, German, French, and Brazilian Portuguese localization keep the interface familiar; untranslated text falls back to English.
+
+## Paladin group setup
+
+In Groups, choose Party or Raid. By class uses class assignments and optional player exceptions. Same blessing for everyone applies one blessing to the entire party or selected raid group and temporarily ignores those saved exceptions. Raid groups inherit the raid defaults unless you create an override. Excluded raid groups are skipped, and Greater Blessings only apply when all affected same-class recipients agree.
+
+Party and raid plans are character-specific, including when switching shared profiles. The explicit same-class copy option includes both plans; other classes cannot import them. Copy party assignments changes raid defaults, retaining existing subgroup overrides. Salvation has separate permission and recipient controls.
 
 ## Named profiles
 

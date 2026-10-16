@@ -206,7 +206,7 @@ families = [
     ('PALADIN', 20217, 'Blessing of Kings', 25898, 'Greater Blessing of Kings', 'bok', 21177),
     ('PALADIN', 19740, 'Blessing of Might', 25782, 'Greater Blessing of Might', 'bom', 21177),
     ('PALADIN', 19742, 'Blessing of Wisdom', 25894, 'Greater Blessing of Wisdom', 'bow', 21177),
-    ('PALADIN', 1038, 'Blessing of Salvation', 25895, 'Greater Blessing of Salvation', 'bos', 21177),
+    ('PALADIN', 1038, 'Salvation', 25895, 'Mass Salvation', 'bos', 21177),
     ('PALADIN', 19977, 'Blessing of Light', 25890, 'Greater Blessing of Light', 'bol', 21177),
 ]
 for class_, single, name, group, group_name, key, reagent in families:
@@ -214,7 +214,7 @@ for class_, single, name, group, group_name, key, reagent in families:
 playerClass='{class_}'; spells={{}}; book={{}}; UnitLevel=function() return 60 end
 for _,b in ipairs(BuffTap.Buffs) do BuffTap.db.buffs[b.key]=false end
 spell({single},'{name}'); spell({group},'{group_name}'); bags[{reagent}]=20
-BuffTap.db.buffs['{key}']=true; BuffTap.db.group=true; BuffTap.db.groupNeed=3; BuffTap.db.blessingNeed=3
+BuffTap.db.buffs['{key}']=true; BuffTap.db.salvationGroup=('{key}'=='bos'); BuffTap.db.group=true; BuffTap.db.groupNeed=3; BuffTap.db.blessingNeed=3
 refresh(); assert(BuffTap.action.id=={group} and BuffTap.action.groupCount==3)
 '''
     test(f'{group_name}: one late recipient gets a single buff, not a reagent cast', setup+f'''

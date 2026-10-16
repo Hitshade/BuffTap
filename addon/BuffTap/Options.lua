@@ -76,8 +76,8 @@ local function selector(parent,text,x,y,width,choices,onSelect,searchable)
   control=flatButton(parent,text,x,y,width,function()
     if A.Combat() then return end
     if menu:IsShown() then menu:Hide(); return end
-    if B.options and B.options.activeSelector and B.options.activeSelector~=menu then B.options.activeSelector:Hide() end
-    if B.options then B.options.activeSelector=menu end
+    if B.options and B.options.activeSelector and B.options.activeSelector~=menu and B.options.activeSelector~=control.ownerPanel then B.options.activeSelector:Hide() end
+    if B.options then B.options.activeSelector=control.ownerPanel or menu end
     render(); menu:Show()
   end)
   control.arrow=control:CreateTexture(nil,"OVERLAY"); control.arrow:SetSize(16,16); control.arrow:SetPoint("RIGHT",-4,0)
@@ -268,6 +268,15 @@ local function prioritySummary(order)
   for i,key in ipairs(order or {}) do names[#names+1]=i.." "..blessingName(key) end
   return #names>0 and table.concat(names," > ") or L("No blessings selected")
 end
+-- Match the group's legacy fallback, rather than target-only class suitability.
+local function groupDefaultOrder(class,scope)
+  local order={}
+  for _,def in ipairs(B.blessingClassList or B:ClassList()) do
+    if def.kind=="blessing" and not def.singleKey and B:Enabled(def) and B:GroupClassAllowed(def,class)
+      and (not scope or scope==0 or B:GroupSelected(def,scope)) then order[#order+1]=def.key end
+  end
+  return order
+end
 local function showBlessingPriorityMenu(menu,control)
   menu.owner=control
   for _,row in ipairs(menu.rows) do row:Hide() end
@@ -288,7 +297,7 @@ local function showBlessingPriorityMenu(menu,control)
   end
   menu.priorityTitle:SetText(L("Blessing priorities: %s",((LOCALIZED_CLASS_NAMES_MALE and LOCALIZED_CLASS_NAMES_MALE[control.priorityClass]) or control.priorityClass:sub(1,1)..control.priorityClass:sub(2):lower())))
   menu.priorityHelp:SetText(L("Only checked blessings are used. Use arrows to order; 1 is first."))
-  menu.priorityAutomatic:SetText(L(control.priorityTarget and "Automatic" or "Buff settings"))
+  menu.priorityAutomatic:SetText(L(control.scope and control.scope()>0 and "Use raid defaults" or control.priorityTarget and "Automatic" or "Use Buffs settings"))
   for _,t in ipairs(menu.separators or {}) do t:Hide() end
   menu.priorityTitle:Show(); menu.priorityHelp:Show(); menu.priorityAutomatic:Show(); menu.prioritySkip:Show(); menu.priorityDone:Show()
   local mode=control.getChoice()
@@ -297,12 +306,21 @@ local function showBlessingPriorityMenu(menu,control)
   if mode=="priority" then source=control.getOrder() or {}
   elseif mode=="skip" then source={}
   elseif mode then source={mode}
-  else source=B:DefaultBlessingOrder(control.priorityClass,control.priorityTarget) end
+  else
+    local scope=control.scope and control.scope() or 0
+    local choice,inherited
+    if scope>0 then choice,inherited=B:GroupBlessingSettings(control.priorityClass,0,true) end
+    source=choice=="priority" and (inherited or {}) or choice=="skip" and {} or choice and {choice} or (control.priorityTarget and B:DefaultBlessingOrder(control.priorityClass,true) or groupDefaultOrder(control.priorityClass,scope))
+  end
   for i,key in ipairs(source or {}) do order[i]=key end
   control.editorOrder=order
   if mode~="priority" then
     local name=mode=="skip" and L("Skip class") or mode and L("Fixed: %s",blessingName(mode)) or L(control.priorityTarget and "Automatic" or "Buff settings")
     menu.priorityHelp:SetText(name..". "..L(mode and "Edit checks or arrows to customize." or "Uses enabled Buffs in order, filtered for this class. Edit below to customize."))
+  end
+  if control.scope and control.scope()>0 then
+    menu.priorityTitle:SetText(menu.priorityTitle:GetText().." - G"..control.scope())
+    if mode==nil then menu.priorityHelp:SetText(L("Inherits raid defaults. Changes apply to this raid group only.")) end
   end
   local keys,seen={},{}
   for _,key in ipairs(order) do keys[#keys+1]=key; seen[key]=true end
@@ -356,7 +374,7 @@ local function showBlessingPriorityMenu(menu,control)
     row:Show()
   end
   control.saveOrder=save
-  addHelp(control,"Blessing priority order",prioritySummary(order).."\nOne blessing from you per player. Your own blessing is maintained. Unknown ownership stops fallback. Explicit player exceptions override group priorities.")
+  addHelp(control,"Blessing priority order",prioritySummary(order).."\nOne blessing from you per player. Your own blessing is maintained. Unknown ownership stops fallback. Player exceptions apply in By class mode.")
 end
 
 local function blessingPick(parent,x,y,width,getChoice,setChoice,player)
@@ -364,7 +382,8 @@ local function blessingPick(parent,x,y,width,getChoice,setChoice,player)
     if A.Combat() or control.disabled then return end
     local f=B.options
     if not f.blessingMenu then
-      f.blessingMenu=CreateFrame("Frame",nil,f,"BackdropTemplate")
+      f.blessingMenu=CreateFrame("Frame","BuffTapBlessingMenu",f,"BackdropTemplate")
+      if UISpecialFrames then table.insert(UISpecialFrames,"BuffTapBlessingMenu") end
       f.blessingMenu:SetBackdrop({bgFile="Interface\\Buttons\\WHITE8X8",edgeFile="Interface\\Buttons\\WHITE8X8",edgeSize=1})
       f.blessingMenu:SetBackdropColor(0.025,0.035,0.045,1); f.blessingMenu:SetBackdropBorderColor(0.55,0.44,0.23,1)
       f.blessingMenu.separators={}
@@ -374,14 +393,18 @@ local function blessingPick(parent,x,y,width,getChoice,setChoice,player)
       f.blessingMenu:SetFrameStrata("TOOLTIP"); f.blessingMenu:SetClampedToScreen(true); f.blessingMenu:EnableMouse(true); f.blessingMenu.rows={}; f.blessingMenu:Hide()
     end
     local menu=f.blessingMenu
+    if f.activeSelector and f.activeSelector~=menu then f.activeSelector:Hide() end
+    f.activeSelector=menu
     if menu:IsShown() and menu.owner==control then menu:Hide(); return end
     menu.owner=control; menu:ClearAllPoints(); menu:SetPoint("TOPLEFT",control,"BOTTOMLEFT",0,-2)
     if control.getOrder then showBlessingPriorityMenu(menu,control); menu:Show(); return end
     for _,row in ipairs(menu.priorityRows or {}) do row:Hide() end
     for _,name in ipairs({"priorityTitle","priorityHelp","priorityAutomatic","prioritySkip","priorityDone"}) do if menu[name] then menu[name]:Hide() end end
     for _,t in ipairs(menu.separators or {}) do t:Show() end
-    menu:SetSize(270,204)
-    local choices={"inherit","bok","bom","bow","bos","bol","skip"}
+    menu:SetSize(270,176)
+    local choices=control.uniform and {"bok","bom","bow","bol"} or {"inherit","bok","bom","bow","bol","skip"}
+    menu:SetHeight(#choices*28+8)
+    for _,t in ipairs(menu.separators or {}) do t:Hide() end
     for _,row in ipairs(menu.rows) do row:Hide() end
     for i,key in ipairs(choices) do
       local option=menu.rows[i]
@@ -434,35 +457,78 @@ local function blessingPick(parent,x,y,width,getChoice,setChoice,player)
 end
 function B:BuildBlessingOptions(parent)
   local f=self.options; local p=CreateFrame("Frame",nil,parent); p:SetAllPoints(); f.blessingPanel=p
-  label(p,L("Party & raid buffing"),18,-16,"GameFontNormalLarge")
-  label(p,"Choose a fixed blessing or an ordered list for each class. Expand for player exceptions.",18,-39,"GameFontDisableSmall",680)
-  f.blessingGroupEnable=check(p,L("Enable party / raid"),18,-57,function(c) setAndRefresh("group",c:GetChecked()==true); B:Options() end)
-  f.blessingSmart=check(p,"Use Greater Blessings",280,-57,function(c) setAndRefresh("smartGroup",c:GetChecked()==true); B:Options() end)
-  label(p,L("Raid groups"),18,-91,"GameFontHighlightSmall",85)
-  f.blessingGroups={}
-  for i=1,8 do
-    local group=i
-    f.blessingGroups[i]=check(p,"G"..i,108+(i-1)*68,-85,function(c)
-      if A.Combat() then return end
-      B:SetRaidGroupColumn(group,c:GetChecked()==true); B:RequestRefresh("blessing groups",0); B:Options()
-    end)
-    addHelp(f.blessingGroups[i],"Raid group "..i,"Sets the shared raid group selection. Party members use G1. A Greater Blessing cannot safely bypass an excluded member of the same class.")
-  end
-  label(p,"Greater at",18,-144,"GameFontHighlightSmall",100)
-  f.blessingThreshold=compactSlider(p,2,5,1,150,function(v) return tostring(v).."+" end,function(_,v)
-    B.db.blessingNeed=v; B:NormalizeGroupNeeds(); B:RequestRefresh("blessing threshold",0.08)
-  end); f.blessingThreshold:SetPoint("TOPLEFT",120,-121)
-  label(p,"Only when class choices agree.",345,-124,"GameFontDisableSmall",340)
-  line(p,-150)
-  label(p,"Blessing assignments",18,-164,"GameFontNormalLarge")
-  f.blessingEnable=check(p,"Enable class assignments",345,-158,function(c) setAndRefresh("blessingAssignments",c:GetChecked()==true); B:Options() end)
-  button(p,"Restore defaults",565,-159,140,function()
+  f.blessingContext=self:BlessingContext(); f.blessingScope=0; f.blessingScopeButtons={}
+  f.blessingTitle=label(p,"Party buffing",18,-16,"GameFontNormalLarge")
+  f.blessingIntro=label(p,"",18,-41,"GameFontDisableSmall",680)
+  f.partyView=flatButton(p,"Party",510,-13,92,function()
     if A.Combat() then return end
-    B.db.blessingAssignments=false; B.db.blessingClasses={}; B.db.groupBlessingPriorities={}; B.blessingPlayers=nil; B:RequestRefresh("restore blessings",0); B:Options()
+    f.blessingContext="Party"; f.blessingScope=0; f.expandedBlessing=nil; B:Options()
   end)
-  f.blessingInstruction=label(p,"",18,-190,"GameFontDisableSmall",686)
-  label(p,L("Class"),24,-214,"GameFontDisableSmall",112); label(p,"Blessing / priority order",224,-214,"GameFontDisableSmall",270)
-  label(p,"Player exceptions",546,-214,"GameFontDisableSmall",140)
+  f.raidView=flatButton(p,"Raid",610,-13,92,function()
+    if A.Combat() then return end
+    f.blessingContext="Raid"; f.blessingScope=0; f.expandedBlessing=nil; B:Options()
+  end)
+  f.blessingGroupEnable=check(p,"Enable party / raid",18,-59,function(c)
+    if A.Combat() then return end
+    if f.blessingContext=="Party" then B.db.blessingPartyExcluded=c:GetChecked()~=true end
+    setAndRefresh("group",c:GetChecked()==true); B:Options()
+  end)
+  f.blessingSmart=check(p,"Use Greater Blessings",330,-59,function(c) setAndRefresh("smartGroup",c:GetChecked()==true); B:Options() end)
+  f.blessingCasting=button(p,"Casting...",593,-59,110,function()
+    if A.Combat() then return end
+    local d=f.blessingCastingPanel
+    if f.activeSelector and f.activeSelector~=d then f.activeSelector:Hide() end
+    f.activeSelector=d; d:SetShown(not d:IsShown())
+  end)
+  local casting=CreateFrame("Frame","BuffTapBlessingCasting",p,"BackdropTemplate"); f.blessingCastingPanel=casting
+  casting:SetSize(460,154); casting:SetPoint("CENTER"); casting:SetFrameStrata("DIALOG"); casting:SetFrameLevel(p:GetFrameLevel()+60)
+  casting:SetBackdrop({bgFile="Interface\\Buttons\\WHITE8X8",edgeFile="Interface\\Buttons\\WHITE8X8",edgeSize=1})
+  casting:SetBackdropColor(.025,.035,.045,1); casting:SetBackdropBorderColor(.55,.44,.23,1); casting:EnableMouse(true); casting:SetClampedToScreen(true)
+  label(casting,"Greater Blessings",18,-16,"GameFontNormalLarge")
+  label(casting,"Use a Greater Blessing when this many recipients need it.",18,-43,"GameFontDisableSmall",424)
+  f.blessingThreshold=compactSlider(casting,2,5,1,180,function(v) return tostring(v).."+" end,function(_,v)
+    B.db.blessingNeed=v; B:NormalizeGroupNeeds(); B:RequestRefresh("blessing threshold",0.08)
+  end); f.blessingThreshold:SetPoint("TOPLEFT",22,-72)
+  label(casting,"Same-class assignments must agree across the full group.",18,-100,"GameFontDisableSmall",424)
+  button(casting,"Done",332,-119,110,function() casting:Hide() end); casting:Hide()
+  if UISpecialFrames then table.insert(UISpecialFrames,"BuffTapBlessingCasting") end
+  for i=0,8 do
+    local scope=i
+    local x=i==0 and 18 or 18+((i-1)%4)*174
+    local y=i==0 and -170 or -91-math.floor((i-1)/4)*38
+    local c=flatButton(p,i==0 and "Raid defaults" or "G"..i,x,y,i==0 and 145 or 164,function()
+      if A.Combat() then return end
+      f.blessingScope=scope; f.expandedBlessing=nil; B:Options()
+    end)
+    c:SetHeight(i==0 and 26 or 34); c.icons={}
+    if i>0 then
+      local text=c:GetFontString(); if text then text:ClearAllPoints(); text:SetPoint("TOPLEFT",8,-4); text:SetJustifyH("LEFT") end
+      c.note=label(c,"",8,-21,"GameFontDisableSmall",150)
+      for j=1,4 do local icon=c:CreateTexture(nil,"ARTWORK"); icon:SetSize(19,19); icon:SetPoint("TOPRIGHT",-6-(4-j)*20,-3); c.icons[j]=icon end
+    end
+    f.blessingScopeButtons[i+1]=c
+  end
+  f.blessingSelected=check(p,"Buff this group",180,-170,function(c)
+    if A.Combat() then return end
+    B:SetRaidGroupColumn(f.blessingScope,c:GetChecked()==true); B:InvalidateAura(); B:RequestRefresh("raid responsibility",0); B:Options()
+  end)
+  f.blessingInherit=button(p,"Use raid defaults",549,-171,154,function()
+    if B:ResetBlessingScope(f.blessingScope) then f.expandedBlessing=nil; B:Options() end
+  end)
+  f.blessingAssignmentTitle=label(p,"Party blessings",18,-112,"GameFontNormal")
+  f.blessingByClass=flatButton(p,"By class",280,-106,120,function()
+    if B:SetBlessingPlanMode(f.blessingContext,f.blessingScope,"class") then f.expandedBlessing=nil; B:Options() end
+  end)
+  f.blessingSame=flatButton(p,"Same blessing for everyone",408,-106,295,function()
+    if B:SetBlessingPlanMode(f.blessingContext,f.blessingScope,"same") then f.expandedBlessing=nil; B:Options() end
+  end)
+  f.blessingUniform=blessingPick(p,210,-151,360,function() return B:BlessingPlan(f.blessingContext,f.blessingScope).blessing end,function(key)
+    if key and key~="skip" then B:SetBlessingPlanMode(f.blessingContext,f.blessingScope,"same",key) end
+  end)
+  f.blessingUniform.uniform=true
+  f.blessingUniformLabel=label(p,"Blessing for everyone",24,-159,"GameFontNormal",174)
+  f.blessingUniformHelp=label(p,"",24,-196,"GameFontDisableSmall",670)
+  f.blessingHeaders={label(p,"Class",24,-144,"GameFontDisableSmall",112),label(p,"Blessing / priority order",224,-144,"GameFontDisableSmall",270),label(p,"Player exceptions",546,-144,"GameFontDisableSmall",140)}
   f.blessingRows={}
   for index,class in ipairs(self.RecipientClasses) do
     local token=class; local row=CreateFrame("Frame",nil,p,"BackdropTemplate"); row:SetSize(686,25)
@@ -472,13 +538,24 @@ function B:BuildBlessingOptions(parent)
     local coords=CLASS_ICON_TCOORDS and CLASS_ICON_TCOORDS[token]; if coords then row.icon:SetTexCoord(unpack(coords)) end
     local name=(LOCALIZED_CLASS_NAMES_MALE and LOCALIZED_CLASS_NAMES_MALE[token]) or token:sub(1,1)..token:sub(2):lower()
     label(row,name,36,-8,"GameFontHighlightSmall",114)
-    row.pick=blessingPick(row,206,0,286,function() return B.db.blessingClasses[token] end,function(key) B.db.blessingClasses[token]=key end)
+    row.pick=blessingPick(row,206,0,286,function() return B:GroupBlessingSettings(token,f.blessingScope,false,f.blessingContext) end,function(key) B:SetGroupBlessingSettings(token,f.blessingScope,key,nil,false,f.blessingContext) end)
+    row.pick.scope=function() return f.blessingContext=="Raid" and f.blessingScope or 0 end
+    local update=row.pick.Update
+    row.pick.Update=function(control)
+      update(control)
+      if control.getChoice()==nil then
+        local chosen,order=B:GroupBlessingSettings(token,f.blessingScope,true,f.blessingContext)
+        if not chosen then order=groupDefaultOrder(token,f.blessingContext=="Raid" and f.blessingScope or 1); chosen=order and order[1] end
+        local first=chosen=="priority" and order and order[1] or chosen
+        control:SetText((chosen=="priority" and prioritySummary(order) or blessingName(first or "skip"))..(f.blessingContext=="Raid" and f.blessingScope>0 and " |cffbbb6a8("..L("default")..")|r" or " |cffbbb6a8("..L("Buffs")..")|r"))
+        control.icon:SetTexture(first and first~="skip" and blessingIcon(first) or "Interface\\Buttons\\UI-GroupLoot-Pass-Up")
+      end
+    end
     row.pick.priorityClass=token; row.pick.priorityTarget=false
-    row.pick.getOrder=function() return B.db.groupBlessingPriorities[token] end
-    row.pick.setOrder=function(order) B.db.groupBlessingPriorities[token]=order end
-    row.status=label(row,"",0,0,"GameFontDisableSmall",190); row.status:Hide()
+    row.pick.getOrder=function() local _,order=B:GroupBlessingSettings(token,f.blessingScope,false,f.blessingContext); return order end
+    row.pick.setOrder=function(order) B:SetGroupBlessingSettings(token,f.blessingScope,nil,order,true,f.blessingContext) end
     row.players=flatButton(row,"",548,-2,132,function()
-      if A.Combat() or not B.db.blessingAssignments or not B.db.group then return end
+      if A.Combat() or B:BlessingPlan(f.blessingContext,f.blessingScope).mode=="same" then return end
       if f.expandedBlessing==token then f.expandedBlessing=nil else f.expandedBlessing=token end
       f.blessingPlayerOffset=0; B:Options()
     end)
@@ -503,18 +580,29 @@ function B:BuildBlessingOptions(parent)
     local row=CreateFrame("Frame",nil,detail); row:SetSize(626,26); row:SetPoint("TOPLEFT",4,-26-(i-1)*27)
     row.name=label(row,"",8,-7,"GameFontHighlightSmall",190)
     row.pick=blessingPick(row,210,0,190,function()
-      local v=B.blessingPlayers and B.blessingPlayers[row.guid]; return v and v.choice
+      local v=B:GetBlessingPlayer(row.guid,f.blessingContext); return v and v.choice
     end,function(key)
       if row.entry and A.Call(UnitGUID,row.entry.unit)==row.guid then
-        local v=B.blessingPlayers and B.blessingPlayers[row.guid]; B:SetBlessingPlayer(row.entry,key,v and v.neverSalvation)
+        local v=B.blessingPlayers and B.blessingPlayers[row.guid]; B:SetBlessingPlayer(row.entry,key,v and v.neverSalvation,f.blessingContext)
       end
     end,true)
+    local updatePlayer=row.pick.Update
+    row.pick.Update=function(control)
+      updatePlayer(control)
+      if not control.getChoice() and row.entry then
+        local key,order=B:GroupBlessingSettings(row.entry.class,row.entry.group,true,f.blessingContext)
+        if not key then order=groupDefaultOrder(row.entry.class,row.entry.group); key=order[1] end
+        local first=key=="priority" and order and order[1] or key
+        control:SetText((key=="priority" and L("Priority list") or blessingName(first or "skip")).." ("..L("class")..")")
+        control.icon:SetTexture(first and first~="skip" and blessingIcon(first) or "Interface\\Buttons\\UI-GroupLoot-Pass-Up")
+      end
+    end
     row.protect=check(row,L("Never Salvation"),430,-1,function(c)
       if row.entry and A.Call(UnitGUID,row.entry.unit)==row.guid then
-        local v=B.blessingPlayers and B.blessingPlayers[row.guid]; B:SetBlessingPlayer(row.entry,v and v.choice,c:GetChecked()==true); B:Options()
+        local v=B:GetBlessingPlayer(row.guid,f.blessingContext); B:SetBlessingPlayer(row.entry,v and v.choice,c:GetChecked()==true,f.blessingContext); B:Options()
       end
     end)
-    addHelp(row.protect,L("Never Salvation"),"Blocks Salvation for this player and any Greater Salvation that would affect them. Choose another individual blessing if needed. No role or spec guessing.")
+    addHelp(row.protect,L("Never Salvation"),"Blocks Salvation and Mass Salvation for this player, independently of their blessing choice. No role or spec guessing.")
     f.blessingPlayerRows[i]=row
   end
   f.blessingPageText=label(detail,"",12,-179,"GameFontDisableSmall",440)
@@ -527,33 +615,232 @@ function B:BuildBlessingOptions(parent)
     f.blessingPlayerOffset=math.floor(value+0.5); B:Options()
   end)
   button(detail,L("Done"),548,-170,98,function() f.expandedBlessing=nil; B:Options() end)
-  f.blessingFooter=label(p,"Mixed choices use individual blessings. Player exceptions last for this group session.",18,-602,"GameFontDisableSmall",686)
-  button(p,"Existing buff filters",18,-574,160,function() f.blessingLegacy=true; B:Options() end)
-  label(p,"Follow buff settings uses your enabled buffs, priorities and filters.",192,-581,"GameFontDisableSmall",510)
+  line(p,-505)
+  f.salvationGroup=check(p,"Offer Salvation to party / raid",18,-514,function(c)
+    setAndRefresh("salvationGroup",c:GetChecked()==true); B:Options()
+  end)
+  f.salvationSummary=label(p,"",18,-544,"GameFontDisableSmall",670)
+  f.salvationRecipients=button(p,"Salvation recipients",475,-516,210,function() B:ToggleSalvationRecipients() end)
+  f.blessingFooter=label(p,"",18,-604,"GameFontDisableSmall",686)
+  f.followBuffSettings=button(p,"Use Buffs settings",18,-574,164,function()
+    if A.Combat() then return end
+    B.db.blessingAssignments=false; f.expandedBlessing=nil; B:InvalidateAura(); B:RequestRefresh("follow Buffs settings",0); B:Options()
+  end)
+  addHelp(f.followBuffSettings,"Use Buffs settings","Stop explicit party and raid blessing assignments. Existing plans stay saved. Group blessings follow enabled Buffs, priorities and recipient filters instead.")
+  f.blessingFilterButton=button(p,"Buffs recipient filters",190,-574,188,function() B:ToggleBlessingFilters() end)
+  f.copyPartyBlessings=button(p,"Copy party assignments",500,-574,203,function()
+    if B:CopyPartyBlessingsToRaid() then f.blessingScope=0; f.expandedBlessing=nil; B:Options() end
+  end)
+
+end
+-- The fallback still honors older per-buff filters; keep those editable without
+-- rebuilding the former assignment page or duplicating explicit class plans.
+function B:ToggleBlessingFilters()
+  if A.Combat() then return end
+  local f=self.options; local p=f.blessingFilters
+  if p then p:Sync(); p:SetShown(not p:IsShown()); f.activeSelector=p; return end
+  p=CreateFrame("Frame","BuffTapBlessingFilters",f,"BackdropTemplate"); f.blessingFilters=p
+  p:SetSize(620,338); p:SetPoint("CENTER"); p:SetFrameStrata("DIALOG"); p:SetFrameLevel(f:GetFrameLevel()+100)
+  p:SetBackdrop({bgFile="Interface\\Buttons\\WHITE8X8",edgeFile="Interface\\Buttons\\WHITE8X8",edgeSize=1})
+  p:SetBackdropColor(.025,.035,.045,1); p:SetBackdropBorderColor(.55,.44,.23,1); p:EnableMouse(true); p:SetClampedToScreen(true)
+  if UISpecialFrames then table.insert(UISpecialFrames,"BuffTapBlessingFilters") end
+  label(p,"Buffs recipient filters",18,-16,"GameFontNormalLarge")
+  label(p,"Only affects blessings inherited from Buffs settings. Explicit assignments override these filters.",18,-43,"GameFontDisableSmall",580)
+  p.key="bok"
+  p.pick=selector(p,"",18,-77,365,function()
+    local choices={}; for _,key in ipairs(B.BlessingFamilies) do choices[#choices+1]={key=key,name=blessingName(key)} end; return choices
+  end,function(key) p.key=key; p:Sync() end)
+  p.pick.ownerPanel=p
+  p.icon=p:CreateTexture(nil,"ARTWORK"); p.icon:SetSize(24,24); p.icon:SetPoint("TOPLEFT",402,-78)
+  label(p,"Recipient groups (party uses G1)",18,-117,"GameFontNormal")
+  p.groups={}; p.classes={}
+  for i=1,8 do
+    local group=i
+    p.groups[i]=check(p,"G"..i,18+(i-1)*73,-137,function(c)
+      if A.Combat() then return end
+      local def=B:FindBuff(p.key); B:EnsureBuffGroups(def)[group]=c:GetChecked()==true
+      B:NormalizeBuffGroups(def); B:InvalidateAura(); B:RequestRefresh("blessing recipient group",0)
+    end)
+  end
+  label(p,"Recipient classes",18,-181,"GameFontNormal")
+  for i,class in ipairs(B.RecipientClasses) do
+    local token=class
+    p.classes[token]=check(p,(LOCALIZED_CLASS_NAMES_MALE and LOCALIZED_CLASS_NAMES_MALE[token]) or token:sub(1,1)..token:sub(2):lower(),18+((i-1)%3)*195,-204-math.floor((i-1)/3)*25,function(c)
+      if A.Combat() then return end
+      B.db.buffClasses[p.key]=B.db.buffClasses[p.key] or {}; B.db.buffClasses[p.key][token]=c:GetChecked()==true
+      B:InvalidateAura(); B:RequestRefresh("blessing recipient class",0)
+    end)
+  end
+  p.Sync=function(self)
+    local def=B:FindBuff(self.key); self.pick:SetText(blessingName(self.key)); self.icon:SetTexture(blessingIcon(self.key))
+    for group,c in ipairs(self.groups) do c:SetChecked(B:GroupSelected(def,group)) end
+    for class,c in pairs(self.classes) do c:SetChecked(B:GroupClassAllowed(def,class)) end
+  end
+  button(p,"Reset this blessing",18,-296,170,function()
+    if A.Combat() then return end
+    B.db.buffGroups[p.key]=nil; B.db.buffClasses[p.key]=nil; p:Sync(); B:InvalidateAura(); B:RequestRefresh("reset blessing filters",0)
+  end)
+  button(p,"Done",480,-296,120,function() p:Hide(); B:Options() end)
+  p:SetScript("OnHide",function() p.pick.menu:Hide() end)
+  if f.activeSelector then f.activeSelector:Hide() end
+  f.activeSelector=p; p:Sync(); p:Show()
+end
+
+function B:RefreshInventoryWindows()
+  if A.Combat() then return end
+  if self.options and self.options:IsShown() then self:Options() end
+  if self.itemPicker and self.itemPicker:IsShown() then self:UpdateConsumablePicker() end
+end
+
+function B:UpdateGroupRosterOptions()
+  local f=self.options
+  if A.Combat() or not f or not f:IsShown() or f.activeTab~=TAB.Groups then return end
+  self:UpdateBlessingOptions()
+end
+
+function B:ToggleSalvationRecipients()
+  if A.Combat() then return end
+  local f=self.options
+  if f.salvationPanel then
+    f.salvationPanel:Sync(); f.salvationPanel:SetShown(not f.salvationPanel:IsShown()); f.activeSelector=f.salvationPanel; return
+  end
+  local p=CreateFrame("Frame","BuffTapSalvationRecipients",f,"BackdropTemplate"); f.salvationPanel=p
+  p:SetSize(620,300); p:SetPoint("CENTER"); p:SetFrameStrata("DIALOG"); p:SetFrameLevel(f:GetFrameLevel()+100)
+  p:SetBackdrop({bgFile="Interface\\Buttons\\WHITE8X8",edgeFile="Interface\\Buttons\\WHITE8X8",edgeSize=1})
+  p:SetBackdropColor(.025,.035,.045,1); p:SetBackdropBorderColor(.55,.44,.23,1); p:EnableMouse(true); p:SetClampedToScreen(true)
+  if UISpecialFrames then table.insert(UISpecialFrames,"BuffTapSalvationRecipients") end
+  label(p,"Salvation recipients",18,-16,"GameFontNormalLarge")
+  label(p,"Applies only when party / raid Salvation is enabled. Never Salvation exceptions still apply.",18,-45,"GameFontDisableSmall",580)
+  label(p,"Raid groups (party uses G1)",18,-80,"GameFontNormal")
+  local def=B:FindBuff("bos"); p.groups={}; p.classes={}
+  for i=1,8 do
+    local group=i; local c=check(p,"G"..i,18+(i-1)*73,-100,function(c)
+      if A.Combat() then return end
+      B:EnsureBuffGroups(def)[group]=c:GetChecked()==true; B:InvalidateAura(); B:RequestRefresh("Salvation groups",0)
+    end); c:SetChecked(B:GroupSelected(def,i)); p.groups[i]=c
+  end
+  label(p,"Recipient classes",18,-141,"GameFontNormal")
+  for i,class in ipairs(B.RecipientClasses) do
+    local token=class
+    local c=check(p,(LOCALIZED_CLASS_NAMES_MALE and LOCALIZED_CLASS_NAMES_MALE[token]) or token:sub(1,1)..token:sub(2):lower(),18+((i-1)%3)*195,-166-math.floor((i-1)/3)*27,function(c)
+      if A.Combat() then return end
+      B.db.buffClasses.bos=B.db.buffClasses.bos or {}; B.db.buffClasses.bos[token]=c:GetChecked()==true
+      B:InvalidateAura(); B:RequestRefresh("Salvation classes",0)
+    end); c:SetChecked(B:GroupClassAllowed(def,token)); p.classes[token]=c
+  end
+  p.Sync=function(self)
+    for i,c in ipairs(self.groups) do c:SetChecked(B:GroupSelected(def,i)) end
+    for token,c in pairs(self.classes) do c:SetChecked(B:GroupClassAllowed(def,token)) end
+  end
+  f.activeSelector=p; p:Show()
+  p.playerExclusions=button(p,"Player exclusions",18,-260,170,function()
+    if A.Combat() then return end
+    p:Hide(); f.expandedBlessing="SALVATION"; f.blessingPlayerOffset=0; B:Options()
+  end)
+  button(p,"Done",480,-260,120,function() p:Hide(); B:Options() end)
+end
+local function updateBlessingPlayers(self,f,entries,title,editable,protectionOnly)
+  if #entries==0 then return end
+      local maxOffset=math.max(0,#entries-5); local offset=math.max(0,math.min(f.blessingPlayerOffset or 0,maxOffset)); f.blessingPlayerOffset=offset; f.blessingPlayerMaxOffset=maxOffset
+      f.blessingDetail:ClearAllPoints(); f.blessingDetail:SetPoint("TOPLEFT",36,-242); f.blessingDetail:Show(); f.blessingDetailTitle:SetText(L("Player exceptions")..": "..title)
+      for i,r in ipairs(f.blessingPlayerRows) do
+        local entry=entries[offset+i]
+        if entry then
+          r.entry=entry; r.guid=A.Call(UnitGUID,entry.unit); r.name:SetText(A.Call(UnitName,entry.unit) or entry.unit)
+          r.pick:SetShown(not protectionOnly); r.pick:Update(); r.pick:SetAvailable(editable and not protectionOnly)
+          local v=self.blessingPlayers and self.blessingPlayers[r.guid]; r.protect:SetChecked(v and v.neverSalvation or false); r.protect:SetEnabled(not A.Combat()); r.protect:ClearAllPoints(); r.protect:SetPoint("TOPLEFT",protectionOnly and 210 or 430,-1); r:Show()
+        end
+      end
+      f.blessingPageText:SetText("Players "..(offset+1).."-"..math.min(offset+5,#entries).." / "..#entries.." - "..L(protectionOnly and "Protected players never receive Salvation." or "Player exceptions take precedence."))
+      f.blessingScroll.silent=true; f.blessingScroll:SetMinMaxValues(0,math.max(1,maxOffset)); f.blessingScroll:SetValue(offset); f.blessingScroll:SetShown(maxOffset>0); f.blessingScroll.silent=false
+      f.blessingDetail:SetHeight(202)
+
 end
 function B:UpdateBlessingOptions()
   local f=self.options; local class=A.Call(function() local _,token=UnitClass("player"); return token end); local paladin=class=="PALADIN"
-  f.blessingPanel:SetShown(paladin and not f.blessingLegacy); f.legacyGroups:SetShown(not paladin or f.blessingLegacy)
-  f.backBlessings:SetShown(paladin)
+  f.blessingPanel:SetShown(paladin); f.legacyGroups:SetShown(not paladin)
   if f.blessingMenu then f.blessingMenu:Hide() end
   if not paladin then return end
-  f.blessingEnable:SetChecked(self.db.blessingAssignments); f.blessingGroupEnable:SetChecked(self.db.group); f.blessingSmart:SetChecked(self.db.smartGroup)
-  for i,c in ipairs(f.blessingGroups) do c:SetChecked(self.db.raidGroups[i]) end
+  self:EnsureBlessingPlans()
+  local raid=f.blessingContext=="Raid"; local scope=raid and f.blessingScope or 0
+  local plan=self:BlessingPlan(f.blessingContext,scope); local same=plan.mode=="same"
+  local editable=self.db.blessingAssignments and not A.Combat()
+  f.blessingTitle:SetText(L(raid and "Raid buffing" or "Party buffing"))
+  f.blessingIntro:SetText(L(not raid and self.db.blessingPartyExcluded and "Party excluded by your previous setup. Enable party / raid here to include it." or not self.db.blessingAssignments and "Using Buffs settings. Choose a mode below to set group assignments." or raid and "Set raid defaults, then customize individual groups where needed." or "Set blessings by class for a five-player party. You can prepare this while solo."))
+  for _,pair in ipairs({{f.partyView,not raid},{f.raidView,raid},{f.blessingByClass,not same and self.db.blessingAssignments},{f.blessingSame,same and self.db.blessingAssignments}}) do
+    pair[1]:SetBackdropColor(pair[2] and .20 or .075,pair[2] and .18 or .095,pair[2] and .08 or .11,1)
+  end
+  f.blessingGroupEnable:SetChecked(self.db.group and (raid or not self.db.blessingPartyExcluded)); f.blessingSmart:SetChecked(self.db.smartGroup)
   f.blessingThreshold.silent=true; f.blessingThreshold:SetValue(self.db.blessingNeed); f.blessingThreshold.valueText:SetText(self.db.blessingNeed.."+"); f.blessingThreshold.silent=false
-  local roster=self:Roster(); local active=self:BlessingAssignmentsActive(); self.blessingClassList=self:ClassList(); local y=-230
-  local editable=self.db.blessingAssignments and self.db.group
-  f.blessingInstruction:SetText(L(not self.db.blessingAssignments and "Enable class assignments to choose a blessing for each class." or not self.db.group and "Enable party / raid to use these class assignments." or "Open a class to select and order blessings. Player exceptions take precedence."))
-  if not editable then f.expandedBlessing=nil end
+  local roster=self:Roster(); local active=self:BlessingAssignmentsActive(); self.blessingClassList=self:ClassList()
+  for i,c in ipairs(f.blessingScopeButtons) do
+    local group=i-1; c:SetShown(raid)
+    local selected=scope==group
+    c:SetBackdropColor(selected and .20 or .075,selected and .18 or .095,selected and .08 or .11,1)
+    if group>0 then
+      local excluded=not self.db.raidGroups[group]; local effective=self:BlessingPlan("Raid",group)
+      c:SetText((excluded and "X " or "").."G"..group)
+      c:SetAlpha(excluded and .55 or 1)
+      local summary=effective.mode=="same" and blessingName(effective.blessing) or L("By class")
+      c.note:SetText(excluded and L("Not buffing") or summary..(not self.db.blessingGroupOverrides[group] and " - "..L("default") or ""))
+      local keys,seen={},{}
+      if effective.mode=="same" then keys[1]=effective.blessing
+      else for _,token in ipairs(self.RecipientClasses) do
+        local choice,order=self:GroupBlessingSettings(token,group,true,"Raid")
+        if not choice then order=groupDefaultOrder(token,group); choice="priority" end
+        local values=choice=="priority" and (order or {}) or {choice}
+        for _,key in ipairs(values) do if key~="skip" and not seen[key] and #keys<4 then keys[#keys+1]=key; seen[key]=true end end
+      end end
+      for j,icon in ipairs(c.icons) do icon:SetShown(not excluded and keys[j]~=nil); if keys[j] then icon:SetTexture(blessingIcon(keys[j])) end end
+      addHelp(c,"Raid group "..group,excluded and "Not buffing this group. Its assignments remain saved." or summary..". "..(self.db.blessingGroupOverrides[group] and "Custom group assignments." or "Inherited from raid defaults.").." Click to inspect or edit.")
+    end
+  end
+  f.blessingSelected:SetShown(raid and scope>0); f.blessingSelected:SetChecked(scope>0 and self.db.raidGroups[scope] or false)
+  f.blessingInherit:SetShown(raid and scope>0 and self.db.blessingGroupOverrides[scope]~=nil)
+  f.copyPartyBlessings:SetShown(raid)
+  local modeY=raid and -208 or -111
+  f.blessingAssignmentTitle:ClearAllPoints(); f.blessingAssignmentTitle:SetPoint("TOPLEFT",18,modeY-5)
+  f.blessingAssignmentTitle:SetText(L(raid and (scope>0 and "Group "..scope or "Raid defaults") or "Party blessings"))
+  f.blessingByClass:ClearAllPoints(); f.blessingByClass:SetPoint("TOPLEFT",280,modeY)
+  f.blessingSame:ClearAllPoints(); f.blessingSame:SetPoint("TOPLEFT",408,modeY)
+  local headerY=modeY-39; local y=headerY-20
+  for _,h in ipairs(f.blessingHeaders) do h:Hide() end
+  if not same then
+    for i,h in ipairs(f.blessingHeaders) do h:ClearAllPoints(); h:SetPoint("TOPLEFT",({24,224,546})[i],headerY); h:Show() end
+  end
+  f.blessingUniform:SetShown(same); f.blessingUniformLabel:SetShown(same); f.blessingUniformHelp:SetShown(same)
+  f.blessingUniform:ClearAllPoints(); f.blessingUniform:SetPoint("TOPLEFT",236,modeY-54); f.blessingUniform:Update(); f.blessingUniform:SetAvailable(not A.Combat())
+  f.blessingUniformLabel:ClearAllPoints(); f.blessingUniformLabel:SetPoint("TOPLEFT",24,modeY-61)
+  f.blessingUniformHelp:ClearAllPoints(); f.blessingUniformHelp:SetPoint("TOPLEFT",24,modeY-98)
+  f.blessingUniformHelp:SetText(L("This blessing applies to everyone. Saved class and player choices are inactive in this mode."))
+  f.followBuffSettings:SetShown(self.db.blessingAssignments)
+  f.blessingFilterButton:SetShown(not same or not self.db.blessingAssignments)
+  f.blessingFilterButton:ClearAllPoints(); f.blessingFilterButton:SetPoint("TOPLEFT",self.db.blessingAssignments and 190 or 18,-574)
+  if f.blessingFilters then f.blessingFilters:Sync() end
+  f.salvationGroup:SetChecked(self.db.salvationGroup)
+  f.salvationSummary:SetText(L("Separate from blessings. Your Salvation recipient exclusions still apply."))
+  local mixed=false
+  if active and self.db.smartGroup and f.blessingContext==self:BlessingContext() then
+    for _,entry in ipairs(roster) do
+      local key=self:BlessingChoice(entry)
+      if key and key~="skip" and not self:BlessingGreaterSafe(key,entry.class,roster) then mixed=true; break end
+    end
+  end
+  f.blessingFooter:SetText(L(mixed and "Individual blessings: same-class assignments differ or include an excluded player." or same and "Switch to By class to use your saved class and player assignments." or "Player exceptions override class choices. Party and raid plans are separate."))
+  if same and f.expandedBlessing~="SALVATION" then f.expandedBlessing=nil end
   f.updatingBlessingDetail=true; f.blessingDetail:Hide()
   for _,r in ipairs(f.blessingPlayerRows) do r:Hide(); r.entry=nil; r.guid=nil end
   for _,row in ipairs(f.blessingRows) do
-    row:ClearAllPoints(); row:SetPoint("TOPLEFT",18,y); row.pick:Update()
+    row:SetShown(not same); row:ClearAllPoints(); row:SetPoint("TOPLEFT",18,y); row.pick:Update()
     row.pick:SetAvailable(editable)
-    local entries={}; for _,entry in ipairs(roster) do if entry.class==row.class then entries[#entries+1]=entry end end
-    row.players:SetText(L(#entries==1 and "%d player" or "%d players",#entries))
-    row.players:SetEnabled(editable and #entries>0); row.players:SetAlpha(editable and #entries>0 and 1 or 0.4)
+    local entries={}; for _,entry in ipairs(roster) do if entry.class==row.class and f.blessingContext==self:BlessingContext() and (not raid or scope==0 or entry.group==scope) then entries[#entries+1]=entry end end
+    local exceptions=0
+    for _,entry in ipairs(entries) do local value=self:GetBlessingPlayer(A.Call(UnitGUID,entry.unit),f.blessingContext); if value and value.choice then exceptions=exceptions+1 end end
+    row.players:SetText(exceptions>0 and L(exceptions==1 and "%d exception" or "%d exceptions",exceptions) or L("Players"))
+    row.players:SetBackdropColor(exceptions>0 and .16 or 0,exceptions>0 and .14 or 0,exceptions>0 and .06 or 0,exceptions>0 and 1 or 0)
+    row.players:SetEnabled(#entries>0 and not A.Combat()); row.players:SetAlpha(#entries>0 and 1 or 0.4)
     row.players.arrow:SetTexture(f.expandedBlessing==row.class and "Interface\\ChatFrame\\UI-ChatIcon-ScrollUp-Up" or "Interface\\ChatFrame\\UI-ChatIcon-ScrollDown-Up")
-    local chosen=self.db.blessingClasses[row.class]; local status="Current settings"
+    local chosen=self:GroupBlessingSettings(row.class,scope,true,f.blessingContext); local status="Current settings"
     if self.db.blessingAssignments then
       status=#entries==0 and "No group players" or "Individual"
       if not active then status="Party / raid inactive"
@@ -568,23 +855,13 @@ function B:UpdateBlessingOptions()
         else status="Individual: below threshold" end
       end
     end
-    row.status:SetText(status); addHelp(row.players,"Player exceptions",L(status).."\n"..L("Click to expand or collapse individual player choices.")); y=y-26
-    if f.expandedBlessing==row.class and #entries>0 then
-      local maxOffset=math.max(0,#entries-5); local offset=math.max(0,math.min(f.blessingPlayerOffset or 0,maxOffset)); f.blessingPlayerOffset=offset; f.blessingPlayerMaxOffset=maxOffset
-      f.blessingDetail:ClearAllPoints(); f.blessingDetail:SetPoint("TOPLEFT",36,math.max(y,-370)); f.blessingDetail:Show(); f.blessingDetailTitle:SetText(L("Player exceptions")..": "..L(row.class:sub(1,1)..row.class:sub(2):lower()))
-      for i,r in ipairs(f.blessingPlayerRows) do
-        local entry=entries[offset+i]
-        if entry then
-          r.entry=entry; r.guid=A.Call(UnitGUID,entry.unit); r.name:SetText(A.Call(UnitName,entry.unit) or entry.unit)
-          r.pick:Update(); r.pick:SetAvailable(editable)
-          local v=self.blessingPlayers and self.blessingPlayers[r.guid]; r.protect:SetChecked(v and v.neverSalvation or false); r.protect:SetEnabled(self.db.blessingAssignments); r:Show()
-        end
-      end
-      f.blessingPageText:SetText("Players "..(offset+1).."-"..math.min(offset+5,#entries).." / "..#entries.." - "..L("Player exceptions take precedence."))
-      f.blessingScroll.silent=true; f.blessingScroll:SetMinMaxValues(0,math.max(1,maxOffset)); f.blessingScroll:SetValue(offset); f.blessingScroll:SetShown(maxOffset>0); f.blessingScroll.silent=false
-      f.blessingDetail:SetHeight(202)
-
-    end
+    addHelp(row.players,"Player exceptions",L(status).."\n"..L("Click to expand or collapse individual player choices.")); y=y-26
+    if f.expandedBlessing==row.class then updateBlessingPlayers(self,f,entries,L(row.class:sub(1,1)..row.class:sub(2):lower()),editable,false) end
+  end
+  if f.expandedBlessing=="SALVATION" then
+    local entries={}
+    if f.blessingContext==self:BlessingContext() then for _,entry in ipairs(roster) do if not raid or scope==0 or entry.group==scope then entries[#entries+1]=entry end end end
+    updateBlessingPlayers(self,f,entries,L("Salvation exclusions"),false,true)
   end
   f.updatingBlessingDetail=false
 end
@@ -1164,10 +1441,10 @@ function B:ChooseConsumable(family,anchor)
     f.count=label(f,"",20,-515,"GameFontHighlightSmall",400)
     button(f,L("Done"),540,-508,86,function() f:Hide() end)
     f.search:SetScript("OnTextChanged",function() f.offset=0; B:UpdateConsumablePicker() end)
-    f:RegisterEvent("PLAYER_REGEN_DISABLED"); f:RegisterEvent("BAG_UPDATE_DELAYED"); f:RegisterEvent("ITEM_DATA_LOAD_RESULT")
-    f:SetScript("OnEvent",function(_,event,itemID)
+    f:RegisterEvent("PLAYER_REGEN_DISABLED")
+    f:SetScript("OnEvent",function(_,event)
       if event=="PLAYER_REGEN_DISABLED" then f:Hide()
-      elseif f:IsShown() then B:InvalidateConsumables(event=="ITEM_DATA_LOAD_RESULT" and itemID or nil); B:UpdateConsumablePicker() end
+      end
     end)
     if UISpecialFrames then table.insert(UISpecialFrames,"BuffTapItemPicker") end
   end
@@ -1264,6 +1541,7 @@ function B:Options()
       for i,t in ipairs(f.tabs) do
         if i==index then t:LockHighlight() else t:UnlockHighlight() end
       end
+      if index==TAB.Profiles and f.profiles then B:SaveClassSetup(); B:UpdateProfileOptions() end
     end
     f.selectTab=setTab
     local tabX=24
@@ -1278,7 +1556,7 @@ function B:Options()
     -- BUFFS PAGE
     local buffs=panel(f); f.pages[TAB.Buffs]=buffs
     label(buffs,L("Buffs"),18,-16,"GameFontNormalLarge")
-    label(buffs,L("Use arrows to reorder. Buffs at the top are checked first."),18,-42,"GameFontDisableSmall",650)
+    f.buffInstruction=label(buffs,L("Use arrows to reorder. Buffs at the top are checked first."),18,-42,"GameFontDisableSmall",650)
     label(buffs,L("Rebuff"),334,-66,"GameFontDisableSmall",70)
     label(buffs,L("Priority"),590,-66,"GameFontDisableSmall",70)
     local scroll=CreateFrame("ScrollFrame",nil,buffs,"UIPanelScrollFrameTemplate")
@@ -1359,57 +1637,56 @@ function B:Options()
     -- GROUPS PAGE
     local groupPage=panel(f); f.pages[TAB.Groups]=groupPage
     local groups=CreateFrame("Frame",nil,groupPage); groups:SetAllPoints(); f.legacyGroups=groups
-    self:BuildBlessingOptions(groupPage)
-    f.backBlessings=button(groups,"Blessing assignments",490,-16,200,function() f.blessingLegacy=false; B:Options() end)
-    label(groups,L("Party & raid buffing"),18,-16,"GameFontNormalLarge")
-    label(groups,L("Manage shared settings, then customize each buff below. Party members use G1."),18,-38,"GameFontDisableSmall",680)
-    f.groupEnable=check(groups,L("Enable party / raid"),18,-58,function(s) setAndRefresh("group",s:GetChecked()==true); B:Options() end)
-    f.smartGroup=check(groups,L("Use group spells automatically"),290,-58,function(s) setAndRefresh("smartGroup",s:GetChecked()==true); B:Options() end)
-    local shared=CreateFrame("Frame",nil,groups); shared:SetPoint("TOPLEFT",0,-112); shared:SetSize(704,80); shared:Show()
-    f.sharedGroups=shared
-    card(groups,12,-86,698,106)
-    label(groups,L("Shared group settings"),18,-92,"GameFontNormal")
-    line(groups,-204)
-    f.perBuffHeading=label(groups,L("Per-buff customization"),18,-218,"GameFontNormalLarge")
-    label(groups,L("Select a buff below to customize its party/raid groups, recipient classes and group-spell threshold."),18,-242,"GameFontDisableSmall",686)
-    label(groups,L("These filters apply only to party/raid buffing. Personal and open-world target buffs stay separate."),18,-596,"GameFontDisableSmall",686)
-    label(shared,L("All buffs"),18,-10,"GameFontNormal")
-    f.groupChecks={}; f.groupMixed={}
-    for i=1,8 do
-      local idx=i
-      local c=check(shared,"G"..i,108+(i-1)*68,-5,function(s)
-        if A.Combat() then return end
-        B:SetRaidGroupColumn(idx,s:GetChecked()==true)
-        B:RequestRefresh("raid group master",0)
-        B:Options()
+    if A.Call(function() local _,class=UnitClass("player"); return class end)=="PALADIN" then
+      self:BuildBlessingOptions(groupPage)
+    else
+      f.blessingPanel=CreateFrame("Frame",nil,groupPage); f.blessingPanel:SetAllPoints()
+
+      label(groups,L("Party & raid buffing"),18,-16,"GameFontNormalLarge")
+      label(groups,L("Manage shared settings, then customize each buff below. Party members use G1."),18,-38,"GameFontDisableSmall",680)
+      f.groupEnable=check(groups,L("Enable party / raid"),18,-58,function(s) setAndRefresh("group",s:GetChecked()==true); B:Options() end)
+      f.smartGroup=check(groups,L("Use group spells automatically"),290,-58,function(s) setAndRefresh("smartGroup",s:GetChecked()==true); B:Options() end)
+      local shared=CreateFrame("Frame",nil,groups); shared:SetPoint("TOPLEFT",0,-112); shared:SetSize(704,80); shared:Show()
+      f.sharedGroups=shared
+      card(groups,12,-86,698,106)
+      label(groups,L("Shared group settings"),18,-92,"GameFontNormal")
+      line(groups,-204)
+      f.perBuffHeading=label(groups,L("Per-buff customization"),18,-218,"GameFontNormalLarge")
+      label(groups,L("Select a buff below to customize its party/raid groups, recipient classes and group-spell threshold."),18,-242,"GameFontDisableSmall",686)
+      label(groups,L("These filters apply only to party/raid buffing. Personal and open-world target buffs stay separate."),18,-596,"GameFontDisableSmall",686)
+      label(shared,L("All buffs"),18,-10,"GameFontNormal")
+      f.groupChecks={}
+      for i=1,8 do
+        local idx=i
+        local c=check(shared,"G"..i,108+(i-1)*68,-5,function(s)
+          if A.Combat() then return end
+          B:SetRaidGroupColumn(idx,s:GetChecked()==true)
+          B:RequestRefresh("raid group master",0)
+          B:Options()
+        end)
+        local dash=c:CreateFontString(nil,"OVERLAY","GameFontNormalSmall")
+        dash:SetPoint("CENTER",c,"CENTER",0,1); dash:SetText("—"); dash:SetTextColor(1,0.82,0.1); dash:Hide(); c.mixedDash=dash
+        addHelp(c,"Raid Group "..i,"Checked or unchecked applies to every buff. A gold dash means this group has mixed per-buff assignments.")
+        f.groupChecks[i]=c
+      end
+      label(shared,L("Group threshold"),18,-48,"GameFontHighlight",110)
+      f.groupNeedSlider=compactSlider(shared,2,5,1,150,function(v) return tostring(v).."+" end,function(_,v)
+        B.db.groupNeed=v; B:NormalizeGroupNeeds(); B:InitDB(); B:RequestRefresh("group threshold default",0.08)
       end)
-      local dash=c:CreateFontString(nil,"OVERLAY","GameFontNormalSmall")
-      dash:SetPoint("CENTER",c,"CENTER",0,1); dash:SetText("—"); dash:SetTextColor(1,0.82,0.1); dash:Hide(); c.mixedDash=dash
-      addHelp(c,"Raid Group "..i,"Checked or unchecked applies to every buff. A gold dash means this group has mixed per-buff assignments.")
-      f.groupChecks[i]=c
+      f.groupNeedSlider:SetScript("OnMouseUp",function() if not A.Combat() then B:Options() end end)
+      f.groupNeedSlider:SetPoint("TOPLEFT",128,-45)
+      card(groups,12,-270,194,300)
+      label(groups,L("Select a buff"),18,-274,"GameFontNormal")
+      local listScroll=CreateFrame("ScrollFrame",nil,groups,"UIPanelScrollFrameTemplate")
+      listScroll:SetPoint("TOPLEFT",18,-298); listScroll:SetSize(178,274)
+      f.assignScroll=listScroll
+      f.assignList=CreateFrame("Frame",nil,listScroll); f.assignList:SetSize(174,1); listScroll:SetScrollChild(f.assignList)
+      f.assignButtons={}
+      local assignChild=CreateFrame("Frame",nil,groups); assignChild:SetPoint("TOPLEFT",230,-270); assignChild:SetSize(474,296)
+      f.assignChild=assignChild; f.assignRows={}
+      f.assignEmpty=label(assignChild,"No party / raid buffs available for this class.",8,-12,"GameFontHighlight",440)
+
     end
-    label(shared,L("Group threshold"),18,-48,"GameFontHighlight",110)
-    f.groupNeedSlider=compactSlider(shared,2,5,1,150,function(v) return tostring(v).."+" end,function(_,v)
-      B.db.groupNeed=v; B:NormalizeGroupNeeds(); B:InitDB(); B:RequestRefresh("group threshold default",0.08)
-    end)
-    f.groupNeedSlider:SetScript("OnMouseUp",function() if not A.Combat() then B:Options() end end)
-    f.groupNeedSlider:SetPoint("TOPLEFT",128,-45)
-    f.blessingNeedLabel=label(shared,L("Greater Blessings"),362,-48,"GameFontHighlight",132)
-    f.blessingNeedSlider=compactSlider(shared,2,5,1,120,function(v) return tostring(v).."+" end,function(_,v)
-      B.db.blessingNeed=v; B:NormalizeGroupNeeds(); B:InitDB(); B:RequestRefresh("blessing threshold default",0.08)
-    end)
-    f.blessingNeedSlider:SetScript("OnMouseUp",function() if not A.Combat() then B:Options() end end)
-    f.blessingNeedSlider:SetPoint("TOPLEFT",492,-45)
-    card(groups,12,-270,194,300)
-    label(groups,L("Select a buff"),18,-274,"GameFontNormal")
-    local listScroll=CreateFrame("ScrollFrame",nil,groups,"UIPanelScrollFrameTemplate")
-    listScroll:SetPoint("TOPLEFT",18,-298); listScroll:SetSize(178,274)
-    f.assignScroll=listScroll
-    f.assignList=CreateFrame("Frame",nil,listScroll); f.assignList:SetSize(174,1); listScroll:SetScrollChild(f.assignList)
-    f.assignButtons={}
-    local assignChild=CreateFrame("Frame",nil,groups); assignChild:SetPoint("TOPLEFT",230,-270); assignChild:SetSize(474,296)
-    f.assignChild=assignChild; f.assignRows={}
-    f.assignEmpty=label(assignChild,"No party / raid buffs available for this class.",8,-12,"GameFontHighlight",440)
 
     -- FRIENDLY TARGET PAGE
     local target=panel(f); f.pages[TAB.Target]=target
@@ -1445,10 +1722,10 @@ function B:Options()
     f.targetHeaders=CreateFrame("Frame",nil,target); f.targetHeaders:SetPoint("TOPLEFT",0,-204); f.targetHeaders:SetSize(698,78)
     local header=f.targetHeaders
     line(header,0)
-    label(header,"Spell availability & refresh timing",18,-18,"GameFontNormal")
+    header.title=label(header,"Spell availability & refresh timing",18,-18,"GameFontNormal")
     header:EnableMouse(true)
     addHelp(header,"Spell availability & refresh timing","Allow controls which spells unrestricted friendly-target mode may offer. Refresh timing applies to that spell across recipient classes. Custom priorities choose the order; this section does not add another blessing assignment. Leaving custom timing off uses the default target refresh above.")
-    label(header,"Choose allowed spells and optional refresh overrides for friendly targets.",18,-34,"GameFontDisableSmall",680)
+    header.help=label(header,"Choose allowed spells and optional refresh overrides for friendly targets.",18,-34,"GameFontDisableSmall",680)
     label(header,L("Allow"),18,-56,"GameFontDisableSmall",48)
     label(header,L("Buff"),82,-56,"GameFontDisableSmall",160)
     label(header,L("Override timing"),276,-56,"GameFontDisableSmall",100)
@@ -1655,11 +1932,9 @@ function B:Options()
       if f.resetConfirm then f.resetConfirm:Hide() end
       if B.appearancePreview then B.appearancePreview:Hide() end
     end)
-    f:RegisterEvent("PLAYER_REGEN_DISABLED"); f:RegisterEvent("BAG_UPDATE_DELAYED"); f:RegisterEvent("ITEM_DATA_LOAD_RESULT")
-    f:SetScript("OnEvent",function(_,event,itemID)
+    f:RegisterEvent("PLAYER_REGEN_DISABLED")
+    f:SetScript("OnEvent",function(_,event)
       if event=="PLAYER_REGEN_DISABLED" then f:StopMovingOrSizing(); f:Hide()
-      elseif f:IsShown() and not A.Combat() then
-        B:InvalidateConsumables(event=="ITEM_DATA_LOAD_RESULT" and itemID or nil); B:Options()
       end
     end)
     setTab(1)
@@ -1671,122 +1946,126 @@ function B:Options()
   self:UpdateProfileOptions()
   self:UpdateSupplyOptions()
   local paladin=A.Call(function() local _,token=UnitClass("player"); return token end)=="PALADIN"
+  f.buffInstruction:SetText(L(paladin and self.db.salvationMigration and not self:Enabled(self:FindBuff("bos")) and "Salvation changed: review and enable it separately. Previous opt-ins were paused for safety." or "Use arrows to reorder. Buffs at the top are checked first."))
   f.targetBlessingPanel:SetShown(paladin); f.targetClassAware:SetChecked(self.db.targetClassBlessings)
   f.targetBlessingFallback:SetChecked(self.db.targetBlessingFallback)
   for _,pick in ipairs(f.targetBlessingPicks) do pick:Update(); pick:SetAvailable(self.db.targetClassBlessings and self.db.friendlyTarget) end
   f.targetBlessingInstruction:SetText(L(not self.db.friendlyTarget and "Enable friendly target buffing to use these class choices." or not self.db.targetClassBlessings and "Enable class-aware target blessings to customize each class." or "Open a class to check and order blessings. All use the refresh above. Automatic uses enabled Buffs and their order, filtered for this class."))
   local simplePal=paladin and self.db.targetClassBlessings
-  f.targetHeaders:SetShown(not simplePal); f.targetScroll:SetShown(not simplePal)
+  if f.salvationPanel then f.salvationPanel:Sync() end
+  f.targetHeaders.title:SetText(L(simplePal and "Independent target buffs" or "Spell availability & refresh timing"))
+  f.targetHeaders.help:SetText(L(simplePal and "Salvation is independent. Allow it here for friendly party/raid targets; no self-buff toggle is required." or "Choose allowed spells and optional refresh overrides for friendly targets."))
+  f.targetHeaders:SetShown(true); f.targetScroll:SetShown(true)
   f.targetHeaders:ClearAllPoints(); f.targetHeaders:SetPoint("TOPLEFT",0,paladin and -396 or -204)
   f.targetScroll:ClearAllPoints(); f.targetScroll:SetPoint("TOPLEFT",14,paladin and -474 or -282); f.targetScroll:SetPoint("BOTTOMRIGHT",-34,54)
   f.pauseResting:SetChecked(self.db.pauseResting)
   f.enable:SetChecked(self.db.enabled)
   f.versionText:SetText("v"..self.version)
-  f.groupEnable:SetChecked(self.db.group); f.smartGroup:SetChecked(self.db.smartGroup); f.friendlyTarget:SetChecked(self.db.friendlyTarget)
+  f.friendlyTarget:SetChecked(self.db.friendlyTarget)
   f.targetDefaultSlider.silent=true; f.targetDefaultSlider:SetValue(self.db.targetSeconds); f.targetDefaultSlider.valueText:SetText(formatSeconds(self.db.targetSeconds)); f.targetDefaultSlider.silent=false
-  for i=1,8 do
-    local state=self:GroupColumnState(i)
-    local c=f.groupChecks[i]
-    c:SetChecked(state=="on")
-    if c.mixedDash then c.mixedDash:SetShown(state=="mixed") end
-  end
-  f.groupNeedSlider.silent=true; f.groupNeedSlider:SetValue(self.db.groupNeed); f.groupNeedSlider.valueText:SetText(tostring(self.db.groupNeed).."+"); f.groupNeedSlider.silent=false
-  f.blessingNeedSlider.silent=true; f.blessingNeedSlider:SetValue(self.db.blessingNeed); f.blessingNeedSlider.valueText:SetText(tostring(self.db.blessingNeed).."+"); f.blessingNeedSlider.silent=false
-  local smartAlpha=(self.db.group and self.db.smartGroup) and 1 or 0.45
-  if self.db.group and self.db.smartGroup then f.groupNeedSlider:Enable(); f.blessingNeedSlider:Enable() else f.groupNeedSlider:Disable(); f.blessingNeedSlider:Disable() end
-  f.groupNeedSlider:SetAlpha(smartAlpha); f.blessingNeedSlider:SetAlpha(smartAlpha)
+  if not paladin then
+    f.groupEnable:SetChecked(self.db.group); f.smartGroup:SetChecked(self.db.smartGroup)
+    for i=1,8 do
+      local state=self:GroupColumnState(i)
+      local c=f.groupChecks[i]
+      c:SetChecked(state=="on")
+      if c.mixedDash then c.mixedDash:SetShown(state=="mixed") end
+    end
+    f.groupNeedSlider.silent=true; f.groupNeedSlider:SetValue(self.db.groupNeed); f.groupNeedSlider.valueText:SetText(tostring(self.db.groupNeed).."+"); f.groupNeedSlider.silent=false
+    local smartAlpha=(self.db.group and self.db.smartGroup) and 1 or 0.45
+    if self.db.group and self.db.smartGroup then f.groupNeedSlider:Enable() else f.groupNeedSlider:Disable() end
+    f.groupNeedSlider:SetAlpha(smartAlpha)
 
-  for _,r in ipairs(f.assignRows) do r:Hide() end
-  for _,btn in ipairs(f.assignButtons) do btn:Hide() end
-  local assignmentBuffs=groupAssignableBuffs()
-  local found=false; for _,b in ipairs(assignmentBuffs) do if b.key==f.selectedAssignment then found=true end end
-  if not found then f.selectedAssignment=assignmentBuffs[1] and assignmentBuffs[1].key end
-  f.assignEmpty:SetShown(#assignmentBuffs==0)
-  for rowIndex,b in ipairs(assignmentBuffs) do
-    local row=f.assignRows[rowIndex]
-    if not row then
-      row=CreateFrame("Frame",nil,f.assignChild,"BackdropTemplate"); row:SetSize(474,296)
-      row:SetBackdrop({bgFile="Interface\\Buttons\\WHITE8X8"}); row:SetBackdropColor(0.065,0.085,0.10,0.95)
-      row.icon=row:CreateTexture(nil,"ARTWORK"); row.icon:SetSize(32,32); row.icon:SetPoint("TOPLEFT",8,-4)
-      row.name=label(row,"",48,-5,"GameFontNormalLarge",402)
-      row.detail=label(row,"",48,-29,"GameFontDisableSmall",402)
-      label(row,L("Raid groups"),8,-60,"GameFontNormal")
-      row.checks={}
-      for i=1,8 do
-        local idx=i
-        local c=check(row,tostring(i),8+(i-1)*54,-78,function(s)
-          local parent=s:GetParent(); local def=parent.def
-          if def and not A.Combat() then
-            local map=B:EnsureBuffGroups(def); map[idx]=s:GetChecked()==true
-            B:NormalizeBuffGroups(def); B:ReconcileRaidGroupColumn(idx)
-            B:RequestRefresh("buff group assignment",0); B:Options()
-          end
+    for _,r in ipairs(f.assignRows) do r:Hide() end
+    for _,btn in ipairs(f.assignButtons) do btn:Hide() end
+    local assignmentBuffs=groupAssignableBuffs()
+    local found=false; for _,b in ipairs(assignmentBuffs) do if b.key==f.selectedAssignment then found=true end end
+    if not found then f.selectedAssignment=assignmentBuffs[1] and assignmentBuffs[1].key end
+    f.assignEmpty:SetShown(#assignmentBuffs==0)
+    for rowIndex,b in ipairs(assignmentBuffs) do
+      local row=f.assignRows[rowIndex]
+      if not row then
+        row=CreateFrame("Frame",nil,f.assignChild,"BackdropTemplate"); row:SetSize(474,296)
+        row:SetBackdrop({bgFile="Interface\\Buttons\\WHITE8X8"}); row:SetBackdropColor(0.065,0.085,0.10,0.95)
+        row.icon=row:CreateTexture(nil,"ARTWORK"); row.icon:SetSize(32,32); row.icon:SetPoint("TOPLEFT",8,-4)
+        row.name=label(row,"",48,-5,"GameFontNormalLarge",402)
+        row.detail=label(row,"",48,-29,"GameFontDisableSmall",402)
+        label(row,L("Raid groups"),8,-60,"GameFontNormal")
+        row.checks={}
+        for i=1,8 do
+          local idx=i
+          local c=check(row,tostring(i),8+(i-1)*54,-78,function(s)
+            local parent=s:GetParent(); local def=parent.def
+            if def and not A.Combat() then
+              local map=B:EnsureBuffGroups(def); map[idx]=s:GetChecked()==true
+              B:NormalizeBuffGroups(def); B:ReconcileRaidGroupColumn(idx)
+              B:RequestRefresh("buff group assignment",0); B:Options()
+            end
+          end)
+          c:SetSize(20,20); row.checks[i]=c
+        end
+        row.need=compactSlider(row,2,5,1,62,function(v) return tostring(v).."+" end,function(slider,value)
+          local def=slider:GetParent().def
+          if def then B:SetGroupNeed(def,value); B:RequestRefresh("group threshold",0) end
         end)
-        c:SetSize(20,20); row.checks[i]=c
-      end
-      row.need=compactSlider(row,2,5,1,62,function(v) return tostring(v).."+" end,function(slider,value)
-        local def=slider:GetParent().def
-        if def then B:SetGroupNeed(def,value); B:RequestRefresh("group threshold",0) end
-      end)
-      row.need:SetPoint("TOPLEFT",165,-263)
-      row.needLabel=label(row,"Group spell at",8,-263,"GameFontHighlightSmall",140)
-      label(row,"Recipient classes",8,-116,"GameFontNormal")
-      label(row,"Recipients must match group AND class. Party uses group 1.\nPersonal buffs and open-world targets ignore these filters.",8,-221,"GameFontDisableSmall",450)
-      row.classes={}
-      for i,class in ipairs(B.RecipientClasses) do
-        local token=class
-        local className=(LOCALIZED_CLASS_NAMES_MALE and LOCALIZED_CLASS_NAMES_MALE[token]) or (token:sub(1,1)..token:sub(2):lower())
-          local c=check(row,className,8+((i-1)%3)*152,-138-math.floor((i-1)/3)*25,function(s)
-          local def=row.def
-          if not def or A.Combat() then return end
-          local key=B:RootKey(def)
-          B.db.buffClasses[key]=B.db.buffClasses[key] or {}
-          B.db.buffClasses[key][token]=s:GetChecked()==true
-          B:RequestRefresh("buff class assignment",0); B:Options()
+        row.need:SetPoint("TOPLEFT",165,-263)
+        row.needLabel=label(row,"Group spell at",8,-263,"GameFontHighlightSmall",140)
+        label(row,"Recipient classes",8,-116,"GameFontNormal")
+        label(row,"Recipients must match group AND class. Party uses group 1.\nPersonal buffs and open-world targets ignore these filters.",8,-221,"GameFontDisableSmall",450)
+        row.classes={}
+        for i,class in ipairs(B.RecipientClasses) do
+          local token=class
+          local className=(LOCALIZED_CLASS_NAMES_MALE and LOCALIZED_CLASS_NAMES_MALE[token]) or (token:sub(1,1)..token:sub(2):lower())
+            local c=check(row,className,8+((i-1)%3)*152,-138-math.floor((i-1)/3)*25,function(s)
+            local def=row.def
+            if not def or A.Combat() then return end
+            local key=B:RootKey(def)
+            B.db.buffClasses[key]=B.db.buffClasses[key] or {}
+            B.db.buffClasses[key][token]=s:GetChecked()==true
+            B:RequestRefresh("buff class assignment",0); B:Options()
+          end)
+          c:SetSize(20,20)
+          addHelp(c,className,"Party/raid recipients must match both the selected group and class. Personal buffs and explicit friendly targets ignore these filters. Class does not identify the tank role.")
+          row.classes[token]=c
+        end
+        row.resetClasses=button(row,L("Reset"),374,-258,80,function()
+          if row.def and not A.Combat() then B.db.buffClasses[B:RootKey(row.def)]=nil; B:RequestRefresh("reset classes",0); B:Options() end
         end)
-        c:SetSize(20,20)
-        addHelp(c,className,"Party/raid recipients must match both the selected group and class. Personal buffs and explicit friendly targets ignore these filters. Class does not identify the tank role.")
-        row.classes[token]=c
+        row.allClasses=button(row,"All classes",280,-258,86,function()
+          if not row.def or A.Combat() then return end
+          local map={}; for _,class in ipairs(B.RecipientClasses) do map[class]=true end
+          B.db.buffClasses[B:RootKey(row.def)]=map; B:RequestRefresh("all classes",0); B:Options()
+        end)
+        f.assignRows[rowIndex]=row
       end
-      row.resetClasses=button(row,L("Reset"),374,-258,80,function()
-        if row.def and not A.Combat() then B.db.buffClasses[B:RootKey(row.def)]=nil; B:RequestRefresh("reset classes",0); B:Options() end
-      end)
-      row.allClasses=button(row,"All classes",280,-258,86,function()
-        if not row.def or A.Combat() then return end
-        local map={}; for _,class in ipairs(B.RecipientClasses) do map[class]=true end
-        B.db.buffClasses[B:RootKey(row.def)]=map; B:RequestRefresh("all classes",0); B:Options()
-      end)
-      f.assignRows[rowIndex]=row
+      row.def=b; row:ClearAllPoints(); row:SetPoint("TOPLEFT",0,0); row:SetShown(f.selectedAssignment==b.key); row.name:SetText(spellLabel(b)); row.icon:SetTexture(buffIcon(b))
+      local select=f.assignButtons[rowIndex]
+      if not select then
+        select=flatButton(f.assignList,"",0,-(rowIndex-1)*42,174,function(btn) f.selectedAssignment=btn.def.key; B:Options() end)
+        select:SetHeight(38)
+        select.icon=select:CreateTexture(nil,"ARTWORK"); select.icon:SetSize(24,24); select.icon:SetPoint("TOPLEFT",6,-7)
+        select.title=label(select,"",36,-6,"GameFontHighlightSmall",132)
+        f.assignButtons[rowIndex]=select
+      end
+      select.def=b; select.title:SetText(spellLabel(b)); select.icon:SetTexture(buffIcon(b)); select:Show()
+      if f.selectedAssignment==b.key then select:LockHighlight() else select:UnlockHighlight() end
+      local groupDef=b.groupKey and self:FindBuff(b.groupKey)
+      row.detail:SetText(groupDef and (L("Group")..": "..spellLabel(groupDef)) or L("Single-target only"))
+      for i=1,8 do row.checks[i]:SetChecked(self:GroupSelected(b,i)) end
+      for class,c in pairs(row.classes) do c:SetChecked(self:GroupClassAllowed(b,class)) end
+      if groupDef then
+        row.needLabel:Show(); row.need:Show(); row.need.valueText:Show(); row.need.silent=true; row.need:SetValue(self:GroupNeed(groupDef)); row.need.valueText:SetText(tostring(self:GroupNeed(groupDef)).."+"); row.need.silent=false
+        if self.db.group and self.db.smartGroup then row.need:Enable(); row.need:SetAlpha(1) else row.need:Disable(); row.need:SetAlpha(0.45) end
+      else row.need:Hide(); row.need.valueText:Hide(); row.needLabel:Hide() end
     end
-    row.def=b; row:ClearAllPoints(); row:SetPoint("TOPLEFT",0,0); row:SetShown(f.selectedAssignment==b.key); row.name:SetText(spellLabel(b)); row.icon:SetTexture(buffIcon(b))
-    local select=f.assignButtons[rowIndex]
-    if not select then
-      select=flatButton(f.assignList,"",0,-(rowIndex-1)*42,174,function(btn) f.selectedAssignment=btn.def.key; B:Options() end)
-      select:SetHeight(38)
-      select.icon=select:CreateTexture(nil,"ARTWORK"); select.icon:SetSize(24,24); select.icon:SetPoint("TOPLEFT",6,-7)
-      select.title=label(select,"",36,-6,"GameFontHighlightSmall",132)
-      f.assignButtons[rowIndex]=select
-    end
-    select.def=b; select.title:SetText(spellLabel(b)); select.icon:SetTexture(buffIcon(b)); select:Show()
-    if f.selectedAssignment==b.key then select:LockHighlight() else select:UnlockHighlight() end
-    local groupDef=b.groupKey and self:FindBuff(b.groupKey)
-    row.detail:SetText(groupDef and (L("Group")..": "..spellLabel(groupDef)) or L("Single-target only"))
-    for i=1,8 do row.checks[i]:SetChecked(self:GroupSelected(b,i)) end
-    for class,c in pairs(row.classes) do c:SetChecked(self:GroupClassAllowed(b,class)) end
-    if groupDef then
-      row.needLabel:Show(); row.need:Show(); row.need.valueText:Show(); row.need.silent=true; row.need:SetValue(self:GroupNeed(groupDef)); row.need.valueText:SetText(tostring(self:GroupNeed(groupDef)).."+"); row.need.silent=false
-      if self.db.group and self.db.smartGroup then row.need:Enable(); row.need:SetAlpha(1) else row.need:Disable(); row.need:SetAlpha(0.45) end
-    else row.need:Hide(); row.need.valueText:Hide(); row.needLabel:Hide() end
+    f.assignList:SetHeight(math.max(1,#assignmentBuffs*42))
+    f.assignScroll:SetHeight(math.min(252,math.max(42,#assignmentBuffs*42)))
   end
-  f.assignList:SetHeight(math.max(1,#assignmentBuffs*42))
-  f.assignScroll:SetHeight(math.min(252,math.max(42,#assignmentBuffs*42)))
-  f.blessingNeedLabel:SetShown(paladin)
-  f.blessingNeedSlider:SetShown(paladin)
-  f.blessingNeedSlider.valueText:SetShown(paladin)
   self:UpdateBlessingOptions()
 
   for _,r in ipairs(f.targetRows) do r:Hide() end
-  local targetBuffs=simplePal and {} or targetAssignableBuffs()
+  local targetBuffs=targetAssignableBuffs()
+  if simplePal then local independent={}; for _,b in ipairs(targetBuffs) do if b.kind~="blessing" then independent[#independent+1]=b end end; targetBuffs=independent end
   for rowIndex,b in ipairs(targetBuffs) do
     local row=f.targetRows[rowIndex]
     if not row then
@@ -1818,8 +2097,9 @@ function B:Options()
       f.targetRows[rowIndex]=row
     end
     row.def=b; row:ClearAllPoints(); row:SetPoint("TOPLEFT",0,-(rowIndex-1)*52); row:Show()
+    if b.classWide then addHelp(row.enable,"Allow Salvation on friendly targets","Independent permission for friendly party/raid targets. It does not require Salvation on Buffs or the Groups Salvation toggle. Never Salvation exceptions still apply.") end
     row.enable:SetChecked(self:TargetBuffEnabled(b)); row.icon:SetTexture(buffIcon(b)); row.name:SetText(spellLabel(b))
-    row.detail:SetText(not learnedSpell(b) and unlearnedText() or self:Enabled(b) and L("Single-target spell") or L("Disabled on Buffs tab"))
+    row.detail:SetText(not learnedSpell(b) and unlearnedText() or b.classWide and L("Party/raid member only") or self:Enabled(b) and L("Single-target spell") or L("Disabled on Buffs tab"))
     local custom=self.db.targetBuffSeconds[b.key]~=nil
     row.custom:SetChecked(custom)
     local seconds=self:TargetRebuffSeconds(b)

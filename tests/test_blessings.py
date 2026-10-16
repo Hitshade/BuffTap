@@ -4,9 +4,9 @@ from test_bufftap import tests, ROOT
 setup='''
 playerClass='PALADIN'; spells={}; book={}
 spell(20217,'Blessing of Kings',20); spell(19740,'Blessing of Might',4); spell(19742,'Blessing of Wisdom',4)
-spell(1038,'Blessing of Salvation',26); spell(19977,'Blessing of Light',40)
+spell(1038,'Salvation',26); spell(19977,'Blessing of Light',40)
 spell(25898,'Greater Blessing of Kings',60); spell(25782,'Greater Blessing of Might',52)
-spell(25894,'Greater Blessing of Wisdom',54); spell(25895,'Greater Blessing of Salvation',60)
+spell(25894,'Greater Blessing of Wisdom',54); spell(25895,'Mass Salvation',60)
 UnitLevel=function() return 60 end
 classes={player='PALADIN',party1='WARRIOR',party2='PRIEST',target='WARRIOR'}
 UnitClass=function(u) return 'Class',classes[u] end
@@ -25,8 +25,8 @@ test('Mixed same-class player exceptions forbid Greater',setup+"classes.party2='
 test('Uniform class assignments permit reagent Greater',setup+"classes.party2='WARRIOR'; BuffTap:InvalidateRoster(); refresh(); assert(BuffTap.action.key=='gbom' and BuffTap.action.groupCast)")
 test('Matching player exception does not block Greater',setup+"classes.party2='WARRIOR'; BuffTap:InvalidateRoster(); BuffTap:SetBlessingPlayer({unit='party2'},'bom',false); refresh(); assert(BuffTap.action.key=='gbom')")
 test('Skipped affected player blocks Greater and preserves skip',setup+"classes.party2='WARRIOR'; BuffTap:InvalidateRoster(); BuffTap:SetBlessingPlayer({unit='party2'},'skip',false); refresh(); assert(BuffTap.action.key=='bom' and not BuffTap.action.groupCast); aura('party1',19740,'Blessing of Might'); refresh(); assert(not BuffTap.action)")
-test('Tank protection prevents normal and Greater Salvation',setup+"classes.party2='WARRIOR'; BuffTap.db.blessingClasses.WARRIOR='bos'; BuffTap:InvalidateRoster(); BuffTap:SetBlessingPlayer({unit='party2'},nil,true); refresh(); assert(BuffTap.action.key=='bos' and BuffTap.action.target=='party1' and not BuffTap.action.groupCast); aura('party1',1038,'Blessing of Salvation'); refresh(); assert(not BuffTap.action)")
-test('Group selection remains authoritative for explicit choices',setup+"BuffTap.db.raidGroups[1]=false; refresh(); assert(not BuffTap.action)")
+test('Tank protection prevents normal and Greater Salvation',setup+"classes.party2='WARRIOR'; BuffTap.db.blessingClasses={PALADIN='skip',WARRIOR='skip',PRIEST='skip'}; BuffTap.db.buffs.bos=true; BuffTap.db.buffClasses.bos={PALADIN=false,WARRIOR=true,PRIEST=false}; BuffTap.db.priorities.bos=1; BuffTap.db.salvationGroup=true; BuffTap:SetBlessingPlayer({unit='player'},nil,true); BuffTap:InvalidateRoster(); BuffTap:SetBlessingPlayer({unit='party2'},nil,true); refresh(); assert(BuffTap.action.key=='bos' and BuffTap.action.target=='party1' and not BuffTap.action.groupCast); aura('party1',1038,'Salvation'); refresh(); assert(not BuffTap.action)")
+test('Group selection remains authoritative for explicit choices',setup+"IsInRaid=function() return true end; BuffTap.db.raidGroups[1]=false; assert(BuffTap:BlessingChoice({unit='party1',class='WARRIOR',group=1})=='skip')")
 test('Unknown class blocks affected Greater safety',setup+"local r={{unit='party1',class='WARRIOR',group=1},{unit='party2',group=1}}; assert(not BuffTap:BlessingGreaterSafe('bom','WARRIOR',r))")
 test('Changed single player preference cancels prepared click',setup+"BuffTap.db.blessingClasses.WARRIOR='bow'; BuffTap.button.scripts.PreClick(nil,'LeftButton',false); assert(not BuffTap.action and not BuffTap.button.attrs.type1)")
 test('Changed override cancels prepared Greater without substituting',setup+"classes.party2='WARRIOR'; BuffTap:InvalidateRoster(); refresh(); assert(BuffTap.action.groupCast); BuffTap:SetBlessingPlayer({unit='party2'},'bow',false); BuffTap.button.scripts.PreClick(nil,'LeftButton',false); assert(not BuffTap.action)")

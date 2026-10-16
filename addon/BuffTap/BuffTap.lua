@@ -756,14 +756,12 @@ local itemRequested=event=="ITEM_DATA_LOAD_RESULT" and A.Number(arg) and ((B.ite
   elseif event=="BAG_UPDATE_DELAYED" then
     if B.ObserveConsumableUse then B:ObserveConsumableUse() end
     if B.InvalidateConsumables then B:InvalidateConsumables() end
-    if not A.Combat() then
-      if B.options and B.options:IsShown() then B:Options() end
-      if B.itemPicker and B.itemPicker:IsShown() then B:UpdateConsumablePicker() end
-    end
+    if B.RefreshInventoryWindows then B:RefreshInventoryWindows() end
     if not B.db.consumablesEnabled and not B.db.group and not B.powerBlocked and not (B.WeaponInventoryRelevant and B:WeaponInventoryRelevant()) then return end
   elseif event=="ITEM_DATA_LOAD_RESULT" then
     if not itemRequested then return end
     if B.InvalidateConsumables then B:InvalidateConsumables(arg) end
+    if B.RefreshInventoryWindows then B:RefreshInventoryWindows() end
   elseif event=="UNIT_AURA" then
     if not B:IsWatchedUnit(arg) and not (B:HelperEnabled("helperCoverage") and A.Text(arg) and arg:match("^party[1-4]$")) then return end
     B:InvalidateAura(arg)
@@ -773,6 +771,7 @@ local itemRequested=event=="ITEM_DATA_LOAD_RESULT" and A.Number(arg) and ((B.ite
     local n=A.Call(GetNumSubgroupMembers)
     if A.Call(IsInRaid)==false and A.Number(n) and n==0 then B.blessingPlayers=nil end
     B:InvalidateRoster(); B:InvalidateAura()
+    if B.UpdateGroupRosterOptions then B:UpdateGroupRosterOptions() end
   elseif event=="PLAYER_ENTERING_WORLD" or event=="ZONE_CHANGED_NEW_AREA" then
     B:InvalidateRoster(); B:InvalidateAura(); if B.InvalidateConsumables then B:InvalidateConsumables() end
   elseif event=="PLAYER_REGEN_ENABLED" then

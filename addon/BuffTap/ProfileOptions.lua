@@ -51,7 +51,7 @@ function B:BuildProfileOptions(p,h)
   p.character=selector(p,L("Choose same-class character"),18,-364,420,function()
     local list={}; for _,name in ipairs(B:ClassCopySources(p.sourceName)) do list[#list+1]={key=name,name=name} end; return list
   end,function(name) p.classSource=name; p.pending=nil; p.confirm:Hide() end,"scroll")
-  p.classHint=label(p,"Buff and class settings stay on this character. Optional copying requires a same-class source.",18,-404,"GameFontDisableSmall",680)
+  p.classHint=label(p,"Buff and class settings, including party and raid plans, stay on this character. Optional copying requires a same-class source.",18,-404,"GameFontDisableSmall",680)
   p.renameDialog=CreateFrame("Frame","BuffTapRenameProfile",p,"BackdropTemplate")
   local rename=p.renameDialog; rename:SetSize(686,126); rename:SetPoint("TOPLEFT",16,-158); rename:SetFrameLevel(p:GetFrameLevel()+20); rename:EnableMouse(true)
   rename:SetBackdrop({bgFile="Interface\\Buttons\\WHITE8X8",edgeFile="Interface\\Buttons\\WHITE8X8",edgeSize=1})
@@ -87,7 +87,6 @@ function B:BuildProfileOptions(p,h)
   p:HookScript("OnHide",function() p.pending=nil; p.confirm:Hide(); p.renameDialog:Hide() end)
 end
 function B:UpdateProfileOptions()
-  self:SaveClassSetup()
   local p=self.options.profiles; if not p then return end
   local current=self.profileDB:GetCurrentProfile(); p.active:SetText(current)
   p.createHint:SetText(L(p.copyCurrent:GetChecked() and "Copies shared preferences into a new profile and switches to it. The original is kept." or "Starts with default shared preferences and switches to the new profile. The original is kept."))

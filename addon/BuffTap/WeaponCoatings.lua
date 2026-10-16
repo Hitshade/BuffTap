@@ -66,7 +66,6 @@ B.WeaponChoices={
   {key="wound-poison",class="ROGUE",name="Wound Poison",ranks={13227,13226,13225,13219},enchants={704,705,706,703},items={{10922,13227},{10921,13226},{10920,13225},{10918,13219}}},
 }
 
--- Verified Mage scrolls; Spellbreak is excluded because its effect mapping is ambiguous.
 -- Verified Mage scrolls: research/mage-and-coating-review-1.7.0/mage-scroll-candidates.json.
 -- Spellbreak is intentionally excluded because its live tooltip mapping is ambiguous.
 for _,choice in ipairs({

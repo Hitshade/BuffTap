@@ -4,7 +4,7 @@
 
 local _, B = ...
 _G.BuffTap = B
-B.version = "1.15.1"
+B.version = "1.15.2"
 B.API = {}
 local A = B.API
 
@@ -57,7 +57,7 @@ function B:InitDB()
   local defaults = {enabled=true, size=64, opacity=1, x=0, y=-180,
     seconds=45, rebuffVersion=1, sound=false, reminderSound="default", supplySound="default", soundChannel="Master", soundInterval=5, glow=true, pulse=false, group=false, smartGroup=true,
     groupNeed=3, blessingNeed=2, friendlyTarget=false, targetSeconds=300, keys={"MOUSEWHEELDOWN"}, buffs={}, priorities={}, buffSeconds={},
-    pauseResting=false, targetClassBlessings=true, targetBlessingFallback=true, targetBlessingClasses={}, targetBlessingPriorities={}, groupBlessingPriorities={}, blessingAssignments=false, blessingClasses={}, buffGroups={}, buffClasses={}, buffGroupNeed={}, targetBuffs={}, targetBuffSeconds={}, showBuffName=false, showTargetName=true, showTimer=false, showGroupBadge=true,
+    pauseResting=false, targetClassBlessings=true, targetBlessingFallback=true, targetBlessingClasses={}, targetBlessingPriorities={}, groupBlessingPriorities={}, blessingAssignments=false, blessingClasses={}, blessingGroupOverrides={}, salvationGroup=false, buffGroups={}, buffClasses={}, buffGroupNeed={}, targetBuffs={}, targetBuffSeconds={}, showBuffName=false, showTargetName=true, showTimer=false, showGroupBadge=true,
     consumablesEnabled=false, consumableFamilies={}, consumableChoices={}, consumableSeconds={},
     suppliesEnabled=false, suppliesChat=false, suppliesSound=false, suppliesReadyCheck=false, supplySettings={},
     weaponReminder=true, weaponMainHand=true, weaponOffHand=true,
@@ -77,6 +77,7 @@ function B:InitDB()
   if self.NormalizeAlerts then self:NormalizeAlerts() end
   if self.NormalizeCoatings then self:NormalizeCoatings() end
   if self.SyncBroker then self:SyncBroker() end
+  self:MigrateSalvation()
   if self.NormalizeBlessingAssignments then self:NormalizeBlessingAssignments() end
   if self.SyncReadiness then self:SyncReadiness() end
   -- Validate catalog keys without deleting preferences while class data is loading.
@@ -304,13 +305,12 @@ function B:PickBlessingPriority(entry,choices,target)
   return "skip"
 end
 
-function B:OrderedBlessingChoice(entry,order,target,neverSalvation)
+function B:OrderedBlessingChoice(entry,order,target)
   if type(order)~="table" then return "skip" end
   local choices={}
   for _,key in ipairs(order) do
     local def=self:FindBuff(key)
     if def and def.kind=="blessing" and not def.singleKey
-      and not (key=="bos" and neverSalvation)
       and self:Supported(def)==true and self:Resolve(def,entry.unit) then
       choices[#choices+1]=def
     end
@@ -338,6 +338,7 @@ function B:TargetBuffEnabled(b)
   local key=self:RootKey(b)
   if not key then return false end
   local value=self.db.targetBuffs and self.db.targetBuffs[key]
+  if b.classWide then return value==true end
   if type(value)=="boolean" then return value end
   return true
 end
@@ -363,7 +364,7 @@ function B:GroupNeed(b)
   local key=self:RootKey(b)
   local value=key and self.db.buffGroupNeed and self.db.buffGroupNeed[key]
   if type(value)=="number" then return math.max(2,math.min(5,math.floor(value+0.5))) end
-  if b and b.kind=="blessing" then return self.db.blessingNeed or b.minNeed or 2 end
+  if b and (b.kind=="blessing" or b.classWide) then return self.db.blessingNeed or b.minNeed or 2 end
   return self.db.groupNeed or (b and b.minNeed) or 3
 end
 
@@ -371,7 +372,7 @@ function B:SetGroupNeed(b,value)
   local key=self:RootKey(b)
   if not key then return end
   local pair=b and b.groupKey and self:FindBuff(b.groupKey) or b
-  local fallback=(pair and pair.kind=="blessing") and self.db.blessingNeed or self.db.groupNeed
+  local fallback=(pair and (pair.kind=="blessing" or pair.classWide)) and self.db.blessingNeed or self.db.groupNeed
   value=math.max(2,math.min(5,math.floor((tonumber(value) or fallback or 3)+0.5)))
   if value==(fallback or 3) then self.db.buffGroupNeed[key]=nil else self.db.buffGroupNeed[key]=value end
 end
@@ -380,7 +381,7 @@ function B:NormalizeGroupNeeds()
   for key,value in pairs(self.db.buffGroupNeed or {}) do
     local b=self:FindBuff(key)
     local pair=b and b.groupKey and self:FindBuff(b.groupKey) or b
-    local fallback=(pair and pair.kind=="blessing") and self.db.blessingNeed or self.db.groupNeed
+    local fallback=(pair and (pair.kind=="blessing" or pair.classWide)) and self.db.blessingNeed or self.db.groupNeed
     if not b or value==(fallback or 3) then self.db.buffGroupNeed[key]=nil end
   end
 end
@@ -829,6 +830,7 @@ function B:Validate(action)
     return self:ValidateConsumable(action,false)
   end
   if not action then return false,"no action" end
+  if not self:SalvationActionAllowed(action) then return false,"Salvation recipient settings changed" end
   if not self:BlessingActionAllowed(action) then return false,"blessing assignment changed" end
   if not A.Known(action.id) then return false,"spell no longer known" end
   local eligible,why=self:TargetEligible(action,true)
@@ -932,17 +934,167 @@ end
 
 -- Explicit assignments resolve BEFORE aura coverage; family priority never changes
 -- a player's chosen blessing. Player exceptions belong to this session/group only.
-B.BlessingFamilies={"bok","bom","bow","bos","bol"}
+B.BlessingFamilies={"bok","bom","bow","bol"}
+function B:MigrateSalvation()
+  if self.db.salvationVersion==1 then return end
+  -- Independent Salvation must not silently expand a former exclusive choice
+  -- into an additional threat buff. Keep the previous values for review.
+  local old={buff=self.db.buffs.bos,mass=self.db.buffs.gbos,classes={},targets={},groupOrders={},targetOrders={}}
+  for _,pair in ipairs({{self.db.blessingClasses,old.classes},{self.db.targetBlessingClasses,old.targets}}) do
+    for class,key in pairs(pair[1]) do if key=="bos" then pair[2][class]=key; pair[1][class]="skip" end end
+  end
+  for _,pair in ipairs({{self.db.groupBlessingPriorities,old.groupOrders},{self.db.targetBlessingPriorities,old.targetOrders}}) do
+    for class,order in pairs(pair[1]) do
+      if type(order)=="table" then
+        local clean,backup,had={},{},false
+        for i=1,5 do local key=order[i]; backup[i]=key; if key=="bos" then had=true elseif key then clean[#clean+1]=key end end
+        if had then pair[2][class]=backup; pair[1][class]=clean end
+      end
+    end
+  end
+  if old.buff or old.mass or next(old.classes) or next(old.targets) or next(old.groupOrders) or next(old.targetOrders) then
+    self.db.salvationMigration=old
+  end
+  self.db.buffs.bos=false; self.db.buffs.gbos=false
+  self.db.salvationVersion=1
+end
+-- Party choices keep the established keys. Raid defaults are a separate copy,
+-- so configuring a raid can never rewrite the next five-player party setup.
+local function copyBlessingTable(value)
+  if type(value)~="table" then return value end
+  local out={}; for k,v in pairs(value) do out[k]=copyBlessingTable(v) end; return out
+end
+function B:BlessingContext()
+  return A.Call(IsInRaid)==true and "Raid" or "Party"
+end
+function B:InitBlessingPlans()
+  -- Preserve the effective party exclusion when separating it from raid G1.
+  if type(self.db.blessingPartyExcluded)~="boolean" then self.db.blessingPartyExcluded=self.db.raidGroups[1]==false end
+  if type(self.db.blessingRaidDefaults)~="table" then
+    self.db.blessingRaidDefaults={classes=copyBlessingTable(self.db.blessingClasses),priorities=copyBlessingTable(self.db.groupBlessingPriorities)}
+    -- Before this version a party used G1. Carry that effective party plan over.
+    local g1=self.db.blessingGroupOverrides[1]
+    if type(g1)=="table" and type(g1.classes)=="table" then
+      for class,key in pairs(g1.classes) do
+        self.db.blessingClasses[class]=key
+        if type(g1.priorities)=="table" and type(g1.priorities[class])=="table" then self.db.groupBlessingPriorities[class]=copyBlessingTable(g1.priorities[class]) end
+      end
+    end
+  end
+  local raid=self.db.blessingRaidDefaults
+  if type(raid.classes)~="table" then raid.classes={} end
+  if type(raid.priorities)~="table" then raid.priorities={} end
+  local families={}; for _,key in ipairs(self.BlessingFamilies) do families[key]=true end
+  if self.db.blessingPartyMode~="same" then self.db.blessingPartyMode="class" end
+  if not families[self.db.blessingPartyUniform] then self.db.blessingPartyUniform="bok" end
+  if raid.mode~="same" then raid.mode="class" end
+  if not families[raid.blessing] then raid.blessing="bok" end
+  for _,map in pairs(self.db.blessingGroupOverrides) do
+    if type(map)=="table" then
+      if map.mode~="same" and map.mode~="class" then
+        map.mode=type(map.classes)=="table" and next(map.classes)~=nil and "class" or nil
+      end
+      if not families[map.blessing] then map.blessing="bok" end
+    end
+  end
+  self.blessingPlansDB=self.db; self.blessingPlansRaid=raid
+end
+function B:EnsureBlessingPlans()
+  if self.blessingPlansDB~=self.db or self.blessingPlansRaid~=self.db.blessingRaidDefaults or type(self.db.blessingRaidDefaults)~="table" then self:InitBlessingPlans() end
+end
+function B:BlessingPlan(context,scope)
+  self:EnsureBlessingPlans()
+  if context=="Party" then
+    self.partyBlessingPlan=self.partyBlessingPlan or {}
+    local plan=self.partyBlessingPlan
+    plan.mode=self.db.blessingPartyMode; plan.blessing=self.db.blessingPartyUniform
+    plan.classes=self.db.blessingClasses; plan.priorities=self.db.groupBlessingPriorities
+    return plan
+  end
+  local override=scope and self.db.blessingGroupOverrides[scope]
+  return type(override)=="table" and override.mode and override or self.db.blessingRaidDefaults
+end
+function B:GroupBlessingSettings(class,scope,effective,context)
+  self:EnsureBlessingPlans()
+  if context=="Party" then return self.db.blessingClasses[class],self.db.groupBlessingPriorities[class] end
+  local map=self.db.blessingGroupOverrides[scope]
+  if scope and scope>0 and type(map)=="table" then
+    local choice=map.classes[class]
+    if choice~=nil or not effective then return choice,map.priorities[class] end
+  elseif scope and scope>0 and not effective then return nil,nil end
+  local defaults=self.db.blessingRaidDefaults
+  return defaults.classes[class],defaults.priorities[class]
+end
+function B:SetGroupBlessingSettings(class,scope,choice,order,setOrder,context)
+  if A.Combat() or not A.Text(class) then return end
+  if scope~=nil and (not A.Number(scope) or scope%1~=0 or scope<0 or scope>8) then return end
+  self:InitBlessingPlans()
+  local map
+  if context=="Party" then map={classes=self.db.blessingClasses,priorities=self.db.groupBlessingPriorities}
+  elseif scope and scope>0 then
+    map=self.db.blessingGroupOverrides[scope]
+    if not map then map={classes={},priorities={}}; self.db.blessingGroupOverrides[scope]=map end
+    -- An older per-class override has always meant class mode.
+    if not map.mode and self.db.blessingRaidDefaults.mode=="same" then map.mode="class" end
+  else map=self.db.blessingRaidDefaults end
+  if setOrder then map.priorities[class]=copyBlessingTable(order) else map.classes[class]=choice end
+end
+function B:SetBlessingPlanMode(context,scope,mode,blessing)
+  if A.Combat() or (context~="Party" and context~="Raid") or (mode~="class" and mode~="same") then return false end
+  if not A.Number(scope) or scope%1~=0 or scope<0 or scope>8 then return false end
+  if blessing then local valid=false; for _,key in ipairs(self.BlessingFamilies) do if blessing==key then valid=true end end; if not valid then return false end end
+  self:InitBlessingPlans()
+  if context=="Party" then self.db.blessingPartyMode=mode; if blessing then self.db.blessingPartyUniform=blessing end
+  else
+    local map=self.db.blessingRaidDefaults
+    if scope>0 then
+      map=self.db.blessingGroupOverrides[scope]
+      if not map then map={classes={},priorities={}}; self.db.blessingGroupOverrides[scope]=map end
+      if not map.mode then map.blessing=self.db.blessingRaidDefaults.blessing end
+    end
+    map.mode=mode; if blessing then map.blessing=blessing end
+  end
+  self.db.blessingAssignments=true
+  self:InvalidateAura(); self:RequestRefresh("blessing plan mode",0); return true
+end
+function B:ResetBlessingScope(scope)
+  if A.Combat() or not A.Number(scope) or scope%1~=0 or scope<1 or scope>8 then return false end
+  self.db.blessingGroupOverrides[scope]=nil; self:InvalidateAura(); self:RequestRefresh("inherit raid defaults",0); return true
+end
+function B:CopyPartyBlessingsToRaid()
+  if A.Combat() then return false end
+  self:InitBlessingPlans()
+  self.db.blessingRaidDefaults={classes=copyBlessingTable(self.db.blessingClasses),priorities=copyBlessingTable(self.db.groupBlessingPriorities),mode=self.db.blessingPartyMode,blessing=self.db.blessingPartyUniform}
+  self:InvalidateAura(); self:RequestRefresh("copy party blessings",0); return true
+end
+function B:GetBlessingPlayer(guid,context)
+  local value=self.blessingPlayers and self.blessingPlayers[guid]
+  if not value then return nil end
+  context=context or self:BlessingContext()
+  return {choice=context=="Raid" and value.raidChoice or context=="Party" and value.choice or nil,neverSalvation=value.neverSalvation}
+end
 function B:NormalizeBlessingAssignments()
   local valid={skip=true,priority=true}; for _,key in ipairs(self.BlessingFamilies) do valid[key]=true end
   local classes={WARRIOR=true,PALADIN=true,HUNTER=true,ROGUE=true,PRIEST=true,SHAMAN=true,MAGE=true,WARLOCK=true,DRUID=true}
   local families={}; for _,key in ipairs(self.BlessingFamilies) do families[key]=true end
-  for _,map in ipairs({self.db.targetBlessingPriorities,self.db.groupBlessingPriorities}) do
+  if A.Call(function() local _,c=UnitClass("player"); return c end)=="PALADIN" or type(self.db.blessingRaidDefaults)=="table" then self:InitBlessingPlans() end
+  local orders={self.db.targetBlessingPriorities,self.db.groupBlessingPriorities}
+  local choices={self.db.blessingClasses,self.db.targetBlessingClasses}
+  if type(self.db.blessingRaidDefaults)=="table" then orders[#orders+1]=self.db.blessingRaidDefaults.priorities; choices[#choices+1]=self.db.blessingRaidDefaults.classes end
+  for scope,map in pairs(self.db.blessingGroupOverrides) do
+    if not A.Number(scope) or scope%1~=0 or scope<1 or scope>8 or type(map)~="table" then self.db.blessingGroupOverrides[scope]=nil
+    else
+      if type(map.classes)~="table" then map.classes={} end
+      if type(map.priorities)~="table" then map.priorities={} end
+      orders[#orders+1]=map.priorities; choices[#choices+1]=map.classes
+    end
+  end
+  for _,map in ipairs(orders) do
     for class,order in pairs(map) do
       if not classes[class] or type(order)~="table" then map[class]=nil
       else
         local clean,seen={},{}
-        for i=1,#self.BlessingFamilies do
+        for i=1,5 do
           local key=order[i]
           if type(key)=="string" and families[key] and not seen[key] then clean[#clean+1]=key; seen[key]=true end
         end
@@ -950,7 +1102,7 @@ function B:NormalizeBlessingAssignments()
       end
     end
   end
-  for _,map in ipairs({self.db.blessingClasses,self.db.targetBlessingClasses}) do
+  for _,map in ipairs(choices) do
     for class,key in pairs(map) do
       if not classes[class] or type(key)~="string" or not valid[key] then map[class]=nil end
     end
@@ -973,16 +1125,23 @@ function B:BlessingAssignmentsActive()
   return A.Call(IsInRaid)==true or (A.Number(count) and count>0) or false
 end
 function B:BlessingGroupAllowed(entry)
-  return entry and A.Number(entry.group) and self.db.raidGroups[entry.group]==true
+  local context=self:BlessingContext()
+  return entry and A.Number(entry.group) and ((context=="Party" and not self.db.blessingPartyExcluded)
+    or (context=="Raid" and self.db.raidGroups[entry.group]==true))
 end
 function B:BlessingChoice(entry)
   if not self:BlessingAssignmentsActive() then return nil end
   if not self:BlessingGroupAllowed(entry) then return "skip" end
   local guid=A.Call(UnitGUID,entry.unit)
-  local override=A.Text(guid) and self.blessingPlayers and self.blessingPlayers[guid]
-  local key=override and override.choice or self.db.blessingClasses[entry.class]
+  local context=self:BlessingContext()
+  local plan=self:BlessingPlan(context,entry.group)
+  -- Uniform really means everyone: saved class and player choices are inactive.
+  if plan.mode=="same" then return plan.blessing end
+  local override=A.Text(guid) and self:GetBlessingPlayer(guid,context)
+  local inherited,order=self:GroupBlessingSettings(entry.class,entry.group,true,context)
+  local key=override and override.choice or inherited
   if key=="priority" then
-    return self:OrderedBlessingChoice(entry,self.db.groupBlessingPriorities[entry.class],false,override and override.neverSalvation)
+    return self:OrderedBlessingChoice(entry,order,false)
   end
   if not key then
     -- Legacy fallback is deterministic: first enabled, class-allowed family.
@@ -994,17 +1153,18 @@ function B:BlessingChoice(entry)
     end
     key=key or "skip"
   end
-  if key=="bos" and override and override.neverSalvation then return "skip" end
   return key
 end
-function B:SetBlessingPlayer(entry,key,neverSalvation)
+function B:SetBlessingPlayer(entry,key,neverSalvation,context)
   if A.Combat() then return end
   local guid=entry and A.Call(UnitGUID,entry.unit)
   if not A.Text(guid) then return end
   if key=="priority" then return end
   self.blessingPlayers=self.blessingPlayers or {}
-  if key==nil and not neverSalvation then self.blessingPlayers[guid]=nil
-  else self.blessingPlayers[guid]={choice=key,neverSalvation=neverSalvation==true} end
+  local value=self.blessingPlayers[guid] or {}
+  if (context or self:BlessingContext())=="Raid" then value.raidChoice=key else value.choice=key end
+  value.neverSalvation=neverSalvation==true
+  if not value.choice and not value.raidChoice and not value.neverSalvation then self.blessingPlayers[guid]=nil else self.blessingPlayers[guid]=value end
   self:InvalidateAura(); self:RequestRefresh("blessing player choice",0)
 end
 function B:BlessingGreaterSafe(key,class,roster)
@@ -1035,7 +1195,11 @@ function B:BlessingActionAllowed(action)
     local choice=self:TargetBlessingChoice(entry)
     return choice==nil or choice==(def.singleKey or def.key)
   end
-  if not self:BlessingAssignmentsActive() then return not action.blessingAssigned end
+  if not self:BlessingAssignmentsActive() then
+    if not action.quickTarget and self.db.blessingPartyExcluded and self:BlessingContext()=="Party"
+      and (action.groupCast or A.Call(UnitIsUnit,action.target,"player")~=true) then return false end
+    return not action.blessingAssigned
+  end
   local roster=self:Roster(); local target
   for _,entry in ipairs(roster) do
     if A.Call(UnitIsUnit,entry.unit,action.target)==true or A.Call(UnitGUID,entry.unit)==action.targetGUID then target=entry; break end
@@ -1056,7 +1220,70 @@ function B:GroupClassAllowed(b,class)
   return false
 end
 
+function B:SalvationRecipientAllowed(entry)
+  local guid=A.Call(UnitGUID,entry.unit)
+  local override=A.Text(guid) and self.blessingPlayers and self.blessingPlayers[guid]
+  if override and override.neverSalvation then return false end
+  if A.Call(UnitIsUnit,entry.unit,"player")==true then return true end
+  -- Spell 1038 targets party/raid members, not arbitrary friendly passersby.
+  local raid=A.Call(IsInRaid)
+  local count=A.Call(raid==true and GetNumGroupMembers or GetNumSubgroupMembers)
+  if type(raid)~="boolean" or not A.Number(count) then return false end
+  for i=1,math.min(count,raid and 40 or 4) do
+    local unit=(raid and "raid" or "party")..i
+    if A.Text(guid) and A.Call(UnitExists,unit)==true and A.Call(UnitGUID,unit)==guid then return true end
+  end
+  return false
+end
+function B:SalvationMassSafe(class,roster)
+  if not class then return false end
+  local raid=A.Call(IsInRaid)
+  local count=A.Call(raid==true and GetNumGroupMembers or GetNumSubgroupMembers)
+  if not A.Public(raid) or type(raid)~="boolean" or not A.Number(count) then return false end
+  local expected=raid and count or count+1
+  if #roster~=expected then return false end
+  local seen={}
+  for _,entry in ipairs(roster) do
+    local guid=A.Call(UnitGUID,entry.unit)
+    if not entry.class or not A.Text(guid) or seen[guid] then return false end
+    seen[guid]=true
+    if entry.class==class and (not self:SalvationRecipientAllowed(entry)
+      or not self:GroupSelected(self:FindBuff("bos"),entry.group)
+      or not self:GroupClassAllowed(self:FindBuff("bos"),entry.class)
+      or (self.HelperSuppressed and self:HelperSuppressed({key="bos",target=entry.unit,targetGUID=guid}))) then return false end
+  end
+  return true
+end
+function B:SalvationGroupEnabled(b)
+  return b and b.classWide and self.db.group and self.db.salvationGroup==true
+end
+function B:SalvationActionAllowed(action)
+  local def=action and self:FindBuff(action.key)
+  if not def or not def.classWide then return true end
+  local class=A.Call(function() local _,c=UnitClass(action.target); return c end)
+  local entry={unit=action.target,class=A.Text(class) and class or nil}
+  if not self:SalvationRecipientAllowed(entry) then return false end
+  if action.quickTarget then
+    if not self.db.friendlyTarget or not self:TargetBuffEnabled(def) then return false end
+  else
+    local found=false
+    for _,member in ipairs(self:Roster()) do
+      if A.Call(UnitGUID,member.unit)==action.targetGUID then
+        entry=member; found=true; break
+      end
+    end
+    if not found or not self:RecipientAllowed(def,entry) or (entry.unit~="player" and not self:GroupSelected(def,entry.group)) then return false end
+  end
+  if action.groupCast then return self:SalvationGroupEnabled(def) and self.db.smartGroup and self:SalvationMassSafe(entry.class,self:Roster()) end
+  return true
+end
 function B:RecipientAllowed(b,entry)
+  if b.classWide then
+    if not self:SalvationRecipientAllowed(entry) then return false end
+    if entry.quickTarget then return self:TargetBuffEnabled(b) end
+    if self:SalvationGroupEnabled(b) then return self:GroupClassAllowed(b,entry.class) and self:GroupSelected(b,entry.group) end
+    return entry.unit=="player" and self:Enabled(b)
+  end
   -- Explicit targets and personal maintenance are independent of group assignments.
   if b.kind=="blessing" and self:BlessingAssignmentsActive() and (not entry.quickTarget or entry.blessingAssigned) then
     return self:BlessingChoice(entry)==(b.singleKey or b.key)
@@ -1177,7 +1404,7 @@ function B:Select()
     local blessingOwned=false
     for _,b in ipairs(list) do
       local supported,why=self:Supported(b)
-      if (self:Enabled(b) or (explicitTarget and b.kind=="blessing") or (blessingPlan and quick.blessingAssigned and b.kind=="blessing")) and (self:TargetBuffEnabled(b) or (blessingPlan and quick.blessingAssigned and b.kind=="blessing")) and supported and not b.singleKey and (b.kind=="single" or b.kind=="blessing")
+      if (self:Enabled(b) or (b.classWide and self:TargetBuffEnabled(b)) or (explicitTarget and b.kind=="blessing") or (blessingPlan and quick.blessingAssigned and b.kind=="blessing")) and (self:TargetBuffEnabled(b) or (blessingPlan and quick.blessingAssigned and b.kind=="blessing")) and supported and not b.singleKey and (b.kind=="single" or b.kind=="blessing")
         and not (b.kind=="blessing" and blessingOwned) and self:RecipientAllowed(b,quick) then
         local targetThreshold=self:TargetRebuffSeconds(b)
         local missing=self:ScanMissing(b,{quick},scans,scanErrors,targetThreshold)
@@ -1213,13 +1440,14 @@ function B:Select()
   local exclusive={}
   for _,b in ipairs(list) do
     local supported,why=self:Supported(b)
-    if (self:Enabled(b) or (blessingPlan and b.kind=="blessing")) and supported and not b.singleKey then
+    if (self:Enabled(b) or self:SalvationGroupEnabled(b) or (blessingPlan and b.kind=="blessing")) and supported and not b.singleKey then
       local entries
       if b.kind=="single" or b.kind=="blessing" then entries=roster else entries={roster[1]} end
 
       local candidates={}
       for _,entry in ipairs(entries) do
         local assigned = (blessingPlan and b.kind=="blessing" and self:BlessingGroupAllowed(entry)) or entry.unit=="player" or self:GroupSelected(b,entry.group or 1)
+        if b.kind=="blessing" and self.db.blessingPartyExcluded and self:BlessingContext()=="Party" and entry.unit~="player" then assigned=false end
         local group=b.kind=="blessing" and ("blessing:" .. entry.unit) or nil
         if assigned and self:RecipientAllowed(b,entry) and (not group or not exclusive[group]) then
           candidates[#candidates+1]=entry
@@ -1229,7 +1457,7 @@ function B:Select()
       -- Count only verified, in-range group-rank recipients. Restrict Greater
       -- Blessings to a class whose assigned members all belong to this family.
       local groupDef=b.groupKey and self:FindBuff(b.groupKey)
-      if self.db.group and self.db.smartGroup and groupDef and (self:Enabled(groupDef) or (blessingPlan and b.kind=="blessing")) then
+      if self.db.group and self.db.smartGroup and groupDef and (self:Enabled(groupDef) or self:SalvationGroupEnabled(groupDef) or (blessingPlan and b.kind=="blessing")) then
         local buckets={}
         for _,need in ipairs(missing) do
           local entry=need.entry
@@ -1238,7 +1466,7 @@ function B:Select()
             if ga then
               local eligible,why=self:TargetEligible(ga,true)
               if eligible then
-                local key=b.kind=="blessing" and entry.class or entry.group
+                local key=(b.kind=="blessing" or b.classWide) and entry.class or entry.group
                 if key then
                   buckets[key]=buckets[key] or {}; buckets[key][#buckets[key]+1]={need=need,action=ga}
                 end
@@ -1251,7 +1479,7 @@ function B:Select()
           local bucket=buckets[key]; local safe=true
           -- A group cast would also hit recipients whose reminder was dismissed.
           for _,entry in ipairs(roster) do
-            local affected=b.kind=="blessing" and entry.class==key or b.kind~="blessing" and entry.group==key
+            local affected=(b.kind=="blessing" or b.classWide) and entry.class==key or (b.kind~="blessing" and not b.classWide) and entry.group==key
             if affected and self.HelperSuppressed and self:HelperSuppressed({key=b.key,target=entry.unit,targetGUID=A.Call(UnitGUID,entry.unit)}) then safe=false end
           end
           if blessingPlan and b.kind=="blessing" and not self:BlessingGreaterSafe(b.key,key,roster) then safe=false end
@@ -1260,7 +1488,8 @@ function B:Select()
               if entry.class==key and (exclusive["blessing:"..entry.unit] or (not blessingPlan and (not self:GroupSelected(b,entry.group) or not self:GroupClassAllowed(b,entry.class)))) then safe=false end
             end
           end
-          if b.kind~="blessing" then
+          if b.classWide and not self:SalvationMassSafe(key,roster) then safe=false end
+          if b.kind~="blessing" and not b.classWide then
             for _,entry in ipairs(roster) do
               if entry.group==key and not self:GroupClassAllowed(b,entry.class) then safe=false end
             end
@@ -1332,9 +1561,8 @@ function B:Select()
     if readiness then return readiness,readiness.manual and "manual pet recovery" or "class readiness" end
   end
 
-  -- Weapon coatings are informational reminders. Evaluate them only after all
-  -- valid castable spell and item actions so a manual alert cannot block the
-  -- one-tap workflow.
+  -- Weapon applications and manual coating reminders follow ordinary buffs
+  -- and consumables, so an informational alert cannot block a castable buff.
   if type(self.SelectWeaponReminder)=="function" then
     local ok,action,why=pcall(self.SelectWeaponReminder,self)
     if not ok then self.lastError="weapon reminder provider failed"; return nil,"weapon reminder unavailable" end

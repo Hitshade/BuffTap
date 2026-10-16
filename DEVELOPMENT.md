@@ -1,6 +1,6 @@
 # BuffTap development
 
-Current local version: **1.15.1**. Runtime: `addon/BuffTap`. Named profiles prepared for testing; published stable remains 1.14.2.
+Current local version: **1.15.2**. Runtime: `addon/BuffTap`. Salvation compatibility prepared locally; published stable is 1.15.1.
 
 Install `requirements-dev.txt`, then run `python tests/test_warlock_review.py` for all 825 isolated mocked Lua 5.1 scenarios. This entry point imports all earlier suites. Run `python tools/verify_mage_catalog.py` to cross-check Mage scroll evidence.
 
@@ -27,3 +27,13 @@ Banner artwork is embedded as a shared 512×256 RGB TGA. Source/prompt: research
 1.15.0: embedded AceDB-3.0 minor 39 with an explicit shared-key facade over the character settings. Profiles/ProfileOptions own profile operations and UI. Test entry: tests/test_profile_persistence.py; 876 scenarios. Source class snapshots are profile-specific, keyed by character and never applied on profile switch. Optional copy validates class identity before any mutation.
 
 1.15.1: embedded AceDB-3.0 minor 39 with an explicit shared-key facade over the character settings. Profiles/ProfileOptions own profile operations and UI. Test entry: tests/test_profile_persistence.py; 882 scenarios. Source class snapshots are profile-specific, keyed by character and never applied on profile switch. Optional copy validates class identity before any mutation.
+
+1.15.2: Salvation and Mass Salvation are independent of blessing ownership. Current DB2 evidence: research/salvation-1.15.2.json, build 1.60.1.70425. Test entry: tests/test_salvation.py, 902 mocked Lua 5.1 scenarios. Old opt-ins pause for explicit review, with backups retained; old fixed Salvation assignments become Skip. Class-wide casts revalidate affected exclusions and roster completeness. Revoke remains manual.
+
+1.15.2 clarity revision: Groups owns independent salvationGroup permission; Target owns explicit targetBuffs.bos permission; Buffs retains personal permission. blessingGroupOverrides stores scoped class choices and priorities, resolved before player exceptions, with shared exclusions authoritative. tests/test_group_scopes.py: 922 scenarios. Research-only comparison: research/buff-manager-usability-1.15.2.md.
+
+1.15.2 party-first revision: Party retains blessingClasses/groupBlessingPriorities and adds blessingPartyMode/blessingPartyUniform. blessingRaidDefaults owns separate class/order/mode data; blessingGroupOverrides stores G1-G8 overrides. All four plan fields are classKeys for same-class optional profile copying, never shared profile preferences. Session exceptions use choice for Party and raidChoice for Raid; Never Salvation is independent. Uniform mode returns before class/player resolution. tests/test_party_plans.py: 957 scenarios. No publication performed.
+
+1.15.2 party-first revision: Party retains blessingClasses/groupBlessingPriorities and adds blessingPartyMode/blessingPartyUniform. blessingRaidDefaults owns separate class/order/mode data; blessingGroupOverrides stores G1-G8 overrides. All four plan fields are classKeys for same-class optional profile copying, never shared profile preferences. Session exceptions use choice for Party and raidChoice for Raid; Never Salvation is independent. Uniform mode returns before class/player resolution. tests/test_party_plans.py: 959 scenarios. No publication performed.
+
+1.15.2 party-first revision: Party retains blessingClasses/groupBlessingPriorities and adds blessingPartyMode/blessingPartyUniform/blessingPartyExcluded. blessingRaidDefaults owns separate class/order/mode data; blessingGroupOverrides stores G1-G8 overrides. All plan fields are classKeys for same-class optional profile copying, never shared profile preferences. Session exceptions use choice for Party and raidChoice for Raid; Never Salvation is independent. Uniform mode returns before class/player resolution. tests/test_mechanical_cleanup.py: 983 scenarios. Roster UI/event ownership, plan initialization, inherited filter access, profile normalization and unused class UI corrected. No publication performed.
