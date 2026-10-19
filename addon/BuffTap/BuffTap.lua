@@ -44,6 +44,15 @@ local function shortTime(seconds)
   return s>0 and (tostring(m).."m"..tostring(s).."s") or (tostring(m).."m")
 end
 
+function B:ApplyReminderVisibility()
+  local b=self.button
+  if not b or A.Combat() then return end
+  local visible=self.db.showReminder~=false
+  b:SetAlpha(visible and self.db.opacity or 0)
+  b:EnableMouse(visible)
+  if not visible and GameTooltip then GameTooltip:Hide() end
+end
+
 function B:UpdatePulse()
   local b=self.button
   if not b or not b.glow then return end
@@ -166,7 +175,7 @@ function B:CreateButton()
 
   b:SetScript("OnEnter",function()
     local action=B.action
-    if A.Combat() or B:ReminderPauseReason() or not action or not action.valid or not GameTooltip then return end
+    if B.db.showReminder==false or A.Combat() or B:ReminderPauseReason() or not action or not action.valid or not GameTooltip then return end
     GameTooltip:SetOwner(b,"ANCHOR_RIGHT")
     if action.source=="weapon-reminder" then
       GameTooltip:SetText(action.name,1,0.82,0.1)
@@ -269,7 +278,7 @@ function B:Commit(action,reason)
   if self.ApplyReminderStyle then self:ApplyReminderStyle(b) end
   local previous=self.action
   if self.quickChoices then self.quickChoices:Hide() end
-  local appearance=table.concat({self.db.size,self.db.opacity,self.db.x,self.db.y,tostring(self.db.glow),tostring(self.db.pulse),
+  local appearance=table.concat({tostring(self.db.showReminder),self.db.size,self.db.opacity,self.db.x,self.db.y,tostring(self.db.glow),tostring(self.db.pulse),
     tostring(self.db.showBuffName),tostring(self.db.showTargetName),tostring(self.db.showTimer),tostring(self.db.showGroupBadge),table.concat(self.db.keys,",")},"|")
   local secureMatches=false
   if action and previous and action.id==previous.id and action.source==previous.source and action.target==previous.target and action.targetGUID==previous.targetGUID and action.slot==previous.slot then
@@ -315,7 +324,7 @@ function B:Commit(action,reason)
   if action.manual then
     b:SetSize(self.db.size,self.db.size)
     b:ClearAllPoints(); b:SetPoint("CENTER",UIParent,"CENTER",self.db.x,self.db.y)
-    b:SetAlpha(self.db.opacity); b.icon:SetTexture(action.icon)
+    self:ApplyReminderVisibility(); b.icon:SetTexture(action.icon)
     b.nameLabel:SetText(self.db.showBuffName and action.name or "")
     b.label:SetText(self.db.showTargetName and action.targetName or "")
     self.action=action; self.reason=reason; b:Show()
@@ -359,7 +368,7 @@ function B:Commit(action,reason)
   end
   b:SetSize(self.db.size,self.db.size)
   b:ClearAllPoints(); b:SetPoint("CENTER",UIParent,"CENTER",self.db.x,self.db.y)
-  b:SetAlpha(self.db.opacity)
+  self:ApplyReminderVisibility()
   b.icon:SetTexture(action.icon)
   b.nameLabel:SetText(self.db.showBuffName and action.name or "")
   b.label:SetText(self.db.showTargetName and action.targetName or "")

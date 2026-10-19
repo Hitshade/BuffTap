@@ -1,3 +1,7 @@
+# 1.15.3
+
+Added a profile-aware Show reminder button toggle. Hidden mode preserves the buffing binding and optional audio without an invisible mouse-interactive area.
+
 # BuffTap 1.15.2
 
 Prepared for local in-game testing. Not published.

@@ -54,7 +54,7 @@ function B:InitDB()
   if type(self.db.showTimer)~="boolean" and type(self.db.showRemaining)=="boolean" then self.db.showTimer=self.db.showRemaining end
   if type(self.db.showGroupBadge)~="boolean" and type(self.db.showGroupIndicator)=="boolean" then self.db.showGroupBadge=self.db.showGroupIndicator end
   self.db.showRemaining=nil; self.db.showGroupIndicator=nil
-  local defaults = {enabled=true, size=64, opacity=1, x=0, y=-180,
+  local defaults = {enabled=true, showReminder=true, size=64, opacity=1, x=0, y=-180,
     seconds=45, rebuffVersion=1, sound=false, reminderSound="default", supplySound="default", soundChannel="Master", soundInterval=5, glow=true, pulse=false, group=false, smartGroup=true,
     groupNeed=3, blessingNeed=2, friendlyTarget=false, targetSeconds=300, keys={"MOUSEWHEELDOWN"}, buffs={}, priorities={}, buffSeconds={},
     pauseResting=false, targetClassBlessings=true, targetBlessingFallback=true, targetBlessingClasses={}, targetBlessingPriorities={}, groupBlessingPriorities={}, blessingAssignments=false, blessingClasses={}, blessingGroupOverrides={}, salvationGroup=false, buffGroups={}, buffClasses={}, buffGroupNeed={}, targetBuffs={}, targetBuffSeconds={}, showBuffName=false, showTargetName=true, showTimer=false, showGroupBadge=true,

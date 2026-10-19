@@ -2,7 +2,7 @@
 local _,B=...
 local A=B.API
 -- An explicit allowlist prevents new buff/class options from becoming shared by accident.
-local shared={keys=true,size=true,opacity=true,x=true,y=true,glow=true,pulse=true,
+local shared={showReminder=true,keys=true,size=true,opacity=true,x=true,y=true,glow=true,pulse=true,
   showBuffName=true,showTargetName=true,showTimer=true,showGroupBadge=true,labelFont=true,labelColor=true,
   sound=true,reminderSound=true,supplySound=true,soundChannel=true,soundInterval=true,
   pauseResting=true,helperDismiss=true,helperBounce=true,helperThanks=true,helperThankEmote=true,
