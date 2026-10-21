@@ -178,3 +178,7 @@ function GetCurrentRegionName() return 'US' end
 function GetCurrentRegion() return 1 end
 function strlenutf8(s) return #s end
 function GetLocale() return 'enUS' end
+
+function UnitIsPVP() return false end
+function UnitIsPVPFreeForAll() return false end
+function IsPVPTimerRunning() return false end

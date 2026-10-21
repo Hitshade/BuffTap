@@ -4,7 +4,7 @@
 
 local _, B = ...
 _G.BuffTap = B
-B.version = "1.15.4"
+B.version = "1.15.5"
 B.API = {}
 local A = B.API
 
@@ -62,7 +62,7 @@ function B:InitDB()
     suppliesEnabled=false, suppliesChat=false, suppliesSound=false, suppliesReadyCheck=false, supplySettings={},
     weaponReminder=true, weaponMainHand=true, weaponOffHand=true,
     weaponApply=false, weaponReplace=false, weaponChoices={}, weaponCoatings={}, weaponSeconds=60,
-    helperDismiss=false, helperBounce=false, helperTracking=false, helperTreasure=false, helperCoverage=false,
+    pvpProtection=true, helperDismiss=false, helperBounce=false, helperTracking=false, helperTreasure=false, helperCoverage=false,
     helperDiscovery=false, helperThanks=false, helperThankEmote="THANK", helperQuick=false, helperTracker=0, helperPet=false, helperHealthstone=false, helperSoulstone=false, soulstoneParty="healer", soulstoneRaid="remind", soulstoneAssigned="", helperDemon=0,
     raidGroups={true,true,true,true,true,true,true,true}}
   for k,v in pairs(defaults) do
@@ -276,10 +276,15 @@ function B:BlessingAuraFamily(aura)
 end
 
 function B:PickBlessingPriority(entry,choices,target)
-  local auras,auraError=self:GetAuras(entry.unit,false)
+  local auras,auraError=self:GetAuras(entry.unit,false,true)
   if not auras then
     if target then self.targetDataPending=true end
     self:AddDiag("blessings -> "..entry.unit..": aura scan unavailable ("..tostring(auraError or "unknown")..")")
+    return "skip"
+  end
+  if auras.incomplete then
+    if target then self.targetDataPending=true end
+    self:AddDiag("blessings -> "..entry.unit..": aura identity unreadable; ownership cannot be established")
     return "skip"
   end
   local own,unknown=false,false
@@ -288,28 +293,52 @@ function B:PickBlessingPriority(entry,choices,target)
     if family then
       local source=aura.sourceUnit
       local isOwn=source=="player" and true or (source and A.Call(UnitIsUnit,source,"player"))
+      local resolved=isOwn==true or (isOwn==false and A.Call(UnitExists,source)==true)
+      if not resolved and A.Number(aura.auraInstanceID) then
+        -- Forever AuraUtil documents PLAYER as player/pet/vehicle ownership.
+        -- Ask about this exact aura; never infer ownership from a missing result.
+        local filtered=aura.playerFiltered
+        if type(filtered)~="boolean" then
+          local query=C_UnitAuras and C_UnitAuras.IsAuraFilteredOutByInstanceID
+          local absent=A.Call(query,entry.unit,aura.auraInstanceID,"HELPFUL")
+          if absent==false then filtered=A.Call(query,entry.unit,aura.auraInstanceID,"HELPFUL|PLAYER") end
+          if type(filtered)=="boolean" then aura.playerFiltered=filtered end
+        end
+        if type(filtered)=="boolean" then
+          isOwn=not filtered; resolved=true
+          self:AddDiag("blessings -> "..entry.unit..": ownership verified by aura filter ("..(isOwn and "yours" or "another caster")..")")
+        end
+      end
       if isOwn==true then
         if own and own~=family then return "skip" end
         own=family
-      elseif isOwn~=false or A.Call(UnitExists,source)~=true then unknown=true end
+      elseif not resolved then unknown=true end
     end
   end
   -- Never guess that a nil, restricted or unresolved caster is another Paladin.
   if unknown then
+    self.ownershipUnavailable=true
     if target then self.targetDataPending=true end
     self:AddDiag("blessings -> "..entry.unit..": blessing caster unknown; replacement blocked")
     return "skip"
   end
   if own then
     self:AddDiag("blessings -> "..entry.unit..": own blessing "..own.." retained; other families blocked")
-    for _,def in ipairs(choices) do if def.key==own then return own end end
+    for _,def in ipairs(choices) do
+      if def.key==own then
+        local action=self:Resolve(def,entry.unit)
+        if action and self.HelperSuppressed and self:HelperSuppressed(action) then return "skip" end
+        return own
+      end
+    end
     return "skip"
   end
   for _,def in ipairs(choices) do
     local action=self:Resolve(def,entry.unit)
     local missing,_,_,_,wake=self:Missing(def,action,auras,target and self:TargetRebuffSeconds(def) or nil)
     self:ConsiderWake(wake)
-    if missing then return def.key end
+    if missing and not (self.HelperSuppressed and self:HelperSuppressed(action)) then return def.key end
+    if missing then self:AddDiag("blessings -> "..entry.unit..": "..def.key.." suppressed; evaluating next allowed priority (Restore reminders in Helpers)") end
   end
   self:AddDiag("blessings -> "..entry.unit..": no eligible missing blessing in selected priorities")
   return "skip"
@@ -640,11 +669,12 @@ local function compactAura(data)
   if not A.Public(data) then return nil,"restricted aura record" end
   if type(data)~="table" then return nil,"unexpected aura shape" end
   local name,spellId,duration,expirationTime=data.name,data.spellId,data.duration,data.expirationTime
-  if not A.Public(name) or not A.Public(spellId) or not A.Public(duration) or not A.Public(expirationTime) then
-    return nil,"restricted aura value"
-  end
-  if not A.Text(name) and not A.Number(spellId) then return nil,"aura identity unreadable" end
-  return {sourceUnit=A.Text(data.sourceUnit) and data.sourceUnit or nil, name=A.Text(name) and name or nil,spellId=A.Number(spellId) and spellId or nil,
+  local publicName=A.Text(name) and name or nil
+  local publicID=A.Number(spellId) and spellId or nil
+  if not publicName and not publicID then return nil,"aura identity unreadable" end
+  return {sourceUnit=A.Text(data.sourceUnit) and data.sourceUnit or nil, name=publicName,spellId=publicID,
+    auraInstanceID=A.Number(data.auraInstanceID) and data.auraInstanceID or nil,
+    timingRestricted=not A.Public(duration) or not A.Public(expirationTime),
     duration=A.Number(duration) and duration or nil,expirationTime=A.Number(expirationTime) and expirationTime or nil}
 end
 
@@ -666,8 +696,9 @@ function A.Auras(unit)
       if #data>=255 then return nil,"aura batch may be truncated" end
       local result={}
       for i=1,#data do
-        local aura,why=compactAura(data[i]); if not aura then return nil,why end
-        result[#result+1]=aura
+        local aura,why=compactAura(data[i])
+        if aura then result[#result+1]=aura; if aura.timingRestricted then result.timingRestricted=true end
+        else result.incomplete=true; result.error=why end
       end
       return result
     elseif data~=nil then return nil,"unexpected aura batch shape" end
@@ -676,10 +707,11 @@ function A.Auras(unit)
   local result={}
   for i=1,255 do
     local data,err=A.Call(U and U.GetAuraDataByIndex,unit,i,"HELPFUL")
-    if err then return nil,err end
+    if err=="restricted value" then data={} elseif err then return nil,err end
     if data==nil then return result end
-    local aura,why=compactAura(data); if not aura then return nil,why end
-    result[#result+1]=aura
+    local aura,why=compactAura(data)
+    if aura then result[#result+1]=aura; if aura.timingRestricted then result.timingRestricted=true end
+    else result.incomplete=true; result.error=why end
   end
   return nil,"aura scan did not terminate"
 end
@@ -689,7 +721,7 @@ function B:InvalidateAura(unit)
   if unit then self.auraCache[unit]=nil else self.auraCache={} end
 end
 
-function B:GetAuras(unit,force)
+function B:GetAuras(unit,force,partial)
   self.auraCache=self.auraCache or {}
   local guid=A.Call(UnitGUID,unit)
   local now=GetTime()
@@ -697,12 +729,15 @@ function B:GetAuras(unit,force)
   local ttl=unit=="target" and 2 or 10
   if cached and A.Text(guid) and cached.guid==guid and now-(cached.at or 0)<=ttl then
     if self.stats then self.stats.auraHits=(self.stats.auraHits or 0)+1 end
+    if not partial and (cached.auras.incomplete or cached.auras.timingRestricted) then return nil,cached.auras.error or "restricted aura value" end
     return cached.auras,cached.error
   end
   if self.stats then self.stats.auraScans=(self.stats.auraScans or 0)+1 end
   local auras,err=A.Auras(unit)
+  if not auras or auras.incomplete then self.buffDataUnavailable=true end
   -- Cache successful scans only. Errors/restrictions are retried after the normal scheduler delay.
-  if auras and A.Text(guid) then self.auraCache[unit]={guid=guid,at=now,auras=auras} end
+  if auras and not auras.incomplete and not auras.timingRestricted and A.Text(guid) then self.auraCache[unit]={guid=guid,at=now,auras=auras} end
+  if auras and not partial and (auras.incomplete or auras.timingRestricted) then return nil,auras.error or "restricted aura value" end
   return auras,err
 end
 
@@ -757,6 +792,7 @@ function B:Missing(b,action,auras,rebuffSeconds)
     end
   end
   if anySafe then return false,"present",shownThreshold,bestRemaining,latestCrossing end
+  if auras.incomplete then return false,"aura scan incomplete",0,nil,nil end
   if matched then return true,"expiring",shownThreshold,bestRemaining,0 end
   return true,"missing",0,nil,nil
 end
@@ -791,6 +827,10 @@ end
 
 function B:TargetEligible(action,checkRange)
   if not action then return false,"no action" end
+  if self.PvPActionAllowed then
+    local allowed,why=self:PvPActionAllowed(action)
+    if not allowed then return false,why end
+  end
   if A.Call(UnitExists,action.target) ~= true then return false,"target unavailable" end
   if A.Call(UnitIsDeadOrGhost,action.target) ~= false then return false,"target dead or unreadable" end
   if action.target~="player" then
@@ -1329,7 +1369,7 @@ function B:ScanMissing(b,entries,scans,scanErrors,rebuffSeconds)
         local eligible,eligibleWhy=self:TargetEligible(action,false)
         if eligible then
           if not scans[entry.unit] and not scanErrors[entry.unit] then
-            scans[entry.unit],scanErrors[entry.unit]=self:GetAuras(entry.unit,false)
+            scans[entry.unit],scanErrors[entry.unit]=self:GetAuras(entry.unit,false,true)
           end
           if scans[entry.unit] then
             local isMissing,source,threshold,remaining,wake=self:Missing(b,action,scans[entry.unit],rebuffSeconds)
@@ -1366,6 +1406,7 @@ function B:Select()
   self.cooldownBlocked=false
   self.dataPending=false
   self.targetDataPending=false
+  self.buffDataUnavailable=false; self.ownershipUnavailable=false; self.pvpBlocked=false; self.deferredBlocked=false
   if self.captureDiagnostics then self.diagnostics={} end
   if not self.db.enabled then return nil,"disabled" end
   if A.Call(UnitIsDeadOrGhost,"player") ~= false then return nil,"dead / ghost / player unavailable" end
@@ -1594,6 +1635,11 @@ function B:Select()
       self:AddDiag("weapon reminder: "..tostring(why))
     end
   end
+  if self.pvpBlocked then return nil,"PvP protection: recipient flagged or status unavailable" end
+  if self.ownershipUnavailable then return nil,"Blessing ownership unavailable; replacement blocked" end
+  if self.buffDataUnavailable then return nil,"Buff information unavailable or incomplete" end
+  if self.targetDataPending then return nil,"Target information unavailable; waiting for data" end
+  if self.deferredBlocked then return nil,"Temporary cast failure; automatic retry pending" end
   return nil,"nothing actionable"
 end
 

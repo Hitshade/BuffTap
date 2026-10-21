@@ -1,3 +1,9 @@
+# 1.15.5
+
+Added exact-instance filtered blessing ownership evidence, conservative partial-aura coverage, and suppression-aware blessing priorities. Unknown ownership, unreadable identities, explicit assignments and own blessings remain protected.
+
+Added default-on profile-aware PvP protection, 10-second failed-recipient retries, and explicit restricted-data/safety diagnostics. Group casts check affected members and retain safe single-target alternatives.
+
 # 1.15.4
 
 Improved friendly-target diagnostic reasons and bounded late-data recovery. Fixed disabled-fallback target selection bypassing own-blessing protection. Unknown ownership remains fail-closed.

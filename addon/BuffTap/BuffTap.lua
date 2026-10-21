@@ -206,7 +206,7 @@ function B:CreateButton()
   b:SetScript("OnLeave",function() if GameTooltip then GameTooltip:Hide() end end)
 
   -- Never select a different action during PreClick. The displayed action is the action clicked.
-  b:SetScript("PreClick",function(_,button)
+  b:SetScript("PreClick",function(_,button,down)
     if button and button~="LeftButton" then return end
     local ok=guarded("click validation",function()
     if A.Combat() then return end
@@ -243,14 +243,14 @@ function B:CreateButton()
       return
     end
     local def=B:FindBuff(action.key)
-    local auras=B:GetAuras(action.target,true)
+    local auras=B:GetAuras(action.target,true,true)
     if not auras or not def then B:Commit(nil,"action no longer verifiable"); return end
     if not B:BlessingActionAllowed(action) then B:Commit(nil,"blessing ownership changed before click"); return end
     local missing=B:Missing(def,action,auras,action.quickTarget and B:TargetRebuffSeconds(def) or nil)
     if not missing then B:Commit(nil,"action no longer missing") end
     end)
     if not ok and not A.Combat() then B:Commit(nil,"click validation unavailable") end
-    if ok and not A.Combat() then B:BeginHelperAttempt(B.action) end
+    if ok and not A.Combat() and down~=false then B:BeginHelperAttempt(B.action) end
   end)
   b:SetScript("PostClick",function(_,button,down)
     if not A.Combat() and button=="RightButton" and not down and B:HelperEnabled("helperDismiss") then B:DismissHelper(B.action); return end
@@ -614,6 +614,11 @@ function B:DiagnosticsLines()
     out[#out+1]="Next: "..tostring(a.name or "Unknown action").." -> "..tostring(a.targetName or a.target or "Unknown target").." ["..tostring(a.target or "unknown").."]"
     out[#out+1]="Reason: "..tostring(a.reason).." | range: "..tostring(a.rangeSource or "not checked")
   else out[#out+1]="Next: none" end
+  out[#out+1]="PvP protection: "..(self.db and self.db.pvpProtection and "on" or "off")
+  if self.buffDataUnavailable then out[#out+1]="Buff information unavailable or incomplete; missing coverage cannot be assumed." end
+  if self.ownershipUnavailable then out[#out+1]="Blessing ownership unavailable; replacing your own blessing is prevented." end
+  if self.pvpBlocked then out[#out+1]="PvP protection blocked at least one recipient or group cast." end
+  if self.deferredBlocked then out[#out+1]="A failed recipient is temporarily deferred; automatic retry is scheduled." end
   if self.refreshDue then out[#out+1]="Next event scan: "..string.format("%.1fs",math.max(0,self.refreshDue-GetTime())).." ("..tostring(self.refreshReason or "scheduled")..")" end
   if self.wakeDue then out[#out+1]="Next exact wake: "..string.format("%.1fs",math.max(0,self.wakeDue-GetTime())).." ("..tostring(self.wakeReason or "threshold/cooldown")..")" end
   out[#out+1]="C_Timer.After: "..tostring(C_Timer and type(C_Timer.After)=="function").." | spell range: "..tostring(C_Spell and type(C_Spell.IsSpellInRange)=="function")
@@ -653,6 +658,7 @@ function B:Status(verbose)
   say("Binding: " .. (#self.db.keys>0 and table.concat(self.db.keys,", ") or "none"))
   say("Rebuff default: " .. tostring(self.db.seconds) .. " seconds")
   say("Friendly target buffing: " .. (self.db.friendlyTarget and "on" or "off") .. " | default target refresh: " .. tostring(self.db.targetSeconds or 300) .. " seconds")
+  say("PvP protection: "..(self.db.pvpProtection and "on" or "off").." | blocked="..tostring(self.pvpBlocked==true).." | aura data unavailable="..tostring(self.buffDataUnavailable==true).." | ownership unknown="..tostring(self.ownershipUnavailable==true).." | temporary retry="..tostring(self.deferredBlocked==true))
   say("Consumables: " .. (self.db.consumablesEnabled and "on" or "off") .. " | curated data build " .. tostring(self.ForeverDataBuild or "unknown"))
   if self.db.group then
     local groups={}
@@ -715,7 +721,7 @@ local events={"ADDON_LOADED","PLAYER_LOGIN","PLAYER_ENTERING_WORLD","PLAYER_REGE
   "UNIT_SPELLCAST_FAILED","UNIT_SPELLCAST_INTERRUPTED","SPELL_UPDATE_COOLDOWN","UNIT_POWER_UPDATE",
   "PLAYER_EQUIPMENT_CHANGED","WEAPON_ENCHANT_CHANGED","WEAPON_SLOT_CHANGED","PLAYER_MOUNT_DISPLAY_CHANGED","PLAYER_UPDATE_RESTING","UPDATE_SHAPESHIFT_FORM","UPDATE_BINDINGS",
   "BAG_UPDATE_DELAYED","ITEM_DATA_LOAD_RESULT","UI_ERROR_MESSAGE","MINIMAP_UPDATE_TRACKING","UNIT_CONNECTION",
-  "ADDON_RESTRICTION_STATE_CHANGED","UNIT_AURA_BLOCKED","UNIT_AURA_BLOCK_LIST_CLEARED"}
+  "UNIT_FLAGS","PVP_TIMER_UPDATE","ADDON_RESTRICTION_STATE_CHANGED","UNIT_AURA_BLOCKED","UNIT_AURA_BLOCK_LIST_CLEARED"}
 local playerOnlyEvents={UNIT_POWER_UPDATE=true,UNIT_SPELLCAST_SUCCEEDED=true,UNIT_SPELLCAST_FAILED=true,UNIT_SPELLCAST_INTERRUPTED=true}
 for _,event in ipairs(events) do
   local registered=false
@@ -737,6 +743,11 @@ local castEvents={UNIT_SPELLCAST_SUCCEEDED=true,UNIT_SPELLCAST_FAILED=true,UNIT_
 local function handleEvent(_,event,arg,castGUID,spellID)
   if event=="ADDON_LOADED" then if arg==ADDON then B:InitDB() end; if B.SyncEditMode then B:SyncEditMode() end; return end
   if not B.db then return end
+  if event=="UNIT_FLAGS" or event=="PVP_TIMER_UPDATE" then
+    if B.db.pvpProtection and (arg=="player" or B:IsWatchedUnit(arg) or (A.Text(arg) and (arg:match("^party%d+$") or arg:match("^raid%d+$")))) then B:InvalidateRoster(); B:RequestRefresh("PvP flags changed",0) end
+    if arg=="pet" and B.ReadinessEnabled and B:ReadinessEnabled("pet") then B:RequestRefresh("pet flags changed",.05) end
+    return
+  end
     if event=="PLAYER_REGEN_DISABLED" and B.SuspendItemDataRetries then B:SuspendItemDataRetries() end
   if event=="PLAYER_REGEN_ENABLED" and B.ResumeItemDataRetries then B:ResumeItemDataRetries() end
 local itemRequested=event=="ITEM_DATA_LOAD_RESULT" and A.Number(arg) and ((B.itemRequests and B.itemRequests[arg]) or (B.itemRequestState and B.itemRequestState[arg]))
@@ -756,6 +767,7 @@ local itemRequested=event=="ITEM_DATA_LOAD_RESULT" and A.Number(arg) and ((B.ite
     if A.Combat() then B.dirty=true else B:Refresh(false) end
     return
   end
+  if B.SafetyEvent then B:SafetyEvent(event,arg,castGUID,spellID) end
   if B.HelperEvent then B:HelperEvent(event,arg,castGUID,spellID) end
   if event=="UI_ERROR_MESSAGE" then return end
   if event=="MINIMAP_UPDATE_TRACKING" and not B:HelperEnabled("helperTracking") and not B:HelperEnabled("helperTreasure") then return end

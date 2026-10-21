@@ -387,3 +387,13 @@ B.Locales.deDE["Changes only the name. All settings are preserved."]="Ändert nu
 B.Locales.deDE["Copies shared preferences into a new profile and switches to it. The original is kept."]="Kopiert geteilte Einstellungen in ein neues Profil und aktiviert es. Das Original bleibt erhalten."
 B.Locales.deDE["Starts with default shared preferences and switches to the new profile. The original is kept."]="Erstellt und aktiviert ein Profil mit Standardeinstellungen. Das Original bleibt erhalten."
 B.Locales.deDE["Create a profile with default shared preferences and switch to it? Your current profile is kept unchanged."]="Profil mit geteilten Standardeinstellungen erstellen und aktivieren? Das aktuelle Profil bleibt unverändert."
+
+-- Safety and recovery messages.
+B.Locales.deDE["Prevent accidental PvP flagging"]="Versehentliche PvP-Markierung verhindern"
+B.Locales.deDE["Choose optional helpers. PvP protection starts on; other helpers start off."]="Wählt optionale Helfer. PvP-Schutz ist anfangs aktiv, andere Helfer sind aus."
+B.Locales.deDE["Skip flagged or unreadable recipients while unflagged or leaving PvP. Includes group spells. Battlegrounds and arenas are exempt."]="Überspringt markierte oder nicht prüfbare Empfänger, solange Ihr nicht markiert seid oder PvP verlasst. Gilt auch für Gruppenzauber. Nicht in Schlachtfeldern oder Arenen."
+B.Locales.deDE["PvP protection: flagged recipient or unknown PvP status. Check Diagnostics."]="PvP-Schutz: Empfänger markiert oder PvP-Status unbekannt. Siehe Diagnose."
+B.Locales.deDE["Blessing ownership is unknown; replacement is blocked for safety."]="Segenswirker unbekannt; Ersetzen wird vorsorglich verhindert."
+B.Locales.deDE["Buff information is unavailable or incomplete. Check Diagnostics."]="Stärkungsinformationen fehlen oder sind unvollständig. Siehe Diagnose."
+B.Locales.deDE["Waiting for readable target information."]="Warte auf lesbare Zielinformationen."
+B.Locales.deDE["Recipient temporarily skipped after a failed cast; retrying automatically."]="Empfänger nach fehlgeschlagenem Zauber kurz übersprungen; automatischer neuer Versuch."

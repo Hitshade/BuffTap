@@ -5,7 +5,7 @@ local A=B.API
 local shared={showReminder=true,keys=true,size=true,opacity=true,x=true,y=true,glow=true,pulse=true,
   showBuffName=true,showTargetName=true,showTimer=true,showGroupBadge=true,labelFont=true,labelColor=true,
   sound=true,reminderSound=true,supplySound=true,soundChannel=true,soundInterval=true,
-  pauseResting=true,helperDismiss=true,helperBounce=true,helperThanks=true,helperThankEmote=true,
+  pvpProtection=true,pauseResting=true,helperDismiss=true,helperBounce=true,helperThanks=true,helperThankEmote=true,
   helperQuick=true,helperDiscovery=true,minimap=true,brokerEnabled=true}
 local classKeys={"seconds","rebuffVersion","buffs","priorities","buffSeconds","group","smartGroup","groupNeed","blessingNeed",
   "salvationVersion","salvationMigration","friendlyTarget","targetSeconds","targetClassBlessings","targetBlessingFallback","targetBlessingClasses","targetBlessingPriorities",

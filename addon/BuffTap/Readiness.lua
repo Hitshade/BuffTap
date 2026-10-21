@@ -125,6 +125,7 @@ function B:SyncReadiness()
   if pets then for _,e in ipairs(petEvents) do wanted[e]=true end end
   self.readinessEvents=self.readinessEvents or {}
   for e in pairs(extraEvents) do
+    if e~="UNIT_FLAGS" then -- Owned globally by PvP protection; retain pet notifications too.
     if wanted[e] and not self.readinessEvents[e] then
       local registered=false
       if e:sub(1,5)=="UNIT_" and type(self.events.RegisterUnitEvent)=="function" then
@@ -139,6 +140,7 @@ function B:SyncReadiness()
     elseif not wanted[e] and self.readinessEvents[e] then
       pcall(self.events.UnregisterEvent,self.events,e); self.readinessEvents[e]=nil
     end
+  end
   end
   self.readinessInventory=nil
   if not pets then self.readinessSettleUntil=nil end

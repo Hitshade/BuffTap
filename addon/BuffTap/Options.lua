@@ -1060,7 +1060,7 @@ end
 function B:BuildHelperPage(parent)
   local f=panel(parent); parent.pages[TAB.Helpers]=f; self.helperWindow=f
   label(f,L("Everyday conveniences"),18,-16,"GameFontNormalLarge")
-  label(f,L("Choose the extras you want. All start off; your existing buff settings are preserved."),18,-43,"GameFontDisableSmall",680)
+  label(f,L("Choose optional helpers. PvP protection starts on; other helpers start off."),18,-43,"GameFontDisableSmall",680)
   f.checks={}; f.descriptions={}; f.trackers={}
   local settings={
     {"helperDismiss",L("Dismiss a reminder for now"),L("Right-click a buff or item reminder to skip it until you change zones. Restore reminders below brings it back sooner.")},
@@ -1091,13 +1091,17 @@ function B:BuildHelperPage(parent)
     f.descriptions[key]=label(f,descriptions[i],x+4,y-27,"GameFontDisableSmall",326)
     addHelp(f.checks[key],spec[2],spec[3])
   end
-  card(f,364,-189,336,58)
+  card(f,364,-189,336,72)
   parent.pauseResting=check(f,"Pause reminders while resting",368,-191,function(c)
     if A.Combat() then return end
     setAndRefresh("pauseResting",c:GetChecked()==true); B:InvalidateSupplies(false); B:Refresh(false); B:Options()
   end)
-  label(f,L("Pause reminders and stock alerts in cities and inns."),372,-218,"GameFontDisableSmall",320)
   addHelp(parent.pauseResting,"Pause reminders while resting","Hide buff reminders and quiet automatic stock alerts in cities and inns. Settings remain accessible.")
+  parent.pvpProtection=check(f,"Prevent accidental PvP flagging",368,-225,function(c)
+    if A.Combat() then return end
+    setAndRefresh("pvpProtection",c:GetChecked()==true); B:Refresh(false); B:Options()
+  end)
+  addHelp(parent.pvpProtection,"Prevent accidental PvP flagging","Skip flagged or unreadable recipients while unflagged or leaving PvP. Includes group spells. Battlegrounds and arenas are exempt.")
   line(f,-262)
   label(f,L("Solo thanks"),18,-275,"GameFontNormalLarge")
   f.checks.helperThanks=check(f,L("Thank players who buff me solo"),18,-305,function(c)
@@ -2323,6 +2327,7 @@ function B:Options()
   f.emptyBuffs:SetShown(visible==0)
   f.buffChild:SetHeight(math.max(1,visible*58))
   if f.diagVersion then f.diagVersion:SetText("BuffTap v"..tostring(self.version or "unknown")) end
+  if f.pvpProtection then f.pvpProtection:SetChecked(self.db.pvpProtection==true) end
   if f.diagText then f.diagText:SetText(table.concat(self:DiagnosticsLines(),"\n\n")) end
   f:Show(); f:Raise()
 end

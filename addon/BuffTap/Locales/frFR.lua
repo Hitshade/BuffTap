@@ -387,3 +387,13 @@ B.Locales.frFR["Changes only the name. All settings are preserved."]="Modifie un
 B.Locales.frFR["Copies shared preferences into a new profile and switches to it. The original is kept."]="Copie les réglages partagés dans un nouveau profil et l’active. L’original est conservé."
 B.Locales.frFR["Starts with default shared preferences and switches to the new profile. The original is kept."]="Crée et active un profil avec les réglages partagés par défaut. L’original est conservé."
 B.Locales.frFR["Create a profile with default shared preferences and switch to it? Your current profile is kept unchanged."]="Créer et activer un profil avec les réglages partagés par défaut ? Votre profil actuel est conservé."
+
+-- Safety and recovery messages.
+B.Locales.frFR["Prevent accidental PvP flagging"]="Éviter l’activation involontaire du JcJ"
+B.Locales.frFR["Choose optional helpers. PvP protection starts on; other helpers start off."]="Choisissez les aides facultatives. La protection JcJ est activée par défaut, les autres aides sont désactivées."
+B.Locales.frFR["Skip flagged or unreadable recipients while unflagged or leaving PvP. Includes group spells. Battlegrounds and arenas are exempt."]="Ignore les destinataires marqués JcJ ou non vérifiables lorsque vous quittez le JcJ ou n’êtes pas marqué. Inclut les sorts de groupe. Ne s’applique pas aux champs de bataille ni aux arènes."
+B.Locales.frFR["PvP protection: flagged recipient or unknown PvP status. Check Diagnostics."]="Protection JcJ : destinataire marqué ou statut inconnu. Consultez le diagnostic."
+B.Locales.frFR["Blessing ownership is unknown; replacement is blocked for safety."]="L’auteur de la bénédiction est inconnu ; le remplacement est bloqué par sécurité."
+B.Locales.frFR["Buff information is unavailable or incomplete. Check Diagnostics."]="Les informations des améliorations sont indisponibles ou incomplètes. Consultez le diagnostic."
+B.Locales.frFR["Waiting for readable target information."]="En attente d’informations de cible lisibles."
+B.Locales.frFR["Recipient temporarily skipped after a failed cast; retrying automatically."]="Destinataire temporairement ignoré après un échec ; nouvelle tentative automatique."

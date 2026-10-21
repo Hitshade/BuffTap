@@ -387,3 +387,13 @@ B.Locales.ptBR["Changes only the name. All settings are preserved."]="Altera ape
 B.Locales.ptBR["Copies shared preferences into a new profile and switches to it. The original is kept."]="Copia as preferências compartilhadas para um novo perfil e o ativa. O original é preservado."
 B.Locales.ptBR["Starts with default shared preferences and switches to the new profile. The original is kept."]="Cria e ativa um perfil com preferências compartilhadas padrão. O original é preservado."
 B.Locales.ptBR["Create a profile with default shared preferences and switch to it? Your current profile is kept unchanged."]="Criar e ativar um perfil com preferências compartilhadas padrão? Seu perfil atual permanece inalterado."
+
+-- Safety and recovery messages.
+B.Locales.ptBR["Prevent accidental PvP flagging"]="Evitar ativar JxJ acidentalmente"
+B.Locales.ptBR["Choose optional helpers. PvP protection starts on; other helpers start off."]="Escolha as ajudas opcionais. A proteção JxJ começa ativada; as outras ajudas, desativadas."
+B.Locales.ptBR["Skip flagged or unreadable recipients while unflagged or leaving PvP. Includes group spells. Battlegrounds and arenas are exempt."]="Ignora destinatários marcados ou não verificáveis quando você não está em JxJ ou está saindo dele. Inclui feitiços de grupo. Não se aplica a campos de batalha nem arenas."
+B.Locales.ptBR["PvP protection: flagged recipient or unknown PvP status. Check Diagnostics."]="Proteção JxJ: destinatário marcado ou estado desconhecido. Consulte o diagnóstico."
+B.Locales.ptBR["Blessing ownership is unknown; replacement is blocked for safety."]="Não se sabe quem lançou a bênção; a substituição está bloqueada por segurança."
+B.Locales.ptBR["Buff information is unavailable or incomplete. Check Diagnostics."]="As informações dos benefícios estão indisponíveis ou incompletas. Consulte o diagnóstico."
+B.Locales.ptBR["Waiting for readable target information."]="Aguardando informações legíveis do alvo."
+B.Locales.ptBR["Recipient temporarily skipped after a failed cast; retrying automatically."]="Destinatário ignorado temporariamente após uma falha; nova tentativa automática."
