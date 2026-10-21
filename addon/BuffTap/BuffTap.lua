@@ -453,22 +453,34 @@ function B:ScheduleWake(delay,reason)
   end)
 end
 
--- Target unit metadata/auras can settle a fraction after PLAYER_TARGET_CHANGED on
--- beta/live service conditions. Recheck twice with one-shot timers only when the
--- optional friendly-target mode is enabled. Every target change invalidates the
--- generation, so a callback can never apply to a later target.
+-- Keep settling work bounded: two early checks and, only for incomplete data,
+-- two later checks sharing one timer. Target changes invalidate every callback.
 function B:ScheduleTargetSettling()
-  self:CancelTimer("target0.18"); self:CancelTimer("target0.65")
+  for _,slot in ipairs({"target0.18","target0.65","targetLate"}) do self:CancelTimer(slot) end
   self.targetSettleToken=(self.targetSettleToken or 0)+1
   local token=self.targetSettleToken
   if not (self.db and self.db.friendlyTarget) or A.Combat() or not (C_Timer and type(C_Timer.After)=="function") then return end
+  local function active()
+    return token==B.targetSettleToken and not A.Combat() and B.db and B.db.enabled and B.db.friendlyTarget
+  end
+  local function late(step)
+    if not active() or not B.targetDataPending then return end
+    B:StartTimer("targetLate",step==1 and 1.35 or 3,function()
+      guarded("target data retry",function()
+        if not active() or not B.targetDataPending then return end
+        if B.stats then B.stats.targetRetries=(B.stats.targetRetries or 0)+1 end
+        B:InvalidateAura("target"); B:Refresh(false)
+        if step==1 then late(2) end
+      end)
+    end)
+  end
   for _,delay in ipairs({0.18,0.65}) do
     pcall(B.StartTimer,B,"target"..delay,delay,function()
       guarded("target settle",function()
-        if token~=B.targetSettleToken or A.Combat() or not (B.db and B.db.friendlyTarget) then return end
+        if not active() then return end
         if B.stats then B.stats.targetRetries=(B.stats.targetRetries or 0)+1 end
-        B:InvalidateAura("target")
-        B:Refresh(false)
+        B:InvalidateAura("target"); B:Refresh(false)
+        if delay==0.65 then late(1) end
       end)
     end)
   end
@@ -799,7 +811,7 @@ local itemRequested=event=="ITEM_DATA_LOAD_RESULT" and A.Number(arg) and ((B.ite
   if event=="PLAYER_REGEN_DISABLED" then
     B.dirty=true; B.pendingReason="combat"
     B:CancelRefreshTimer(); B:CancelWakeTimer(); B:CancelRangeTimer(); B:CancelOverlayTimer(); B.targetSettleToken=(B.targetSettleToken or 0)+1
-    B:CancelTimer("target0.18"); B:CancelTimer("target0.65")
+    for _,slot in ipairs({"target0.18","target0.65","targetLate"}) do B:CancelTimer(slot) end
     B.action=nil; B.reason="combat: suspended"
     if B.UpdateBroker then B:UpdateBroker() end
     if GameTooltip then GameTooltip:Hide() end

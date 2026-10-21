@@ -4,7 +4,7 @@
 
 local _, B = ...
 _G.BuffTap = B
-B.version = "1.15.2"
+B.version = "1.15.4"
 B.API = {}
 local A = B.API
 
@@ -242,7 +242,7 @@ function B:TargetBlessingChoice(entry)
   if selected then add(self:FindBuff(selected),false) end
   if not entry.class then return "skip" end
   for _,def in ipairs(self.blessingClassList or self:ClassList()) do add(def,true) end
-  if not self.db.targetBlessingFallback then return choices[1] and choices[1].key or "skip" end
+  if not self.db.targetBlessingFallback then choices=choices[1] and {choices[1]} or {} end
   return self:PickBlessingPriority(entry,choices,true)
 end
 
@@ -276,8 +276,12 @@ function B:BlessingAuraFamily(aura)
 end
 
 function B:PickBlessingPriority(entry,choices,target)
-  local auras=self:GetAuras(entry.unit,false)
-  if not auras then return "skip" end
+  local auras,auraError=self:GetAuras(entry.unit,false)
+  if not auras then
+    if target then self.targetDataPending=true end
+    self:AddDiag("blessings -> "..entry.unit..": aura scan unavailable ("..tostring(auraError or "unknown")..")")
+    return "skip"
+  end
   local own,unknown=false,false
   for _,aura in ipairs(auras) do
     local family=self:BlessingAuraFamily(aura)
@@ -291,8 +295,13 @@ function B:PickBlessingPriority(entry,choices,target)
     end
   end
   -- Never guess that a nil, restricted or unresolved caster is another Paladin.
-  if unknown then return "skip" end
+  if unknown then
+    if target then self.targetDataPending=true end
+    self:AddDiag("blessings -> "..entry.unit..": blessing caster unknown; replacement blocked")
+    return "skip"
+  end
   if own then
+    self:AddDiag("blessings -> "..entry.unit..": own blessing "..own.." retained; other families blocked")
     for _,def in ipairs(choices) do if def.key==own then return own end end
     return "skip"
   end
@@ -302,6 +311,7 @@ function B:PickBlessingPriority(entry,choices,target)
     self:ConsiderWake(wake)
     if missing then return def.key end
   end
+  self:AddDiag("blessings -> "..entry.unit..": no eligible missing blessing in selected priorities")
   return "skip"
 end
 
@@ -1327,8 +1337,11 @@ function B:ScanMissing(b,entries,scans,scanErrors,rebuffSeconds)
             if isMissing and not (self.HelperSuppressed and self:HelperSuppressed(action)) then
               action.needState=source; action.remaining=remaining; action.threshold=threshold
               missing[#missing+1]={entry=entry,action=action,reason=source,threshold=threshold,remaining=remaining}
+            elseif isMissing then
+              self:AddDiag(b.key.." -> "..entry.unit..": reminder dismissed or suppressed; use Restore reminders in Helpers")
             end
           else
+            if entry.quickTarget then self.targetDataPending=true end
             if self.captureDiagnostics then self:AddDiag(b.key .. " -> " .. entry.unit .. ": " .. tostring(scanErrors[entry.unit])) end
           end
         else
@@ -1352,6 +1365,7 @@ function B:Select()
   self.powerBlocked=false
   self.cooldownBlocked=false
   self.dataPending=false
+  self.targetDataPending=false
   if self.captureDiagnostics then self.diagnostics={} end
   if not self.db.enabled then return nil,"disabled" end
   if A.Call(UnitIsDeadOrGhost,"player") ~= false then return nil,"dead / ghost / player unavailable" end
@@ -1388,7 +1402,11 @@ function B:Select()
   -- families: clicking a friendly passerby should never fire a party/raid-wide
   -- spell or alter raid assignment behavior. The current target takes priority
   -- while this option is enabled, then normal self/group selection resumes.
-  local quick=self:FriendlyTargetEntry()
+  local quick,quickWhy=self:FriendlyTargetEntry()
+  if not quick and self.db.friendlyTarget then
+    self:AddDiag("friendly target: "..tostring(quickWhy))
+    if quickWhy=="target class unavailable" or quickWhy=="target dead or unreadable" then self.targetDataPending=true end
+  end
   if quick and blessingPlan then
     local guid=A.Call(UnitGUID,quick.unit)
     for _,entry in ipairs(roster) do
@@ -1398,7 +1416,12 @@ function B:Select()
     end
   end
   if quick then
-    if not quick.blessingAssigned then quick.targetBlessingChoice=self:TargetBlessingChoice(quick) end
+    if not quick.blessingAssigned then
+      quick.targetBlessingChoice=self:TargetBlessingChoice(quick)
+      self:AddDiag("friendly target blessing choice: "..tostring(quick.targetBlessingChoice or "follow buff settings"))
+    else self:AddDiag("friendly target: group assignment overrides target priorities") end
+    local quickLevel=A.Call(UnitLevel,quick.unit)
+    if not A.Number(quickLevel) or quickLevel<1 then self.targetDataPending=true; self:AddDiag("friendly target: target level unavailable") end
     local chosen=self.db.targetClassBlessings and self.db.targetBlessingClasses[quick.class]
     local explicitTarget=not quick.blessingAssigned and chosen and chosen~="skip"
     local blessingOwned=false

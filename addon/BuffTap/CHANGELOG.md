@@ -1,3 +1,7 @@
+# 1.15.4
+
+Improved friendly-target diagnostic reasons and bounded late-data recovery. Fixed disabled-fallback target selection bypassing own-blessing protection. Unknown ownership remains fail-closed.
+
 # 1.15.3
 
 Added a profile-aware Show reminder button toggle. Hidden mode preserves the buffing binding and optional audio without an invisible mouse-interactive area.
