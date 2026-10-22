@@ -1,10 +1,22 @@
-![BuffTap — Less buff management. More adventure. For all classes in WoW Forever.](docs/bufftap-banner.png)
+![BuffTap: Less buff management. More adventure. For all classes in WoW Forever.](docs/bufftap-banner.png)
 
 **Smart buff reminders and effortless mouse-wheel buffing for all classes in WoW Forever.**
 
 BuffTap detects missing or expiring buffs, follows your priorities, and prepares the next spell or item. **Scroll to buff, then keep adventuring.** Prefer a different control? Use a custom keybind, mouse button, or the clickable reminder.
 
 BuffTap automates detection and preparation; every cast or item use still requires your input. Designed for out-of-combat maintenance, with event-driven updates and cached information.
+
+## Nearby player buffing (optional)
+
+Buff nearby players without manually hunting through targets. Enable the optional **Nearby window** to see eligible players who need your buffs, with **class-coloured names and missing-buff icons**. Click a name or use your normal mouse-wheel or key binding to apply the next buff.
+
+- **Compact, movable and lockable**, with stable rows and scrolling for longer lists.
+- **Uses your Target buff preferences**, including class-aware Paladin blessing choices.
+- Enable **Nearby buffing in the Target tab**, or **Shift-left-click the minimap icon** to toggle it.
+- **Quiet nearby reminders**, with no extra reminder icon or notification ding.
+- **Out-of-combat use**, with checks for recipient combat state and your PvP protection setting.
+
+**Friendly player nameplates must be enabled**, normally with **Shift+V**. Nearby buffing starts disabled, and every cast still requires your click or binding.
 
 ## 🛡️ Buff yourself, your party, or your raid
 
@@ -37,9 +49,9 @@ Helpers are opt-in, so you choose how much assistance you want.
 
 ## 🎨 Make it your own
 
-Open **Customization** to adjust your binding, appearance, sounds and quick access. Use arrows to arrange buff priorities. Move and resize the reminder—including alongside Blizzard Edit Mode—and adjust opacity, label fonts/colors, timers, glow, and pulse. Choose separate reminder and low-stock sounds from game assets or installed SharedMedia packs, search and preview them, and control alert frequency. Reminders pause while mounted; optionally pause them in cities and inns too.
+Open **Customization** to adjust your binding, appearance, sounds and quick access. Use arrows to arrange buff priorities. Move and resize the reminder, including alongside Blizzard Edit Mode, and adjust opacity, label fonts/colors, timers, glow, and pulse. Choose separate reminder and low-stock sounds from game assets or installed SharedMedia packs, search and preview them, and control alert frequency. Reminders pause while mounted; optionally pause them in cities and inns too.
 
-Use first-use guidance to get started, and right-click the minimap icon for quick controls or a temporary pause. Open settings from the **draggable minimap button** or enable an optional **LibDataBroker display** alongside—or in place of—the standard reminder. Native game icons and automatic Spanish, German, French, and Brazilian Portuguese localization keep the interface familiar; untranslated text falls back to English.
+Use first-use guidance to get started, and right-click the minimap icon for quick controls or a temporary pause. Open settings from the **draggable minimap button** or enable an optional **LibDataBroker display** alongside, or in place of, the standard reminder. Native game icons and automatic Spanish, German, French, and Brazilian Portuguese localization keep the interface familiar; untranslated text falls back to English.
 
 ## Paladin group setup
 

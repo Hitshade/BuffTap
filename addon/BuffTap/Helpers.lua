@@ -30,8 +30,13 @@ function B:RestoreHelpers()
   self:RequestRefresh("restore reminders",0)
 end
 function B:BeginHelperAttempt(action)
+  self.buffCastAttempt=nil
+  if action and not action.manual and (not action.source or action.source=="spell") and A.Number(action.id) and A.Text(action.targetGUID) then
+    self.buffCastAttempt={id=action.id,unit=action.target,guid=action.targetGUID,at=GetTime()}
+    self.buffAuraFresh={unit=action.target,guid=action.targetGUID,untilTime=GetTime()+3}
+  end
   self.helperAttempt=nil
-  if not self:HelperEnabled("helperBounce") or not action or action.manual then return end
+  if not action or action.manual or (not action.nearby and not self:HelperEnabled("helperBounce")) then return end
   local id=action.id
   if action.itemID then
     local info=self.itemMeta and self.itemMeta[action.itemID]
@@ -41,7 +46,7 @@ function B:BeginHelperAttempt(action)
 end
 function B:CheckHelperBounce()
   local attempt=self.helperAttempt
-  if not self:HelperEnabled("helperBounce") or A.Combat() or not attempt or GetTime()-attempt.at>0.5 then
+  if A.Combat() or not attempt or (not attempt.action.nearby and not self:HelperEnabled("helperBounce")) or GetTime()-attempt.at>0.5 then
     self.helperAttempt=nil; return
   end
   -- FAILED supplies the spell identity; UI_ERROR_MESSAGE supplies the reason.
@@ -306,4 +311,21 @@ function B:Refresh(...)
   if self:HelperEnabled("helperDiscovery") and self.helperDiscoverDirty then self:DiscoverConsumables() end
   if self:HelperEnabled("helperThanks") then self:ObserveSoloThanks() end
   if self.UpdateCoverageDisplay then self:UpdateCoverageDisplay() end
+end
+
+function B:RefreshBuffCastAuras(attempt)
+  if A.Combat() or not self.db.enabled or not attempt or A.Call(UnitGUID,attempt.unit)~=attempt.guid then return end
+  self:InvalidateAura(attempt.unit)
+  self:RequestRefresh("buff cast aura update",.03)
+end
+function B:BuffCastSucceeded(unit,id)
+  local attempt=self.buffCastAttempt
+  if unit~="player" or not A.Number(id) or not attempt or id~=attempt.id or GetTime()-attempt.at>3 then return end
+  if A.Call(UnitGUID,attempt.unit)~=attempt.guid then return end
+  self.buffCastAttempt=nil
+  self.buffAuraFresh={unit=attempt.unit,guid=attempt.guid,untilTime=GetTime()+3}
+  self:RefreshBuffCastAuras(attempt)
+  for _,value in ipairs({{"buff-aura-early",.12},{"buff-aura-settle",.45},{"buff-aura-late",1.6}}) do
+    self:StartTimer(value[1],value[2],function() B:RefreshBuffCastAuras(attempt) end)
+  end
 end

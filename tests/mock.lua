@@ -70,7 +70,7 @@ function methods:GetChecked() return self.checked end
 function methods:GetParent() return self.parent end
 function methods:GetFrameLevel() return 1 end
 function methods:GetCenter() return 500,500 end
-function methods:SetSize() assert(not combat or not self.protected,'protected resize') end
+function methods:SetSize(w,h) assert(not combat or not self.protected,'protected resize'); self.width=w; self.height=h end
 function methods:SetPoint() assert(not combat or not self.protected,'protected move') end
 function CreateFrame(kind,name,parent,template)
  local f=setmetatable({attrs={},scripts={},registered={},shown=false,parent=parent,Text=visual(),Low=visual(),High=visual(),protected=template and template:find('Secure')~=nil}, {__index=function(_,k) return methods[k] or (k:match("^%u") and noop or nil) end})
@@ -182,3 +182,5 @@ function GetLocale() return 'enUS' end
 function UnitIsPVP() return false end
 function UnitIsPVPFreeForAll() return false end
 function IsPVPTimerRunning() return false end
+
+function UnitAffectingCombat() return false end

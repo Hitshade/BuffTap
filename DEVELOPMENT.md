@@ -1,6 +1,6 @@
 # BuffTap development
 
-Current local version: **1.15.2**. Runtime: `addon/BuffTap`. Salvation compatibility prepared locally; published stable is 1.15.1.
+Current version: **1.16.0**. Runtime: `addon/BuffTap`. Nearby player buffing is optional and starts disabled.
 
 Install `requirements-dev.txt`, then run `python tests/test_warlock_review.py` for all 825 isolated mocked Lua 5.1 scenarios. This entry point imports all earlier suites. Run `python tools/verify_mage_catalog.py` to cross-check Mage scroll evidence.
 
@@ -43,3 +43,7 @@ Banner artwork is embedded as a shared 512×256 RGB TGA. Source/prompt: research
 Exact-instance PLAYER ownership queries, conservative partial buff scans and suppression-aware priorities. See research/aura-evidence-1.15.5.md and AURA-TESTING-1.15.5.md. 1026 mocked Lua 5.1 scenarios passed; shipped Lua and archive verified. Not published; no live-client verification.
 
 1.15.5 safety pass: Safety.lua owns PvP recipient/area checks and confirmed 10-second recipient deferrals. pvpProtection is a default-on shared profile preference. UNIT_FLAGS remains globally registered independently of readiness helpers. No polling was added. tests/test_safety.py adds 35 scenarios; total 1061 mocked Lua 5.1 scenarios. Live tests: AURA-TESTING-1.15.5.md. Not published.
+
+## 1.16.0 Nearby release
+
+Nearby.lua owns the fixed compact list, bounded nameplate tracking, exact-name secure cast/restore payloads, per-spell range heartbeat and nearby-only stronger-effect handling. Helpers.lua and Engine.lua share bounded post-cast aura freshness with normal buffing. No new artwork or dependencies. Run `python tests/run_release.py` for the full suite (1,183 scenarios). Scanning remains optional, out of combat and limited to friendly player nameplates.

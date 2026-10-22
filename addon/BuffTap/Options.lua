@@ -367,7 +367,7 @@ local function showBlessingPriorityMenu(menu,control)
     row.toggle.key=key; row.toggle:SetChecked(index~=nil)
     row.icon:SetTexture(blessingIcon(key)); row.name:SetText((index and tostring(index)..". " or "")..blessingName(key))
     local note=not index and L("Not included") or L("Use arrows to reorder")
-    if not B:BlessingLearned(key) then note=(not index and L("Not included").." · " or "")..unlearnedText() end
+    if not B:BlessingLearned(key) then note=(not index and L("Not included").." Â· " or "")..unlearnedText() end
     row.note:SetText(note)
     row.up.index=index; row.down.index=index
     row.up:SetEnabled(index~=nil and index>1); row.down:SetEnabled(index~=nil and index<#order)
@@ -1669,7 +1669,7 @@ function B:Options()
           B:Options()
         end)
         local dash=c:CreateFontString(nil,"OVERLAY","GameFontNormalSmall")
-        dash:SetPoint("CENTER",c,"CENTER",0,1); dash:SetText("—"); dash:SetTextColor(1,0.82,0.1); dash:Hide(); c.mixedDash=dash
+        dash:SetPoint("CENTER",c,"CENTER",0,1); dash:SetText("â€”"); dash:SetTextColor(1,0.82,0.1); dash:Hide(); c.mixedDash=dash
         addHelp(c,"Raid Group "..i,"Checked or unchecked applies to every buff. A gold dash means this group has mixed per-buff assignments.")
         f.groupChecks[i]=c
       end
@@ -1695,9 +1695,16 @@ function B:Options()
     -- FRIENDLY TARGET PAGE
     local target=panel(f); f.pages[TAB.Target]=target
     label(target,L("Friendly target buffing"),18,-16,"GameFontNormalLarge")
+    flatButton(target,"Nearby window",480,-12,224,function() B:ShowNearbySetup() end)
     label(target,"Click a friendly player and BuffTap can offer selected single-target buffs before returning to your normal queue.",18,-42,"GameFontDisableSmall",680)
     f.friendlyTarget=check(target,L("Enable friendly target buffing"),18,-76,function(s) setAndRefresh("friendlyTarget",s:GetChecked()==true); B:Options() end)
-    addHelp(f.friendlyTarget,L("Friendly target buffing"),"Only the player you explicitly target is inspected. No nearby-player or nameplate scanning is performed. Target mode uses single-target versions. Grouped Paladin targets follow enabled blessing assignments; ungrouped targets use their independent target settings.")
+    addHelp(f.friendlyTarget,L("Friendly target buffing"),"This toggle inspects only the player you explicitly target. Nearby buffing is enabled separately and requires friendly nameplates. Target mode uses single-target versions. Grouped Paladin targets follow enabled blessing assignments; ungrouped targets use their independent target settings.")
+    f.nearbyEnable=check(target,"Enable nearby buffing",370,-76,function(c)
+      local enabled=c:GetChecked()==true
+      if enabled~=B.db.nearbyEnabled then B:ToggleNearby() end
+      B:Options()
+    end)
+    addHelp(f.nearbyEnable,"Nearby buffing","Requires friendly player nameplates (normally Shift+V). Uses your Target buff preferences. Every cast requires a click or binding, out of combat. Shift-left-click the minimap icon also toggles this feature.")
     card(target,12,-108,698,84)
     label(target,"Default target refresh",18,-116,"GameFontNormal")
     label(target,"Useful for passersby: a long buff can be refreshed much earlier here without changing party/raid timing.",18,-138,"GameFontDisableSmall",680)
@@ -1765,7 +1772,7 @@ function B:Options()
     f.consumablesEnable=check(consume,"Enable consumable reminders",18,-72,function(c)
       if not A.Combat() then B.db.consumablesEnabled=c:GetChecked()==true; if B.InvalidateConsumables then B:InvalidateConsumables() end; B:RequestRefresh("consumables master",0); B:Options() end
     end)
-    f.consumeBuild=label(consume,"Data: —",410,-77,"GameFontDisableSmall",260)
+    f.consumeBuild=label(consume,"Data: â€”",410,-77,"GameFontDisableSmall",260)
     line(consume,-108)
     f.consumableRows={}
     for index,family in ipairs(B.ConsumableFamilies or {}) do
@@ -1798,7 +1805,7 @@ function B:Options()
     local campY=-116-(#(B.ConsumableFamilies or {}))*80-4
     line(consume,campY)
     label(consume,"Camp Benefits",18,campY-22,"GameFontNormal")
-    f.campStatus=label(consume,"Status: —",132,campY-22,"GameFontHighlightSmall",260)
+    f.campStatus=label(consume,"Status: â€”",132,campY-22,"GameFontHighlightSmall",260)
     label(consume,"Recognition only in this build; BuffTap will not guess individual camp effects or interact with camp objects.",18,campY-44,"GameFontDisableSmall",660)
 
     f.consumeRetry=button(consume,L("Retry reminders"),18,-450,154,function() B:RetryConsumableReminders(); B:Options() end)
@@ -1809,7 +1816,7 @@ function B:Options()
     local app=panel(f); f.pages[TAB.Appearance]=app
     card(app,12,-10,698,88); card(app,12,-118,698,256); card(app,12,-390,698,128); card(app,12,-528,698,78)
     label(app,L("Binding"),18,-16,"GameFontNormalLarge")
-    f.bindingText=label(app,"Current: —",18,-46,"GameFontHighlight",280)
+    f.bindingText=label(app,"Current: â€”",18,-46,"GameFontHighlight",280)
     button(app,L("Set binding"),310,-42,116,function() B:CaptureBinding() end)
     button(app,L("Clear"),436,-42,82,function() if not A.Combat() then B.db.keys={}; B.appearance=nil; B:RequestRefresh("clear binding",0); B:Options() end end)
     label(app,"The override binding is active only while BuffTap has a valid buff action ready.",18,-73,"GameFontDisableSmall",650)
@@ -1955,8 +1962,8 @@ function B:Options()
   f.buffInstruction:SetText(L(paladin and self.db.salvationMigration and not self:Enabled(self:FindBuff("bos")) and "Salvation changed: review and enable it separately. Previous opt-ins were paused for safety." or "Use arrows to reorder. Buffs at the top are checked first."))
   f.targetBlessingPanel:SetShown(paladin); f.targetClassAware:SetChecked(self.db.targetClassBlessings)
   f.targetBlessingFallback:SetChecked(self.db.targetBlessingFallback)
-  for _,pick in ipairs(f.targetBlessingPicks) do pick:Update(); pick:SetAvailable(self.db.targetClassBlessings and self.db.friendlyTarget) end
-  f.targetBlessingInstruction:SetText(L(not self.db.friendlyTarget and "Enable friendly target buffing to use these class choices." or not self.db.targetClassBlessings and "Enable class-aware target blessings to customize each class." or "Open a class to check and order blessings. All use the refresh above. Automatic uses enabled Buffs and their order, filtered for this class."))
+  for _,pick in ipairs(f.targetBlessingPicks) do pick:Update(); pick:SetAvailable(self.db.targetClassBlessings and (self.db.friendlyTarget or self.db.nearbyEnabled)) end
+  f.targetBlessingInstruction:SetText(L(not (self.db.friendlyTarget or self.db.nearbyEnabled) and "Enable friendly target buffing to use these class choices." or not self.db.targetClassBlessings and "Enable class-aware target blessings to customize each class." or "Open a class to check and order blessings. All use the refresh above. Automatic uses enabled Buffs and their order, filtered for this class."))
   local simplePal=paladin and self.db.targetClassBlessings
   if f.salvationPanel then f.salvationPanel:Sync() end
   f.targetHeaders.title:SetText(L(simplePal and "Independent target buffs" or "Spell availability & refresh timing"))
@@ -1968,6 +1975,7 @@ function B:Options()
   f.enable:SetChecked(self.db.enabled)
   f.versionText:SetText("v"..self.version)
   f.friendlyTarget:SetChecked(self.db.friendlyTarget)
+  f.nearbyEnable:SetChecked(self.db.nearbyEnabled==true)
   f.targetDefaultSlider.silent=true; f.targetDefaultSlider:SetValue(self.db.targetSeconds); f.targetDefaultSlider.valueText:SetText(formatSeconds(self.db.targetSeconds)); f.targetDefaultSlider.silent=false
   if not paladin then
     f.groupEnable:SetChecked(self.db.group); f.smartGroup:SetChecked(self.db.smartGroup)
@@ -2151,7 +2159,7 @@ function B:Options()
       local text
       if camp.unknown then text="Status: unavailable"
       elseif camp.active then
-        text="Status: active"..(camp.remaining and (" • "..formatSeconds(camp.remaining).." remaining") or "")
+        text="Status: active"..(camp.remaining and (" â€¢ "..formatSeconds(camp.remaining).." remaining") or "")
         if camp.benefits and #camp.benefits>0 then
           local names={}; for _,benefit in ipairs(camp.benefits) do names[#names+1]=benefit.name end
           text=text.."\nGranted: "..table.concat(names,", ")
@@ -2282,7 +2290,7 @@ function B:Options()
         local def=btn:GetParent().def
         if def and not A.Combat() then B.db.buffSeconds[def.key]=nil; B:RequestRefresh("rebuff default",0); B:Options() end
       end)
-      addHelp(row.default,"Use default timing","Remove this buff’s custom refresh timing and use the default rebuff threshold below. This does not reset its priority or enable setting.")
+      addHelp(row.default,"Use default timing","Remove this buffâ€™s custom refresh timing and use the default rebuff threshold below. This does not reset its priority or enable setting.")
       for _,direction in ipairs({-1,1}) do
         local delta=direction
         local arrow=arrowButton(row,"",delta<0 and 550 or 576,-16,24,function(btn)
@@ -2308,7 +2316,7 @@ function B:Options()
     if b.groupKey then
       local groupDef=self:FindBuff(b.groupKey)
       row.groupIcon:SetTexture(groupDef and buffIcon(groupDef) or 134400); row.groupIcon:Show()
-      row.detail:ClearAllPoints(); row.detail:SetPoint("TOPLEFT",106,-28); row.detail:SetText((groupName or "Group version").."  •  "..L("group spell"))
+      row.detail:ClearAllPoints(); row.detail:SetPoint("TOPLEFT",106,-28); row.detail:SetText((groupName or "Group version").."  â€¢  "..L("group spell"))
     else
       row.groupIcon:Hide(); row.detail:ClearAllPoints(); row.detail:SetPoint("TOPLEFT",84,-28)
       row.detail:SetText(b.kind=="self" and L("Self buff") or L("Single-target buff"))
@@ -2316,7 +2324,7 @@ function B:Options()
     if not learnedSpell(b) then
       row.groupIcon:Hide(); row.detail:ClearAllPoints(); row.detail:SetPoint("TOPLEFT",84,-28); row.detail:SetText(unlearnedText())
     elseif b.groupKey and not learnedSpell(self:FindBuff(b.groupKey)) then
-      row.detail:SetText(L("group spell").." · "..unlearnedText())
+      row.detail:SetText(L("group spell").." Â· "..unlearnedText())
     end
     row.up:SetEnabled(visible>1); row.down:SetEnabled(visible<#list)
     row.order:SetText(tostring(self.db.priorities[b.key] or b.order))

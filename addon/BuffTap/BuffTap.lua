@@ -47,7 +47,7 @@ end
 function B:ApplyReminderVisibility()
   local b=self.button
   if not b or A.Combat() then return end
-  local visible=self.db.showReminder~=false
+  local visible=self.db.showReminder~=false and not self.nearbyQuietAction
   b:SetAlpha(visible and self.db.opacity or 0)
   b:EnableMouse(visible)
   if not visible and GameTooltip then GameTooltip:Hide() end
@@ -96,7 +96,7 @@ function B:UpdateOverlay()
   if b.label then b.label:SetText(self.db.showTargetName and action.targetName or "") end
   if b.groupLabel then
     if action.manual then b.groupLabel:SetText("!")
-    else b.groupLabel:SetText(self.db.showGroupBadge and action.groupCast and (action.groupCount and ("×"..tostring(action.groupCount)) or "G") or "") end
+    else b.groupLabel:SetText(self.db.showGroupBadge and action.groupCast and (action.groupCount and ("Ã—"..tostring(action.groupCount)) or "G") or "") end
   end
   if b.timerLabel then
     if self.db.showTimer and action.needState=="expiring" and type(action.remaining)=="number" then
@@ -131,6 +131,7 @@ function B:CreateButton()
     if newstate == "blocked" then
       self:SetAttribute("type1", nil)
       self:SetAttribute("spell", nil)
+      self:SetAttribute("macrotext", nil)
       self:SetAttribute("item", nil)
       self:SetAttribute("unit", nil)
       self:SetAttribute("target-slot", nil)
@@ -234,6 +235,11 @@ function B:CreateButton()
       else B:BeforeConsumableClick(action) end
       return
     end
+    if action.nearby then
+      if not B:ValidateNearby(action) or not B:PrepareNearbyCast(action) then B:NoteNearbyClick(nil); B:Commit(nil,"nearby click changed"); return end
+      B:NoteNearbyClick(action)
+      B.button:SetAttribute("macrotext",action.macroText)
+    end
     local valid=B:Validate(action)
     if not valid then B:Commit(nil,"click validation failed"); return end
     if action.groupCast and B.GroupReagents and B.GroupReagents[action.id] then
@@ -272,13 +278,14 @@ function B:Commit(action,reason)
   if A.Combat() then self.dirty=true; return end
   local b=self.button
   if not b then return end
+  self.nearbyQuietAction=action and action.nearby==true or false
   if action and action.source=="consumable" and not self:ValidateConsumable(action,false,true) then action=nil; reason="item changed before preparation" end
   if action and action.source=="weapon-reminder" and not self:ValidateWeaponReminder(action) then action=nil; reason="weapon reminder changed before display" end
   if action and action.source=="readiness" and not self:Validate(action) then action=nil; reason="readiness changed before preparation" end
   if self.ApplyReminderStyle then self:ApplyReminderStyle(b) end
   local previous=self.action
   if self.quickChoices then self.quickChoices:Hide() end
-  local appearance=table.concat({tostring(self.db.showReminder),self.db.size,self.db.opacity,self.db.x,self.db.y,tostring(self.db.glow),tostring(self.db.pulse),
+  local appearance=table.concat({tostring(self.db.showReminder),tostring(self.nearbyQuietAction),self.db.size,self.db.opacity,self.db.x,self.db.y,tostring(self.db.glow),tostring(self.db.pulse),
     tostring(self.db.showBuffName),tostring(self.db.showTargetName),tostring(self.db.showTimer),tostring(self.db.showGroupBadge),table.concat(self.db.keys,",")},"|")
   local secureMatches=false
   if action and previous and action.id==previous.id and action.source==previous.source and action.target==previous.target and action.targetGUID==previous.targetGUID and action.slot==previous.slot then
@@ -286,6 +293,9 @@ function B:Commit(action,reason)
       secureMatches=action.key==previous.key and action.slot==previous.slot
         and b:GetAttribute("type1")==nil and b:GetAttribute("spell")==nil
         and b:GetAttribute("item")==nil and b:GetAttribute("unit")==nil
+    elseif action.nearby and action.secureType=="macro" then
+      secureMatches=b:GetAttribute("type1")=="macro" and b:GetAttribute("macrotext")==action.macroText
+        and b:GetAttribute("spell")==nil and b:GetAttribute("unit")==nil
     elseif action.source=="readiness" and action.secureType=="item" then
       secureMatches=b:GetAttribute("type1")=="item" and b:GetAttribute("item")==action.itemToken and b:GetAttribute("unit")==action.target
     elseif action.source=="consumable" or (action.source=="weapon-reminder" and action.secureType=="item") then
@@ -307,7 +317,7 @@ function B:Commit(action,reason)
   -- Clear the secure payload before doing anything else. Even if the binding API
   -- unexpectedly disappears/fails on a beta build, the stale click has no action.
   b:Hide()
-  b:SetAttribute("type1",nil); b:SetAttribute("spell",nil); b:SetAttribute("item",nil); b:SetAttribute("unit",nil); b:SetAttribute("target-slot",nil)
+  b:SetAttribute("type1",nil); b:SetAttribute("macrotext",nil); b:SetAttribute("spell",nil); b:SetAttribute("item",nil); b:SetAttribute("unit",nil); b:SetAttribute("target-slot",nil)
   self.action=nil; self.reason=reason
   if self.UpdateBroker then self:UpdateBroker() end
   if type(ClearOverrideBindings)~="function" then self.setupError="override binding API unavailable"; return end
@@ -329,7 +339,7 @@ function B:Commit(action,reason)
     b.label:SetText(self.db.showTargetName and action.targetName or "")
     self.action=action; self.reason=reason; b:Show()
     self:UpdateOverlay(); self:UpdatePulse()
-    if self.db.sound and (not previous or previous.key~=action.key) and GetTime()-(self.lastSound or -100)>=(self.db.soundInterval or 5) then
+    if self.db.sound and not action.nearby and (not self.ReminderSoundAllowed or self:ReminderSoundAllowed(action)) and (not previous or previous.key~=action.key) and GetTime()-(self.lastSound or -100)>=(self.db.soundInterval or 5) then
       self:PlayAlert("reminder")
       self.lastSound=GetTime()
     end
@@ -337,7 +347,13 @@ function B:Commit(action,reason)
   end
 
   if action.source=="weapon-reminder" then b:SetAttribute("target-slot",action.slot) end
-  if action.source=="readiness" and action.secureType=="item" then
+  if action.nearby and action.secureType=="macro" then
+    if not self:PrepareNearbyCast(action) then self.reason="nearby macro unavailable"; return end
+    b:SetAttribute("macrotext",action.macroText); b:SetAttribute("type1","macro")
+    if b:GetAttribute("macrotext")~=action.macroText or b:GetAttribute("type1")~="macro" then
+      b:SetAttribute("type1",nil); b:SetAttribute("macrotext",nil); self.reason="nearby macro verification failed"; return
+    end
+  elseif action.source=="readiness" and action.secureType=="item" then
     -- Item used on an explicit unit (Soulstone). Never relies on the current target.
     b:SetAttribute("item",action.itemToken)
     b:SetAttribute("unit",action.target)
@@ -375,7 +391,7 @@ function B:Commit(action,reason)
   self.action=action
   b:Show()
   self:UpdateOverlay(); self:UpdatePulse()
-  if self.db.sound and (not previous or previous.key~=action.key or previous.target~=action.target)
+  if self.db.sound and not action.nearby and (not self.ReminderSoundAllowed or self:ReminderSoundAllowed(action)) and (not previous or previous.key~=action.key or previous.target~=action.target)
     and GetTime()-(self.lastSound or -100)>=(self.db.soundInterval or 5) then
     self:PlayAlert("reminder")
     self.lastSound=GetTime()
@@ -571,6 +587,7 @@ function B:Refresh(captureDiagnostics)
       pcall(self.button.Hide,self.button)
       pcall(self.button.SetAttribute,self.button,"type1",nil)
       pcall(self.button.SetAttribute,self.button,"spell",nil)
+      pcall(self.button.SetAttribute,self.button,"macrotext",nil)
       pcall(self.button.SetAttribute,self.button,"item",nil)
       pcall(self.button.SetAttribute,self.button,"unit",nil)
       pcall(self.button.SetAttribute,self.button,"target-slot",nil)
@@ -598,6 +615,7 @@ end
 
 function B:IsWatchedUnit(unit)
   if not A.Public(unit) or type(unit)~="string" then return false end
+  if self.db and self.db.nearbyEnabled and self.nearbyUnits and self.nearbyUnits[unit] then return true end
   if unit=="player" then return true end
   if self.db and (self.db.group or (self.ReadinessEnabled and self:ReadinessEnabled("soulstone"))) and (unit:match("^party%d+$") or unit:match("^raid%d+$")) then return true end
   if unit=="target" and self.db and self.db.friendlyTarget then
@@ -818,9 +836,12 @@ local itemRequested=event=="ITEM_DATA_LOAD_RESULT" and A.Number(arg) and ((B.ite
   if event=="UNIT_POWER_UPDATE" and (arg~="player" or not B.powerBlocked) then return end
   if event=="SPELL_UPDATE_COOLDOWN" and not B.cooldownBlocked then return end
   if castEvents[event] and arg~="player" then return end
+  if event=="UNIT_SPELLCAST_SUCCEEDED" then B:BuffCastSucceeded(arg,spellID) end
   if event=="UNIT_SPELLCAST_SUCCEEDED" and B.ObserveConsumableUse then B:ObserveConsumableUse(spellID) end
 
   if event=="PLAYER_REGEN_DISABLED" then
+    B.buffCastAttempt=nil; B.buffAuraFresh=nil
+    for _,slot in ipairs({"buff-aura-early","buff-aura-settle","buff-aura-late"}) do B:CancelTimer(slot) end
     B.dirty=true; B.pendingReason="combat"
     B:CancelRefreshTimer(); B:CancelWakeTimer(); B:CancelRangeTimer(); B:CancelOverlayTimer(); B.targetSettleToken=(B.targetSettleToken or 0)+1
     for _,slot in ipairs({"target0.18","target0.65","targetLate"}) do B:CancelTimer(slot) end

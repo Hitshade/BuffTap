@@ -4,7 +4,7 @@
 
 local _, B = ...
 _G.BuffTap = B
-B.version = "1.15.5"
+B.version = "1.16.0"
 B.API = {}
 local A = B.API
 
@@ -16,6 +16,13 @@ function A.Call(fn, ...)
   if not ok then return nil, "API call failed: " .. (A.Public(value) and type(value)=="string" and value or "unreadable error") end
   if not A.Public(value) then return nil, "restricted value" end
   return value
+end
+function A.SpellUsable(id)
+  if not C_Spell or type(C_Spell.IsSpellUsable)~="function" then return nil,"API unavailable" end
+  local ok,usable,power=pcall(C_Spell.IsSpellUsable,id)
+  if not ok then return nil,"spell usability unavailable" end
+  if not A.Public(usable) then return nil,"restricted spell usability" end
+  return usable,A.Public(power) and power==true or false
 end
 function A.Number(v) return A.Public(v) and type(v) == "number" and v==v and v>-math.huge and v<math.huge end
 function A.Text(v) return A.Public(v) and type(v) == "string" and v ~= "" end
@@ -62,7 +69,7 @@ function B:InitDB()
     suppliesEnabled=false, suppliesChat=false, suppliesSound=false, suppliesReadyCheck=false, supplySettings={},
     weaponReminder=true, weaponMainHand=true, weaponOffHand=true,
     weaponApply=false, weaponReplace=false, weaponChoices={}, weaponCoatings={}, weaponSeconds=60,
-    pvpProtection=true, helperDismiss=false, helperBounce=false, helperTracking=false, helperTreasure=false, helperCoverage=false,
+    nearbyEnabled=false, nearbyLocked=false, nearbyX=240, nearbyY=0, pvpProtection=true, helperDismiss=false, helperBounce=false, helperTracking=false, helperTreasure=false, helperCoverage=false,
     helperDiscovery=false, helperThanks=false, helperThankEmote="THANK", helperQuick=false, helperTracker=0, helperPet=false, helperHealthstone=false, helperSoulstone=false, soulstoneParty="healer", soulstoneRaid="remind", soulstoneAssigned="", helperDemon=0,
     raidGroups={true,true,true,true,true,true,true,true}}
   for k,v in pairs(defaults) do
@@ -725,6 +732,8 @@ function B:GetAuras(unit,force,partial)
   self.auraCache=self.auraCache or {}
   local guid=A.Call(UnitGUID,unit)
   local now=GetTime()
+  local fresh=self.buffAuraFresh
+  if fresh and now<fresh.untilTime and fresh.unit==unit and fresh.guid==guid then force=true end
   local cached=not force and self.auraCache[unit] or nil
   local ttl=unit=="target" and 2 or 10
   if cached and A.Text(guid) and cached.guid==guid and now-(cached.at or 0)<=ttl then
@@ -892,11 +901,12 @@ function B:Validate(action)
     local count=A.Call(C_Item and C_Item.GetItemCount,reagent[1],false,false,false,false)
     if not A.Number(count) or count<reagent[2] then return false,"group reagent unavailable" end
   end
-  local usable,err = A.Call(C_Spell and C_Spell.IsSpellUsable,action.id)
+  local usable,err = A.SpellUsable(action.id)
   action.usable = usable==true
   if not action.usable then
     self.powerBlocked=true
-    return false,err or "spell not usable (power, form, reagent or requirements)"
+    if err==true then self.manaBlocked=true; return false,"not enough mana" end
+    return false,type(err)=="string" and err or "spell not usable (power, form, reagent or requirements)"
   end
   local cd,cdwhy = A.Call(C_Spell and C_Spell.GetSpellCooldown,action.id)
   if type(cd)~="table" then return false,cdwhy or "cooldown data unavailable" end
@@ -960,25 +970,26 @@ function B:Roster()
   return roster
 end
 
-function B:FriendlyTargetEntry()
-  if not (self.db and self.db.friendlyTarget) then return nil,"disabled" end
-  if A.Call(UnitExists,"target") ~= true then return nil,"no target" end
-  if A.Call(UnitIsUnit,"target","player") == true then return nil,"self target" end
-  if A.Call(UnitCanAssist,"player","target") ~= true then return nil,"target not friendly" end
-  if A.Call(UnitIsDeadOrGhost,"target") ~= false then return nil,"target dead or unreadable" end
+function B:FriendlyTargetEntry(unit,nearby)
+  unit=unit or "target"
+  if not (self.db and (nearby and self.db.nearbyEnabled or not nearby and self.db.friendlyTarget)) then return nil,"disabled" end
+  if A.Call(UnitExists,unit) ~= true then return nil,"no target" end
+  if A.Call(UnitIsUnit,unit,"player") == true then return nil,"self target" end
+  if A.Call(UnitCanAssist,"player",unit) ~= true then return nil,"target not friendly" end
+  if A.Call(UnitIsDeadOrGhost,unit) ~= false then return nil,"target dead or unreadable" end
 
   -- Prefer UnitIsPlayer when the client exposes it. Fall back to the stable
   -- Player- GUID prefix so this mode never starts buffing friendly NPCs/pets.
   local isPlayer
-  if type(UnitIsPlayer)=="function" then isPlayer=A.Call(UnitIsPlayer,"target") end
+  if type(UnitIsPlayer)=="function" then isPlayer=A.Call(UnitIsPlayer,unit) end
   if isPlayer ~= true then
-    local guid=A.Call(UnitGUID,"target")
+    local guid=A.Call(UnitGUID,unit)
     if not A.Text(guid) or not guid:match("^Player%-") then return nil,"target is not a player" end
   end
 
-  local class=A.Call(function() local _,c=UnitClass("target"); return c end)
+  local class=A.Call(function() local _,c=UnitClass(unit); return c end)
   if not A.Text(class) then return nil,"target class unavailable" end
-  return {unit="target",group=0,class=class,selected=true,rosterOrder=-1,quickTarget=true}
+  return {unit=unit,group=0,class=class,selected=true,rosterOrder=-1,quickTarget=true,nearby=nearby==true}
 end
 
 
@@ -1229,8 +1240,8 @@ function B:BlessingActionAllowed(action)
   local def=action and self:FindBuff(action.key)
   if not def or def.kind~="blessing" then return true end
   if action.quickTarget and not action.blessingAssigned then
-    if not self.db.friendlyTarget then return false end
-    local entry=self:FriendlyTargetEntry()
+    if not (action.nearby and self.db.nearbyEnabled or not action.nearby and self.db.friendlyTarget) then return false end
+    local entry=self:FriendlyTargetEntry(action.target,action.nearby)
     if not entry then return false end
     local selected=self.db.targetClassBlessings and self.db.targetBlessingClasses[entry.class]
     local explicit=selected and selected~="skip"
@@ -1314,7 +1325,7 @@ function B:SalvationActionAllowed(action)
   local entry={unit=action.target,class=A.Text(class) and class or nil}
   if not self:SalvationRecipientAllowed(entry) then return false end
   if action.quickTarget then
-    if not self.db.friendlyTarget or not self:TargetBuffEnabled(def) then return false end
+    if not (action.nearby and self.db.nearbyEnabled or not action.nearby and self.db.friendlyTarget) or not self:TargetBuffEnabled(def) then return false end
   else
     local found=false
     for _,member in ipairs(self:Roster()) do
@@ -1403,6 +1414,7 @@ function B:Select()
   self.rangeBlockedActions={}
   self.rangeBlockedKeys={}
   self.powerBlocked=false
+  self.manaBlocked=false
   self.cooldownBlocked=false
   self.dataPending=false
   self.targetDataPending=false
@@ -1634,6 +1646,10 @@ function B:Select()
     if self.db.weaponReminder and why and why~="weapon coatings present" and why~="no learned coating ability" then
       self:AddDiag("weapon reminder: "..tostring(why))
     end
+  end
+  if self.SelectNearby then
+    local nearby=self:SelectNearby()
+    if nearby then return nearby,"nearby player" end
   end
   if self.pvpBlocked then return nil,"PvP protection: recipient flagged or status unavailable" end
   if self.ownershipUnavailable then return nil,"Blessing ownership unavailable; replacement blocked" end
