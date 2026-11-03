@@ -4,7 +4,7 @@
 
 local _, B = ...
 _G.BuffTap = B
-B.version = "1.16.0"
+B.version = "1.16.1"
 B.API = {}
 local A = B.API
 
@@ -889,7 +889,6 @@ function B:Validate(action)
     return self:ValidateConsumable(action,false)
   end
   if not action then return false,"no action" end
-  if not self:SalvationActionAllowed(action) then return false,"Salvation recipient settings changed" end
   if not self:BlessingActionAllowed(action) then return false,"blessing assignment changed" end
   if not A.Known(action.id) then return false,"spell no longer known" end
   local eligible,why=self:TargetEligible(action,true)
@@ -995,7 +994,7 @@ end
 
 -- Explicit assignments resolve BEFORE aura coverage; family priority never changes
 -- a player's chosen blessing. Player exceptions belong to this session/group only.
-B.BlessingFamilies={"bok","bom","bow","bol"}
+B.BlessingFamilies={"bok","bom","bow"}
 function B:MigrateSalvation()
   if self.db.salvationVersion==1 then return end
   -- Independent Salvation must not silently expand a former exclusive choice
@@ -1047,15 +1046,15 @@ function B:InitBlessingPlans()
   if type(raid.priorities)~="table" then raid.priorities={} end
   local families={}; for _,key in ipairs(self.BlessingFamilies) do families[key]=true end
   if self.db.blessingPartyMode~="same" then self.db.blessingPartyMode="class" end
-  if not families[self.db.blessingPartyUniform] then self.db.blessingPartyUniform="bok" end
+  if not families[self.db.blessingPartyUniform] and self.db.blessingPartyUniform~="skip" then self.db.blessingPartyUniform=(self.db.blessingPartyUniform=="bol" or self.db.blessingPartyUniform=="gbol" or self.db.blessingPartyUniform=="bos" or self.db.blessingPartyUniform=="gbos") and "skip" or "bok" end
   if raid.mode~="same" then raid.mode="class" end
-  if not families[raid.blessing] then raid.blessing="bok" end
+  if not families[raid.blessing] and raid.blessing~="skip" then raid.blessing=(raid.blessing=="bol" or raid.blessing=="gbol" or raid.blessing=="bos" or raid.blessing=="gbos") and "skip" or "bok" end
   for _,map in pairs(self.db.blessingGroupOverrides) do
     if type(map)=="table" then
       if map.mode~="same" and map.mode~="class" then
         map.mode=type(map.classes)=="table" and next(map.classes)~=nil and "class" or nil
       end
-      if not families[map.blessing] then map.blessing="bok" end
+      if not families[map.blessing] and map.blessing~="skip" then map.blessing=(map.blessing=="bol" or map.blessing=="gbol" or map.blessing=="bos" or map.blessing=="gbos") and "skip" or "bok" end
     end
   end
   self.blessingPlansDB=self.db; self.blessingPlansRaid=raid
@@ -1134,6 +1133,7 @@ function B:GetBlessingPlayer(guid,context)
   context=context or self:BlessingContext()
   return {choice=context=="Raid" and value.raidChoice or context=="Party" and value.choice or nil,neverSalvation=value.neverSalvation}
 end
+local retiredBlessings={bos=true,gbos=true,bol=true,gbol=true}
 function B:NormalizeBlessingAssignments()
   local valid={skip=true,priority=true}; for _,key in ipairs(self.BlessingFamilies) do valid[key]=true end
   local classes={WARRIOR=true,PALADIN=true,HUNTER=true,ROGUE=true,PRIEST=true,SHAMAN=true,MAGE=true,WARLOCK=true,DRUID=true}
@@ -1165,7 +1165,8 @@ function B:NormalizeBlessingAssignments()
   end
   for _,map in ipairs(choices) do
     for class,key in pairs(map) do
-      if not classes[class] or type(key)~="string" or not valid[key] then map[class]=nil end
+      if classes[class] and retiredBlessings[key] then map[class]="skip"
+      elseif not classes[class] or type(key)~="string" or not valid[key] then map[class]=nil end
     end
   end
 end
@@ -1281,70 +1282,7 @@ function B:GroupClassAllowed(b,class)
   return false
 end
 
-function B:SalvationRecipientAllowed(entry)
-  local guid=A.Call(UnitGUID,entry.unit)
-  local override=A.Text(guid) and self.blessingPlayers and self.blessingPlayers[guid]
-  if override and override.neverSalvation then return false end
-  if A.Call(UnitIsUnit,entry.unit,"player")==true then return true end
-  -- Spell 1038 targets party/raid members, not arbitrary friendly passersby.
-  local raid=A.Call(IsInRaid)
-  local count=A.Call(raid==true and GetNumGroupMembers or GetNumSubgroupMembers)
-  if type(raid)~="boolean" or not A.Number(count) then return false end
-  for i=1,math.min(count,raid and 40 or 4) do
-    local unit=(raid and "raid" or "party")..i
-    if A.Text(guid) and A.Call(UnitExists,unit)==true and A.Call(UnitGUID,unit)==guid then return true end
-  end
-  return false
-end
-function B:SalvationMassSafe(class,roster)
-  if not class then return false end
-  local raid=A.Call(IsInRaid)
-  local count=A.Call(raid==true and GetNumGroupMembers or GetNumSubgroupMembers)
-  if not A.Public(raid) or type(raid)~="boolean" or not A.Number(count) then return false end
-  local expected=raid and count or count+1
-  if #roster~=expected then return false end
-  local seen={}
-  for _,entry in ipairs(roster) do
-    local guid=A.Call(UnitGUID,entry.unit)
-    if not entry.class or not A.Text(guid) or seen[guid] then return false end
-    seen[guid]=true
-    if entry.class==class and (not self:SalvationRecipientAllowed(entry)
-      or not self:GroupSelected(self:FindBuff("bos"),entry.group)
-      or not self:GroupClassAllowed(self:FindBuff("bos"),entry.class)
-      or (self.HelperSuppressed and self:HelperSuppressed({key="bos",target=entry.unit,targetGUID=guid}))) then return false end
-  end
-  return true
-end
-function B:SalvationGroupEnabled(b)
-  return b and b.classWide and self.db.group and self.db.salvationGroup==true
-end
-function B:SalvationActionAllowed(action)
-  local def=action and self:FindBuff(action.key)
-  if not def or not def.classWide then return true end
-  local class=A.Call(function() local _,c=UnitClass(action.target); return c end)
-  local entry={unit=action.target,class=A.Text(class) and class or nil}
-  if not self:SalvationRecipientAllowed(entry) then return false end
-  if action.quickTarget then
-    if not (action.nearby and self.db.nearbyEnabled or not action.nearby and self.db.friendlyTarget) or not self:TargetBuffEnabled(def) then return false end
-  else
-    local found=false
-    for _,member in ipairs(self:Roster()) do
-      if A.Call(UnitGUID,member.unit)==action.targetGUID then
-        entry=member; found=true; break
-      end
-    end
-    if not found or not self:RecipientAllowed(def,entry) or (entry.unit~="player" and not self:GroupSelected(def,entry.group)) then return false end
-  end
-  if action.groupCast then return self:SalvationGroupEnabled(def) and self.db.smartGroup and self:SalvationMassSafe(entry.class,self:Roster()) end
-  return true
-end
 function B:RecipientAllowed(b,entry)
-  if b.classWide then
-    if not self:SalvationRecipientAllowed(entry) then return false end
-    if entry.quickTarget then return self:TargetBuffEnabled(b) end
-    if self:SalvationGroupEnabled(b) then return self:GroupClassAllowed(b,entry.class) and self:GroupSelected(b,entry.group) end
-    return entry.unit=="player" and self:Enabled(b)
-  end
   -- Explicit targets and personal maintenance are independent of group assignments.
   if b.kind=="blessing" and self:BlessingAssignmentsActive() and (not entry.quickTarget or entry.blessingAssigned) then
     return self:BlessingChoice(entry)==(b.singleKey or b.key)
@@ -1516,7 +1454,7 @@ function B:Select()
   local exclusive={}
   for _,b in ipairs(list) do
     local supported,why=self:Supported(b)
-    if (self:Enabled(b) or self:SalvationGroupEnabled(b) or (blessingPlan and b.kind=="blessing")) and supported and not b.singleKey then
+    if (self:Enabled(b) or (blessingPlan and b.kind=="blessing")) and supported and not b.singleKey then
       local entries
       if b.kind=="single" or b.kind=="blessing" then entries=roster else entries={roster[1]} end
 
@@ -1533,7 +1471,7 @@ function B:Select()
       -- Count only verified, in-range group-rank recipients. Restrict Greater
       -- Blessings to a class whose assigned members all belong to this family.
       local groupDef=b.groupKey and self:FindBuff(b.groupKey)
-      if self.db.group and self.db.smartGroup and groupDef and (self:Enabled(groupDef) or self:SalvationGroupEnabled(groupDef) or (blessingPlan and b.kind=="blessing")) then
+      if self.db.group and self.db.smartGroup and groupDef and (self:Enabled(groupDef) or (blessingPlan and b.kind=="blessing")) then
         local buckets={}
         for _,need in ipairs(missing) do
           local entry=need.entry
@@ -1564,7 +1502,6 @@ function B:Select()
               if entry.class==key and (exclusive["blessing:"..entry.unit] or (not blessingPlan and (not self:GroupSelected(b,entry.group) or not self:GroupClassAllowed(b,entry.class)))) then safe=false end
             end
           end
-          if b.classWide and not self:SalvationMassSafe(key,roster) then safe=false end
           if b.kind~="blessing" and not b.classWide then
             for _,entry in ipairs(roster) do
               if entry.group==key and not self:GroupClassAllowed(b,entry.class) then safe=false end

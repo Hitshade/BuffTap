@@ -206,8 +206,6 @@ families = [
     ('PALADIN', 20217, 'Blessing of Kings', 25898, 'Greater Blessing of Kings', 'bok', 21177),
     ('PALADIN', 19740, 'Blessing of Might', 25782, 'Greater Blessing of Might', 'bom', 21177),
     ('PALADIN', 19742, 'Blessing of Wisdom', 25894, 'Greater Blessing of Wisdom', 'bow', 21177),
-    ('PALADIN', 1038, 'Salvation', 25895, 'Mass Salvation', 'bos', 21177),
-    ('PALADIN', 19977, 'Blessing of Light', 25890, 'Greater Blessing of Light', 'bol', 21177),
 ]
 for class_, single, name, group, group_name, key, reagent in families:
     setup = f'''

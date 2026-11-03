@@ -1,4 +1,4 @@
-from test_salvation import tests,solo,party
+from test_bufftap import tests
 from test_bufftap import test
 from test_blessings import setup
 scoped=setup+"IsInRaid=function() return true end; "
@@ -16,12 +16,6 @@ test('Agreeing subgroup choices permit Greater across subgroups',raid+"BuffTap:S
 test('Scope change cancels prepared Greater at click',raid+"BuffTap:SetGroupBlessingSettings('WARRIOR',2,'bok'); BuffTap:SetGroupBlessingSettings('WARRIOR',3,'bok'); refresh(); assert(BuffTap.action.groupCast); BuffTap:SetGroupBlessingSettings('WARRIOR',3,'bow'); BuffTap.button.scripts.PreClick(nil,'LeftButton',true); assert(not BuffTap.action)")
 test('Scope config survives normalization and removes malformed keys',setup+"BuffTap.db.blessingGroupOverrides={[1]={classes={WARRIOR='bow'},priorities={WARRIOR={'bow','bom'}}},[9]={},bad=true}; BuffTap:InitDB(); assert(BuffTap.db.blessingGroupOverrides[1].classes.WARRIOR=='bow' and not BuffTap.db.blessingGroupOverrides[9] and not BuffTap.db.blessingGroupOverrides.bad)")
 test('Combat cannot edit subgroup choices',setup+"combat=true; BuffTap:SetGroupBlessingSettings('WARRIOR',1,'bow'); assert(not BuffTap.db.blessingGroupOverrides[1])")
-test('Party Salvation requires no personal buff toggle',party+"BuffTap.db.buffs.bos=false; refresh(); assert(BuffTap.action.id==25895)")
-test('Personal Salvation does not grant group permission',solo+"BuffTap.db.group=true; BuffTap.db.salvationGroup=false; BuffTap:InvalidateRoster(); refresh(); assert(BuffTap.action.id==1038 and BuffTap.action.target=='player')")
-test('Target Salvation requires no personal or group toggle',solo+"BuffTap.db.buffs.bos=false; BuffTap.db.friendlyTarget=true; BuffTap.db.targetBuffs.bos=true; UnitGUID=function(u) return 'Player-'..(u=='target' and 'party1' or u) end; refresh(); assert(BuffTap.action.id==1038 and BuffTap.action.quickTarget)")
-test('Salvation target permission defaults off',solo+"BuffTap.db.friendlyTarget=true; UnitGUID=function(u) return 'Player-'..(u=='target' and 'party1' or u) end; refresh(); assert(not BuffTap.action.quickTarget)")
-test('Groups has direct Salvation and recipient dialog',setup+"BuffTap:Options(); local f=BuffTap.options; f.salvationGroup:SetChecked(true); f.salvationGroup.scripts.OnClick(f.salvationGroup); assert(BuffTap.db.salvationGroup); f.salvationRecipients.scripts.OnClick(); assert(f.salvationPanel.shown and #f.salvationPanel.groups==8); f.salvationPanel.groups[3]:SetChecked(false); f.salvationPanel.groups[3].scripts.OnClick(f.salvationPanel.groups[3]); assert(not BuffTap:GroupSelected(BuffTap:FindBuff('bos'),3)); f.selectTab(1); assert(not f.salvationPanel.shown)")
 test('Scope editor saves only selected subgroup',setup+"BuffTap:Options(); local f=BuffTap.options; f.raidView.scripts.OnClick(); f.blessingScopeButtons[4].scripts.OnClick(); assert(f.blessingScope==3); f.blessingRows[1].pick.setChoice('bow'); assert(BuffTap.db.blessingGroupOverrides[3].classes.WARRIOR=='bow' and BuffTap.db.blessingClasses.WARRIOR=='bom')")
 test('No-group scope setup is available before joining',setup+"GetNumSubgroupMembers=function() return 0 end; BuffTap:InvalidateRoster(); BuffTap:Options(); local f=BuffTap.options; f.raidView.scripts.OnClick(); f.blessingScopeButtons[4].scripts.OnClick(); f.blessingRows[1].pick.setChoice('bow'); assert(BuffTap.db.blessingGroupOverrides[3].classes.WARRIOR=='bow')")
-test('Salvation protections can be edited without class assignments',setup+"BuffTap.db.blessingAssignments=false; BuffTap:Options(); local f=BuffTap.options; f.blessingRows[1].players.scripts.OnClick(); assert(f.blessingDetail.shown and f.blessingPlayerRows[1].protect.enabled~=false)")
 print('ALL',len(tests),'SCENARIOS PASSED')

@@ -402,7 +402,7 @@ local function blessingPick(parent,x,y,width,getChoice,setChoice,player)
     for _,name in ipairs({"priorityTitle","priorityHelp","priorityAutomatic","prioritySkip","priorityDone"}) do if menu[name] then menu[name]:Hide() end end
     for _,t in ipairs(menu.separators or {}) do t:Show() end
     menu:SetSize(270,176)
-    local choices=control.uniform and {"bok","bom","bow","bol"} or {"inherit","bok","bom","bow","bol","skip"}
+    local choices=control.uniform and {"bok","bom","bow"} or {"inherit","bok","bom","bow","skip"}
     menu:SetHeight(#choices*28+8)
     for _,t in ipairs(menu.separators or {}) do t:Hide() end
     for _,row in ipairs(menu.rows) do row:Hide() end
@@ -597,12 +597,6 @@ function B:BuildBlessingOptions(parent)
         control.icon:SetTexture(first and first~="skip" and blessingIcon(first) or "Interface\\Buttons\\UI-GroupLoot-Pass-Up")
       end
     end
-    row.protect=check(row,L("Never Salvation"),430,-1,function(c)
-      if row.entry and A.Call(UnitGUID,row.entry.unit)==row.guid then
-        local v=B:GetBlessingPlayer(row.guid,f.blessingContext); B:SetBlessingPlayer(row.entry,v and v.choice,c:GetChecked()==true,f.blessingContext); B:Options()
-      end
-    end)
-    addHelp(row.protect,L("Never Salvation"),"Blocks Salvation and Mass Salvation for this player, independently of their blessing choice. No role or spec guessing.")
     f.blessingPlayerRows[i]=row
   end
   f.blessingPageText=label(detail,"",12,-179,"GameFontDisableSmall",440)
@@ -616,11 +610,6 @@ function B:BuildBlessingOptions(parent)
   end)
   button(detail,L("Done"),548,-170,98,function() f.expandedBlessing=nil; B:Options() end)
   line(p,-505)
-  f.salvationGroup=check(p,"Offer Salvation to party / raid",18,-514,function(c)
-    setAndRefresh("salvationGroup",c:GetChecked()==true); B:Options()
-  end)
-  f.salvationSummary=label(p,"",18,-544,"GameFontDisableSmall",670)
-  f.salvationRecipients=button(p,"Salvation recipients",475,-516,210,function() B:ToggleSalvationRecipients() end)
   f.blessingFooter=label(p,"",18,-604,"GameFontDisableSmall",686)
   f.followBuffSettings=button(p,"Use Buffs settings",18,-574,164,function()
     if A.Combat() then return end
@@ -698,47 +687,6 @@ function B:UpdateGroupRosterOptions()
   self:UpdateBlessingOptions()
 end
 
-function B:ToggleSalvationRecipients()
-  if A.Combat() then return end
-  local f=self.options
-  if f.salvationPanel then
-    f.salvationPanel:Sync(); f.salvationPanel:SetShown(not f.salvationPanel:IsShown()); f.activeSelector=f.salvationPanel; return
-  end
-  local p=CreateFrame("Frame","BuffTapSalvationRecipients",f,"BackdropTemplate"); f.salvationPanel=p
-  p:SetSize(620,300); p:SetPoint("CENTER"); p:SetFrameStrata("DIALOG"); p:SetFrameLevel(f:GetFrameLevel()+100)
-  p:SetBackdrop({bgFile="Interface\\Buttons\\WHITE8X8",edgeFile="Interface\\Buttons\\WHITE8X8",edgeSize=1})
-  p:SetBackdropColor(.025,.035,.045,1); p:SetBackdropBorderColor(.55,.44,.23,1); p:EnableMouse(true); p:SetClampedToScreen(true)
-  if UISpecialFrames then table.insert(UISpecialFrames,"BuffTapSalvationRecipients") end
-  label(p,"Salvation recipients",18,-16,"GameFontNormalLarge")
-  label(p,"Applies only when party / raid Salvation is enabled. Never Salvation exceptions still apply.",18,-45,"GameFontDisableSmall",580)
-  label(p,"Raid groups (party uses G1)",18,-80,"GameFontNormal")
-  local def=B:FindBuff("bos"); p.groups={}; p.classes={}
-  for i=1,8 do
-    local group=i; local c=check(p,"G"..i,18+(i-1)*73,-100,function(c)
-      if A.Combat() then return end
-      B:EnsureBuffGroups(def)[group]=c:GetChecked()==true; B:InvalidateAura(); B:RequestRefresh("Salvation groups",0)
-    end); c:SetChecked(B:GroupSelected(def,i)); p.groups[i]=c
-  end
-  label(p,"Recipient classes",18,-141,"GameFontNormal")
-  for i,class in ipairs(B.RecipientClasses) do
-    local token=class
-    local c=check(p,(LOCALIZED_CLASS_NAMES_MALE and LOCALIZED_CLASS_NAMES_MALE[token]) or token:sub(1,1)..token:sub(2):lower(),18+((i-1)%3)*195,-166-math.floor((i-1)/3)*27,function(c)
-      if A.Combat() then return end
-      B.db.buffClasses.bos=B.db.buffClasses.bos or {}; B.db.buffClasses.bos[token]=c:GetChecked()==true
-      B:InvalidateAura(); B:RequestRefresh("Salvation classes",0)
-    end); c:SetChecked(B:GroupClassAllowed(def,token)); p.classes[token]=c
-  end
-  p.Sync=function(self)
-    for i,c in ipairs(self.groups) do c:SetChecked(B:GroupSelected(def,i)) end
-    for token,c in pairs(self.classes) do c:SetChecked(B:GroupClassAllowed(def,token)) end
-  end
-  f.activeSelector=p; p:Show()
-  p.playerExclusions=button(p,"Player exclusions",18,-260,170,function()
-    if A.Combat() then return end
-    p:Hide(); f.expandedBlessing="SALVATION"; f.blessingPlayerOffset=0; B:Options()
-  end)
-  button(p,"Done",480,-260,120,function() p:Hide(); B:Options() end)
-end
 local function updateBlessingPlayers(self,f,entries,title,editable,protectionOnly)
   if #entries==0 then return end
       local maxOffset=math.max(0,#entries-5); local offset=math.max(0,math.min(f.blessingPlayerOffset or 0,maxOffset)); f.blessingPlayerOffset=offset; f.blessingPlayerMaxOffset=maxOffset
@@ -747,8 +695,7 @@ local function updateBlessingPlayers(self,f,entries,title,editable,protectionOnl
         local entry=entries[offset+i]
         if entry then
           r.entry=entry; r.guid=A.Call(UnitGUID,entry.unit); r.name:SetText(A.Call(UnitName,entry.unit) or entry.unit)
-          r.pick:SetShown(not protectionOnly); r.pick:Update(); r.pick:SetAvailable(editable and not protectionOnly)
-          local v=self.blessingPlayers and self.blessingPlayers[r.guid]; r.protect:SetChecked(v and v.neverSalvation or false); r.protect:SetEnabled(not A.Combat()); r.protect:ClearAllPoints(); r.protect:SetPoint("TOPLEFT",protectionOnly and 210 or 430,-1); r:Show()
+          r.pick:SetShown(not protectionOnly); r.pick:Update(); r.pick:SetAvailable(editable); r:Show()
         end
       end
       f.blessingPageText:SetText("Players "..(offset+1).."-"..math.min(offset+5,#entries).." / "..#entries.." - "..L(protectionOnly and "Protected players never receive Salvation." or "Player exceptions take precedence."))
@@ -817,8 +764,6 @@ function B:UpdateBlessingOptions()
   f.blessingFilterButton:SetShown(not same or not self.db.blessingAssignments)
   f.blessingFilterButton:ClearAllPoints(); f.blessingFilterButton:SetPoint("TOPLEFT",self.db.blessingAssignments and 190 or 18,-574)
   if f.blessingFilters then f.blessingFilters:Sync() end
-  f.salvationGroup:SetChecked(self.db.salvationGroup)
-  f.salvationSummary:SetText(L("Separate from blessings. Your Salvation recipient exclusions still apply."))
   local mixed=false
   if active and self.db.smartGroup and f.blessingContext==self:BlessingContext() then
     for _,entry in ipairs(roster) do
@@ -827,7 +772,7 @@ function B:UpdateBlessingOptions()
     end
   end
   f.blessingFooter:SetText(L(mixed and "Individual blessings: same-class assignments differ or include an excluded player." or same and "Switch to By class to use your saved class and player assignments." or "Player exceptions override class choices. Party and raid plans are separate."))
-  if same and f.expandedBlessing~="SALVATION" then f.expandedBlessing=nil end
+  if same then f.expandedBlessing=nil end
   f.updatingBlessingDetail=true; f.blessingDetail:Hide()
   for _,r in ipairs(f.blessingPlayerRows) do r:Hide(); r.entry=nil; r.guid=nil end
   for _,row in ipairs(f.blessingRows) do
@@ -857,11 +802,6 @@ function B:UpdateBlessingOptions()
     end
     addHelp(row.players,"Player exceptions",L(status).."\n"..L("Click to expand or collapse individual player choices.")); y=y-26
     if f.expandedBlessing==row.class then updateBlessingPlayers(self,f,entries,L(row.class:sub(1,1)..row.class:sub(2):lower()),editable,false) end
-  end
-  if f.expandedBlessing=="SALVATION" then
-    local entries={}
-    if f.blessingContext==self:BlessingContext() then for _,entry in ipairs(roster) do if not raid or scope==0 or entry.group==scope then entries[#entries+1]=entry end end end
-    updateBlessingPlayers(self,f,entries,L("Salvation exclusions"),false,true)
   end
   f.updatingBlessingDetail=false
 end
@@ -1959,16 +1899,15 @@ function B:Options()
   self:UpdateProfileOptions()
   self:UpdateSupplyOptions()
   local paladin=A.Call(function() local _,token=UnitClass("player"); return token end)=="PALADIN"
-  f.buffInstruction:SetText(L(paladin and self.db.salvationMigration and not self:Enabled(self:FindBuff("bos")) and "Salvation changed: review and enable it separately. Previous opt-ins were paused for safety." or "Use arrows to reorder. Buffs at the top are checked first."))
+  f.buffInstruction:SetText(L("Use arrows to reorder. Buffs at the top are checked first."))
   f.targetBlessingPanel:SetShown(paladin); f.targetClassAware:SetChecked(self.db.targetClassBlessings)
   f.targetBlessingFallback:SetChecked(self.db.targetBlessingFallback)
   for _,pick in ipairs(f.targetBlessingPicks) do pick:Update(); pick:SetAvailable(self.db.targetClassBlessings and (self.db.friendlyTarget or self.db.nearbyEnabled)) end
   f.targetBlessingInstruction:SetText(L(not (self.db.friendlyTarget or self.db.nearbyEnabled) and "Enable friendly target buffing to use these class choices." or not self.db.targetClassBlessings and "Enable class-aware target blessings to customize each class." or "Open a class to check and order blessings. All use the refresh above. Automatic uses enabled Buffs and their order, filtered for this class."))
   local simplePal=paladin and self.db.targetClassBlessings
-  if f.salvationPanel then f.salvationPanel:Sync() end
   f.targetHeaders.title:SetText(L(simplePal and "Independent target buffs" or "Spell availability & refresh timing"))
-  f.targetHeaders.help:SetText(L(simplePal and "Salvation is independent. Allow it here for friendly party/raid targets; no self-buff toggle is required." or "Choose allowed spells and optional refresh overrides for friendly targets."))
-  f.targetHeaders:SetShown(true); f.targetScroll:SetShown(true)
+  f.targetHeaders.help:SetText(L("Choose allowed spells and optional refresh overrides for friendly targets."))
+  f.targetHeaders:SetShown(not simplePal); f.targetScroll:SetShown(not simplePal)
   f.targetHeaders:ClearAllPoints(); f.targetHeaders:SetPoint("TOPLEFT",0,paladin and -396 or -204)
   f.targetScroll:ClearAllPoints(); f.targetScroll:SetPoint("TOPLEFT",14,paladin and -474 or -282); f.targetScroll:SetPoint("BOTTOMRIGHT",-34,54)
   f.pauseResting:SetChecked(self.db.pauseResting)
@@ -2111,7 +2050,6 @@ function B:Options()
       f.targetRows[rowIndex]=row
     end
     row.def=b; row:ClearAllPoints(); row:SetPoint("TOPLEFT",0,-(rowIndex-1)*52); row:Show()
-    if b.classWide then addHelp(row.enable,"Allow Salvation on friendly targets","Independent permission for friendly party/raid targets. It does not require Salvation on Buffs or the Groups Salvation toggle. Never Salvation exceptions still apply.") end
     row.enable:SetChecked(self:TargetBuffEnabled(b)); row.icon:SetTexture(buffIcon(b)); row.name:SetText(spellLabel(b))
     row.detail:SetText(not learnedSpell(b) and unlearnedText() or b.classWide and L("Party/raid member only") or self:Enabled(b) and L("Single-target spell") or L("Disabled on Buffs tab"))
     local custom=self.db.targetBuffSeconds[b.key]~=nil

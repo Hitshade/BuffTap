@@ -13,7 +13,6 @@ test('Each target class uses suitable enabled priority',solo+"for _,c in ipairs(
 test('Healthy desired target blessing does not cycle',solo+"aura('target',19742,'Blessing of Wisdom'); refresh(); assert(not BuffTap.action.quickTarget)")
 test('Explicit target class choice permits deliberate override',solo+"BuffTap.db.targetBlessingClasses.PRIEST='bom'; refresh(); assert(BuffTap.action.key=='bom' and BuffTap.action.quickTarget)")
 test('Explicit target choice independently enables target use',solo+"BuffTap.db.targetBlessingClasses.PRIEST='bom'; BuffTap.db.buffs.bom=false; refresh(); assert(BuffTap.action.key=='bom')")
-test('Unlearned target choice falls back without changing saved choice',solo+"BuffTap.db.targetBlessingClasses.PRIEST='bol'; spells[19977].known=false; BuffTap.bookDirty=true; refresh(); assert(BuffTap.action.key=='bow' and BuffTap.db.targetBlessingClasses.PRIEST=='bol')")
 test('Target choice skip returns to personal queue',solo+"BuffTap.db.targetBlessingClasses.PRIEST='skip'; refresh(); assert(not BuffTap.action.quickTarget)")
 test('Target class change cancels prepared blessing',solo+"classes.target='WARRIOR'; BuffTap.button.scripts.PreClick(nil,'LeftButton'); assert(not BuffTap.action and not BuffTap.button.attrs.type1)")
 test('Target preference change cancels prepared blessing',solo+"BuffTap.db.targetBlessingClasses.PRIEST='bok'; BuffTap.button.scripts.PreClick(nil,'LeftButton'); assert(not BuffTap.action)")

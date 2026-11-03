@@ -218,7 +218,7 @@ elixir.items={
   {id=250346,useSpell=1250978,auraIDs={1250978},name="Elixir of Spirit",note="Drink to increase your Spirit by 10. Lasts for 30 min. (3 Sec Cooldown)"},
   {id=250349,useSpell=1250984,auraIDs={1250984},name="Elixir of Strength",note="Drink to increase your Strength by 10. Lasts for 30 min. (3 Sec Cooldown)"},
   {id=250336,useSpell=1250932,auraIDs={1250932},name="Elixir of Wicked Regeneration",note="Drink to restore 9 health and 10 mana every 5 sec. Lasts for 30 min. (3 Sec Cooldown)"},
-  {id=3383,useSpell=3166,auraIDs={3166},name="Elixir of Wisdom",note="Increases Intellect by 6 for 1 hour. (3 Sec Cooldown)"},
+  {id=3383,useSpell=3166,auraIDs={3166},name="Elixir of Wisdom",note="Increases Intellect by 3 for 30 minutes. (3 Sec Cooldown)"},
   {id=250351,useSpell=1250986,auraIDs={1250986},name="Elixir of the Grizzly",note="Drink to increase your Strength by 25 and chance to critically hit by 2%. Lasts for 30 min. (3 Sec Cooldown)"},
   {id=13452,useSpell=17538,auraIDs={17538},name="Elixir of the Mongoose",note="Increases Agility by 25 and chance to get a critical hit by 2%. Lasts for 30 min. (3 Sec Cooldown)"},
   {id=250337,useSpell=1250940,auraIDs={1250940},name="Elixir of the Owl",note="Drink to increase your Intellect by 25 and chance to critically hit by 2%. Lasts for 30 min. (3 Sec Cooldown)"},

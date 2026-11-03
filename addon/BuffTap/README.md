@@ -25,7 +25,7 @@ Choose what to maintain, who receives it, and when to refresh it.
 - **Personal and friendly-target buffing** with independent settings and class-aware Paladin target choices.
 - **Per-buff raid-group and class filters**, priorities, and refresh thresholds.
 - **Smart group spells** that check who still needs the buff before spending reagents.
-- **Paladin blessing assignments and ordered priorities** with separate party/raid plans, uniform or per-class choices, subgroup overrides, visual assignment icons, player exceptions and independent Salvation protection.
+- **Paladin blessing assignments and ordered priorities** with separate party/raid plans, uniform or per-class choices, subgroup overrides, visual assignment icons, and player exceptions.
 
 ## ⚔️ Keep your weapons ready
 
@@ -57,7 +57,7 @@ Use first-use guidance to get started, and right-click the minimap icon for quic
 
 In Groups, choose Party or Raid. By class uses class assignments and optional player exceptions. Same blessing for everyone applies one blessing to the entire party or selected raid group and temporarily ignores those saved exceptions. Raid groups inherit the raid defaults unless you create an override. Excluded raid groups are skipped, and Greater Blessings only apply when all affected same-class recipients agree.
 
-Party and raid plans are character-specific, including when switching shared profiles. The explicit same-class copy option includes both plans; other classes cannot import them. Copy party assignments changes raid defaults, retaining existing subgroup overrides. Salvation has separate permission and recipient controls.
+Party and raid plans are character-specific, including when switching shared profiles. The explicit same-class copy option includes both plans; other classes cannot import them. Copy party assignments changes raid defaults, retaining existing subgroup overrides.
 
 ## Named profiles
 
