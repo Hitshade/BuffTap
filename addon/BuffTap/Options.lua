@@ -367,7 +367,7 @@ local function showBlessingPriorityMenu(menu,control)
     row.toggle.key=key; row.toggle:SetChecked(index~=nil)
     row.icon:SetTexture(blessingIcon(key)); row.name:SetText((index and tostring(index)..". " or "")..blessingName(key))
     local note=not index and L("Not included") or L("Use arrows to reorder")
-    if not B:BlessingLearned(key) then note=(not index and L("Not included").." Â· " or "")..unlearnedText() end
+    if not B:BlessingLearned(key) then note=(not index and L("Not included").." - " or "")..unlearnedText() end
     row.note:SetText(note)
     row.up.index=index; row.down.index=index
     row.up:SetEnabled(index~=nil and index>1); row.down:SetEnabled(index~=nil and index<#order)
@@ -1609,7 +1609,7 @@ function B:Options()
           B:Options()
         end)
         local dash=c:CreateFontString(nil,"OVERLAY","GameFontNormalSmall")
-        dash:SetPoint("CENTER",c,"CENTER",0,1); dash:SetText("â€”"); dash:SetTextColor(1,0.82,0.1); dash:Hide(); c.mixedDash=dash
+        dash:SetPoint("CENTER",c,"CENTER",0,1); dash:SetText("-"); dash:SetTextColor(1,0.82,0.1); dash:Hide(); c.mixedDash=dash
         addHelp(c,"Raid Group "..i,"Checked or unchecked applies to every buff. A gold dash means this group has mixed per-buff assignments.")
         f.groupChecks[i]=c
       end
@@ -1712,7 +1712,7 @@ function B:Options()
     f.consumablesEnable=check(consume,"Enable consumable reminders",18,-72,function(c)
       if not A.Combat() then B.db.consumablesEnabled=c:GetChecked()==true; if B.InvalidateConsumables then B:InvalidateConsumables() end; B:RequestRefresh("consumables master",0); B:Options() end
     end)
-    f.consumeBuild=label(consume,"Data: â€”",410,-77,"GameFontDisableSmall",260)
+    f.consumeBuild=label(consume,"Data: -",410,-77,"GameFontDisableSmall",260)
     line(consume,-108)
     f.consumableRows={}
     for index,family in ipairs(B.ConsumableFamilies or {}) do
@@ -1745,7 +1745,7 @@ function B:Options()
     local campY=-116-(#(B.ConsumableFamilies or {}))*80-4
     line(consume,campY)
     label(consume,"Camp Benefits",18,campY-22,"GameFontNormal")
-    f.campStatus=label(consume,"Status: â€”",132,campY-22,"GameFontHighlightSmall",260)
+    f.campStatus=label(consume,"Status: -",132,campY-22,"GameFontHighlightSmall",260)
     label(consume,"Recognition only in this build; BuffTap will not guess individual camp effects or interact with camp objects.",18,campY-44,"GameFontDisableSmall",660)
 
     f.consumeRetry=button(consume,L("Retry reminders"),18,-450,154,function() B:RetryConsumableReminders(); B:Options() end)
@@ -1756,7 +1756,7 @@ function B:Options()
     local app=panel(f); f.pages[TAB.Appearance]=app
     card(app,12,-10,698,88); card(app,12,-118,698,256); card(app,12,-390,698,128); card(app,12,-528,698,78)
     label(app,L("Binding"),18,-16,"GameFontNormalLarge")
-    f.bindingText=label(app,"Current: â€”",18,-46,"GameFontHighlight",280)
+    f.bindingText=label(app,"Current: -",18,-46,"GameFontHighlight",280)
     button(app,L("Set binding"),310,-42,116,function() B:CaptureBinding() end)
     button(app,L("Clear"),436,-42,82,function() if not A.Combat() then B.db.keys={}; B.appearance=nil; B:RequestRefresh("clear binding",0); B:Options() end end)
     label(app,"The override binding is active only while BuffTap has a valid buff action ready.",18,-73,"GameFontDisableSmall",650)
@@ -2097,7 +2097,7 @@ function B:Options()
       local text
       if camp.unknown then text="Status: unavailable"
       elseif camp.active then
-        text="Status: active"..(camp.remaining and (" â€¢ "..formatSeconds(camp.remaining).." remaining") or "")
+        text="Status: active"..(camp.remaining and (" - "..formatSeconds(camp.remaining).." remaining") or "")
         if camp.benefits and #camp.benefits>0 then
           local names={}; for _,benefit in ipairs(camp.benefits) do names[#names+1]=benefit.name end
           text=text.."\nGranted: "..table.concat(names,", ")
@@ -2228,7 +2228,7 @@ function B:Options()
         local def=btn:GetParent().def
         if def and not A.Combat() then B.db.buffSeconds[def.key]=nil; B:RequestRefresh("rebuff default",0); B:Options() end
       end)
-      addHelp(row.default,"Use default timing","Remove this buffâ€™s custom refresh timing and use the default rebuff threshold below. This does not reset its priority or enable setting.")
+      addHelp(row.default,"Use default timing","Remove this buff's custom refresh timing and use the default rebuff threshold below. This does not reset its priority or enable setting.")
       for _,direction in ipairs({-1,1}) do
         local delta=direction
         local arrow=arrowButton(row,"",delta<0 and 550 or 576,-16,24,function(btn)
@@ -2254,7 +2254,7 @@ function B:Options()
     if b.groupKey then
       local groupDef=self:FindBuff(b.groupKey)
       row.groupIcon:SetTexture(groupDef and buffIcon(groupDef) or 134400); row.groupIcon:Show()
-      row.detail:ClearAllPoints(); row.detail:SetPoint("TOPLEFT",106,-28); row.detail:SetText((groupName or "Group version").."  â€¢  "..L("group spell"))
+      row.detail:ClearAllPoints(); row.detail:SetPoint("TOPLEFT",106,-28); row.detail:SetText((groupName or "Group version").."  -  "..L("group spell"))
     else
       row.groupIcon:Hide(); row.detail:ClearAllPoints(); row.detail:SetPoint("TOPLEFT",84,-28)
       row.detail:SetText(b.kind=="self" and L("Self buff") or L("Single-target buff"))
@@ -2262,7 +2262,7 @@ function B:Options()
     if not learnedSpell(b) then
       row.groupIcon:Hide(); row.detail:ClearAllPoints(); row.detail:SetPoint("TOPLEFT",84,-28); row.detail:SetText(unlearnedText())
     elseif b.groupKey and not learnedSpell(self:FindBuff(b.groupKey)) then
-      row.detail:SetText(L("group spell").." Â· "..unlearnedText())
+      row.detail:SetText(L("group spell").." - "..unlearnedText())
     end
     row.up:SetEnabled(visible>1); row.down:SetEnabled(visible<#list)
     row.order:SetText(tostring(self.db.priorities[b.key] or b.order))

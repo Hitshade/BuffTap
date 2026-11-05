@@ -432,7 +432,7 @@ function B:CreateNearbyWindow()
       self:StartTimer("nearby-display",.1,function() if not A.Combat() then B:UpdateNearbyWindow() end end)
     end)
   end
-  local ok,result=pcall(RegisterStateDriver,f,"visibility","[combat] hide; show")
+  local ok,result=pcall(RegisterStateDriver,f,"visibility","[combat] hide")
   if not ok or result==false then self.nearbySetupError="Secure combat visibility failed"; f:Hide(); return end
   f:Hide()
 end
