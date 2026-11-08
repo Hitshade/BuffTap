@@ -36,4 +36,5 @@ __import__('test_warlock_stones')
 __import__('test_weapons')
 import test_safety
 import test_nearby
+import test_bg_self
 print('TOTAL',len(__import__('test_bufftap').tests))

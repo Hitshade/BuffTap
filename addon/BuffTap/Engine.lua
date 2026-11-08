@@ -4,7 +4,7 @@
 
 local _, B = ...
 _G.BuffTap = B
-B.version = "1.16.2"
+B.version = "1.16.3"
 B.API = {}
 local A = B.API
 
@@ -750,6 +750,72 @@ function B:GetAuras(unit,force,partial)
   return auras,err
 end
 
+-- BG aura restrictions are per spell. Never infer absence from a refused lookup.
+function B:BGSelfMode()
+  if type(IsInInstance)~="function" then return false end
+  local ok,inside,kind=pcall(IsInInstance)
+  if not ok or not A.Public(inside) or not A.Public(kind) or inside~=true or kind~="pvp" then return false end
+  if not C_Secrets or type(C_Secrets.ShouldAurasBeSecret)~="function" then return false end
+  local restricted,err=A.Call(C_Secrets.ShouldAurasBeSecret)
+  return err~=nil or restricted~=false
+end
+
+function B:BGSelfAuras(b)
+  if A.Combat() or not self:BGSelfMode() then return nil,"BG self check unavailable" end
+  local lookup=C_UnitAuras and C_UnitAuras.GetPlayerAuraBySpellID
+  local predicate=C_Secrets and C_Secrets.ShouldSpellAuraBeSecret
+  if type(lookup)~="function" or type(predicate)~="function" then return nil,"spell-specific aura API unavailable" end
+  local ids={}
+  for _,other in ipairs(self.Buffs) do
+    if other.key==b.key or (b.covers and other.covers==b.covers)
+      or (b.kind=="blessing" and other.kind=="blessing") then
+      for _,id in ipairs(other.ranks or {}) do ids[id]=true end
+    end
+  end
+  local unknown=false
+  for id in pairs(ids) do
+    local secret,err=A.Call(predicate,id)
+    if err or secret~=false then unknown=true
+    else
+      local aura,why=A.Call(lookup,id)
+      if why then unknown=true
+      elseif type(aura)=="table" then
+        -- Presence is enough: expiration and caster fields may still be hidden.
+        return {{spellId=id,name=b.name,duration=0,expirationTime=0}},nil,true
+      elseif aura~=nil then unknown=true end
+    end
+  end
+  if unknown then return nil,"self buff hidden or unreadable" end
+  return {}
+end
+
+function B:SelectBGSelf()
+  self:AddDiag("Battleground: self-only spell checks; hidden buffs are not treated as missing")
+  local list,err=self:ClassList()
+  if err then return nil,err end
+  local unknown=false
+  for _,b in ipairs(list) do
+    if not b.singleKey and (b.kind=="single" or b.kind=="self" or b.kind=="blessing")
+      and self:Enabled(b) and self:Supported(b) then
+      local action=self:Resolve(b,"player")
+      if action then
+        local auras,why,present=self:BGSelfAuras(b)
+        if auras and not present then
+          local missing=self:Missing(b,action,auras)
+          if missing and not (self.HelperSuppressed and self:HelperSuppressed(action)) then
+            action.bgSelf=true; action.needState="missing"; action.reason="Battleground self buff: verified missing"
+            if self:Validate(action) then action.selectedAt=GetTime(); return action,"ready" end
+          end
+        elseif not auras then unknown=true; self:AddDiag(b.key.." -> player: "..tostring(why)) end
+      end
+    end
+  end
+  if self.manaBlocked then return nil,"Battleground self buffs: not enough mana" end
+  if self.cooldownBlocked then return nil,"Battleground self buffs: waiting for cooldown" end
+  if unknown then self.buffDataUnavailable=true; return nil,"Battleground self buffs: some buff information is hidden" end
+  return nil,"Battleground self buffs: nothing actionable"
+end
+
 function B:Missing(b,action,auras,rebuffSeconds)
   self.coverCache=self.coverCache or {}
   local cacheKey=b.key .. ":" .. action.id
@@ -1238,6 +1304,10 @@ function B:BlessingGreaterSafe(key,class,roster)
   return true
 end
 function B:BlessingActionAllowed(action)
+  if action and action.bgSelf then
+    local b=self:FindBuff(action.key)
+    return action.target=="player" and self:BGSelfMode() and b and self:Enabled(b)
+  end
   local def=action and self:FindBuff(action.key)
   if not def or def.kind~="blessing" then return true end
   if action.quickTarget and not action.blessingAssigned then
@@ -1365,6 +1435,8 @@ function B:Select()
   local channeling,channelError=A.Call(UnitChannelInfo,"player")
   if castError or channelError then return nil,"cast/channel state unreadable" end
   if casting ~= nil or channeling ~= nil then return nil,"casting / channeling" end
+
+  if self:BGSelfMode() then return self:SelectBGSelf() end
 
   if self.db.consumablesEnabled and self.db.consumableFamilies.food then
     local eatingAuras=self:GetAuras("player",false)

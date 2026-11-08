@@ -75,3 +75,7 @@ Found a problem? Include your class, addon version, game build, and steps to rep
 
 **MPL 2.0.** See bundled license notices. Game data and artwork belong to their respective owners. Developed with AI-assisted coding and review.
 
+
+### Battleground self buffs
+
+While out of combat in a battleground, BuffTap checks enabled self buffs individually when normal aura scanning is restricted. Only verified missing self buffs are offered; hidden data is skipped. Buffing others remains unavailable under these restrictions, and in-combat casting remains disabled. This support needs live testing; please include `/bt debug` output with reports.

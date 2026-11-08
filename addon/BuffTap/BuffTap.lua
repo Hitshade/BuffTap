@@ -249,7 +249,13 @@ function B:CreateButton()
       return
     end
     local def=B:FindBuff(action.key)
-    local auras=B:GetAuras(action.target,true,true)
+    local auras,present
+    if action.bgSelf then
+      if action.target~="player" or not def or not B:Enabled(def) then B:Commit(nil,"BG self settings changed"); return end
+      local why
+      auras,why,present=B:BGSelfAuras(def)
+      if present then B:Commit(nil,"self buff now present"); return end
+    else auras=B:GetAuras(action.target,true,true) end
     if not auras or not def then B:Commit(nil,"action no longer verifiable"); return end
     if not B:BlessingActionAllowed(action) then B:Commit(nil,"blessing ownership changed before click"); return end
     local missing=B:Missing(def,action,auras,action.quickTarget and B:TargetRebuffSeconds(def) or nil)
