@@ -38,4 +38,6 @@ import test_safety
 import test_nearby
 import test_bg_self
 import test_cast_retry
+import test_thanks_robust
+import test_mark_rank
 print('TOTAL',len(__import__('test_bufftap').tests))

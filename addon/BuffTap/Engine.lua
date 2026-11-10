@@ -4,7 +4,7 @@
 
 local _, B = ...
 _G.BuffTap = B
-B.version = "1.16.4"
+B.version = "1.16.5"
 B.API = {}
 local A = B.API
 
@@ -655,7 +655,7 @@ function B:Resolve(b, unit)
   else
     if self.stats then self.stats.resolveBuilds=(self.stats.resolveBuilds or 0)+1 end
     for _,c in ipairs(candidates) do
-      if unit=="player" or (A.Number(targetLevel) and A.Number(c.level) and targetLevel>=c.level) then
+      if unit=="player" or (A.Number(targetLevel) and A.Number(c.level) and targetLevel+(b.key=="motw" and 10 or 0)>=c.level) then
         if #candidates>1 and not A.Number(c.level) and not c.order then
           return nil,"ambiguous rank ordering for remapped spell"
         end

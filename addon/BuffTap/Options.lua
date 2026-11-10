@@ -1049,8 +1049,8 @@ function B:BuildHelperPage(parent)
     B.db.helperThanks=c:GetChecked()==true; B.helperThankSeen=nil; B:ObserveSoloThanks(true)
     B:RequestRefresh("solo thanks",0); B:Options()
   end)
-  addHelp(f.checks.helperThanks,L("Solo thanks"),L("Thanks an identified solo buff provider. Never in groups, instances or combat. Limited to once a minute and once per player per 10 minutes."))
-  f.descriptions.helperThanks=label(f,L("Thanks solo buff providers, at most once a minute. Never in groups, instances or combat."),22,-333,"GameFontDisableSmall",326)
+  addHelp(f.checks.helperThanks,L("Solo thanks"),L("Thanks identified solo buff providers. Never in groups, instances or combat. Emotes are spaced one second apart, with a one-minute cooldown per player."))
+  f.descriptions.helperThanks=label(f,L("Thanks solo buff providers, once per player per minute. Different players are thanked one second apart."),22,-333,"GameFontDisableSmall",326)
   label(f,L("Solo response emote"),368,-279,"GameFontNormal",320)
   f.thankEmote=selector(f,"",364,-303,324,function() return B:SoloThankEmotes() end,function(choice)
     B.db.helperThankEmote=choice
@@ -2262,7 +2262,8 @@ function B:Options()
     if not learnedSpell(b) then
       row.groupIcon:Hide(); row.detail:ClearAllPoints(); row.detail:SetPoint("TOPLEFT",84,-28); row.detail:SetText(unlearnedText())
     elseif b.groupKey and not learnedSpell(self:FindBuff(b.groupKey)) then
-      row.detail:SetText(L("group spell").." - "..unlearnedText())
+      local groupDef=self:FindBuff(b.groupKey)
+      row.detail:SetText((groupName or (groupDef and spellLabel(groupDef)) or L("group spell"))..": "..unlearnedText())
     end
     row.up:SetEnabled(visible>1); row.down:SetEnabled(visible<#list)
     row.order:SetText(tostring(self.db.priorities[b.key] or b.order))

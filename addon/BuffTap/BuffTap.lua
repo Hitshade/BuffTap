@@ -638,6 +638,7 @@ function B:DiagnosticsLines()
     out[#out+1]="Next: "..tostring(a.name or "Unknown action").." -> "..tostring(a.targetName or a.target or "Unknown target").." ["..tostring(a.target or "unknown").."]"
     out[#out+1]="Reason: "..tostring(a.reason).." | range: "..tostring(a.rangeSource or "not checked")
   else out[#out+1]="Next: none" end
+  out[#out+1]="Solo thanks: "..tostring(self.helperThankStatus or "not observed")
   out[#out+1]="PvP protection: "..(self.db and self.db.pvpProtection and "on" or "off")
   if self.buffDataUnavailable then out[#out+1]="Buff information unavailable or incomplete; missing coverage cannot be assumed." end
   if self.ownershipUnavailable then out[#out+1]="Blessing ownership unavailable; replacing your own blessing is prevented." end
@@ -682,6 +683,7 @@ function B:Status(verbose)
   say("Binding: " .. (#self.db.keys>0 and table.concat(self.db.keys,", ") or "none"))
   say("Rebuff default: " .. tostring(self.db.seconds) .. " seconds")
   say("Friendly target buffing: " .. (self.db.friendlyTarget and "on" or "off") .. " | default target refresh: " .. tostring(self.db.targetSeconds or 300) .. " seconds")
+  say("Solo thanks: "..tostring(self.helperThankStatus or "not observed"))
   say("PvP protection: "..(self.db.pvpProtection and "on" or "off").." | blocked="..tostring(self.pvpBlocked==true).." | aura data unavailable="..tostring(self.buffDataUnavailable==true).." | ownership unknown="..tostring(self.ownershipUnavailable==true).." | temporary retry="..tostring(self.deferredBlocked==true))
   say("Consumables: " .. (self.db.consumablesEnabled and "on" or "off") .. " | curated data build " .. tostring(self.ForeverDataBuild or "unknown"))
   if self.db.group then

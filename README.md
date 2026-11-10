@@ -79,3 +79,5 @@ Found a problem? Include your class, addon version, game build, and steps to rep
 ### Battleground self buffs
 
 While out of combat in a battleground, BuffTap checks enabled self buffs individually when normal aura scanning is restricted. Only verified missing self buffs are offered; hidden data is skipped. Buffing others remains unavailable under these restrictions, and in-combat casting remains disabled. This support needs live testing; please include `/bt debug` output with reports.
+
+Solo thanks queues distinct providers one second apart and limits each provider to one thank per minute. It requires a verified friendly caster and remains disabled in groups, instances and combat.

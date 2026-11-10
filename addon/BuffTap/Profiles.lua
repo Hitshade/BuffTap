@@ -103,6 +103,8 @@ function B:ClassCopySources(profile)
   table.sort(list); return list
 end
 function B:FinishProfileChange()
+  self.helperThankSeen=nil; self.helperThankBaseline=nil; self.helperThankPending=nil; self.helperThankQueue={}
+  self.helperThankRetries=0; self.helperThankRetryPending=nil; self:CancelTimer("thanks-send"); self:CancelTimer("thanks-settle")
   self:InitDB(); self.appearance=nil; self.rankChoiceCache=nil; self.resolveCache=nil; self.coverCache=nil
   self:InvalidateAura(); self:InvalidateRoster()
   -- Rebuild secure bindings immediately while these operations are out of combat.
