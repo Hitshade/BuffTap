@@ -397,3 +397,7 @@ B.Locales.ptBR["Blessing ownership is unknown; replacement is blocked for safety
 B.Locales.ptBR["Buff information is unavailable or incomplete. Check Diagnostics."]="As informações dos benefícios estão indisponíveis ou incompletas. Consulte o diagnóstico."
 B.Locales.ptBR["Waiting for readable target information."]="Aguardando informações legíveis do alvo."
 B.Locales.ptBR["Recipient temporarily skipped after a failed cast; retrying automatically."]="Destinatário ignorado temporariamente após uma falha; nova tentativa automática."
+
+B.Locales.ptBR["Not enough mana to buff."]="Mana insuficiente para aplicar um bônus."
+B.Locales.ptBR["Waiting for a spell cooldown."]="Aguardando a recarga de um feitiço."
+B.Locales.ptBR["Buff unavailable: check form, reagents or requirements."]="Bônus indisponível: verifique a forma, os reagentes ou os requisitos."

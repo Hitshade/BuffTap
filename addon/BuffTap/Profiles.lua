@@ -9,7 +9,7 @@ local shared={nearbyEnabled=true,nearbyBuffing=true,nearbyShowAll=true,nearbyInv
   helperQuick=true,helperDiscovery=true,minimap=true,brokerEnabled=true}
 local classKeys={"seconds","rebuffVersion","buffs","priorities","buffSeconds","group","smartGroup","groupNeed","blessingNeed",
   "salvationVersion","salvationMigration","friendlyTarget","targetSeconds","targetClassBlessings","targetBlessingFallback","targetBlessingClasses","targetBlessingPriorities",
-  "blessingGroupOverrides","blessingRaidDefaults","blessingPartyMode","blessingPartyUniform","blessingPartyExcluded","salvationGroup","groupBlessingPriorities","blessingAssignments","blessingClasses","buffGroups","buffClasses","buffGroupNeed","targetBuffs","targetBuffSeconds","raidGroups",
+  "blessingGroupOverrides","blessingRaidDefaults","blessingPartyMode","blessingPartyUniform","blessingPartyExcluded","groupBlessingPriorities","blessingAssignments","blessingClasses","buffGroups","buffClasses","buffGroupNeed","targetBuffs","targetBuffSeconds","raidGroups",
   "consumablesEnabled","consumableFamilies","consumableChoices","consumableSeconds","suppliesEnabled","suppliesChat","suppliesSound","suppliesReadyCheck","supplySettings",
   "weaponReminder","weaponMainHand","weaponOffHand","weaponApply","weaponReplace","weaponChoices","weaponCoatings","weaponSeconds",
   "helperTracking","helperTreasure","helperTracker","helperCoverage","helperPet","helperHealthstone","helperSoulstone","helperDemon","soulstoneParty","soulstoneRaid","soulstoneAssigned"}
@@ -103,6 +103,7 @@ function B:ClassCopySources(profile)
   table.sort(list); return list
 end
 function B:FinishProfileChange()
+  if self.ClearAppearanceEdits then self:ClearAppearanceEdits() end
   self.helperThankSeen=nil; self.helperThankBaseline=nil; self.helperThankPending=nil; self.helperThankQueue={}
   self.helperThankRetries=0; self.helperThankRetryPending=nil; self:CancelTimer("thanks-send"); self:CancelTimer("thanks-settle")
   self:InitDB(); self.appearance=nil; self.rankChoiceCache=nil; self.resolveCache=nil; self.coverCache=nil

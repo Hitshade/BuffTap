@@ -705,6 +705,8 @@ function B:Status(verbose)
       .. ", auras=" .. tostring(C_UnitAuras and type(C_UnitAuras.GetAuraDataByIndex)=="function")
       .. ", spellRange=" .. tostring(C_Spell and type(C_Spell.IsSpellInRange)=="function")
       .. ", bookRange=" .. tostring(C_SpellBook and type(C_SpellBook.IsSpellBookItemInRange)=="function")
+      .. ", casterGUID=" .. tostring(C_UnitAuras and type(C_UnitAuras.GetAuraCasterGUID)=="function")
+      .. ", nameFromGUID=" .. tostring(type(UnitNameFromGUID)=="function")
       .. ", timer=" .. tostring(C_Timer and type(C_Timer.After)=="function")
       .. ", itemCount=" .. tostring(C_Item and type(C_Item.GetItemCount)=="function")
       .. ", itemUse=" .. tostring(C_Item and type(C_Item.IsUsableItem)=="function")
@@ -769,6 +771,7 @@ local castEvents={UNIT_SPELLCAST_SUCCEEDED=true,UNIT_SPELLCAST_FAILED=true,UNIT_
 local function handleEvent(_,event,arg,castGUID,spellID)
   if event=="ADDON_LOADED" then if arg==ADDON then B:InitDB() end; if B.SyncEditMode then B:SyncEditMode() end; return end
   if not B.db then return end
+  if event=="UNIT_AURA" and A.EmptyAuraUpdate(castGUID) then return end
   if event=="UNIT_FLAGS" or event=="PVP_TIMER_UPDATE" then
     if B.db.pvpProtection and (arg=="player" or B:IsWatchedUnit(arg) or (A.Text(arg) and (arg:match("^party%d+$") or arg:match("^raid%d+$")))) then B:InvalidateRoster(); B:RequestRefresh("PvP flags changed",0) end
     if arg=="pet" and B.ReadinessEnabled and B:ReadinessEnabled("pet") then B:RequestRefresh("pet flags changed",.05) end
@@ -793,7 +796,6 @@ local itemRequested=event=="ITEM_DATA_LOAD_RESULT" and A.Number(arg) and ((B.ite
     if A.Combat() then B.dirty=true else B:Refresh(false) end
     return
   end
-  if B.SafetyEvent then B:SafetyEvent(event,arg,castGUID,spellID) end
   if B.HelperEvent then B:HelperEvent(event,arg,castGUID,spellID) end
   if event=="UI_ERROR_MESSAGE" then return end
   if event=="MINIMAP_UPDATE_TRACKING" and not B:HelperEnabled("helperTracking") and not B:HelperEnabled("helperTreasure") then return end

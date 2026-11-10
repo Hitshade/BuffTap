@@ -397,3 +397,7 @@ B.Locales.esES["Blessing ownership is unknown; replacement is blocked for safety
 B.Locales.esES["Buff information is unavailable or incomplete. Check Diagnostics."]="La información de beneficios no está disponible o está incompleta. Consulta Diagnóstico."
 B.Locales.esES["Waiting for readable target information."]="Esperando información legible del objetivo."
 B.Locales.esES["Recipient temporarily skipped after a failed cast; retrying automatically."]="Destinatario omitido temporalmente tras un fallo; se reintentará automáticamente."
+
+B.Locales.esES["Not enough mana to buff."]="No hay suficiente maná para aplicar mejoras."
+B.Locales.esES["Waiting for a spell cooldown."]="Esperando el tiempo de reutilización de un hechizo."
+B.Locales.esES["Buff unavailable: check form, reagents or requirements."]="Mejora no disponible: comprueba la forma, los componentes o los requisitos."

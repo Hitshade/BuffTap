@@ -106,6 +106,9 @@ function B:FriendlyStatus()
   if self.reason=="resting" then return self:Text("Reminders pause in cities and inns.") end
   if self.reason=="mounted" then return self:Text("Reminders pause while mounted.") end
   if self.reason=="dead / ghost / player unavailable" then return self:Text("Player is dead, a ghost, or unavailable.") end
+  if self.reason=="not enough mana" then return self:Text("Not enough mana to buff.") end
+  if self.reason=="waiting for cooldown" then return self:Text("Waiting for a spell cooldown.") end
+  if self.reason=="spell unavailable: form, reagents or requirements" then return self:Text("Buff unavailable: check form, reagents or requirements.") end
   if self.pvpBlocked then return self:Text("PvP protection: flagged recipient or unknown PvP status. Check Diagnostics.") end
   if self.ownershipUnavailable then return self:Text("Blessing ownership is unknown; replacement is blocked for safety.") end
   if self.buffDataUnavailable then return self:Text("Buff information is unavailable or incomplete. Check Diagnostics.") end

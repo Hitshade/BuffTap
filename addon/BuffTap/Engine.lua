@@ -4,7 +4,7 @@
 
 local _, B = ...
 _G.BuffTap = B
-B.version = "1.16.7"
+B.version = "1.16.8"
 B.API = {}
 local A = B.API
 
@@ -16,6 +16,26 @@ function A.Call(fn, ...)
   if not ok then return nil, "API call failed: " .. (A.Public(value) and type(value)=="string" and value or "unreadable error") end
   if not A.Public(value) then return nil, "restricted value" end
   return value
+end
+-- Only a fully public, explicitly incremental empty update can be ignored.
+function A.EmptyAuraUpdate(info)
+  if not A.Public(info) or type(info)~="table" or not A.Public(info.isFullUpdate) or info.isFullUpdate~=false then return false end
+  for _,key in ipairs({"addedAuras","removedAuraInstanceIDs","updatedAuraInstanceIDs"}) do
+    local value=info[key]
+    if not A.Public(value) then return false end
+    if value~=nil then
+      if type(value)~="table" then return false end
+      local first=next(value)
+      if not A.Public(first) or first~=nil then return false end
+    end
+  end
+  return true
+end
+function B:AuraCasterGUID(unit,aura)
+  if not aura or not A.Number(aura.auraInstanceID) then return nil,"aura instance unavailable" end
+  local guid,why=A.Call(C_UnitAuras and C_UnitAuras.GetAuraCasterGUID,unit,aura.auraInstanceID)
+  if A.Text(guid) then return guid end
+  return nil,why or "caster GUID unavailable"
 end
 function A.SpellUsable(id)
   if not C_Spell or type(C_Spell.IsSpellUsable)~="function" then return nil,"API unavailable" end
@@ -64,7 +84,7 @@ function B:InitDB()
   local defaults = {enabled=true, showReminder=true, size=64, opacity=1, x=0, y=-180,
     seconds=45, rebuffVersion=1, sound=false, reminderSound="default", supplySound="default", soundChannel="Master", soundInterval=5, glow=true, pulse=false, group=false, smartGroup=true,
     groupNeed=3, blessingNeed=2, friendlyTarget=false, targetSeconds=300, keys={"MOUSEWHEELDOWN"}, buffs={}, priorities={}, buffSeconds={},
-    pauseResting=false, targetClassBlessings=true, targetBlessingFallback=true, targetBlessingClasses={}, targetBlessingPriorities={}, groupBlessingPriorities={}, blessingAssignments=false, blessingClasses={}, blessingGroupOverrides={}, salvationGroup=false, buffGroups={}, buffClasses={}, buffGroupNeed={}, targetBuffs={}, targetBuffSeconds={}, showBuffName=false, showTargetName=true, showTimer=false, showGroupBadge=true,
+    pauseResting=false, targetClassBlessings=true, targetBlessingFallback=true, targetBlessingClasses={}, targetBlessingPriorities={}, groupBlessingPriorities={}, blessingAssignments=false, blessingClasses={}, blessingGroupOverrides={}, buffGroups={}, buffClasses={}, buffGroupNeed={}, targetBuffs={}, targetBuffSeconds={}, showBuffName=false, showTargetName=true, showTimer=false, showGroupBadge=true,
     consumablesEnabled=false, consumableFamilies={}, consumableChoices={}, consumableSeconds={},
     suppliesEnabled=false, suppliesChat=false, suppliesSound=false, suppliesReadyCheck=false, supplySettings={},
     weaponReminder=true, weaponMainHand=true, weaponOffHand=true,
@@ -84,6 +104,7 @@ function B:InitDB()
   if self.NormalizeAlerts then self:NormalizeAlerts() end
   if self.NormalizeCoatings then self:NormalizeCoatings() end
   if self.SyncBroker then self:SyncBroker() end
+  self.db.salvationGroup=nil
   self:MigrateSalvation()
   if self.NormalizeBlessingAssignments then self:NormalizeBlessingAssignments() end
   if self.SyncReadiness then self:SyncReadiness() end
@@ -301,6 +322,14 @@ function B:PickBlessingPriority(entry,choices,target)
       local source=aura.sourceUnit
       local isOwn=source=="player" and true or (source and A.Call(UnitIsUnit,source,"player"))
       local resolved=isOwn==true or (isOwn==false and A.Call(UnitExists,source)==true)
+      if not resolved then
+        local caster=self:AuraCasterGUID(entry.unit,aura)
+        local player=A.Call(UnitGUID,"player")
+        if A.Text(caster) and caster:match("^Player%-") and A.Text(player) then
+          isOwn=caster==player; resolved=true
+          self:AddDiag("blessings -> "..entry.unit..": ownership verified by caster GUID ("..(isOwn and "yours" or "another caster")..")")
+        end
+      end
       if not resolved and A.Number(aura.auraInstanceID) then
         -- Forever AuraUtil documents PLAYER as player/pet/vehicle ownership.
         -- Ask about this exact aura; never infer ownership from a missing result.
@@ -790,13 +819,15 @@ function B:BGSelfAuras(b)
   return {}
 end
 
+local bgSelfKinds={single=true,self=true,blessing=true,seal=true}
+local bgSelfAspects={["aspect-hawk"]=true,["aspect-monkey"]=true,["aspect-cheetah"]=true,["aspect-beast"]=true}
 function B:SelectBGSelf()
   self:AddDiag("Battleground: self-only spell checks; hidden buffs are not treated as missing")
   local list,err=self:ClassList()
   if err then return nil,err end
   local unknown=false
   for _,b in ipairs(list) do
-    if not b.singleKey and (b.kind=="single" or b.kind=="self" or b.kind=="blessing")
+    if not b.singleKey and (bgSelfKinds[b.kind] or bgSelfAspects[b.key])
       and self:Enabled(b) and self:Supported(b) then
       local action=self:Resolve(b,"player")
       if action then
@@ -978,9 +1009,19 @@ function B:Validate(action)
   end
   local cd,cdwhy = A.Call(C_Spell and C_Spell.GetSpellCooldown,action.id)
   if type(cd)~="table" then return false,cdwhy or "cooldown data unavailable" end
-  if not A.Number(cd.startTime) or not A.Number(cd.duration) or not A.Public(cd.isEnabled) then return false,"restricted cooldown" end
-  if cd.isEnabled == false then return false,"cooldown disabled" end
-  if cd.duration>0 and cd.startTime+cd.duration>GetTime() then
+  if not A.Public(cd.isEnabled) or cd.isEnabled~=true then
+    self.cooldownBlocked=true; return false,"cooldown disabled or unreadable"
+  end
+  local timing=A.Number(cd.startTime) and A.Number(cd.duration)
+  if A.Public(cd.isActive) and type(cd.isActive)=="boolean" then
+    if cd.isActive then
+      self.cooldownBlocked=true
+      if timing then self:ConsiderWake(cd.startTime+cd.duration-GetTime()+0.03) end
+      return false,"cooldown / global cooldown"
+    end
+  elseif not timing then
+    self.cooldownBlocked=true; return false,"restricted cooldown"
+  elseif cd.duration>0 and cd.startTime+cd.duration>GetTime() then
     self.cooldownBlocked=true
     self:ConsiderWake(cd.startTime+cd.duration-GetTime()+0.03)
     return false,"cooldown / global cooldown"
@@ -1200,7 +1241,7 @@ function B:GetBlessingPlayer(guid,context)
   local value=self.blessingPlayers and self.blessingPlayers[guid]
   if not value then return nil end
   context=context or self:BlessingContext()
-  return {choice=context=="Raid" and value.raidChoice or context=="Party" and value.choice or nil,neverSalvation=value.neverSalvation}
+  return {choice=context=="Raid" and value.raidChoice or context=="Party" and value.choice or nil}
 end
 local retiredBlessings={bos=true,gbos=true,bol=true,gbol=true}
 function B:NormalizeBlessingAssignments()
@@ -1286,7 +1327,7 @@ function B:BlessingChoice(entry)
   end
   return key
 end
-function B:SetBlessingPlayer(entry,key,neverSalvation,context)
+function B:SetBlessingPlayer(entry,key,context)
   if A.Combat() then return end
   local guid=entry and A.Call(UnitGUID,entry.unit)
   if not A.Text(guid) then return end
@@ -1294,8 +1335,7 @@ function B:SetBlessingPlayer(entry,key,neverSalvation,context)
   self.blessingPlayers=self.blessingPlayers or {}
   local value=self.blessingPlayers[guid] or {}
   if (context or self:BlessingContext())=="Raid" then value.raidChoice=key else value.choice=key end
-  value.neverSalvation=neverSalvation==true
-  if not value.choice and not value.raidChoice and not value.neverSalvation then self.blessingPlayers[guid]=nil else self.blessingPlayers[guid]=value end
+  if not value.choice and not value.raidChoice then self.blessingPlayers[guid]=nil else self.blessingPlayers[guid]=value end
   self:InvalidateAura(); self:RequestRefresh("blessing player choice",0)
 end
 function B:BlessingGreaterSafe(key,class,roster)
@@ -1663,6 +1703,9 @@ function B:Select()
     local nearby=self:SelectNearby()
     if nearby then return nearby,"nearby player" end
   end
+  if self.manaBlocked then return nil,"not enough mana" end
+  if self.powerBlocked then return nil,"spell unavailable: form, reagents or requirements" end
+  if self.cooldownBlocked then return nil,"waiting for cooldown" end
   if self.pvpBlocked then return nil,"PvP protection: recipient flagged or status unavailable" end
   if self.ownershipUnavailable then return nil,"Blessing ownership unavailable; replacement blocked" end
   if self.buffDataUnavailable then return nil,"Buff information unavailable or incomplete" end

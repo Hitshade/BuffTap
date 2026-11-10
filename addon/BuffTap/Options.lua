@@ -583,7 +583,7 @@ function B:BuildBlessingOptions(parent)
       local v=B:GetBlessingPlayer(row.guid,f.blessingContext); return v and v.choice
     end,function(key)
       if row.entry and A.Call(UnitGUID,row.entry.unit)==row.guid then
-        local v=B.blessingPlayers and B.blessingPlayers[row.guid]; B:SetBlessingPlayer(row.entry,key,v and v.neverSalvation,f.blessingContext)
+        B:SetBlessingPlayer(row.entry,key,f.blessingContext)
       end
     end,true)
     local updatePlayer=row.pick.Update
@@ -675,9 +675,18 @@ function B:ToggleBlessingFilters()
   f.activeSelector=p; p:Sync(); p:Show()
 end
 
+function B:ClearAppearanceEdits()
+  local f=self.options
+  if not f then return end
+  for _,field in ipairs({"sizeEdit","opacityEdit","xEdit","yEdit"}) do
+    local e=f[field]; if e then e.unsaved=nil; e:ClearFocus() end
+  end
+end
+
 function B:RefreshInventoryWindows()
   if A.Combat() then return end
-  if self.options and self.options:IsShown() then self:Options() end
+  local f=self.options
+  if f and f:IsShown() and (f.activeTab==TAB.Consumables or f.activeTab==TAB.Weapons or f.activeTab==TAB.Diagnostics) then self:Options() end
   if self.itemPicker and self.itemPicker:IsShown() then self:UpdateConsumablePicker() end
 end
 
@@ -687,7 +696,7 @@ function B:UpdateGroupRosterOptions()
   self:UpdateBlessingOptions()
 end
 
-local function updateBlessingPlayers(self,f,entries,title,editable,protectionOnly)
+local function updateBlessingPlayers(self,f,entries,title,editable)
   if #entries==0 then return end
       local maxOffset=math.max(0,#entries-5); local offset=math.max(0,math.min(f.blessingPlayerOffset or 0,maxOffset)); f.blessingPlayerOffset=offset; f.blessingPlayerMaxOffset=maxOffset
       f.blessingDetail:ClearAllPoints(); f.blessingDetail:SetPoint("TOPLEFT",36,-242); f.blessingDetail:Show(); f.blessingDetailTitle:SetText(L("Player exceptions")..": "..title)
@@ -695,10 +704,10 @@ local function updateBlessingPlayers(self,f,entries,title,editable,protectionOnl
         local entry=entries[offset+i]
         if entry then
           r.entry=entry; r.guid=A.Call(UnitGUID,entry.unit); r.name:SetText(A.Call(UnitName,entry.unit) or entry.unit)
-          r.pick:SetShown(not protectionOnly); r.pick:Update(); r.pick:SetAvailable(editable); r:Show()
+          r.pick:Show(); r.pick:Update(); r.pick:SetAvailable(editable); r:Show()
         end
       end
-      f.blessingPageText:SetText("Players "..(offset+1).."-"..math.min(offset+5,#entries).." / "..#entries.." - "..L(protectionOnly and "Protected players never receive Salvation." or "Player exceptions take precedence."))
+      f.blessingPageText:SetText("Players "..(offset+1).."-"..math.min(offset+5,#entries).." / "..#entries.." - "..L("Player exceptions take precedence."))
       f.blessingScroll.silent=true; f.blessingScroll:SetMinMaxValues(0,math.max(1,maxOffset)); f.blessingScroll:SetValue(offset); f.blessingScroll:SetShown(maxOffset>0); f.blessingScroll.silent=false
       f.blessingDetail:SetHeight(202)
 
@@ -801,7 +810,7 @@ function B:UpdateBlessingOptions()
       end
     end
     addHelp(row.players,"Player exceptions",L(status).."\n"..L("Click to expand or collapse individual player choices.")); y=y-26
-    if f.expandedBlessing==row.class then updateBlessingPlayers(self,f,entries,L(row.class:sub(1,1)..row.class:sub(2):lower()),editable,false) end
+    if f.expandedBlessing==row.class then updateBlessingPlayers(self,f,entries,L(row.class:sub(1,1)..row.class:sub(2):lower()),editable) end
   end
   f.updatingBlessingDetail=false
 end
@@ -1428,7 +1437,6 @@ function B:UpdateConsumablePicker()
     local item=list[f.offset+i]
     if item then
       row.itemID=item.id; row.mark:SetText(selected==item.id and "(o)" or "( )")
-      local info=self.ConsumableItemInfo and self:ConsumableItemInfo(item.id,item)
       row.name:SetText((info and info.name) or item.name); row.stock:SetText(item.count>0 and ("|cff88dd88"..item.count.."|r") or ("|cffffc466"..L("Out of stock").."|r"))
       local info=self.ConsumableItemInfo and self:ConsumableItemInfo(item.id,item)
       row.icon:SetTexture((info and info.texture) or item.icon or 134400)
@@ -1790,6 +1798,7 @@ function B:Options()
       if A.Combat() then return end
       local size,opacity,x,y=tonumber(f.sizeEdit:GetText()),tonumber(f.opacityEdit:GetText()),tonumber(f.xEdit:GetText()),tonumber(f.yEdit:GetText())
       if size then B.db.size=size end; if opacity then B.db.opacity=math.max(0,math.min(100,opacity))/100 end; if x then B.db.x=x end; if y then B.db.y=y end
+      for _,e in ipairs({f.sizeEdit,f.opacityEdit,f.xEdit,f.yEdit}) do e.unsaved=nil; e:ClearFocus() end
       B:InitDB(); B.appearance=nil; B:RequestRefresh("appearance",0); B:Options()
     end)
     f.soundCheck=check(app,L("Enable reminder sound"),18,-488,function(s) setAndRefresh("sound",s:GetChecked()==true) end)
@@ -1902,8 +1911,9 @@ function B:Options()
     self:BuildHelperPage(f)
 
     local function acceptEdit(e,key)
-      e:SetScript("OnEnterPressed",function(s) local v=tonumber(s:GetText()); if v and not A.Combat() then if key=="opacity" then v=math.max(0,math.min(100,v))/100 end; setAndRefresh(key,v) end; s:ClearFocus(); B:Options() end)
-      e:SetScript("OnEscapePressed",function(s) s:ClearFocus(); B:Options() end)
+      e:SetScript("OnTextChanged",function(s,userInput) if userInput then s.unsaved=true end end)
+      e:SetScript("OnEnterPressed",function(s) local v=tonumber(s:GetText()); if v and not A.Combat() then if key=="opacity" then v=math.max(0,math.min(100,v))/100 end; setAndRefresh(key,v) end; s.unsaved=nil; s:ClearFocus(); B:Options() end)
+      e:SetScript("OnEscapePressed",function(s) s.unsaved=nil; s:ClearFocus(); B:Options() end)
     end
     acceptEdit(f.sizeEdit,"size"); acceptEdit(f.opacityEdit,"opacity"); acceptEdit(f.xEdit,"x"); acceptEdit(f.yEdit,"y")
 
@@ -2144,7 +2154,9 @@ function B:Options()
   for _,choice in ipairs(self:ReminderFonts()) do if choice.key==self.db.labelFont then f.fontButton:SetText(L(choice.name)) end end
   for _,choice in ipairs(self:ReminderColors()) do if choice.key==self.db.labelColor then f.colorButton:SetText(L(choice.name)) end end
   f.bindingText:SetText("Current: "..(#self.db.keys>0 and table.concat(self.db.keys,", ") or "none"))
-  f.sizeEdit:SetText(tostring(self.db.size)); f.opacityEdit:SetText(tostring(math.floor(self.db.opacity*100+0.5))); f.xEdit:SetText(tostring(math.floor(self.db.x+0.5))); f.yEdit:SetText(tostring(math.floor(self.db.y+0.5)))
+  for _,pair in ipairs({{f.sizeEdit,self.db.size},{f.opacityEdit,math.floor(self.db.opacity*100+0.5)},{f.xEdit,math.floor(self.db.x+0.5)},{f.yEdit,math.floor(self.db.y+0.5)}}) do
+    if not pair[1].unsaved and pair[1]:HasFocus()~=true then pair[1]:SetText(tostring(pair[2])) end
+  end
   for _,choice in ipairs(self:SoundChoices()) do
     if choice.key==self.db.reminderSound then f.reminderSoundButton:SetText(L(choice.name)) end
     if choice.key==self.db.supplySound then f.supplySoundButton:SetText(L(choice.name)) end
@@ -2298,7 +2310,7 @@ function B:Options()
       row.detail:SetText((groupName or (groupDef and spellLabel(groupDef)) or L("group spell"))..": "..unlearnedText())
     end
     row.up:SetEnabled(visible>1); row.down:SetEnabled(visible<#list)
-    row.order:SetText(tostring(self.db.priorities[b.key] or b.order))
+    if row.order:HasFocus()~=true then row.order:SetText(tostring(self.db.priorities[b.key] or b.order)) end
     local threshold=self:RebuffSeconds(b)
     row.rebuff.silent=true; row.rebuff:SetValue(threshold); row.rebuff.valueText:SetText(formatSeconds(threshold)); row.rebuff.silent=false
     if self.db.buffSeconds[b.key]~=nil then row.default:Enable(); row.default:SetAlpha(1) else row.default:Disable(); row.default:SetAlpha(0.45) end

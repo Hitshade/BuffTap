@@ -397,3 +397,7 @@ B.Locales.frFR["Blessing ownership is unknown; replacement is blocked for safety
 B.Locales.frFR["Buff information is unavailable or incomplete. Check Diagnostics."]="Les informations des améliorations sont indisponibles ou incomplètes. Consultez le diagnostic."
 B.Locales.frFR["Waiting for readable target information."]="En attente d’informations de cible lisibles."
 B.Locales.frFR["Recipient temporarily skipped after a failed cast; retrying automatically."]="Destinataire temporairement ignoré après un échec ; nouvelle tentative automatique."
+
+B.Locales.frFR["Not enough mana to buff."]="Mana insuffisant pour lancer une amélioration."
+B.Locales.frFR["Waiting for a spell cooldown."]="En attente du temps de recharge d’un sort."
+B.Locales.frFR["Buff unavailable: check form, reagents or requirements."]="Amélioration indisponible : vérifiez la forme, les composants ou les conditions requises."

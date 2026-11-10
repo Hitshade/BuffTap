@@ -397,3 +397,7 @@ B.Locales.deDE["Blessing ownership is unknown; replacement is blocked for safety
 B.Locales.deDE["Buff information is unavailable or incomplete. Check Diagnostics."]="Stärkungsinformationen fehlen oder sind unvollständig. Siehe Diagnose."
 B.Locales.deDE["Waiting for readable target information."]="Warte auf lesbare Zielinformationen."
 B.Locales.deDE["Recipient temporarily skipped after a failed cast; retrying automatically."]="Empfänger nach fehlgeschlagenem Zauber kurz übersprungen; automatischer neuer Versuch."
+
+B.Locales.deDE["Not enough mana to buff."]="Nicht genug Mana zum Stärken."
+B.Locales.deDE["Waiting for a spell cooldown."]="Warte auf eine Zauberabklingzeit."
+B.Locales.deDE["Buff unavailable: check form, reagents or requirements."]="Stärkungszauber nicht verfügbar: Gestalt, Reagenzien oder Voraussetzungen prüfen."
