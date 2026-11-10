@@ -348,17 +348,6 @@ local function thankRecipient(source)
   if ignoredProvider(source,guid,name) then return nil,"provider is ignored",false end
   return {unit=source,guid=guid,name=name,key=guid and ("guid:"..guid) or ("name:"..name),nameKey="name:"..name,identity="source unit"}
 end
-local function guidName(guid)
-  if type(UnitNameFromGUID)~="function" then return nil end
-  local ok,name,realm=pcall(UnitNameFromGUID,guid)
-  if not ok or not A.Text(name) or name==(_G.UNKNOWNOBJECT or "Unknown") or not A.Public(realm) then return nil end
-  if name:find("[%c|]") or name:match("^%s") or name:match("%s$") then return nil end
-  -- UnitNameFromGUID returns the character name and SERVER, unlike UnitName's
-  -- surname return on Forever. Preserve the name and qualify the server.
-  local character=name
-  if A.Text(realm) and realm~="" then name=name.."-"..realm:gsub("%s","") end
-  return name,character
-end
 function B:FindCasterUnit(guid)
   local seen={}
   local function match(unit)
@@ -366,6 +355,8 @@ function B:FindCasterUnit(guid)
     seen[unit]=true
     if A.Call(UnitExists,unit)==true and A.Call(UnitGUID,unit)==guid then return unit end
   end
+  local native=match(A.Call(UnitTokenFromGUID,guid))
+  if native then return native end
   for _,unit in ipairs({"player","target","mouseover","focus"}) do local found=match(unit); if found then return found end end
   local raid=A.Call(IsInRaid)==true
   local count=A.Call(raid and GetNumGroupMembers or GetNumSubgroupMembers)
@@ -401,11 +392,9 @@ function B:ThanksAuraRecipient(aura,cache)
     if candidate then candidate.identity="aura GUID / live unit" end
     return candidate,reason,again
   end
-  local name,character=guidName(guid)
-  if not name then return nil,"caster GUID readable; full name unavailable",true end
-  if ignoredProvider(nil,guid,name) then return nil,"provider is ignored",false end
-  local nameKey=A.Call(RegionalUniqueNamesEnabled)==true and character or name
-  return {guid=guid,name=name,key="guid:"..guid,nameKey="name:"..nameKey,identity="aura GUID / name"}
+  -- Knowing a caster's name does not prove the emote API can resolve them.
+  -- An unresolved name may produce the general emote instead of a directed one.
+  return nil,"caster GUID readable; no live unit for a directed emote",true
 end
 -- Read fresh helpful auras and capture the caster beside each slot. Casting
 -- keeps its separate, stricter aura reader/cache and all existing safeguards.
@@ -450,22 +439,16 @@ function B:DispatchSoloThanks()
       local wait=1-(now-(self.helperLastThank or -1000))
       if wait>0 then self:StartTimer("thanks-send",wait,function() B:DispatchSoloThanks() end); return end
       table.remove(queue,1)
-      local held
-      if candidate.unit then
-        held=A.Call(UnitExists,candidate.unit)==true and A.Call(UnitIsPlayer,candidate.unit)==true
-          and thankName(candidate.unit)==candidate.name
-          and (not candidate.guid or A.Call(UnitGUID,candidate.unit)==candidate.guid)
-      else
-        held=A.Text(candidate.guid) and candidate.guid:match("^Player%-") and guidName(candidate.guid)==candidate.name
-          and A.Text(A.Call(UnitGUID,"player")) and candidate.guid~=A.Call(UnitGUID,"player")
-      end
+      local held=A.Text(candidate.unit) and A.Call(UnitExists,candidate.unit)==true
+        and A.Call(UnitIsPlayer,candidate.unit)==true and thankName(candidate.unit)==candidate.name
+        and (not candidate.guid or A.Call(UnitGUID,candidate.unit)==candidate.guid)
       if ignoredProvider(candidate.unit,candidate.guid,candidate.name) then
         self.helperThankStatus="Skipped thanks: provider is ignored"
       elseif held then
         local emote=C_ChatInfo and C_ChatInfo.PerformEmote or DoEmote
         if type(emote)~="function" then self.helperThankStatus="Emote API unavailable"; self.helperThankQueue={}; return end
         self.helperLastThank=now
-        local ok,result=pcall(emote,self:SoloThankEmote(),candidate.unit or candidate.name)
+        local ok,result=pcall(emote,self:SoloThankEmote(),candidate.unit)
         if ok then
           self.helperThankCooldowns[candidate.key]=now; self.helperThankCooldowns[candidate.nameKey]=now
           -- Blizzard's chat parser treats true as restricted, despite the
