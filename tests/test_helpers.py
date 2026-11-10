@@ -95,18 +95,18 @@ BuffTap:DiscoverConsumables(); assert(#BuffTap.helperDiscoveries==0)
 ''')
 solo='''
 IsInGroup=function() return false end; IsInRaid=function() return false end; IsInInstance=function() return false end
-UnitIsPlayer=function() return true end; local emotes={}; DoEmote=function(e,u) emotes[#emotes+1]={e,u} end
+UnitIsPlayer=function() return true end; local priorName=UnitName; UnitName=function(u) if u=='party1' then return 'Other' elseif u=='party2' then return 'Third' end return priorName(u) end; local emotes={}; DoEmote=function(e,u) emotes[#emotes+1]={e,u} end
 BuffTap.db.helperThanks=true; BuffTap:ObserveSoloThanks(true)
 local function received(id,source) aura('player',id,'External buff',600,600); auras.player[#auras.player].sourceUnit=source; BuffTap:InvalidateAura('player'); BuffTap:ObserveSoloThanks() end
 '''
 test('Solo thanks requires known caster and coalesces consecutive buffs',solo+'''
-received(1459,'target'); assert(#emotes==1 and emotes[1][1]=='THANK' and emotes[1][2]=='Ally')
+received(1459,'target'); assert(#emotes==1 and emotes[1][1]=='THANK' and emotes[1][2]=='target')
 received(1243,'target'); assert(#emotes==1)
 now=now+65; received(14752,'target'); assert(#emotes==2)
 ''')
-test('Thanks skips self, unknown caster, unrelated effects and login buffs',solo+'''
-received(1459,'player'); received(1243,nil); received(999999,'target'); assert(#emotes==0)
-BuffTap.helperThankSeen=nil; received(14752,'target'); assert(#emotes==0)
+test('Thanks skips self and unknown caster while accepting other helpful effects',solo+'''
+received(1459,'player'); received(1243,nil); received(999999,'target'); assert(#emotes==1)
+BuffTap.helperThankSeen=nil; received(14752,'target'); assert(#emotes==1)
 ''')
 test('Thanks stays off in party raid instance and combat',solo+'''
 IsInGroup=function() return true end; received(1459,'target'); assert(#emotes==0)
@@ -137,9 +137,9 @@ f.rows[1].scripts.OnClick(f.rows[1]); assert(BuffTap.db.consumableChoices.flask=
 advance(.1); assert(BuffTap.action.itemID==13510)
 bags[13510]=0; BuffTap.button.scripts.PreClick(nil,'LeftButton',false); assert(not BuffTap.action)
 ''')
-test('Modern emote API receives a resolved name and never retries a restriction',solo+'''
-DoEmote=nil; C_ChatInfo={PerformEmote=function(e,name) emotes[#emotes+1]={e,name}; return false end}
-received(1459,'target'); assert(#emotes==1 and emotes[1][2]=='Ally')
+test('Modern emote API receives a verified unit and never retries a restriction',solo+'''
+DoEmote=nil; C_ChatInfo={PerformEmote=function(e,name) emotes[#emotes+1]={e,name}; return true end}
+received(1459,'target'); assert(#emotes==1 and emotes[1][2]=='target')
 received(1243,'target'); assert(#emotes==1 and BuffTap.helperThankStatus:find('restricted'))
 ''')
 test('Auto thanks remains silent when disabled',solo+'''
@@ -253,16 +253,16 @@ refresh(); assert(not table.concat(BuffTap:CoverageLines(),';'):find('Shadow Pro
 """)
 
 # Curated emotes reuse the existing recipient identity and cooldown safeguards.
-test('Selected solo emote is directed at the verified provider',solo+"BuffTap.db.helperThankEmote='BOW'; received(1459,'target'); assert(#emotes==1 and emotes[1][1]=='BOW' and emotes[1][2]=='Ally')")
+test('Selected solo emote is directed at the verified provider',solo+"BuffTap.db.helperThankEmote='BOW'; received(1459,'target'); assert(#emotes==1 and emotes[1][1]=='BOW' and emotes[1][2]=='target')")
 test('Unsafe and malformed stored emotes fall back to thank',solo+"for _,v in ipairs({'SIT','SLEEP','DANCE','KNEEL','/say hi',123}) do BuffTap.db.helperThankEmote=v; assert(BuffTap:SoloThankEmote()=='THANK') end; received(1459,'target'); assert(emotes[1][1]=='THANK')")
 test('Curated choices exclude posture commands and use client localized aliases',"MAXEMOTEINDEX=2; EMOTE1_TOKEN='BOW'; EMOTE1_CMD1='/verbeugen'; EMOTE2_TOKEN='SIT'; EMOTE2_CMD1='/sitzen'; local choices=BuffTap:SoloThankEmotes(); assert(#choices==30); local seen={}; for _,v in ipairs(choices) do seen[v.key]=true; if v.key=='BOW' then assert(v.name=='verbeugen') end end; assert(not seen.SIT and not seen.SLEEP and not seen.DANCE and not seen.KNEEL)")
 test('Changing solo response preserves cooldowns and sends nothing',solo+"received(1459,'target'); BuffTap.db.helperThankEmote='WAVE'; received(1243,'party1'); assert(#emotes==1); now=now+59; received(14752,'target'); assert(#emotes==1)")
-test('Modern emote failure makes one attempt without retry',solo+"local attempts=0; C_ChatInfo={PerformEmote=function(e,u) attempts=attempts+1; assert(e=='SALUTE' and u=='Ally'); return false end}; BuffTap.db.helperThankEmote='SALUTE'; received(1459,'target'); received(1243,'target'); assert(attempts==1 and BuffTap.helperThankStatus=='Emote unavailable or restricted; no retry')")
+test('Modern emote failure makes one attempt without retry',solo+"local attempts=0; C_ChatInfo={PerformEmote=function(e,u) attempts=attempts+1; assert(e=='SALUTE' and u=='target'); return true end}; BuffTap.db.helperThankEmote='SALUTE'; received(1459,'target'); received(1243,'target'); assert(attempts==1 and BuffTap.helperThankStatus=='Client restricted the emote; no retry')")
 test('Solo response selector stores choices without emitting chat',solo+"BuffTap:HelperOptions(); local picker=BuffTap.helperWindow.thankEmote; picker.scripts.OnClick(); local row=picker.menu.rows[2]; row.scripts.OnClick(row); assert(BuffTap.db.helperThankEmote=='BOW' and #emotes==0); picker.scripts.OnClick(); picker.scripts.OnClick(); assert(not picker.menu.shown)")
 
 
 test('Solo emote remains configurable while automatic thanks is off',solo+"BuffTap.db.helperThanks=false; BuffTap:HelperOptions(); local picker=BuffTap.helperWindow.thankEmote; assert(picker.enabled); picker.scripts.OnClick(); local row=picker.menu.rows[2]; row.scripts.OnClick(row); assert(BuffTap.db.helperThankEmote=='BOW' and BuffTap.db.helperThanks==false and #emotes==0); picker.scripts.OnClick(); picker.scripts.OnClick(); assert(not picker.menu.shown)")
 
-test("Questionable directed emotes remain selectable",solo+"for _,token in ipairs({'FART','BURP','RUDE','RASP','MOCK','TAUNT'}) do BuffTap.db.helperThankEmote=token; assert(BuffTap:SoloThankEmote()==token) end; BuffTap.db.helperThankEmote='FART'; received(1459,'target'); assert(#emotes==1 and emotes[1][1]=='FART' and emotes[1][2]=='Ally')")
+test("Questionable directed emotes remain selectable",solo+"for _,token in ipairs({'FART','BURP','RUDE','RASP','MOCK','TAUNT'}) do BuffTap.db.helperThankEmote=token; assert(BuffTap:SoloThankEmote()==token) end; BuffTap.db.helperThankEmote='FART'; received(1459,'target'); assert(#emotes==1 and emotes[1][1]=='FART' and emotes[1][2]=='target')")
 
 test("Solo emote dropdown scrolls without a search box", "BuffTap:HelperOptions(); local picker=BuffTap.helperWindow.thankEmote; picker.scripts.OnClick(); assert(picker.menu.scroll and picker.menu.content and not picker.menu.search); assert(#picker.menu.rows==30)")

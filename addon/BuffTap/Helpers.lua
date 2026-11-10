@@ -302,18 +302,60 @@ function B:ScheduleThanksSettle()
     if B:SoloThanksAllowed() then B:InvalidateAura("player"); B:ObserveSoloThanks() end
   end)
 end
-local function thankRecipient(aura)
-  local unit=aura.sourceUnit
-  if not A.Text(unit) or A.Call(UnitIsPlayer,unit)~=true or A.Call(UnitIsUnit,unit,"player")~=false
-    or A.Call(UnitCanAssist,"player",unit)~=true then return end
-  local guid=A.Call(UnitGUID,unit)
-  if not A.Text(guid) then return end
-  local name=A.Call(GetUnitName,unit,true)
-  if not A.Text(name) and type(UnitName)=="function" then
-    local ok,short,realm=pcall(UnitName,unit)
-    if ok and A.Text(short) and A.Public(realm) then name=short..(A.Text(realm) and ("-"..realm) or "") end
+local function thankName(unit)
+  local ok,name,second=pcall(UnitName,unit)
+  if ok and A.Text(name) and name~="" and name~=(_G.UNKNOWNOBJECT or "Unknown") and A.Public(second) then
+    if A.Text(second) and second~="" then
+      local version=A.Call(GetBuildInfo)
+      name=name..(A.Text(version) and version:match("^1%.60%.") and " " or "-")..second
+    end
+    return name
   end
-  if A.Text(name) then return {unit=unit,guid=guid,name=name} end
+  local full=A.Call(GetUnitName,unit,true)
+  if A.Text(full) and full~="" and full~=(_G.UNKNOWNOBJECT or "Unknown") then return full end
+end
+local function thankRecipient(source)
+  if not A.Text(source) or source=="" then return nil,"source unit missing or restricted",true end
+  if source=="player" or A.Call(UnitIsUnit,source,"player")==true then return nil,nil,false end
+  if A.Call(UnitExists,source)~=true then return nil,"caster unit unavailable: "..source,true end
+  local player=A.Call(UnitIsPlayer,source)
+  if player==false then return nil,nil,false end
+  if player~=true then return nil,"caster player identity unavailable: "..source,true end
+  local guid=A.Call(UnitGUID,source); guid=A.Text(guid) and guid or nil
+  local own=A.Call(UnitGUID,"player")
+  if guid and A.Text(own) and guid==own then return nil,nil,false end
+  local name=thankName(source)
+  if not name then return nil,"caster name unavailable: "..source,true end
+  if name==thankName("player") then return nil,nil,false end
+  return {unit=source,guid=guid,name=name,key=guid and ("guid:"..guid) or ("name:"..name),nameKey="name:"..name}
+end
+-- Read fresh helpful auras and capture the caster beside each slot. Casting
+-- keeps its separate, stricter aura reader/cache and all existing safeguards.
+function B:ReadSoloThanksAuras()
+  local read=C_UnitAuras and C_UnitAuras.GetAuraDataByIndex
+  if type(read)~="function" then return nil,"helpful aura API unavailable" end
+  local out,empty,refused={},false,0
+  for i=1,255 do
+    local raw,err=A.Call(read,"player",i,"HELPFUL")
+    if err or not A.Public(raw) then out.incomplete=true; refused=refused+1
+    elseif raw==nil then
+      empty=true
+      if i>=40 then break end
+    elseif type(raw)~="table" then out.incomplete=true
+    else
+      if empty then out.incomplete=true end
+      local id=A.Number(raw.spellId) and raw.spellId or nil
+      local instance=A.Number(raw.auraInstanceID) and raw.auraInstanceID or nil
+      if id or instance then
+        local recipient,why,retry=thankRecipient(raw.sourceUnit)
+        out[#out+1]={spellId=id,auraInstanceID=instance,expirationTime=A.Number(raw.expirationTime) and raw.expirationTime or nil,
+          recipient=recipient,casterReason=why,casterRetry=retry}
+      else out.incomplete=true end
+    end
+    if i==255 then out.incomplete=true end
+  end
+  if #out==0 and refused>=40 then return nil,"helpful aura reads restricted" end
+  return out
 end
 function B:DispatchSoloThanks()
   self:CancelTimer("thanks-send")
@@ -324,17 +366,27 @@ function B:DispatchSoloThanks()
   local queue=self.helperThankQueue or {}
   while #queue>0 do
     local candidate=queue[1]
-    if now-candidate.at>10 or self.helperThankCooldowns[candidate.guid] then table.remove(queue,1)
+    if now-candidate.at>10 or (self.helperThankCooldowns[candidate.key] or self.helperThankCooldowns[candidate.nameKey]) then table.remove(queue,1)
     else
       local wait=1-(now-(self.helperLastThank or -1000))
       if wait>0 then self:StartTimer("thanks-send",wait,function() B:DispatchSoloThanks() end); return end
       table.remove(queue,1)
-      if A.Call(UnitGUID,candidate.unit)==candidate.guid then
+      local held=A.Call(UnitExists,candidate.unit)==true and A.Call(UnitIsPlayer,candidate.unit)==true
+        and thankName(candidate.unit)==candidate.name
+        and (not candidate.guid or A.Call(UnitGUID,candidate.unit)==candidate.guid)
+      if held then
         local emote=C_ChatInfo and C_ChatInfo.PerformEmote or DoEmote
         if type(emote)~="function" then self.helperThankStatus="Emote API unavailable"; self.helperThankQueue={}; return end
-        self.helperLastThank=now; self.helperThankCooldowns[candidate.guid]=now
-        local ok,result=pcall(emote,self:SoloThankEmote(),candidate.name)
-        self.helperThankStatus=ok and A.Public(result) and result~=false and ("Thank emote requested for "..candidate.name) or "Emote unavailable or restricted; no retry"
+        self.helperLastThank=now
+        local ok,result=pcall(emote,self:SoloThankEmote(),candidate.unit)
+        if ok then
+          self.helperThankCooldowns[candidate.key]=now; self.helperThankCooldowns[candidate.nameKey]=now
+          -- Blizzard's chat parser treats true as restricted, despite the
+          -- generated API documentation naming this return value success.
+          if not A.Public(result) then self.helperThankStatus="Emote result restricted or unreadable; no retry"
+          elseif result==true then self.helperThankStatus="Client restricted the emote; no retry"
+          else self.helperThankStatus="Thank emote requested for "..candidate.name end
+        else self.helperThankStatus="Emote call failed; no retry" end
         if #queue>0 then self:StartTimer("thanks-send",1,function() B:DispatchSoloThanks() end) end
         return
       else self.helperThankStatus="Caster identity changed; no emote sent" end
@@ -349,18 +401,10 @@ function B:ObserveSoloThanks(baseline)
     self.helperThankStatus="Paused: solo, outdoor, out-of-combat conditions required"; return
   end
   -- Gratitude needs readable identity, not the strict timing required for casting.
-  local auras=self:GetAuras("player",false,true)
+  local auras,scanError=self:ReadSoloThanksAuras()
   if not auras then
-    self.helperThankStatus="Aura scan unavailable; previous baseline preserved"
+    self.helperThankStatus="Aura scan unavailable: "..tostring(scanError).."; previous baseline preserved"
     self:ScheduleThanksSettle(); return
-  end
-  if not self.helperThankIDs then
-    self.helperThankIDs={}
-    for _,def in ipairs(self.Buffs) do
-      if def.kind=="single" or def.kind=="group" or def.kind=="blessing" then
-        for _,id in ipairs(def.ranks or {}) do self.helperThankIDs[id]=true end
-      end
-    end
   end
   local old=self.helperThankSeen
   local current,candidates={},{}
@@ -368,16 +412,16 @@ function B:ObserveSoloThanks(baseline)
   local unidentified=false
   local pendingCaster=false
   for _,aura in ipairs(auras) do
-    if A.Number(aura.spellId) and self.helperThankIDs[aura.spellId]
-      and (not A.Number(aura.duration) or aura.duration>=60) then
-      local recipient=thankRecipient(aura)
+    if A.Number(aura.spellId) or A.Number(aura.auraInstanceID) then
+      local recipient=aura.recipient
       local key=A.Number(aura.auraInstanceID) and ("instance:"..aura.auraInstanceID) or ("spell:"..aura.spellId)
-      local record={id=aura.spellId,guid=recipient and recipient.guid,expires=aura.expirationTime}
+      local record={id=aura.spellId,guid=recipient and recipient.guid,name=recipient and recipient.name,expires=aura.expirationTime}
       current[key]=record
       local previous=old and old[key]
-      if not previous and old and A.Number(aura.auraInstanceID) then previous=old["spell:"..aura.spellId] end
+      if not previous and old and A.Number(aura.auraInstanceID) and A.Number(aura.spellId) then previous=old["spell:"..aura.spellId] end
       local changed=old and (not previous or previous.id~=record.id
         or (previous.guid and record.guid and previous.guid~=record.guid)
+        or (previous.name and record.name and previous.name~=record.name)
         or (A.Number(previous.expires) and A.Number(record.expires) and previous.expires>0 and record.expires>previous.expires+1))
       local pending=self.helperThankPending[key]
       if pending and (pending.id~=record.id or GetTime()-pending.at>2) then self.helperThankPending[key]=nil; pending=nil end
@@ -385,8 +429,10 @@ function B:ObserveSoloThanks(baseline)
         if recipient then
           candidates[#candidates+1]=recipient; self.helperThankPending[key]=nil
         else
-          unidentified=true
-          if A.Number(aura.auraInstanceID) and (not A.Text(aura.sourceUnit) or A.Call(UnitIsUnit,aura.sourceUnit,"player")~=true) then
+          if aura.casterReason then
+            unidentified=aura.casterReason.." (spell "..tostring(aura.spellId or "unreadable")..", instance "..tostring(aura.auraInstanceID or "unavailable")..")"
+          end
+          if aura.casterRetry then
             self.helperThankPending[key]=pending or {id=record.id,at=GetTime()}; pendingCaster=true
           end
         end
@@ -410,7 +456,7 @@ function B:ObserveSoloThanks(baseline)
   else self.helperThankRetries=0; self.helperThankRetryPending=nil; self:CancelTimer("thanks-settle") end
   if baseline or not old then self.helperThankStatus="Baseline ready; waiting for an incoming buff"; return end
   if #candidates==0 then
-    if unidentified then self.helperThankStatus="Incoming buff caster could not be identified" end
+    if unidentified then self.helperThankStatus="Incoming buff caster unavailable: "..unidentified end
     return
   end
   self.helperThankQueue=self.helperThankQueue or {}
@@ -418,8 +464,8 @@ function B:ObserveSoloThanks(baseline)
   for index=#self.helperThankQueue,1,-1 do if GetTime()-self.helperThankQueue[index].at>10 then table.remove(self.helperThankQueue,index) end end
   for _,candidate in ipairs(candidates) do
     local queued=false
-    for _,other in ipairs(self.helperThankQueue) do if other.guid==candidate.guid then queued=true; break end end
-    local last=self.helperThankCooldowns[candidate.guid]
+    for _,other in ipairs(self.helperThankQueue) do if other.key==candidate.key or other.name==candidate.name then queued=true; break end end
+    local last=(self.helperThankCooldowns[candidate.key] or self.helperThankCooldowns[candidate.nameKey])
     if not queued and (not last or GetTime()-last>=60) and #self.helperThankQueue<20 then
       candidate.at=GetTime(); self.helperThankQueue[#self.helperThankQueue+1]=candidate
     end
@@ -428,7 +474,9 @@ function B:ObserveSoloThanks(baseline)
 end
 
 function B:HelperEvent(event,arg,arg2,spellID)
-  if event=="PLAYER_REGEN_DISABLED" then
+  if event=="UNIT_AURA" and A.Text(arg) and arg=="player" and self:HelperEnabled("helperThanks") then
+    self:ObserveSoloThanks()
+  elseif event=="PLAYER_REGEN_DISABLED" then
     self.helperThankQueue={}; self:CancelTimer("thanks-send")
     self.helperAttempt=nil; self.castRetryAttempt=nil; self.helperThankSeen=nil
     self.helperThankBaseline=nil; self.helperThankRetries=0; self.helperThankRetryPending=nil; self:CancelTimer("thanks-settle")
@@ -459,7 +507,7 @@ function B:Refresh(...)
     return
   end
   if self:HelperEnabled("helperDiscovery") and self.helperDiscoverDirty then self:DiscoverConsumables() end
-  if self:HelperEnabled("helperThanks") then self:ObserveSoloThanks() end
+  if self:HelperEnabled("helperThanks") and not self.helperThankSeen then self:ObserveSoloThanks() end
   if self.UpdateCoverageDisplay then self:UpdateCoverageDisplay() end
 end
 

@@ -44,4 +44,5 @@ import test_mark_rank
 import test_nearby_invites
 
 import test_diagnostics_layout
+import test_thanks_identity
 print('TOTAL',len(__import__('test_bufftap').tests))
