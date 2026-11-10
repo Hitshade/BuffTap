@@ -188,20 +188,20 @@ assert(BuffTap.action.slot==17 and not BuffTap.button.attrs.type1 and not next(b
 print('HELPER REGRESSIONS COMPLETE')
 test('Helpers opens the main options tab without a second window', '''
 BuffTap:HelperOptions()
-assert(BuffTap.options:IsShown() and BuffTap.options.activeTab==7)
+assert(BuffTap.options:IsShown() and BuffTap.options.activeTab==8)
 assert(BuffTap.helperWindow:GetParent()==BuffTap.options)
-assert(BuffTapHelperOptions==nil and BuffTap.options.pages[7]==BuffTap.helperWindow)
+assert(BuffTapHelperOptions==nil and BuffTap.options.pages[8]==BuffTap.helperWindow)
 for key in pairs(BuffTap.helperWindow.checks) do if key~="helperTracking" then assert(#BuffTap.helperWindow.descriptions[key].text>40) end end
 BuffTap.options.selectTab(1); assert(not BuffTap.helperWindow:IsShown())
 ''')
 test('Helper setting preserves selected tab and existing buff choices', '''
 BuffTap.db.buffSeconds.motw=90; BuffTap:HelperOptions()
 local c=BuffTap.helperWindow.checks.helperQuick; c:SetChecked(true); c.scripts.OnClick(c)
-assert(BuffTap.options.activeTab==7 and BuffTap.db.helperQuick and BuffTap.db.buffSeconds.motw==90)
+assert(BuffTap.options.activeTab==8 and BuffTap.db.helperQuick and BuffTap.db.buffSeconds.motw==90)
 ''')
 test('Discovery report is inside Diagnostics and disabled scan is explained', '''
 BuffTap:HelperOptions(); BuffTap:ShowDiscoveryReport()
-assert(BuffTap.options.activeTab==9 and BuffTap.options.discoveryScroll:IsShown())
+assert(BuffTap.options.activeTab==10 and BuffTap.options.discoveryScroll:IsShown())
 assert(not BuffTap.helperWindow:IsShown() and not BuffTap.options.diagText:IsShown())
 assert(BuffTap.options.discoveryReport:GetText():find('Enable Find unrecognized'))
 ''')

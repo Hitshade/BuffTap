@@ -96,7 +96,7 @@ for _,tab in ipairs(f.tabs) do
  assert(-y+tab.height< -f.pages[1].points[3])
  previousRight=x+tab.width
 end
-assert(f.tabs[4].width>f.tabs[1].width and f.tabs[6].width>f.tabs[5].width)
+assert(f.tabs[5].width>f.tabs[1].width and f.tabs[7].width>f.tabs[6].width)
 assert(f.height-206-32==630) -- Preserve the existing page area.
 """)
 test('Header Close hides options and all tabs still select their own page',setup+"""

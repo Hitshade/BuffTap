@@ -5,9 +5,9 @@
 local ADDON,B=...
 local A=B.API
 local function L(key,...) return B:Text(key,...) end
-local TAB={Buffs=1,Groups=2,Target=3,Consumables=4,Weapons=5,Appearance=6,Helpers=7,Profiles=8,Diagnostics=9}
-local TAB_NAMES={L("Buffs"),L("Groups"),L("Target"),L("Consumables"),L("Weapons"),L("Customization"),L("Helpers"),L("Profiles"),L("Diagnostics")}
-local TAB_WIDTHS={62,58,54,94,70,100,64,66,80}
+local TAB={Buffs=1,Groups=2,Target=3,Nearby=4,Consumables=5,Weapons=6,Appearance=7,Helpers=8,Profiles=9,Diagnostics=10}
+local TAB_NAMES={L("Buffs"),L("Groups"),L("Target"),L("Nearby"),L("Consumables"),L("Weapons"),L("Customization"),L("Helpers"),L("Profiles"),L("Diagnostics")}
+local TAB_WIDTHS={60,54,50,54,88,64,90,58,60,74}
 local OPTIONS_WIDTH,OPTIONS_HEIGHT=760,868
 local ICON_PATH="Interface\\AddOns\\BuffTap\\Media\\BuffTapIcon"
 
@@ -1276,7 +1276,8 @@ function B:ShowDiscoveryReport()
     end
   else report[#report+1]="Enable Find unrecognized consumables on the Helpers tab to scan your bags." end
   f.discoveryReport:SetText(table.concat(report,"\n")); f.discoveryReport:SetCursorPosition(0)
-  f.diagText:Hide(); f.discoveryScroll:Show()
+  f.resizeDiscoveryReport(); f.discoveryScroll:SetVerticalScroll(0)
+  f.diagText:Hide(); f.diagScroll:Hide(); f.discoveryScroll:Show()
 end
 
 function B:ShowQuickChoices(action,page)
@@ -1635,16 +1636,33 @@ function B:Options()
     -- FRIENDLY TARGET PAGE
     local target=panel(f); f.pages[TAB.Target]=target
     label(target,L("Friendly target buffing"),18,-16,"GameFontNormalLarge")
-    flatButton(target,"Nearby window",480,-12,224,function() B:ShowNearbySetup() end)
+
     label(target,"Click a friendly player and BuffTap can offer selected single-target buffs before returning to your normal queue.",18,-42,"GameFontDisableSmall",680)
     f.friendlyTarget=check(target,L("Enable friendly target buffing"),18,-76,function(s) setAndRefresh("friendlyTarget",s:GetChecked()==true); B:Options() end)
     addHelp(f.friendlyTarget,L("Friendly target buffing"),"This toggle inspects only the player you explicitly target. Nearby buffing is enabled separately and requires friendly nameplates. Target mode uses single-target versions. Grouped Paladin targets follow enabled blessing assignments; ungrouped targets use their independent target settings.")
-    f.nearbyEnable=check(target,"Enable nearby buffing",370,-76,function(c)
-      local enabled=c:GetChecked()==true
-      if enabled~=B.db.nearbyEnabled then B:ToggleNearby() end
+    local nearby=panel(f); f.pages[TAB.Nearby]=nearby
+    label(nearby,"Nearby buffing & players",18,-16,"GameFontNormalLarge")
+    flatButton(nearby,"Open nearby window",506,-16,176,function() B:ShowNearbySetup() end)
+    label(nearby,"Buff nearby players, or keep a compact player list for quick invitations.",18,-48,"GameFontDisableSmall",680)
+    f.nearbyEnable=check(nearby,"Enable nearby window",18,-92,function(c)
+      if (c:GetChecked()==true)~=B.db.nearbyEnabled then B:ToggleNearby() end
       B:Options()
     end)
-    addHelp(f.nearbyEnable,"Nearby buffing","Requires friendly player nameplates (normally Shift+V). Uses your Target buff preferences. Every cast requires a click or binding, out of combat. Shift-left-click the minimap icon also toggles this feature.")
+    f.nearbyAll=check(nearby,"Show all nearby players",370,-92,function(c) B:SetNearbyView(c:GetChecked()==true); B:Options() end)
+    f.nearbyBuffing=check(nearby,"Offer nearby buffs",18,-128,function(c) setAndRefresh("nearbyBuffing",c:GetChecked()==true); B:Options() end)
+    f.nearbyInvites=check(nearby,"Show invite / suggest buttons",370,-128,function(c) setAndRefresh("nearbyInvites",c:GetChecked()==true); B:Options() end)
+    addHelp(f.nearbyEnable,"Nearby window","Requires friendly player nameplates (normally Shift+V). Tracks up to 40 observed players, with five visible rows and a scrollbar. Shift-left-click the minimap icon toggles the window. Hidden during combat.")
+    addHelp(f.nearbyAll,"Show all nearby players","Keep observed players listed after buffing. Group members appear only while a buff is queued. Use the small people icon in the window header to switch views.")
+    addHelp(f.nearbyBuffing,"Offer nearby buffs","Uses your Target preferences for strangers and group settings for current group members. Every cast requires a click or binding, out of combat. Disable to use the all-players view for invites only.")
+    addHelp(f.nearbyInvites,"Invite / suggest","Small buttons beside player rows: + invites, > suggests an invite to your leader. Each requires your click. Already-grouped players and full groups have no invite button. Available in either view.")
+    label(nearby,"Friendly player nameplates required. Five visible rows; scroll up to 40 players.",18,-176,"GameFontDisableSmall",680)
+    line(nearby,-210)
+    label(nearby,"Using the nearby window",18,-232,"GameFontNormalLarge")
+    label(nearby,"The all-players view keeps observed strangers listed after buffing. Group members appear only while an eligible group buff is queued.",18,-268,"GameFontHighlightSmall",660)
+    label(nearby,"Buff candidates appear first. The left-side + button invites. A > button suggests an invitation to your leader. Each action requires your click.",18,-316,"GameFontHighlightSmall",660)
+    label(nearby,"Buff offers use your Target preferences for strangers and Groups settings for party or raid members. PvP protection still applies.",18,-364,"GameFontHighlightSmall",660)
+    label(nearby,"The window stays five rows tall. Use the scrollbar in busy areas; a bound mouse wheel continues to buff.",18,-412,"GameFontHighlightSmall",660)
+    label(nearby,"Shift-left-click the minimap icon to toggle the window. Drag its header when unlocked. The window hides during combat.",18,-460,"GameFontDisableSmall",660)
     card(target,12,-108,698,84)
     label(target,"Default target refresh",18,-116,"GameFontNormal")
     label(target,"Useful for passersby: a long buff can be refreshed much earlier here without changing party/raid timing.",18,-138,"GameFontDisableSmall",680)
@@ -1663,9 +1681,9 @@ function B:Options()
     f.targetBlessingPicks={}
     for i,class in ipairs(B.RecipientClasses) do
       local token=class; local x=((i-1)%3)*230; local y=-32-math.floor((i-1)/3)*32
-      label(f.targetBlessingPanel,(LOCALIZED_CLASS_NAMES_MALE and LOCALIZED_CLASS_NAMES_MALE[token]) or token:sub(1,1)..token:sub(2):lower(),x+6,y-7,"GameFontHighlightSmall",80)
+      local classLabel=label(f.targetBlessingPanel,(LOCALIZED_CLASS_NAMES_MALE and LOCALIZED_CLASS_NAMES_MALE[token]) or token:sub(1,1)..token:sub(2):lower(),x+6,y-7,"GameFontHighlightSmall",80)
       f.targetBlessingPicks[i]=blessingPick(f.targetBlessingPanel,x+89,y,136,function() return B.db.targetBlessingClasses[token] end,function(key) B.db.targetBlessingClasses[token]=key end,"target")
-      local pick=f.targetBlessingPicks[i]; pick.priorityClass=token; pick.priorityTarget=true
+      local pick=f.targetBlessingPicks[i]; pick.classLabel=classLabel; pick.priorityClass=token; pick.priorityTarget=true
       pick.getOrder=function() return B.db.targetBlessingPriorities[token] end
       pick.setOrder=function(order) B.db.targetBlessingPriorities[token]=order end
     end
@@ -1839,8 +1857,7 @@ function B:Options()
     label(diag,L("Diagnostics & performance"),18,-16,"GameFontNormalLarge")
     f.diagVersion=label(diag,"",550,-20,"GameFontHighlightSmall",144)
     f.diagVersion:SetJustifyH("RIGHT")
-    f.friendlyStatus=label(diag,"",18,-468,"GameFontHighlightSmall",670)
-    button(diag,L("Check now"),18,-530,116,function() if not A.Combat() then B:Refresh(true); B:Options() end end)
+    button(diag,L("Check now"),18,-546,116,function() if not A.Combat() then B:Refresh(true); B:Options() end end)
     label(diag,"Core scanning is event-driven. Profiling is optional and lasts only for this game session.",18,-42,"GameFontDisableSmall",680)
     f.profileCheck=check(diag,L("Measure refresh cost"),18,-76,function(c)
       B.profileEnabled=c:GetChecked()==true; B.profileStats=nil
@@ -1848,28 +1865,40 @@ function B:Options()
       B:Options()
     end)
     addHelp(f.profileCheck,"Refresh profiler","Disabled by default. When enabled, BuffTap measures only its own refresh duration with debugprofilestop().")
-    card(diag,12,-108,698,268)
-    f.diagText=label(diag,"",18,-116,"GameFontHighlightSmall",680)
-    button(diag,L("Refresh diagnostics"),18,-390,142,function()
-      if not A.Combat() then f.discoveryScroll:Hide(); f.diagText:Show(); B:Refresh(true); B:Options() end
+    card(diag,12,-108,698,330)
+    f.diagScroll=CreateFrame("ScrollFrame",nil,diag,"UIPanelScrollFrameTemplate")
+    f.diagScroll:SetPoint("TOPLEFT",18,-116); f.diagScroll:SetSize(654,314); f.diagScroll:Show()
+    f.diagContent=CreateFrame("Frame",nil,f.diagScroll); f.diagContent:SetSize(638,314)
+    f.diagScroll:SetScrollChild(f.diagContent)
+    f.diagText=label(f.diagContent,"",0,0,"GameFontHighlightSmall",638); f.diagText:SetSpacing(3); f.diagText:Show()
+    button(diag,L("Refresh diagnostics"),18,-450,142,function()
+      if not A.Combat() then f.discoveryScroll:Hide(); f.diagScroll:Show(); f.diagText:Show(); f.diagScroll:SetVerticalScroll(0); B:Refresh(true); B:Options() end
     end)
-    button(diag,L("Print to chat"),170,-390,108,function() B:Status(true); B:Options() end)
-    button(diag,L("Reset metrics"),288,-390,110,function()
+    button(diag,L("Print to chat"),170,-450,108,function() B:Status(true); B:Options() end)
+    button(diag,L("Reset metrics"),288,-450,110,function()
       B.profileStats=nil; if B.profileEnabled then B:ResetStats() else B.stats=nil end; B:Options()
     end)
 
     local scroll=CreateFrame("ScrollFrame",nil,diag,"UIPanelScrollFrameTemplate")
-    scroll:SetPoint("TOPLEFT",18,-116); scroll:SetSize(654,258); scroll:Hide(); f.discoveryScroll=scroll
+    scroll:SetPoint("TOPLEFT",18,-116); scroll:SetSize(654,314); scroll:Hide(); f.discoveryScroll=scroll
     local report=CreateFrame("EditBox",nil,scroll); report:SetMultiLine(true); report:SetAutoFocus(false)
-    report:SetFontObject("GameFontHighlightSmall"); report:SetWidth(638); report:SetHeight(258)
+    report:SetFontObject("GameFontHighlightSmall"); report:SetWidth(638); report:SetHeight(314)
     report:SetScript("OnEscapePressed",function(control) control:ClearFocus() end)
     scroll:SetScrollChild(report); f.discoveryReport=report
-    button(diag,L("Unknown items"),410,-390,124,function() B:ShowDiscoveryReport() end)
-    button(diag,L("Rescan bags"),546,-390,130,function()
+    f.reportMeasure=label(diag,"",0,0,"GameFontHighlightSmall",638); f.reportMeasure:Hide()
+    f.resizeDiscoveryReport=function()
+      local text=report:GetText() or ""; f.reportMeasure:SetText(text)
+      local height=f.reportMeasure:GetStringHeight()
+      if type(height)~="number" then local _,lines=text:gsub("\n",""); height=(lines+1)*14 end
+      report:SetHeight(math.max(314,height+12))
+    end
+    report:SetScript("OnTextChanged",f.resizeDiscoveryReport)
+    button(diag,L("Unknown items"),410,-450,124,function() B:ShowDiscoveryReport() end)
+    button(diag,L("Rescan bags"),546,-450,130,function()
       if A.Combat() then return end
       B:DiscoverConsumables(); B:ShowDiscoveryReport()
     end)
-    label(diag,"Unknown items is a copyable report for improving item support, not a list of items BuffTap will use.",18,-430,"GameFontDisableSmall",672)
+    label(diag,"Unknown items is a copyable report for improving item support, not a list of items BuffTap will use.",18,-490,"GameFontDisableSmall",672)
     self:BuildHelperPage(f)
 
     local function acceptEdit(e,key)
@@ -1902,19 +1931,24 @@ function B:Options()
   f.buffInstruction:SetText(L("Use arrows to reorder. Buffs at the top are checked first."))
   f.targetBlessingPanel:SetShown(paladin); f.targetClassAware:SetChecked(self.db.targetClassBlessings)
   f.targetBlessingFallback:SetChecked(self.db.targetBlessingFallback)
-  for _,pick in ipairs(f.targetBlessingPicks) do pick:Update(); pick:SetAvailable(self.db.targetClassBlessings and (self.db.friendlyTarget or self.db.nearbyEnabled)) end
+  for _,pick in ipairs(f.targetBlessingPicks) do pick:SetShown(self.db.targetClassBlessings); pick.classLabel:SetShown(self.db.targetClassBlessings); pick:Update(); pick:SetAvailable(self.db.targetClassBlessings and (self.db.friendlyTarget or self.db.nearbyEnabled)) end
   f.targetBlessingInstruction:SetText(L(not (self.db.friendlyTarget or self.db.nearbyEnabled) and "Enable friendly target buffing to use these class choices." or not self.db.targetClassBlessings and "Enable class-aware target blessings to customize each class." or "Open a class to check and order blessings. All use the refresh above. Automatic uses enabled Buffs and their order, filtered for this class."))
+  f.targetBlessingFallback:ClearAllPoints(); f.targetBlessingFallback:SetPoint("TOPLEFT",6,self.db.targetClassBlessings and -128 or -28)
+  f.targetBlessingInstruction:ClearAllPoints(); f.targetBlessingInstruction:SetPoint("TOPLEFT",6,self.db.targetClassBlessings and -160 or -60)
   local simplePal=paladin and self.db.targetClassBlessings
   f.targetHeaders.title:SetText(L(simplePal and "Independent target buffs" or "Spell availability & refresh timing"))
   f.targetHeaders.help:SetText(L("Choose allowed spells and optional refresh overrides for friendly targets."))
   f.targetHeaders:SetShown(not simplePal); f.targetScroll:SetShown(not simplePal)
-  f.targetHeaders:ClearAllPoints(); f.targetHeaders:SetPoint("TOPLEFT",0,paladin and -396 or -204)
-  f.targetScroll:ClearAllPoints(); f.targetScroll:SetPoint("TOPLEFT",14,paladin and -474 or -282); f.targetScroll:SetPoint("BOTTOMRIGHT",-34,54)
+  f.targetHeaders:ClearAllPoints(); f.targetHeaders:SetPoint("TOPLEFT",0,paladin and -300 or -204)
+  f.targetScroll:ClearAllPoints(); f.targetScroll:SetPoint("TOPLEFT",14,paladin and -378 or -282); f.targetScroll:SetPoint("BOTTOMRIGHT",-34,54)
   f.pauseResting:SetChecked(self.db.pauseResting)
   f.enable:SetChecked(self.db.enabled)
   f.versionText:SetText("v"..self.version)
   f.friendlyTarget:SetChecked(self.db.friendlyTarget)
   f.nearbyEnable:SetChecked(self.db.nearbyEnabled==true)
+  f.nearbyAll:SetChecked(self.db.nearbyShowAll==true)
+  f.nearbyBuffing:SetChecked(self.db.nearbyBuffing~=false)
+  f.nearbyInvites:SetChecked(self.db.nearbyInvites~=false)
   f.targetDefaultSlider.silent=true; f.targetDefaultSlider:SetValue(self.db.targetSeconds); f.targetDefaultSlider.valueText:SetText(formatSeconds(self.db.targetSeconds)); f.targetDefaultSlider.silent=false
   if not paladin then
     f.groupEnable:SetChecked(self.db.group); f.smartGroup:SetChecked(self.db.smartGroup)
@@ -2119,7 +2153,7 @@ function B:Options()
   f.minimapCheck:SetChecked(not self.db.minimap.hide)
   f.brokerCheck:SetChecked(self.db.brokerEnabled)
   f.soundInterval.silent=true; f.soundInterval:SetValue(self.db.soundInterval); f.soundInterval.silent=false
-  f.friendlyStatus:SetText(self:FriendlyStatus()); f.statusText:SetText(self:FriendlyStatus())
+  f.statusText:SetText(self:FriendlyStatus())
   if self.appearancePreview and self.appearancePreview:IsShown() then self:PreviewAppearance() end
   f.showReminderCheck:SetChecked(self.db.showReminder); f.soundCheck:SetChecked(self.db.sound); f.glowCheck:SetChecked(self.db.glow); f.pulseCheck:SetChecked(self.db.pulse)
   f.buffNameCheck:SetChecked(self.db.showBuffName); f.targetNameCheck:SetChecked(self.db.showTargetName)
@@ -2133,42 +2167,40 @@ function B:Options()
   f.weaponPoisonHint:SetShown(weaponClass=="ROGUE")
   for _,control in ipairs({f.weaponHint,f.weaponEnable,f.weaponApply,f.weaponMain,f.weaponOff,f.weaponTimingLabel,f.weaponTiming,f.weaponReplace,f.weaponStatus,f.weaponHandsHint}) do control:Show() end
   for _,pick in pairs(f.weaponPickers) do pick:SetShown(weaponClass~=nil); pick.menu:Hide() end
-  if true then
-    f.weaponEnable:SetChecked(self.db.weaponReminder==true); f.weaponApply:SetText(L(self.db.weaponApply and "Remind and apply" or "Remind only"))
-    f.weaponModeHint:SetText(L(self.db.weaponApply and "Your scroll or click applies the selected weapon buff, out of combat." or "Alerts only: apply weapon buffs manually. Your preferences remain saved."))
-    f.weaponMain:SetChecked(self.db.weaponMainHand~=false); f.weaponOff:SetChecked(self.db.weaponOffHand~=false)
-    f.weaponReplace:SetChecked(self.db.weaponReplace==true)
-    f.weaponOff:SetShown(weaponClass=="ROGUE" or not weaponClass)
-    f.weaponTiming.silent=true; f.weaponTiming:SetValue(self.db.weaponSeconds); f.weaponTiming.valueText:SetText(formatSeconds(self.db.weaponSeconds)); f.weaponTiming.silent=false
-    local status=self:WeaponReminderSummary()
-    f.weaponStatus:SetText(status)
-    for hand,pick in pairs(f.weaponPickers) do
-      pick:SetShown(weaponClass~=nil and (hand=="main" or weaponClass=="ROGUE"))
-      local handKey=hand; local selected=self:WeaponPreference(hand)
-      pick:SetText(selected and selected.name or L("Choose preferred buff"))
-      local src=selected and self:WeaponChoiceSource(selected)
-      local preferredIcon=selected and A.Call(C_Spell and C_Spell.GetSpellTexture,selected.ranks[#selected.ranks])
-      pick.icon:SetTexture(src and src.icon or preferredIcon or "Interface\\Icons\\INV_Misc_QuestionMark")
-      for _,row in ipairs(pick.menu.rows) do row:Hide() end
-      local choices={{name=B:ItemImbueClass(weaponClass) and L("None") or "None (manual missing-buff alert)"}}
-      for _,choice in ipairs(self.WeaponChoices) do if choice.class==weaponClass then choices[#choices+1]=choice end end
-      for i,choice in ipairs(choices) do
-        local choiceKey=choice.key
-        local row=pick.menu.rows[i]
-        if not row then row=flatButton(pick.menu.child,"",0,-(i-1)*28,466,function(control)
-          if A.Combat() then return end
-          B.db.weaponChoices[control.hand]=control.choice; B.weaponPending=nil; B:InvalidateSupplies(false); B:RequestRefresh("weapon preference",0); B:Options()
-        end); row.icon=row:CreateTexture(nil,"ARTWORK"); row.icon:SetSize(22,22); row.icon:SetPoint("LEFT",4,0); pick.menu.rows[i]=row end
-        row.hand=handKey; row.choice=choiceKey
-        local source,why=self:WeaponChoiceSource(choiceKey and choice or nil)
-        local icon=source and source.icon or (choiceKey and A.Call(C_Spell and C_Spell.GetSpellTexture,choice.ranks[#choice.ranks]))
-        row.icon:SetTexture(icon or "Interface\\Icons\\INV_Misc_QuestionMark")
-        local incompatible=choiceKey and B:ItemImbueClass(choice.class) and B:CoatingWeaponMatches(16,choice)~=true
-        row:SetText(choice.name..(choiceKey and (incompatible and " (incompatible weapon)" or source and (source.count and " (in bags: "..source.count..")" or " (learned)") or " (unavailable)") or "")); fitButtonText(row,420); row:Show()
-        addHelp(row,choice.name,why or "Select this buff for this hand. Highest available rank is used.")
-      end
-      pick.menu.child:SetHeight(#choices*28)
+  f.weaponEnable:SetChecked(self.db.weaponReminder==true); f.weaponApply:SetText(L(self.db.weaponApply and "Remind and apply" or "Remind only"))
+  f.weaponModeHint:SetText(L(self.db.weaponApply and "Your scroll or click applies the selected weapon buff, out of combat." or "Alerts only: apply weapon buffs manually. Your preferences remain saved."))
+  f.weaponMain:SetChecked(self.db.weaponMainHand~=false); f.weaponOff:SetChecked(self.db.weaponOffHand~=false)
+  f.weaponReplace:SetChecked(self.db.weaponReplace==true)
+  f.weaponOff:SetShown(weaponClass=="ROGUE" or not weaponClass)
+  f.weaponTiming.silent=true; f.weaponTiming:SetValue(self.db.weaponSeconds); f.weaponTiming.valueText:SetText(formatSeconds(self.db.weaponSeconds)); f.weaponTiming.silent=false
+  local status=self:WeaponReminderSummary()
+  f.weaponStatus:SetText(status)
+  for hand,pick in pairs(f.weaponPickers) do
+    pick:SetShown(weaponClass~=nil and (hand=="main" or weaponClass=="ROGUE"))
+    local handKey=hand; local selected=self:WeaponPreference(hand)
+    pick:SetText(selected and selected.name or L("Choose preferred buff"))
+    local src=selected and self:WeaponChoiceSource(selected)
+    local preferredIcon=selected and A.Call(C_Spell and C_Spell.GetSpellTexture,selected.ranks[#selected.ranks])
+    pick.icon:SetTexture(src and src.icon or preferredIcon or "Interface\\Icons\\INV_Misc_QuestionMark")
+    for _,row in ipairs(pick.menu.rows) do row:Hide() end
+    local choices={{name=B:ItemImbueClass(weaponClass) and L("None") or "None (manual missing-buff alert)"}}
+    for _,choice in ipairs(self.WeaponChoices) do if choice.class==weaponClass then choices[#choices+1]=choice end end
+    for i,choice in ipairs(choices) do
+      local choiceKey=choice.key
+      local row=pick.menu.rows[i]
+      if not row then row=flatButton(pick.menu.child,"",0,-(i-1)*28,466,function(control)
+        if A.Combat() then return end
+        B.db.weaponChoices[control.hand]=control.choice; B.weaponPending=nil; B:InvalidateSupplies(false); B:RequestRefresh("weapon preference",0); B:Options()
+      end); row.icon=row:CreateTexture(nil,"ARTWORK"); row.icon:SetSize(22,22); row.icon:SetPoint("LEFT",4,0); pick.menu.rows[i]=row end
+      row.hand=handKey; row.choice=choiceKey
+      local source,why=self:WeaponChoiceSource(choiceKey and choice or nil)
+      local icon=source and source.icon or (choiceKey and A.Call(C_Spell and C_Spell.GetSpellTexture,choice.ranks[#choice.ranks]))
+      row.icon:SetTexture(icon or "Interface\\Icons\\INV_Misc_QuestionMark")
+      local incompatible=choiceKey and B:ItemImbueClass(choice.class) and B:CoatingWeaponMatches(16,choice)~=true
+      row:SetText(choice.name..(choiceKey and (incompatible and " (incompatible weapon)" or source and (source.count and " (in bags: "..source.count..")" or " (learned)") or " (unavailable)") or "")); fitButtonText(row,420); row:Show()
+      addHelp(row,choice.name,why or "Select this buff for this hand. Highest available rank is used.")
     end
+    pick.menu.child:SetHeight(#choices*28)
   end
 
   for hand,pick in pairs(f.coatingPickers) do
@@ -2275,7 +2307,13 @@ function B:Options()
   f.buffChild:SetHeight(math.max(1,visible*58))
   if f.diagVersion then f.diagVersion:SetText("BuffTap v"..tostring(self.version or "unknown")) end
   if f.pvpProtection then f.pvpProtection:SetChecked(self.db.pvpProtection==true) end
-  if f.diagText then f.diagText:SetText(table.concat(self:DiagnosticsLines(),"\n\n")) end
+  if f.diagText then
+    local text=table.concat(self:DiagnosticsLines(),"\n")
+    f.diagText:SetText(text)
+    local height=f.diagText:GetStringHeight()
+    if type(height)~="number" then local _,lines=text:gsub("\n",""); height=(lines+1)*14 end
+    f.diagContent:SetHeight(math.max(314,height+12))
+  end
   f:Show(); f:Raise()
 end
 
@@ -2386,3 +2424,4 @@ function B:OpenOptionsCategory()
   end
   self:Options()
 end
+

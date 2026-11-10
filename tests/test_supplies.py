@@ -170,7 +170,7 @@ assert(BuffTap.db.supplySettings['poison:instant-poison'].minimum==999 and BuffT
 ''')
 test('Supplies view is integrated and preserves all eight main tabs', flask+'''
 BuffTap:ShowSuppliesOptions(); local f=BuffTap.options
-assert(#f.pages==9 and f.activeTab==4 and f.supplyBody.shown and not f.consumableBody.shown)
+assert(#f.pages==10 and f.activeTab==5 and f.supplyBody.shown and not f.consumableBody.shown)
 assert(f.supplyRows[1].shown and not f.supplyRows[2].shown and f.supplyRows[1].icon.texture==12345)
 f.selectConsumableView(false); assert(f.consumableBody.shown and not f.supplyBody.shown)
 ''')
@@ -183,7 +183,7 @@ assert(BuffTap.db.supplySettings['consumable:flask'].target==999 and BuffTap.db.
 ''')
 test('Supply badge clicks open integrated options or snooze', flask+'''
 bags[13510]=0; bagEvent(); local badge=BuffTap.supplyBadge
-badge.scripts.OnClick(badge,'LeftButton'); assert(BuffTap.options.activeTab==4 and BuffTap.options.supplyBody.shown)
+badge.scripts.OnClick(badge,'LeftButton'); assert(BuffTap.options.activeTab==5 and BuffTap.options.supplyBody.shown)
 badge.scripts.OnClick(badge,'RightButton'); assert(BuffTap:SupplySnoozed())
 ''')
 test('Supply view makes no configuration changes while in combat', flask+'''

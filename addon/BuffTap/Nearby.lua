@@ -1,5 +1,5 @@
 -- This Source Code Form is subject to the Mozilla Public License, v. 2.0.
--- Experimental recipient source. The ordinary buff engine remains authoritative.
+-- Nearby recipient source. The ordinary buff engine remains authoritative.
 local _,B=...
 local A=B.API
 local MAX_UNITS,ROWS=40,5
@@ -138,7 +138,7 @@ function B:NearbyRecipientSafe(unit)
   return true
 end
 function B:NearbyEntry(unit)
-  if not self.db.nearbyEnabled or not platesOn() or A.Combat() then return nil end
+  if not self.db.nearbyEnabled or self.db.nearbyBuffing==false or not platesOn() or A.Combat() then return nil end
   if not A.Text(unit) or not unit:match("^nameplate%d+$") then return nil end
   local guid=A.Call(UnitGUID,unit)
   if not self.nearbyUnits or self.nearbyUnits[unit]~=guid then return nil end
@@ -209,6 +209,113 @@ function B:NearbyCandidates(force)
   self.nearbySnapshot=out
   return out
 end
+function B:NearbyGroupActions(unit)
+  if self.db.nearbyBuffing==false or not self.db.group or not self:NearbyRecipientSafe(unit) then return {} end
+  local entry
+  local guid=A.Call(UnitGUID,unit)
+  for _,member in ipairs(self:Roster()) do
+    if member.unit~="player" and A.Call(UnitGUID,member.unit)==guid then entry=member; break end
+  end
+  if not entry then return {} end
+  local actions,scans,errors={},{},{}
+  local plan=self:BlessingAssignmentsActive()
+  local blessingOwned=false
+  for _,def in ipairs(self:ClassList()) do
+    if not def.singleKey and (def.kind=="single" or def.kind=="blessing")
+      and (self:Enabled(def) or (plan and def.kind=="blessing")) and self:Supported(def)
+      and ((plan and def.kind=="blessing" and self:BlessingGroupAllowed(entry)) or self:GroupSelected(def,entry.group))
+      and not (def.kind=="blessing" and self.db.blessingPartyExcluded and self:BlessingContext()=="Party")
+      and not (def.kind=="blessing" and blessingOwned) then
+      local missing=self:ScanMissing(def,{entry},scans,errors)
+      if missing[1] then
+        local need=missing[1]; local action=need.action
+        action.blessingAssigned=plan and def.kind=="blessing" or nil
+        local valid,why=self:Validate(action)
+        action.ready=valid==true; action.waiting=why=="cooldown / global cooldown"
+        if valid or action.waiting then
+          action.nearbyGroup=true; action.needState=need.reason; action.remaining=need.remaining; action.threshold=need.threshold
+          actions[#actions+1]=action
+        end
+        if def.kind=="blessing" then blessingOwned=true end
+      elseif def.kind=="blessing" and scans[entry.unit] then
+        local current=self:Resolve(def,entry.unit)
+        if current and not self:Missing(def,current,scans[entry.unit]) then blessingOwned=true end
+      end
+      if #actions==4 then break end
+    end
+  end
+  return actions
+end
+-- The display can retain players without turning them into eligible buff targets.
+function B:NearbyPlayers()
+  local buffs=self:NearbyCandidates()
+  local out,seen,byGUID={},{},{}
+  self.nearbyCounts={need=0,total=0}
+  for _,entry in ipairs(buffs) do byGUID[entry.guid]=entry end
+  if not self.db.enabled or not self.db.nearbyEnabled or not platesOn() or A.Combat()
+    or self:ReminderPauseReason() then return out end
+  for unit,guid in pairs(self.nearbyUnits or {}) do
+    if A.Text(guid) and not seen[guid] and A.Call(UnitGUID,unit)==guid
+      and A.Call(UnitExists,unit)==true and A.Call(UnitCanAssist,"player",unit)==true
+      and A.Call(UnitIsUnit,unit,"player")==false then
+      local name=A.Call(UnitName,unit)
+      local class=A.Call(function() local _,c=UnitClass(unit); return c end)
+      if A.Text(name) and A.Text(class) then
+        seen[guid]=true; self.nearbyCounts.total=self.nearbyCounts.total+1
+        local grouped=self:NearbyGroupMember(unit)
+        local groupActions=grouped and self:NearbyGroupActions(unit) or {}
+        local entry=byGUID[guid] or {unit=unit,guid=guid,name=name,class=class,actions=groupActions,order=self.nearbyOrder[guid] or 0}
+        local needs=#entry.actions>0
+        if needs then self.nearbyCounts.need=self.nearbyCounts.need+1 end
+        if needs or (self.db.nearbyShowAll and not grouped) then out[#out+1]=entry end
+      end
+    end
+  end
+  table.sort(out,function(a,b) if a.order==b.order then return a.guid<b.guid end return a.order<b.order end)
+  return out
+end
+function B:SetNearbyView(showAll)
+  if A.Combat() then return end
+  if GameTooltip then GameTooltip:Hide() end
+  self.db.nearbyShowAll=showAll==true
+  self.nearbyDisplay=nil; self.nearbyHovered=nil; self.nearbyOffset=0
+  self:UpdateNearbyWindow()
+end
+function B:NearbyInviteName(entry)
+  if A.Combat() or not self.db.enabled or not self.db.nearbyEnabled 
+    or self.db.nearbyInvites==false or not entry or not platesOn() then return nil end
+  local unit=entry.unit
+  if not self.nearbyUnits or self.nearbyUnits[unit]~=entry.guid or A.Call(UnitGUID,unit)~=entry.guid
+    or A.Call(UnitExists,unit)~=true or A.Call(UnitCanAssist,"player",unit)~=true
+    or self:NearbyGroupMember(unit) or A.Call(UnitInAnyGroup,unit)==true then return nil end
+  local raid=A.Call(IsInRaid)==true
+  local count=A.Call(raid and GetNumGroupMembers or GetNumSubgroupMembers)
+  if not A.Number(count) or count>=(raid and 40 or 4) then return nil end
+  local mode=A.Call(GetDisplayedInviteType,entry.guid)
+  if not A.Text(mode) then mode=nil end
+  if mode~="INVITE" and mode~="SUGGEST_INVITE" then
+    if type(GetDisplayedInviteType)=="function" then return nil end
+    if (raid or count>0) and A.Call(UnitIsGroupLeader,"player")~=true
+      and A.Call(UnitIsGroupAssistant,"player")~=true then return nil end
+    mode="INVITE"
+  end
+  if type(C_PartyInfo and C_PartyInfo.InviteUnit)~="function" then return nil end
+  local name=self:NearbyCastName({target=unit,targetGUID=entry.guid})
+  return name,mode
+end
+function B:InviteNearby(entry)
+  local name,mode=self:NearbyInviteName(entry)
+  if not name then return false end
+  self.nearbyInvited=self.nearbyInvited or {}
+  local at=self.nearbyInvited[entry.guid]
+  if at and GetTime()-at<10 then return false end
+  -- Only a deliberate button click calls this API; never scans or timers.
+  local ok,result=pcall(C_PartyInfo.InviteUnit,name)
+  if not ok or result==false then self.Print("The group invitation could not be requested."); return false end
+  self.nearbyInvited[entry.guid]=GetTime(); self.nearbyLastInvite=mode..": "..name
+  self:UpdateNearbyWindow()
+  return true
+end
 function B:SelectNearby()
   for _,entry in ipairs(self:NearbyCandidates()) do
     local action=nextAction(entry,true); if action then return action end
@@ -237,10 +344,10 @@ function B:SyncNearby()
   local enabled=self.db and self.db.nearbyEnabled==true
   if enabled==self.nearbyRegistered then return end
   self.nearbyRegistered=enabled
-  self.nearbyDisplay=nil; self.nearbyHovered=nil; self.nearbyDisplayCount=nil; self:CancelTimer("nearby-display")
+  self.nearbyDisplay=nil; self.nearbyHovered=nil; self:CancelTimer("nearby-display")
   self.buffCastAttempt=nil; self.buffAuraFresh=nil
   for _,slot in ipairs({"buff-aura-early","buff-aura-settle","buff-aura-late"}) do self:CancelTimer(slot) end
-  self.nearbyUnits={}; self.nearbyOrder={}; self.nearbySnapshot=nil; self.nearbyOffset=0
+  self.nearbyUnits={}; self.nearbyOrder={}; self.nearbySnapshot=nil; self.nearbyOffset=0; self.nearbyInvited={}; self.nearbyCounts={need=0,total=0}
   self:CancelTimer("nearby-settle"); self:CancelTimer("nearby-late")
   for _,event in ipairs({"NAME_PLATE_UNIT_ADDED","NAME_PLATE_UNIT_REMOVED","CVAR_UPDATE","UI_ERROR_MESSAGE","UNIT_SPELLCAST_SUCCEEDED"}) do
     if enabled then pcall(self.nearbyEvents.RegisterEvent,self.nearbyEvents,event)
@@ -257,17 +364,27 @@ function B:ScheduleNearbySettle()
     end)
   end
 end
-function B:SeedNearby()
+function B:SeedNearby(skipUnit)
   if not self.db.nearbyEnabled then return end
   local plates=A.Call(C_NamePlate and C_NamePlate.GetNamePlates)
   if type(plates)=="table" then
     for _,plate in ipairs(plates) do
       local unit=A.Call(function() return plate:GetUnit() end)
-      self:TrackNearby(unit)
+      if unit~=skipUnit then self:TrackNearby(unit) end
     end
   end
 end
 function B:ValidateNearby(action)
+  if action and action.nearbyGroup then
+    if A.Combat() or not self.db.enabled or not self.db.nearbyEnabled 
+      or self.db.nearbyBuffing==false or not platesOn() or self:ReminderPauseReason() then return false end
+    local unit
+    for token,guid in pairs(self.nearbyUnits or {}) do if guid==action.targetGUID and A.Call(UnitGUID,token)==guid then unit=token; break end end
+    if not unit or not self:NearbyGroupMember(unit) then return false end
+    self:InvalidateAura(action.target)
+    local fresh=nextAction({actions=self:NearbyGroupActions(unit)},true)
+    return fresh and fresh.id==action.id and fresh.targetGUID==action.targetGUID and self:Validate(action)==true
+  end
   if not action or A.Combat() or not self.db.enabled or not self.db.nearbyEnabled
     or not platesOn() or self:ReminderPauseReason() then return false end
   local entry=self:NearbyEntry(action.target)
@@ -312,7 +429,10 @@ function B:NearbyDisplayList(list)
     if not entry and self.CastRetryBlocked then
       for _,action in ipairs(old.entry.actions) do if self:CastRetryBlocked(action) then delayed=true; break end end
     end
-    local safe=not delayed and A.Call(UnitGUID,old.entry.unit)==old.entry.guid and self:NearbyRecipientSafe(old.entry.unit)
+    local safe=A.Call(UnitGUID,old.entry.unit)==old.entry.guid and self.nearbyUnits[old.entry.unit]==old.entry.guid
+      and A.Call(UnitCanAssist,"player",old.entry.unit)==true
+      and (self.db.nearbyShowAll or (not delayed and self:NearbyRecipientSafe(old.entry.unit)))
+      and not (self.db.nearbyShowAll and self:NearbyGroupMember(old.entry.unit) and not entry)
     if not safe then
       safetyRemoved=true
       if self.nearbyHovered==old.entry.guid then self.nearbyHovered=nil; if GameTooltip then GameTooltip:Hide() end end
@@ -327,29 +447,43 @@ function B:NearbyDisplayList(list)
       if not seen[entry.guid] and #out<MAX_UNITS then out[#out+1]={entry=entry,fresh=true}; seen[entry.guid]=true end
     end
   end
+  if not self.nearbyHovered and self.db.nearbyShowAll then
+    table.sort(out,function(a,b)
+      local an=a.fresh and #a.entry.actions>0 or false
+      local bn=b.fresh and #b.entry.actions>0 or false
+      if an~=bn then return an end
+      if a.entry.order~=b.entry.order then return a.entry.order<b.entry.order end
+      return a.entry.guid<b.entry.guid
+    end)
+  end
   self.nearbyDisplay=out
   self:CancelTimer("nearby-display")
   if pending then self:StartTimer("nearby-display",math.max(.03,pending+.02),function() if not A.Combat() then B:UpdateNearbyWindow() end end) end
   return out
 end
 function B:SetNearbyRowPayload(row,action)
-  local macro=action and action.ready~=false and action.macroText or nil
-  if row:GetAttribute("type1")== (macro and "macro" or nil) and row:GetAttribute("macrotext")==macro then return end
-  row:SetAttribute("type1",nil); row:SetAttribute("macrotext",nil); row:SetAttribute("spell",nil); row:SetAttribute("unit",nil)
-  if macro then row:SetAttribute("macrotext",macro); row:SetAttribute("type1","macro") end
+  local ready=action and action.ready~=false
+  local macro=ready and action.macroText or nil
+  local spell=ready and action.nearbyGroup and action.id or nil
+  local unit=spell and action.target or nil
+  local kind=macro and "macro" or spell and "spell" or nil
+  if row:GetAttribute("type1")==kind and row:GetAttribute("macrotext")==macro
+    and row:GetAttribute("spell")==spell and row:GetAttribute("unit")==unit then return end
+  row:SetAttribute("type1",nil); row:SetAttribute("macrotext",macro); row:SetAttribute("spell",spell); row:SetAttribute("unit",unit)
+  if kind then row:SetAttribute("type1",kind) end
 end
 function B:CreateNearbyWindow()
   if self.nearbyFrame or A.Combat() then return end
   if type(RegisterStateDriver)~="function" then self.nearbySetupError="Secure combat visibility is unavailable"; return end
   local f=CreateFrame("Frame","BuffTapNearbyWindow",UIParent,"SecureHandlerStateTemplate")
-  self.nearbyFrame=f; f:SetSize(WIDTH,HEIGHT); f:SetFrameStrata("DIALOG"); f:SetClampedToScreen(true); f:SetFrameLevel(120)
+  self.nearbyFrame=f; f:SetSize(WIDTH+24,HEIGHT); f:SetFrameStrata("DIALOG"); f:SetClampedToScreen(true); f:SetFrameLevel(120)
   f:SetMovable(true); f:EnableMouse(false); f:RegisterForDrag("LeftButton")
-  f.header=wash(f,"BACKGROUND",.055,.07,.09,.50); f.header:SetPoint("TOPLEFT"); f.header:SetPoint("TOPRIGHT"); f.header:SetHeight(21)
-  f.line=wash(f,"BORDER",.72,.58,.25,.80); f.line:SetPoint("TOPLEFT",0,-21); f.line:SetPoint("TOPRIGHT",0,-21); f.line:SetHeight(1)
-  f.title=label(f,"BuffTap",5,-5); f.title:SetTextColor(1,.82,0)
-  f.subtitle=label(f,"Nearby",53,-5); f.subtitle:SetTextColor(.76,.76,.72)
-  f.count=label(f,"",135,-5); f.count:SetWidth(31); f.count:SetJustifyH("RIGHT"); f.count:SetTextColor(.82,.82,.79)
-  f.lock=CreateFrame("Button",nil,f); f.lock:SetSize(12,15); f.lock:SetPoint("TOPRIGHT",-22,-3)
+  local c=CreateFrame("Frame",nil,f); f.content=c; c:SetSize(WIDTH,HEIGHT); c:SetPoint("TOPLEFT",24,0); c:EnableMouse(false)
+  f.header=wash(c,"BACKGROUND",.055,.07,.09,.50); f.header:SetPoint("TOPLEFT"); f.header:SetWidth(WIDTH); f.header:SetHeight(21)
+  f.line=wash(c,"BORDER",.72,.58,.25,.80); f.line:SetPoint("TOPLEFT",0,-21); f.line:SetWidth(WIDTH); f.line:SetHeight(1)
+  f.title=label(c,"BuffTap",5,-5); f.title:SetTextColor(1,.82,0)
+  f.count=label(c,"0/0",69,-5); f.count:SetWidth(75); f.count:SetJustifyH("RIGHT"); f.count:SetTextColor(.82,.82,.79)
+  f.lock=CreateFrame("Button",nil,c); f.lock:SetSize(12,15); f.lock:SetPoint("TOPLEFT",176,-3)
   f.lock.body=wash(f.lock,"ARTWORK",.8,.8,.76,1); f.lock.body:SetSize(8,6); f.lock.body:SetPoint("BOTTOM",0,2)
   f.lock.key=wash(f.lock,"OVERLAY",.10,.12,.15,1); f.lock.key:SetSize(1,3); f.lock.key:SetPoint("BOTTOM",0,3)
   f.lock.shackle={}
@@ -358,15 +492,30 @@ function B:CreateNearbyWindow()
   end
   f.lock:SetScript("OnClick",function() if not A.Combat() then self.db.nearbyLocked=not self.db.nearbyLocked; self:UpdateNearbyWindow() end end)
   hint(f.lock,function() return self.db.nearbyLocked and "Unlock position" or "Lock position" end,"Drag the header to move. Shift-left-click the minimap icon to toggle Nearby.")
-  f.close=CreateFrame("Button",nil,f); f.close:SetSize(14,16); f.close:SetPoint("TOPRIGHT",-3,-3)
+  f.close=CreateFrame("Button",nil,c); f.close:SetSize(14,16); f.close:SetPoint("TOPLEFT",193,-3)
   f.close.text=label(f.close,"x",3,-1); f.close.text:SetTextColor(.78,.78,.75)
   f.close:SetScript("OnClick",function()
     if A.Combat() then return end
     self.db.nearbyEnabled=false; self.nearbyUserOpened=false; self:SyncNearby(); f:Hide(); self:RequestRefresh("nearby closed",0)
   end)
   hint(f.close,function() return "Disable Nearby" end,"Shift-left-click the minimap icon to enable it again.")
-  f.status=label(f,"",6,-31); f.status:SetWidth(198); f.status:SetJustifyH("LEFT"); f.status:SetWordWrap(true)
-  f.statusButton=CreateFrame("Button",nil,f); f.statusButton:SetPoint("TOPLEFT",4,-25); f.statusButton:SetSize(198,34)
+  f.countHelp=CreateFrame("Button",nil,c); f.countHelp:SetSize(79,18); f.countHelp:SetPoint("TOPLEFT",65,-2)
+  f.countHelp:SetFrameLevel(f:GetFrameLevel()+3)
+  hint(f.countHelp,function()
+    local n=self.nearbyCounts or {need=0,total=0}
+    return n.need.." players with buffs queued / "..n.total.." nearby"
+  end,"Counts friendly players currently detected, up to 40. Buff candidates appear first. Group members with no queued buff stay hidden.")
+  f.allPlayers=CreateFrame("Button",nil,c)
+  f.allPlayers:SetFrameLevel(f:GetFrameLevel()+3)
+  f.allPlayers:SetSize(14,16); f.allPlayers:SetPoint("TOPLEFT",154,-3)
+  f.allPlayers.parts={}
+  for _,part in ipairs({{2,-2,4,4},{1,-7,6,5},{8,-3,3,3},{7,-8,5,4}}) do
+    local t=wash(f.allPlayers,"ARTWORK",.65,.65,.62,1); t:SetSize(part[3],part[4]); t:SetPoint("TOPLEFT",part[1],part[2]); f.allPlayers.parts[#f.allPlayers.parts+1]=t
+  end
+  f.allPlayers:SetScript("OnClick",function() self:SetNearbyView(not self.db.nearbyShowAll) end)
+  hint(f.allPlayers,function() return self.db.nearbyShowAll and "Show only players needing buffs" or "Show all nearby players" end,"Grey: buff candidates only. Gold: all observed strangers. Invite buttons are available in either view.")
+  f.status=label(c,"",6,-31); f.status:SetWidth(198); f.status:SetJustifyH("LEFT"); f.status:SetWordWrap(true)
+  f.statusButton=CreateFrame("Button",nil,c); f.statusButton:SetPoint("TOPLEFT",4,-25); f.statusButton:SetSize(198,34)
   hint(f.statusButton,function() return "Nearby buffing" end,"Uses your Target preferences. Friendly player nameplates must be enabled (Shift+V). Shift-click the minimap icon to toggle. Players in combat are skipped; PvP protection skips flagged or unreadable players.")
   f.statusButton:SetScript("OnClick",function() if not self.db.nearbyEnabled then self:ToggleNearby() end end)
   local function dragStart() if not A.Combat() and not self.db.nearbyLocked then self.nearbyDragging=true; f:StartMoving() end end
@@ -378,7 +527,7 @@ function B:CreateNearbyWindow()
     self:UpdateNearbyWindow()
   end
   f:SetScript("OnDragStart",dragStart); f:SetScript("OnDragStop",dragStop)
-  f.dragHandle=CreateFrame("Frame",nil,f); f.dragHandle:SetSize(WIDTH-43,21); f.dragHandle:SetPoint("TOPLEFT")
+  f.dragHandle=CreateFrame("Frame",nil,c); f.dragHandle:SetSize(WIDTH-43,21); f.dragHandle:SetPoint("TOPLEFT")
   f.dragHandle:EnableMouse(true); f.dragHandle:RegisterForDrag("LeftButton")
   f.dragHandle:SetScript("OnDragStart",dragStart); f.dragHandle:SetScript("OnDragStop",dragStop)
   f:SetScript("OnMouseWheel",function(_,delta)
@@ -386,7 +535,7 @@ function B:CreateNearbyWindow()
     self.nearbyOffset=math.max(0,math.min(math.max(0,#(self.nearbyDisplay or {})-ROWS),(self.nearbyOffset or 0)-(delta>0 and 1 or -1)))
     self:UpdateNearbyWindow()
   end)
-  f.scroll=CreateFrame("Slider",nil,f); f.scroll:SetSize(4,103); f.scroll:SetPoint("TOPRIGHT",-1,-25)
+  f.scroll=CreateFrame("Slider",nil,c); f.scroll:SetSize(4,103); f.scroll:SetPoint("TOPLEFT",205,-25)
   f.scroll:SetOrientation("VERTICAL"); f.scroll:SetValueStep(1); f.scroll:SetObeyStepOnDrag(true)
   f.scroll.track=wash(f.scroll,"BACKGROUND",.5,.51,.49,.16); f.scroll.track:SetAllPoints()
   f.scroll.thumb=wash(f.scroll,"ARTWORK",.67,.68,.65,.65); f.scroll.thumb:SetSize(4,22); f.scroll:SetThumbTexture(f.scroll.thumb)
@@ -397,15 +546,36 @@ function B:CreateNearbyWindow()
   end)
   f.rows={}
   for i=1,ROWS do
-    local row=CreateFrame("Button",nil,f,"SecureActionButtonTemplate")
-    f.rows[i]=row; row:SetSize(198,20); row:SetPoint("TOPLEFT",4,-25-(i-1)*ROW_HEIGHT)
+    local row=CreateFrame("Button",nil,c,"SecureActionButtonTemplate")
+    f.rows[i]=row; row:SetSize(WIDTH,20); row:SetPoint("TOPLEFT",0,-25-(i-1)*ROW_HEIGHT)
     row:RegisterForClicks("AnyDown","AnyUp"); row:SetAttribute("useOnKeyDown",true)
     row.wash=wash(row,"BACKGROUND",.055,.075,.095,.34); row.wash:SetAllPoints()
     row.hover=wash(row,"HIGHLIGHT",.75,.60,.25,.17); row.hover:SetAllPoints()
     row.marker=wash(row,"BACKGROUND",.75,.60,.25,.075); row.marker:SetAllPoints()
-    row.classEdge=wash(row,"BORDER",.55,.47,.30,.70); row.classEdge:SetSize(16,16); row.classEdge:SetPoint("LEFT",1,0)
-    row.classIcon=row:CreateTexture(nil,"ARTWORK"); row.classIcon:SetSize(14,14); row.classIcon:SetPoint("LEFT",2,0)
-    row.name=label(row,"",23,-4); row.name:SetWidth(132); row.name:SetJustifyH("LEFT"); row.name:SetWordWrap(false)
+    row.classEdge=wash(row,"BORDER",.55,.47,.30,.70); row.classEdge:SetSize(16,16); row.classEdge:SetPoint("LEFT",4,0)
+    row.classIcon=row:CreateTexture(nil,"ARTWORK"); row.classIcon:SetSize(14,14); row.classIcon:SetPoint("LEFT",5,0)
+    row.name=label(row,"",26,-4); row.name:SetWidth(132); row.name:SetJustifyH("LEFT"); row.name:SetWordWrap(false)
+    row.idle=label(row,"-",190,-4); row.idle:SetTextColor(.55,.62,.59)
+    row.invite=CreateFrame("Button",nil,row)
+    row.invite:SetSize(20,20); row.invite:SetPoint("RIGHT",row,"LEFT",-4,0)
+    row.invite.bg=wash(row.invite,"BACKGROUND",.055,.075,.095,.65); row.invite.bg:SetAllPoints()
+    row.invite.hover=wash(row.invite,"HIGHLIGHT",.75,.60,.25,.25); row.invite.hover:SetAllPoints()
+    row.invite.text=label(row.invite,"+",5,-3); row.invite.text:SetTextColor(1,.82,0)
+    row.invite:RegisterForClicks("LeftButtonUp")
+    row.invite:SetScript("OnClick",function() self:InviteNearby(row.entry) end)
+    row.invite:SetScript("OnEnter",function()
+      if not row.entry then return end
+      self.nearbyHovered=row.entry.guid
+      local _,mode=self:NearbyInviteName(row.entry)
+      GameTooltip:SetOwner(row.invite,"ANCHOR_RIGHT"); GameTooltip:SetText((mode=="SUGGEST_INVITE" and "Suggest party invite: " or "Send party invite to ")..row.entry.name)
+      local at=self.nearbyInvited and self.nearbyInvited[row.entry.guid]
+      GameTooltip:AddLine(at and GetTime()-at<10 and "Party invite or suggestion sent. Waiting briefly before allowing another." or "Click to "..(mode=="SUGGEST_INVITE" and "suggest this player to your group leader." or "send this player a party invite."),.8,.8,.8,true); GameTooltip:Show()
+    end)
+    row.invite:SetScript("OnLeave",function()
+      self.nearbyHovered=nil; GameTooltip:Hide()
+      self:CancelTimer("nearby-display")
+      self:StartTimer("nearby-display",.1,function() if not A.Combat() then B:UpdateNearbyWindow() end end)
+    end)
     row.icons={}; row.iconEdges={}
     for j=1,4 do
       local icon=row:CreateTexture(nil,"ARTWORK"); icon:SetSize(14,14); icon:SetTexCoord(.07,.93,.07,.93); row.icons[j]=icon
@@ -416,7 +586,7 @@ function B:CreateNearbyWindow()
       local action=button.action; self:SetNearbyRowPayload(button,nil)
       local ok,valid=pcall(self.ValidateNearby,self,action)
       if ok and valid and mouse=="LeftButton" then
-        if not self:PrepareNearbyCast(action) then self:NoteNearbyClick(nil); return end
+        if not action.nearbyGroup and not self:PrepareNearbyCast(action) then self:NoteNearbyClick(nil); return end
         self:NoteNearbyClick(action); self:SetNearbyRowPayload(button,action)
         if down~=false then self:BeginHelperAttempt(action) end
       else self:NoteNearbyClick(nil); self:RequestRefresh("nearby click changed",0) end
@@ -429,9 +599,9 @@ function B:CreateNearbyWindow()
       self.nearbyHovered=button.entry.guid
       GameTooltip:SetOwner(button,"ANCHOR_RIGHT"); GameTooltip:SetText(button.entry.name)
       if button.action then for _,action in ipairs(button.entry.actions) do GameTooltip:AddLine(action.name,1,1,1) end
-      else GameTooltip:AddLine("Updating recipient; casting is unavailable.",.7,.7,.7,true) end
+      else GameTooltip:AddLine("No buff queued. Buffs may be covered, excluded, or unavailable.",.7,.7,.7,true) end
       if button.action and not button.action.ready then GameTooltip:AddLine("Waiting for cooldown.",.8,.8,.7)
-      else GameTooltip:AddLine("Click: next appropriate buff",1,.82,0) end
+      elseif button.action then GameTooltip:AddLine("Click: next appropriate buff",1,.82,0) end
       GameTooltip:Show()
     end)
     row:SetScript("OnLeave",function()
@@ -451,13 +621,23 @@ function B:UpdateNearbyWindow()
   end
   self:CreateNearbyWindow()
   local f=self.nearbyFrame; if not f or self.nearbySetupError then return end
-  local list=self:NearbyCandidates()
+  local list=self:NearbyPlayers()
   if not self.db.enabled or not self.db.nearbyEnabled or not platesOn() or self:ReminderPauseReason() then self.nearbyDisplay=nil end
   local display=self:NearbyDisplayList(list)
   local x,y=self.db.nearbyX,self.db.nearbyY
   x=A.Number(x) and x or 240; y=A.Number(y) and y or 0
   if f.positionX~=x or f.positionY~=y then f:ClearAllPoints(); f:SetPoint("CENTER",UIParent,"CENTER",x,y); f.positionX=x; f.positionY=y end
-  f.count:SetText(#display>0 and tostring(#display) or "")
+  local counts=self.nearbyCounts or {need=0,total=0}
+  f.count:SetText(counts.need.."/"..counts.total)
+  if f.allPlayers.showAll~=self.db.nearbyShowAll then
+    f.allPlayers.showAll=self.db.nearbyShowAll
+    for _,t in ipairs(f.allPlayers.parts) do
+      if self.db.nearbyShowAll then t:SetColorTexture(1,.82,0,1) else t:SetColorTexture(.65,.65,.62,1) end
+    end
+  end
+  for guid,at in pairs(self.nearbyInvited or {}) do
+    if GetTime()-at>=10 then self.nearbyInvited[guid]=nil end
+  end
   for _,t in ipairs(f.lock.shackle) do t:SetAlpha(self.db.nearbyLocked and 1 or .4) end
   f.lock.body:SetAlpha(self.db.nearbyLocked and 1 or .55)
   f:EnableMouseWheel(not self:NearbyWheelBound())
@@ -478,19 +658,24 @@ function B:UpdateNearbyWindow()
         if coords then row.classIcon:SetTexCoord(unpack(coords)); row.classIcon:Show() else row.classIcon:Hide() end
         local color=RAID_CLASS_COLORS and RAID_CLASS_COLORS[entry.class]
         if color then row.name:SetTextColor(color.r,color.g,color.b) else row.name:SetTextColor(1,1,1) end
-        local count=math.min(4,#entry.actions); row.name:SetWidth(198-23-8-count*18)
+        local count=math.min(4,#entry.actions); row.name:SetWidth(WIDTH-26-12-count*18)
         for j,icon in ipairs(row.icons) do
           local action=entry.actions[j]; local edge=row.iconEdges[j]
           icon:ClearAllPoints(); edge:ClearAllPoints()
-          local offset=-(count-j)*18-3
+          local offset=-(count-j)*18-8
           edge:SetPoint("RIGHT",offset,0); icon:SetPoint("RIGHT",offset-1,0)
           icon:SetTexture(action and (action.icon or 134400)); icon:SetShown(action~=nil); edge:SetShown(action~=nil)
         end
       end
-      row:SetAlpha(row.action and (row.action.ready and 1 or .72) or .40)
+      row:SetAlpha(row.action and (row.action.ready and 1 or .72) or (self.db.nearbyShowAll and .60 or .40))
+      row.idle:SetShown(self.db.nearbyShowAll and not row.action)
+      local invited=self.nearbyInvited and self.nearbyInvited[entry.guid]
+      local inviteName,inviteMode=self:NearbyInviteName(entry)
+      row.invite.text:SetText(invited and "..." or inviteMode=="SUGGEST_INVITE" and ">" or "+")
+      row.invite:SetShown(item.fresh and inviteName~=nil)
       row.marker:SetShown(row.action and row.action.ready and self.action and self.action.nearby and self.action.targetGUID==entry.guid or false)
       if not row:IsShown() then row:Show() end
-    else row.style=nil; if row:IsShown() then row:Hide() end end
+    else row.style=nil; row.invite:Hide(); row.idle:Hide(); if row:IsShown() then row:Hide() end end
   end
   local status
   if not self.db.enabled then status="BuffTap is disabled."
@@ -498,6 +683,8 @@ function B:UpdateNearbyWindow()
   elseif plateSetting()==nil then status="Friendly nameplate setting unavailable."
   elseif not platesOn() then status="Enable friendly nameplates (Shift+V)."
   elseif self:ReminderPauseReason() then status="Paused: "..self:ReminderPauseReason()
+  elseif self.db.nearbyShowAll then status="No nearby players detected."
+  elseif self.db.nearbyBuffing==false then status="Nearby buffing is off."
   elseif #self:TargetAssignableBuffs()==0 then status="No supported buffs for nearby players."
   elseif #list==0 and self.manaBlocked then status="Not enough mana to buff."
   elseif #list==0 and self.powerBlocked then status="Buff unavailable: check form, reagents or requirements."
@@ -540,7 +727,8 @@ frame:SetScript("OnEvent",function(_,event,unit,message,spellID)
     return
   elseif event=="NAME_PLATE_UNIT_ADDED" then B:TrackNearby(unit); B:ScheduleNearbySettle()
   elseif event=="NAME_PLATE_UNIT_REMOVED" and A.Text(unit) then
-    local guid=B.nearbyUnits[unit]; B.nearbyUnits[unit]=nil; B:InvalidateAura(unit)
+    B.nearbyUnits[unit]=nil; B:InvalidateAura(unit)
+    if not A.Combat() then B:SeedNearby(unit) end
     -- Preserve arrival order through short nameplate hide/show cycles.
   elseif event=="PLAYER_ENTERING_WORLD" or event=="PLAYER_REGEN_ENABLED" then
     B.nearbyUnits={}; B.nearbyOrder={}; if not A.Combat() then B:SeedNearby() end
@@ -600,25 +788,33 @@ SlashCmdList.BUFFTAP=function(text)
   if (text or ""):match("^%s*nearby%s*$") then B:ShowNearbySetup(); return end
   return slash(text)
 end
-local diagnostics=B.DiagnosticsLines
-function B:DiagnosticsLines()
-  local out=diagnostics(self); local tracked=0
-  local plates,setting=plateSetting()
+function B:NearbyDiagnosticsLines()
+  local tracked=0; local plates,setting=plateSetting()
   for _ in pairs(self.nearbyUnits or {}) do tracked=tracked+1 end
-  out[#out+1]="Nearby experiment: "..tostring(self.db.nearbyEnabled==true).." | friendly nameplates: "..tostring(plates).." ("..setting..")"
-    .." | tracked: "..tracked.."/40 | eligible: "..#(self.nearbySnapshot or {})
-  out[#out]=out[#out].." | cast: exact-name/cast/restore | notifications: quiet"
-  if self.nearbyLastClick then out[#out]=out[#out].." | last click: "..self.nearbyLastClick end
-  if self.nearbyClickError then out[#out]=out[#out].." | client error: "..self.nearbyClickError end
+  local counts=self.nearbyCounts or {need=0,total=0}
+  local out={
+    "Nearby: "..(self.db.nearbyEnabled and "on" or "off").." | view: "..(self.db.nearbyShowAll and "all players" or "buffs only").." | buffing: "..(self.db.nearbyBuffing~=false and "on" or "off"),
+    "Nearby players: "..counts.need.." queued / "..counts.total.." detected | tracked: "..tracked.."/40",
+    "Nearby nameplates: "..tostring(plates).." ("..setting..")",
+    "Nearby casting: exact-name/cast/restore | notifications: quiet",
+  }
+  if self.nearbyLastClick then out[#out+1]="Nearby last click: "..self.nearbyLastClick end
+  if self.nearbyClickError then out[#out+1]="Nearby client error: "..self.nearbyClickError end
+  if self.nearbyLastInvite then out[#out+1]="Nearby last invitation: "..self.nearbyLastInvite end
   if self.nearbyCastError then out[#out+1]="Nearby cast: "..self.nearbyCastError end
   if self.nearbySetupError then out[#out+1]=self.nearbySetupError end
+  return out
+end
+local diagnostics=B.DiagnosticsLines
+function B:DiagnosticsLines()
+  local out=diagnostics(self)
+  for _,line in ipairs(self:NearbyDiagnosticsLines()) do out[#out+1]=line end
   return out
 end
 local status=B.Status
 function B:Status(verbose)
   status(self,verbose)
   if verbose and DEFAULT_CHAT_FRAME then
-    local lines=self:DiagnosticsLines()
-    DEFAULT_CHAT_FRAME:AddMessage("BuffTap "..lines[#lines])
+    for _,line in ipairs(self:NearbyDiagnosticsLines()) do DEFAULT_CHAT_FRAME:AddMessage("BuffTap "..line) end
   end
 end

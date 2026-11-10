@@ -1,6 +1,6 @@
 from test_player_exceptions import test,tests
 
-test('Profiles tab preserves character-specific buff preferences', "local buffs=BuffTap.db.buffs; local keys=BuffTap.db.keys; BuffTap:Options(); assert(#BuffTap.options.pages==9 and BuffTap.options.tabs[8].text=='Profiles'); assert(BuffTap.db.buffs==buffs and BuffTap.db.keys==keys)")
+test('Profiles tab preserves character-specific buff preferences', "local buffs=BuffTap.db.buffs; local keys=BuffTap.db.keys; BuffTap:Options(); assert(#BuffTap.options.pages==10 and BuffTap.options.tabs[9].text=='Profiles'); assert(BuffTap.db.buffs==buffs and BuffTap.db.keys==keys)")
 test('First migration keeps old preferences and a rollback backup', "BuffTapDB={keys={'CTRL-G'},size=91,opacity=.7,buffs={thorns=false},seconds=75}; BuffTap:InitDB(); assert(BuffTap.db.size==91 and BuffTap.db.keys[1]=='CTRL-G' and BuffTap.db.opacity==.7 and BuffTap.db.seconds==75 and not BuffTap.db.buffs.thorns); assert(rawget(BuffTapDB,'size')==nil and BuffTapDB.profileMigrationBackup.size==91)")
 test('Migrated profile choice survives repeat InitDB', "local name=BuffTap.profileDB:GetCurrentProfile(); BuffTap.db.size=88; for i=1,4 do BuffTap:InitDB() end; assert(name==BuffTap.profileDB:GetCurrentProfile() and BuffTap.db.size==88)")
 test('New default profile changes general preferences only', "BuffTap.db.buffs.thorns=false; BuffTap.db.priorities.motw=6; BuffTap.db.group=true; BuffTap.db.size=100; assert(BuffTap:CreateSettingsProfile('Raid',false)); assert(BuffTap.db.size==64 and BuffTap.db.buffs.thorns==false and BuffTap.db.priorities.motw==6 and BuffTap.db.group)")
@@ -22,7 +22,7 @@ test('Profile reset and copy require confirmation in options', "BuffTap:Options(
 test('Switching profiles preserves existing group-session exceptions', "BuffTap.blessingPlayers={test={choice='bow'}}; BuffTap:CreateSettingsProfile('Other',true); assert(BuffTap.blessingPlayers.test.choice=='bow')")
 test('Malformed imported class preferences run through existing normalization', "local source=BuffTap.profileDB:GetCurrentProfile(); BuffTap:CreateSettingsProfile('Dest',false); BuffTap.profileDB.global.characterSetups[source].Broken={class='DRUID',profile=source,settings={buffs='bad',priorities={motw='bad'},weaponChoices={main='not-valid'},raidGroups='bad'}}; assert(BuffTap:CopySettingsProfile(source,'Broken')); assert(type(BuffTap.db.buffs)=='table' and not BuffTap.db.priorities.motw and not next(BuffTap.db.weaponChoices) and #BuffTap.db.raidGroups==8)")
 for loc in ('deDE','frFR','esES','ptBR'):
- test('Profiles controls and confirmation localized '+loc,"BuffTap:Options(); assert(BuffTap.options.tabs[8].text~='Profiles'); local p=BuffTap.options.profiles; p.reset.scripts.OnClick(); assert(p.confirmText.text~=\"Reset this profile's shared preferences? Buff and class settings will stay unchanged.\")",locale=loc)
+ test('Profiles controls and confirmation localized '+loc,"BuffTap:Options(); assert(BuffTap.options.tabs[9].text~='Profiles'); local p=BuffTap.options.profiles; p.reset.scripts.OnClick(); assert(p.confirmText.text~=\"Reset this profile's shared preferences? Buff and class settings will stay unchanged.\")",locale=loc)
 test('Unreadable class identity cannot enable or execute class imports', "local source=BuffTap.profileDB:GetCurrentProfile(); BuffTap:CreateSettingsProfile('Dest',false); BuffTap.profileDB.global.characterSetups[source].Unknown={profile=source,settings={}}; UnitClass=function() return nil,nil end; assert(#BuffTap:ClassCopySources(source)==0 and not BuffTap:CopySettingsProfile(source,'Unknown'))")
 test('AceDB shutdown saves class preferences before storage cleanup, even in combat', "BuffTap.db.buffs.thorns=false; combat=true; local db=LibStub('AceDB-3.0'); db.frame.scripts.OnEvent(db.frame,'PLAYER_LOGOUT'); local p=BuffTap.profileDB; assert(not p.sv.global.characterSetups[p:GetCurrentProfile()][p.keys.char].settings.buffs.thorns)")
 test('Profiles page fits existing panel and tabs fit header', """
@@ -30,6 +30,6 @@ local original=CreateFrame
 CreateFrame=function(...) local f=original(...); f.SetSize=function(self,w,h) self.width=w; self.height=h end; f.SetPoint=function(self,...) self.point={...} end; return f end
 BuffTap:Options(); local p=BuffTap.options.profiles
 for _,c in ipairs({p.active,p.name,p.create,p.source,p.copy,p.character,p.rename,p.reset,p.deletePick,p.delete,p.confirm}) do assert(c.point[2]+c.width<=724 and -c.point[3]+c.height<=624) end
-local last=BuffTap.options.tabs[9]; assert(last.point[2]+last.width<=736)
+local last=BuffTap.options.tabs[10]; assert(last.point[2]+last.width<=736)
 """)
 print('ALL',len(tests),'SCENARIOS PASSED')

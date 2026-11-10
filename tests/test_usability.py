@@ -6,14 +6,14 @@ for locale,close in [('esES','Cerrar'),('esMX','Cerrar'),('deDE','Schließen'),(
 local oldAction=BuffTap.action
 assert(BuffTap:Text('Close')=='{close}')
 BuffTap:Options(); local f=BuffTap.options
-assert(f.closeButton.text=='{close}' and #f.tabs==9 and BuffTap.action==oldAction)
+assert(f.closeButton.text=='{close}' and #f.tabs==10 and BuffTap.action==oldAction)
 assert(not f.languageSelector)
 f.channelButton.scripts.OnClick(); local c=f.channelButton.menu.rows[2]; c.scripts.OnClick(c); assert(BuffTap.db.soundChannel=='SFX')
 f.channelButton.scripts.OnClick(); local c=f.channelButton.menu.rows[1]; c.scripts.OnClick(c); assert(BuffTap.db.soundChannel=='Master')
 assert(BuffTap:Enabled(BuffTap:FindBuff('motw')) and BuffTap.button.attrs.spell==5232)
 ''',locale=locale)
 
-test('Unknown locale preserves English and normal buff selection',"assert(BuffTap:Text('Close')=='Close'); BuffTap:Options(); assert(BuffTap.options.tabs[5].text=='Weapons' and BuffTap.action.id==5232)",locale='itIT')
+test('Unknown locale preserves English and normal buff selection',"assert(BuffTap:Text('Close')=='Close'); BuffTap:Options(); assert(BuffTap.options.tabs[6].text=='Weapons' and BuffTap.action.id==5232)",locale='itIT')
 test('Missing translation and broken translated format fall back safely',"BuffTap.locale='deDE'; BuffTap.Locales.deDE={['Value %d']='Wert %q %q'}; assert(BuffTap:Text('Unknown phrase')=='Unknown phrase'); assert(BuffTap:Text('Value %d',3)=='Value 3')")
 
 for locale in ['esES','deDE','frFR','ptBR']:

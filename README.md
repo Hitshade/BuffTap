@@ -6,17 +6,18 @@ BuffTap detects missing or expiring buffs, follows your priorities, and prepares
 
 BuffTap automates detection and preparation; every cast or item use still requires your input. Designed for out-of-combat maintenance, with event-driven updates and cached information.
 
-## Nearby player buffing (optional)
+## 👥 Nearby buffing & quick party invites
 
-Buff nearby players without manually hunting through targets. Enable the optional **Nearby window** to see eligible players who need your buffs, with **class-coloured names and missing-buff icons**. Click a name or use your normal mouse-wheel or key binding to apply the next buff.
+Share buffs with nearby players from a **compact, movable window**, with class-coloured names and missing-buff icons. **Players needing an eligible buff appear first**. Click a player or use your normal mouse-wheel or key binding to apply the next buff.
 
-- **Compact, movable and lockable**, with stable rows and scrolling for longer lists.
-- **Uses your Target buff preferences**, including class-aware Paladin blessing choices.
-- Enable **Nearby buffing in the Target tab**, or **Shift-left-click the minimap icon** to toggle it.
-- **Quiet nearby reminders**, with no extra reminder icon or notification ding.
-- **Out-of-combat use**, with checks for recipient combat state and your PvP protection setting.
+- **Stable, fixed-size list** with five visible rows, a scrollbar and support for up to 40 detected players.
+- **Optional all-players view** keeps nearby strangers listed after buffing, with a small header icon to switch views.
+- **Quick party invites** beside player names, or suggestions to your group leader when the game offers that action. Invite shortcuts work in either view.
+- **Independent controls** for nearby buffing, the player list and invitation buttons in the **Nearby tab**. **Shift-left-click the minimap icon** to toggle the window.
+- **Your existing preferences apply**: Target settings for strangers and Groups settings for current party or raid members. Group members leave the list when no eligible buff is queued.
+- **Quiet buffing**, with no extra reminder icon or notification ding.
 
-**Friendly player nameplates must be enabled**, normally with **Shift+V**. Nearby buffing starts disabled, and every cast still requires your click or binding.
+**Friendly player nameplates must be enabled**, normally with **Shift+V**. Nearby starts disabled. Every cast and invitation requires your input, and the window hides during combat. PvP and recipient-combat checks continue to protect buff casting.
 
 ## 🛡️ Buff yourself, your party, or your raid
 

@@ -4,7 +4,7 @@
 
 local _, B = ...
 _G.BuffTap = B
-B.version = "1.16.5"
+B.version = "1.16.6"
 B.API = {}
 local A = B.API
 
@@ -69,7 +69,7 @@ function B:InitDB()
     suppliesEnabled=false, suppliesChat=false, suppliesSound=false, suppliesReadyCheck=false, supplySettings={},
     weaponReminder=true, weaponMainHand=true, weaponOffHand=true,
     weaponApply=false, weaponReplace=false, weaponChoices={}, weaponCoatings={}, weaponSeconds=60,
-    nearbyEnabled=false, nearbyLocked=false, nearbyX=240, nearbyY=0, pvpProtection=true, helperDismiss=false, helperBounce=false, helperTracking=false, helperTreasure=false, helperCoverage=false,
+    nearbyEnabled=false, nearbyBuffing=true, nearbyShowAll=false, nearbyInvites=true, nearbyLocked=false, nearbyX=240, nearbyY=0, pvpProtection=true, helperDismiss=false, helperBounce=false, helperTracking=false, helperTreasure=false, helperCoverage=false,
     helperDiscovery=false, helperThanks=false, helperThankEmote="THANK", helperQuick=false, helperTracker=0, helperPet=false, helperHealthstone=false, helperSoulstone=false, soulstoneParty="healer", soulstoneRaid="remind", soulstoneAssigned="", helperDemon=0,
     raidGroups={true,true,true,true,true,true,true,true}}
   for k,v in pairs(defaults) do

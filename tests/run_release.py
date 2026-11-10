@@ -40,4 +40,8 @@ import test_bg_self
 import test_cast_retry
 import test_thanks_robust
 import test_mark_rank
+
+import test_nearby_invites
+
+import test_diagnostics_layout
 print('TOTAL',len(__import__('test_bufftap').tests))
