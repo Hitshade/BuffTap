@@ -37,4 +37,5 @@ __import__('test_weapons')
 import test_safety
 import test_nearby
 import test_bg_self
+import test_cast_retry
 print('TOTAL',len(__import__('test_bufftap').tests))

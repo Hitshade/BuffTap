@@ -304,17 +304,25 @@ end
 function B:NearbyDisplayList(list)
   local now,fresh,seen,out=GetTime(),{},{},{}
   for _,entry in ipairs(list) do fresh[entry.guid]=entry end
-  local pending
+  local pending,safetyRemoved
   for _,old in ipairs(self.nearbyDisplay or {}) do
     local entry=fresh[old.entry.guid]
     local missing=not entry and (old.missingAt or now)
-    if entry or self.nearbyHovered or (missing and now-missing<.65) then
+    local delayed=false
+    if not entry and self.CastRetryBlocked then
+      for _,action in ipairs(old.entry.actions) do if self:CastRetryBlocked(action) then delayed=true; break end end
+    end
+    local safe=not delayed and A.Call(UnitGUID,old.entry.unit)==old.entry.guid and self:NearbyRecipientSafe(old.entry.unit)
+    if not safe then
+      safetyRemoved=true
+      if self.nearbyHovered==old.entry.guid then self.nearbyHovered=nil; if GameTooltip then GameTooltip:Hide() end end
+    elseif entry or self.nearbyHovered or (missing and now-missing<.65) then
       out[#out+1]={entry=entry or old.entry,fresh=entry~=nil,missingAt=missing}
       seen[old.entry.guid]=true
       if missing and now-missing<.65 then pending=math.min(pending or .65,.65-(now-missing)) end
     end
   end
-  if not self.nearbyHovered then
+  if not self.nearbyHovered or safetyRemoved then
     for _,entry in ipairs(list) do
       if not seen[entry.guid] and #out<MAX_UNITS then out[#out+1]={entry=entry,fresh=true}; seen[entry.guid]=true end
     end
@@ -546,9 +554,19 @@ end)
 function B:WatchNearbyRange()
   self:CancelTimer("nearby-range")
   if not self.db.nearbyEnabled or not self.db.enabled or not platesOn() or A.Combat()
-    or self:ReminderPauseReason() or not next(self.nearbyProbes or {}) then return end
+    or self:ReminderPauseReason() or not next(self.nearbyUnits or {}) then return end
+  local safety={}
+  local function state(unit)
+    return tostring(A.Call(UnitAffectingCombat,unit))..":"..tostring(A.Call(UnitIsPVP,unit))..":"..tostring(A.Call(UnitIsPVPFreeForAll,unit))
+  end
+  for unit in pairs(self.nearbyUnits) do safety[unit]=state(unit) end
   self:StartTimer("nearby-range",1,function()
     if A.Combat() or not B.db.nearbyEnabled then return end
+    for unit,previous in pairs(safety) do
+      if state(unit)~=previous then
+        B.nearbySnapshot=nil; B:RequestRefresh("nearby recipient safety changed",.05); return
+      end
+    end
     for _,probe in pairs(B.nearbyProbes or {}) do
       local unit=probe.action.target
       local range=B:SpellRange(probe.action); range=range==nil and "unknown" or range

@@ -32,4 +32,10 @@ test('BG self blessing ignores raid assignment but retains enabled choice',palad
 test('BG self blessings do not replace an existing different blessing',paladin+"playerAuras[19742]={}; refresh(); assert(not BuffTap.action)")
 test('BG higher priority hidden blessing does not imply lower is safe',paladin+"C_Secrets.ShouldSpellAuraBeSecret=function(id) return id==19742 end; refresh(); assert(not BuffTap.action)")
 
-test('BG beta version identifies the test build',"assert(BuffTap.version=='1.16.3')")
+test('Version identifies the current build',"assert(BuffTap.version=='1.16.4')")
+
+warlock=setup+"playerClass='WARLOCK'; spells={}; book={}; spell(19028,'Soul Link',40); BuffTap.bookDirty=true; "
+test('BG Soul Link recognises pet aura without offering another cast',warlock+"playerAuras[25228]={}; refresh(); assert(not BuffTap.action)")
+test('BG Soul Link casts only original spell when both identities absent',warlock+"refresh(); assert(BuffTap.action and BuffTap.action.id==19028); assert(#BuffTap:Candidates(BuffTap:FindBuff('soul-link'))==1)")
+test('BG hidden Soul Link pet aura is unknown rather than missing',warlock+"C_Secrets.ShouldSpellAuraBeSecret=function(id) return id==25228 end; refresh(); assert(not BuffTap.action and BuffTap.buffDataUnavailable)")
+test('Normal Soul Link recognises separate aura id despite different name',warlock+"IsInInstance=function() return false,'none' end; C_Secrets=nil; C_UnitAuras.GetAuraDataByIndex=function(u,i) if u=='player' and i==1 then return {spellId=25228,name='Localized aura',duration=0,expirationTime=0} end end; refresh(); assert(not BuffTap.action)")

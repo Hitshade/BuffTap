@@ -236,7 +236,7 @@ function B:CreateButton()
       return
     end
     if action.nearby then
-      if not B:ValidateNearby(action) or not B:PrepareNearbyCast(action) then B:NoteNearbyClick(nil); B:Commit(nil,"nearby click changed"); return end
+      if not B:ValidateNearby(action) or not B:PrepareNearbyCast(action) then B:NoteNearbyClick(nil); B:Commit(nil,"nearby click changed"); B:RequestRefresh("nearby click changed",0); return end
       B:NoteNearbyClick(action)
       B.button:SetAttribute("macrotext",action.macroText)
     end

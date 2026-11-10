@@ -4,7 +4,7 @@
 
 local _, B = ...
 _G.BuffTap = B
-B.version = "1.16.3"
+B.version = "1.16.4"
 B.API = {}
 local A = B.API
 
@@ -770,6 +770,7 @@ function B:BGSelfAuras(b)
     if other.key==b.key or (b.covers and other.covers==b.covers)
       or (b.kind=="blessing" and other.kind=="blessing") then
       for _,id in ipairs(other.ranks or {}) do ids[id]=true end
+      for _,id in ipairs(other.auraIDs or {}) do ids[id]=true end
     end
   end
   local unknown=false
@@ -824,6 +825,7 @@ function B:Missing(b,action,auras,rebuffSeconds)
   if cached then ids,names=cached.ids,cached.names else
     ids,names = {[action.id]=true},{[fold(action.name)]=true}
     for _,id in ipairs(b.ranks or {}) do ids[id]=true end
+    for _,id in ipairs(b.auraIDs or {}) do ids[id]=true end
     for _,name in ipairs(b.covers or {}) do names[fold(name)]=true end
     -- Localized coverage names are obtained from the catalog's related IDs.
     for _,other in ipairs(self.Buffs) do
@@ -937,6 +939,7 @@ function B:AddRangeBlocked(action)
 end
 
 function B:Validate(action)
+  if self.CastRetryBlocked and self:CastRetryBlocked(action) then return false,"recipient temporarily skipped after cast failure" end
   local paused=self:ReminderPauseReason(); if paused then return false,paused end
   if action and action.source=="readiness" then
     local needed,why=self:ReadinessStillNeeded(action)
@@ -1397,7 +1400,7 @@ function B:ScanMissing(b,entries,scans,scanErrors,rebuffSeconds)
               action.needState=source; action.remaining=remaining; action.threshold=threshold
               missing[#missing+1]={entry=entry,action=action,reason=source,threshold=threshold,remaining=remaining}
             elseif isMissing then
-              self:AddDiag(b.key.." -> "..entry.unit..": reminder dismissed or suppressed; use Restore reminders in Helpers")
+              self:AddDiag(b.key.." -> "..entry.unit..": reminder dismissed, suppressed or temporarily delayed; use Restore reminders in Helpers")
             end
           else
             if entry.quickTarget then self.targetDataPending=true end

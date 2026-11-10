@@ -78,7 +78,7 @@ B.Buffs={
   {key="demon-skin",class="WARLOCK",kind="self",name="Demon Skin",ranks={696,687},icon=136185,defaultOn=false,coverage="demonarmor"},
   {key="unending-breath",class="WARLOCK",kind="single",name="Unending Breath",ranks={5697},icon=136148,defaultOn=false,covers={"Unending Breath"}},
   {key="detect-invis",class="WARLOCK",kind="single",name="Detect Invisibility",ranks={11743,2970,132},icon=136152,defaultOn=false,covers={"Detect Invisibility"}},
-  {key="soul-link",class="WARLOCK",kind="self",name="Soul Link",ranks={19028},icon=136160,defaultOn=true,covers={"Soul Link"}},
+  {key="soul-link",class="WARLOCK",kind="self",name="Soul Link",ranks={19028},auraIDs={25228},icon=136160,defaultOn=true,covers={"Soul Link"}},
   {key="instant-poison",class="ROGUE",kind="weapon",name="Instant Poison",ranks={11343,11340,11342,11339,11341,11338,8691,8688,8687,8686,8681,8679},icon=132273,defaultOn=true,covers={"Instant Poison"}},
   {key="deadly-poison",class="ROGUE",kind="weapon",name="Deadly Poison",ranks={25351,25347,11358,11356,11357,11355,2837,2824,2835,2823},icon=132290,defaultOn=true,covers={"Deadly Poison"}},
   {key="crippling-poison",class="ROGUE",kind="weapon",name="Crippling Poison",ranks={11202,3421,3420,3408},icon=132274,defaultOn=false,covers={"Crippling Poison"}},

@@ -4,7 +4,7 @@
 local _, B = ...
 local A = B.API
 
--- Helpers are opt-in. No timers or inventory work are added while disabled.
+-- Optional conveniences and verified cast-failure tracking.
 function B:HelperEnabled(key) return self.db and self.db[key]==true end
 function B:HelperKey(action)
   if not action then return nil end
@@ -13,7 +13,54 @@ function B:HelperKey(action)
   return tostring(action.source or "spell")..":"..tostring(family)
     ..":"..tostring(action.targetGUID or action.target or "player")
 end
+local function retryKey(action)
+  if not action or action.manual or action.target=="player" or not A.Text(action.targetGUID)
+    or not A.Number(action.id) or (action.source and action.source~="spell") then return end
+  return action.targetGUID..":"..tostring(action.id)
+end
+function B:CastRetryBlocked(action)
+  local key=retryKey(action)
+  local entry=key and self.castRetry and self.castRetry[key]
+  if not entry then return false end
+  local remaining=entry.untilTime-GetTime()
+  if remaining<=0 then self.castRetry[key]=nil; return false end
+  self:ConsiderWake(remaining)
+  self:AddDiag("Cast retry -> "..tostring(action.target)..": "..entry.reason.."; retry in "..math.ceil(remaining).." sec")
+  return true
+end
+function B:CheckCastRetry()
+  local attempt=self.castRetryAttempt
+  if not attempt or A.Combat() or GetTime()-attempt.at>1 then self.castRetryAttempt=nil; return end
+  if not attempt.failed or not attempt.reason then return end
+  self.castRetryAttempt=nil
+  if A.Call(UnitGUID,attempt.action.target)~=attempt.action.targetGUID then return end
+  self.castRetry=self.castRetry or {}
+  local count,oldest,expiry=0
+  for key,entry in pairs(self.castRetry) do
+    if entry.untilTime<=GetTime() then self.castRetry[key]=nil
+    else
+      count=count+1
+      if not expiry or entry.untilTime<expiry then oldest,expiry=key,entry.untilTime end
+    end
+  end
+  if count>=200 then self.castRetry[oldest]=nil end
+  self.castRetry[attempt.key]={untilTime=GetTime()+10,reason=attempt.reason}
+  self:RequestRefresh("recipient cast retry delay",0)
+end
+function B:CastRetryError(message)
+  local attempt=self.castRetryAttempt
+  if not attempt then return end
+  if not A.Text(message) then self.castRetryAttempt=nil; return end
+  for _,key in ipairs({"ERR_OUT_OF_RANGE","ERR_SPELL_OUT_OF_RANGE","SPELL_FAILED_OUT_OF_RANGE","SPELL_FAILED_LINE_OF_SIGHT"}) do
+    local text=_G[key]
+    if A.Text(text) and message==text then attempt.reason=key; self:CheckCastRetry(); return end
+  end
+  -- A caster-side or unrelated error must never penalize this recipient.
+  self.castRetryAttempt=nil
+end
+
 function B:HelperSuppressed(action)
+  if self:CastRetryBlocked(action) then return true end
   local dismissed=self.helperDismissed
   if not dismissed or next(dismissed)==nil then return false end
   local key=self:HelperKey(action)
@@ -26,10 +73,12 @@ function B:DismissHelper(action,reason)
   self:RequestRefresh("reminder dismissed",0)
 end
 function B:RestoreHelpers()
-  self.helperDismissed={}; self.helperAttempt=nil
+  self.helperDismissed={}; self.helperAttempt=nil; self.castRetry={}; self.castRetryAttempt=nil
   self:RequestRefresh("restore reminders",0)
 end
 function B:BeginHelperAttempt(action)
+  local key=retryKey(action)
+  self.castRetryAttempt=key and {key=key,action=action,at=GetTime(),spellID=action.id} or nil
   self.buffCastAttempt=nil
   if action and not action.manual and (not action.source or action.source=="spell") and A.Number(action.id) and A.Text(action.targetGUID) then
     self.buffCastAttempt={id=action.id,unit=action.target,guid=action.targetGUID,at=GetTime()}
@@ -57,6 +106,7 @@ function B:CheckHelperBounce()
   end
 end
 function B:HandleHelperError(message)
+  self:CastRetryError(message)
   if not A.Text(message) or not A.Text(SPELL_FAILED_AURA_BOUNCED) or message~=SPELL_FAILED_AURA_BOUNCED then
     self.helperAttempt=nil; return
   end
@@ -64,6 +114,11 @@ function B:HandleHelperError(message)
   self:CheckHelperBounce()
 end
 function B:HandleHelperFailure(spellID)
+  local retry=self.castRetryAttempt
+  if retry then
+    if A.Number(spellID) and spellID==retry.spellID then retry.failed=true; self:CheckCastRetry()
+    else self.castRetryAttempt=nil end
+  end
   local attempt=self.helperAttempt
   if not attempt or not A.Number(spellID) or spellID~=attempt.spellID then
     self.helperAttempt=nil; return
@@ -283,16 +338,16 @@ end
 
 function B:HelperEvent(event,arg,arg2,spellID)
   if event=="PLAYER_REGEN_DISABLED" then
-    self.helperAttempt=nil; self.helperThankSeen=nil
+    self.helperAttempt=nil; self.castRetryAttempt=nil; self.helperThankSeen=nil
     if self.helperWindow then self.helperWindow:Hide() end
     if self.quickChoices then self.quickChoices:Hide() end
     if self.coverageFrame then self.coverageFrame:Hide() end
   elseif event=="PLAYER_ENTERING_WORLD" or event=="ZONE_CHANGED_NEW_AREA" then
-    self.helperDismissed={}; self.helperAttempt=nil; self.helperThankSeen=nil; self.helperDiscoverDirty=true
+    self.helperDismissed={}; self.helperAttempt=nil; self.castRetry={}; self.castRetryAttempt=nil; self.helperThankSeen=nil; self.helperDiscoverDirty=true
   elseif event=="GROUP_ROSTER_UPDATE" then self.helperThankSeen=nil
   elseif event=="UI_ERROR_MESSAGE" then self:HandleHelperError(arg2)
   elseif event=="UNIT_SPELLCAST_FAILED" and arg=="player" then self:HandleHelperFailure(spellID)
-  elseif (event=="UNIT_SPELLCAST_SUCCEEDED" or event=="UNIT_SPELLCAST_INTERRUPTED") and arg=="player" then self.helperAttempt=nil
+  elseif (event=="UNIT_SPELLCAST_SUCCEEDED" or event=="UNIT_SPELLCAST_INTERRUPTED") and arg=="player" then self.helperAttempt=nil; self.castRetryAttempt=nil
   elseif event=="BAG_UPDATE_DELAYED" or (event=="ITEM_DATA_LOAD_RESULT" and A.Number(arg) and self.helperDiscoveryPending and self.helperDiscoveryPending[arg]) then
     if event=="BAG_UPDATE_DELAYED" then self.helperDiscoveryPending={} end
     self.helperDiscoverDirty=true
