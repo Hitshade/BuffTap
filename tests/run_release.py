@@ -47,4 +47,5 @@ import test_diagnostics_layout
 import test_thanks_identity
 import test_review_corrections
 import test_directed_thanks
+import test_performance_beta
 print('TOTAL',len(__import__('test_bufftap').tests))

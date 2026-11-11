@@ -4,7 +4,7 @@
 
 local _, B = ...
 _G.BuffTap = B
-B.version = "1.16.9"
+B.version = "1.16.10"
 B.API = {}
 local A = B.API
 
@@ -46,6 +46,10 @@ function A.SpellUsable(id)
 end
 function A.Number(v) return A.Public(v) and type(v) == "number" and v==v and v>-math.huge and v<math.huge end
 function A.Text(v) return A.Public(v) and type(v) == "string" and v ~= "" end
+function A.Class(unit)
+  local ok,_,class=pcall(UnitClass,unit)
+  if ok and A.Text(class) then return class end
+end
 function A.Combat() return not InCombatLockdown or InCombatLockdown() end
 local foldCache,foldCount={},0
 local function fold(v)
@@ -198,6 +202,7 @@ function B:Supported(b)
   return true
 end
 function B:ClassList()
+  if self.classListPassActive and self.refreshClassList then return self.refreshClassList,self.refreshClassError end
   local ok,_,class = pcall(UnitClass, "player")
   if not ok or not A.Text(class) then return {}, "class unavailable" end
   local list = {}
@@ -225,6 +230,7 @@ function B:ClassList()
     if x == y then return (a.catalogOrder or 0) < (b.catalogOrder or 0) end
     return x < y
   end)
+  if self.classListPassActive then self.refreshClassList=list end
   return list
 end
 function B:FindBuff(key)
@@ -1079,7 +1085,7 @@ function B:Roster()
   return roster
 end
 
-function B:FriendlyTargetEntry(unit,nearby)
+function B:FriendlyTargetEntry(unit,nearby,checkOnly)
   unit=unit or "target"
   if not (self.db and (nearby and self.db.nearbyEnabled or not nearby and self.db.friendlyTarget)) then return nil,"disabled" end
   if A.Call(UnitExists,unit) ~= true then return nil,"no target" end
@@ -1096,8 +1102,9 @@ function B:FriendlyTargetEntry(unit,nearby)
     if not A.Text(guid) or not guid:match("^Player%-") then return nil,"target is not a player" end
   end
 
-  local class=A.Call(function() local _,c=UnitClass(unit); return c end)
+  local class=A.Class(unit)
   if not A.Text(class) then return nil,"target class unavailable" end
+  if checkOnly then return true end
   return {unit=unit,group=0,class=class,selected=true,rosterOrder=-1,quickTarget=true,nearby=nearby==true}
 end
 

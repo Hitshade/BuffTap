@@ -6,7 +6,7 @@ local MAX_UNITS,ROWS=40,5
 local WIDTH,HEIGHT,ROW_HEIGHT=210,134,21
 local targetChoice=B.TargetBlessingChoice
 function B:TargetBlessingChoice(entry)
-  if A.Call(function() local _,class=UnitClass("player"); return class end)~="PALADIN" then return nil end
+  if A.Class("player")~="PALADIN" then return nil end
   local choice=targetChoice(self,entry)
   if choice~=nil or not entry.nearby then return choice end
   local choices={}
@@ -137,7 +137,7 @@ function B:NearbyRecipientSafe(unit)
   end
   return true
 end
-function B:NearbyEntry(unit)
+function B:NearbyEntry(unit,checkOnly)
   if not self.db.nearbyEnabled or self.db.nearbyBuffing==false or not platesOn() or A.Combat() then return nil end
   if not A.Text(unit) or not unit:match("^nameplate%d+$") then return nil end
   local guid=A.Call(UnitGUID,unit)
@@ -145,7 +145,7 @@ function B:NearbyEntry(unit)
   if self:NearbyGroupMember(unit) or not self:NearbyRecipientSafe(unit) then return nil end
   -- Your explicitly selected player remains owned by normal Target mode.
   if self.db.friendlyTarget and A.Call(UnitIsUnit,unit,"target")==true then return nil end
-  return self:FriendlyTargetEntry(unit,true)
+  return self:FriendlyTargetEntry(unit,true,checkOnly)
 end
 local function fits(def,class)
   if (def.key=="ai" or def.key=="spirit") and (class=="WARRIOR" or class=="ROGUE") then return false end
@@ -153,10 +153,51 @@ local function fits(def,class)
   for _,c in ipairs(def.target) do if c==class then return true end end
   return false
 end
-function B:NearbyActions(entry)
-  local actions={}
-  local list=self:ClassList()
-  self.blessingClassList=list
+-- Compare preferences without allocating a new signature every scan. The copy
+-- changes only when preferences do; it is never written to SavedVariables.
+local function sameSettings(current,previous,depth)
+  if type(current)~="table" or type(previous)~="table" then return current==previous end
+  if depth>8 then return false end
+  for key,value in pairs(current) do if not sameSettings(value,previous[key],depth+1) then return false end end
+  for key in pairs(previous) do if current[key]==nil then return false end end
+  return true
+end
+local function copySettings(current,seen)
+  if type(current)~="table" then return current end
+  if seen[current] then return seen[current] end
+  local out={}; seen[current]=out
+  for key,value in pairs(current) do out[key]=copySettings(value,seen) end
+  return out
+end
+function B:CheckNearbyNeedSettings()
+  if self.nearbyNeedSettingsChecked then return end
+  if self.nearbyNeedBook~=self.resolveCache or not sameSettings(self.db,self.nearbyNeedSettings,0) then
+    self.nearbyNeedCache={}; self.nearbyNeedSettings=copySettings(self.db,{})
+    self.nearbyNeedBook=self.resolveCache
+  end
+  if self.classListPassActive then self.nearbyNeedSettingsChecked=true end
+end
+function B:NearbyNeeds(entry,list)
+  self:CheckNearbyNeedSettings()
+  self.nearbyNeedCache=self.nearbyNeedCache or {}
+  local now=GetTime()
+  local guid,level=A.Call(UnitGUID,entry.unit),A.Call(UnitLevel,entry.unit)
+  local auras=self:GetAuras(entry.unit,false,true)
+  local reusable=auras and not auras.incomplete and not auras.timingRestricted
+    and A.Text(guid) and A.Number(level) and level>0 and not self.captureDiagnostics
+    and not self.bookIssue and not self.bookDirty
+    and (not self.helperDismissed or not next(self.helperDismissed))
+    and (not self.castRetry or not next(self.castRetry))
+    and A.Call(UnitIsConnected,entry.unit)==true
+    and (type(UnitIsVisible)~="function" or A.Call(UnitIsVisible,entry.unit)==true)
+  local cached=self.nearbyNeedCache[entry.unit]
+  if reusable and cached and cached.guid==guid and cached.class==entry.class and cached.level==level
+    and cached.auras==auras and now<cached.untilTime then
+    if cached.wakeAt then self:ConsiderWake(cached.wakeAt-now) end
+    return cached.needs
+  end
+  local priorWake=self.nextWakeDelay; self.nextWakeDelay=nil
+  local needs={}
   entry.targetBlessingChoice=self:TargetBlessingChoice(entry)
   local selected=self.db.targetClassBlessings and self.db.targetBlessingClasses[entry.class]
   local explicit=selected and selected~="skip"
@@ -167,26 +208,47 @@ function B:NearbyActions(entry)
       and (def.kind=="single" or def.kind=="blessing") and self:Supported(def)
       and (explicit and def.kind=="blessing" or fits(def,entry.class)) then
       local missing=self:ScanMissing(def,{entry},scans,errors,self:TargetRebuffSeconds(def))
-      if missing[1] then
-        local need=missing[1]; local action=need.action
-        action.quickTarget=true; action.nearby=true
-        action.needState=need.reason; action.remaining=need.remaining; action.threshold=need.threshold
-        action.reason="nearby player: "..need.reason
-        local valid,why=self:Validate(action)
-        action.ready=valid==true
-        action.waiting=not valid and why=="cooldown / global cooldown"
-        self.nearbyProbes=self.nearbyProbes or {}
-        local probeKey=entry.unit..":"..tostring(action.id)
-        local range=self:SpellRange(action)
-        self.nearbyProbes[probeKey]={action=action,range=range==nil and "unknown" or range}
-        if (valid or action.waiting) and self:PrepareNearbyCast(action) then
-          action.selectedAt=GetTime(); actions[#actions+1]=action
-          if #actions==4 then break end
-        end
-      end
+      if missing[1] then needs[#needs+1]=missing[1] end
+    end
+  end
+  local wake=self.nextWakeDelay
+  if priorWake then self:ConsiderWake(priorWake) end
+  if reusable and not self.ownershipUnavailable and not self.buffDataUnavailable and not self.dataPending then
+    self.nearbyNeedCache[entry.unit]={guid=guid,class=entry.class,level=level,auras=auras,needs=needs,
+      untilTime=now+math.min(.5,wake or .5),wakeAt=wake and now+wake}
+  else self.nearbyNeedCache[entry.unit]=nil end
+  return needs
+end
+function B:NearbyActions(entry)
+  local actions={}
+  local list=self:ClassList()
+  self.blessingClassList=list
+  for _,need in ipairs(self:NearbyNeeds(entry,list)) do
+    local action=need.action
+    action.quickTarget=true; action.nearby=true
+    action.needState=need.reason; action.remaining=need.remaining; action.threshold=need.threshold
+    action.reason="nearby player: "..need.reason
+    -- Cached need decisions never bypass fresh recipient/range/power checks.
+    local valid,why=self:Validate(action)
+    action.ready=valid==true
+    action.waiting=not valid and why=="cooldown / global cooldown"
+    self.nearbyProbes=self.nearbyProbes or {}
+    local probeKey=entry.unit..":"..tostring(action.id)
+    local range=self:SpellRange(action)
+    self.nearbyProbes[probeKey]={action=action,range=range==nil and "unknown" or range}
+    if not self:HelperSuppressed(action) and (valid or action.waiting) and self:PrepareNearbyCast(action) then
+      action.selectedAt=GetTime(); actions[#actions+1]=action
+      if #actions==4 then break end
     end
   end
   return actions
+end
+local invalidateAura=B.InvalidateAura
+function B:InvalidateAura(unit)
+  if self.nearbyNeedCache then
+    if unit then self.nearbyNeedCache[unit]=nil else self.nearbyNeedCache={} end
+  end
+  return invalidateAura(self,unit)
 end
 function B:NearbyCandidates(force)
   if not force and self.nearbySnapshot then return self.nearbySnapshot end
@@ -259,7 +321,7 @@ function B:NearbyPlayers()
       and A.Call(UnitExists,unit)==true and A.Call(UnitCanAssist,"player",unit)==true
       and A.Call(UnitIsUnit,unit,"player")==false then
       local name=A.Call(UnitName,unit)
-      local class=A.Call(function() local _,c=UnitClass(unit); return c end)
+      local class=A.Class(unit)
       if A.Text(name) and A.Text(class) then
         seen[guid]=true; self.nearbyCounts.total=self.nearbyCounts.total+1
         local grouped=self:NearbyGroupMember(unit)
@@ -347,6 +409,7 @@ function B:SyncNearby()
   self.nearbyDisplay=nil; self.nearbyHovered=nil; self:CancelTimer("nearby-display")
   self.buffCastAttempt=nil; self.buffAuraFresh=nil
   for _,slot in ipairs({"buff-aura-early","buff-aura-settle","buff-aura-late"}) do self:CancelTimer(slot) end
+  self.nearbyNeedCache={}; self.nearbyNeedSettings=nil
   self.nearbyUnits={}; self.nearbyOrder={}; self.nearbySnapshot=nil; self.nearbyOffset=0; self.nearbyInvited={}; self.nearbyCounts={need=0,total=0}
   self:CancelTimer("nearby-settle"); self:CancelTimer("nearby-late")
   for _,event in ipairs({"NAME_PLATE_UNIT_ADDED","NAME_PLATE_UNIT_REMOVED","CVAR_UPDATE","UI_ERROR_MESSAGE","UNIT_SPELLCAST_SUCCEEDED"}) do
@@ -731,7 +794,7 @@ frame:SetScript("OnEvent",function(_,event,unit,message,spellID)
     if not A.Combat() then B:SeedNearby(unit) end
     -- Preserve arrival order through short nameplate hide/show cycles.
   elseif event=="PLAYER_ENTERING_WORLD" or event=="PLAYER_REGEN_ENABLED" then
-    B.nearbyUnits={}; B.nearbyOrder={}; if not A.Combat() then B:SeedNearby() end
+    B.nearbyNeedCache={}; B.nearbyUnits={}; B.nearbyOrder={}; if not A.Combat() then B:SeedNearby() end
     B:ScheduleNearbySettle()
   elseif event=="CVAR_UPDATE" then
     if not A.Text(unit) or (unit:lower()~="nameplateshowfriends" and unit:lower()~="nameplateshowfriendlyplayers") then return end
@@ -768,6 +831,7 @@ end
 local refresh=B.Refresh
 function B:Refresh(...)
   if self.db then self:SyncNearby() end
+  self.classListPassActive=true; self.refreshClassList=nil; self.nearbyNeedSettingsChecked=nil
   self.nearbySnapshot=nil
   local result=refresh(self,...)
   if self.db and not A.Combat() then
@@ -776,11 +840,12 @@ function B:Refresh(...)
     self:WatchNearbyRange()
     if self.db.nearbyEnabled and self.nextWakeDelay then self:ScheduleWake(self.nextWakeDelay+.03,"nearby threshold/retry") end
   end
+  self.classListPassActive=nil; self.refreshClassList=nil; self.nearbyNeedSettingsChecked=nil
   return result
 end
 local validate=B.Validate
 function B:Validate(action)
-  if action and action.nearby and not self:NearbyEntry(action.target) then return false,"nearby player no longer eligible" end
+  if action and action.nearby and not self:NearbyEntry(action.target,true) then return false,"nearby player no longer eligible" end
   return validate(self,action)
 end
 local slash=SlashCmdList.BUFFTAP
