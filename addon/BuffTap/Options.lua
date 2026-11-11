@@ -4,11 +4,11 @@
 
 local ADDON,B=...
 local A=B.API
+local T=B.OptionsTheme
 local function L(key,...) return B:Text(key,...) end
-local TAB={Buffs=1,Groups=2,Target=3,Nearby=4,Consumables=5,Weapons=6,Appearance=7,Helpers=8,Profiles=9,Diagnostics=10}
-local TAB_NAMES={L("Buffs"),L("Groups"),L("Target"),L("Nearby"),L("Consumables"),L("Weapons"),L("Customization"),L("Helpers"),L("Profiles"),L("Diagnostics")}
-local TAB_WIDTHS={60,54,50,54,88,64,90,58,60,74}
-local OPTIONS_WIDTH,OPTIONS_HEIGHT=760,868
+local TAB={Buffs=1,Groups=2,Target=3,Nearby=4,Consumables=5,Camping=6,Weapons=7,Appearance=8,Helpers=9,Profiles=10,Diagnostics=11}
+local TAB_NAMES={L("Buffs"),L("Groups"),L("Target"),L("Nearby"),L("Consumables"),L("Camping"),L("Weapons"),L("Customization"),L("Helpers"),L("Profiles"),L("Diagnostics")}
+local OPTIONS_WIDTH,OPTIONS_HEIGHT=932,836
 local ICON_PATH="Interface\\AddOns\\BuffTap\\Media\\BuffTapIcon"
 
 local function label(parent,text,x,y,font,width)
@@ -16,7 +16,7 @@ local function label(parent,text,x,y,font,width)
   fs:SetPoint("TOPLEFT",x,y)
   if width then fs:SetWidth(width); fs:SetJustifyH("LEFT"); fs:SetWordWrap(true) end
   fs:SetText(L(text))
-  if font=="GameFontDisableSmall" then fs:SetTextColor(0.73,0.73,0.70) end
+  if font=="GameFontDisableSmall" then fs:SetTextColor(unpack(T.muted)) end
   return fs
 end
 
@@ -27,9 +27,7 @@ local function line(parent,y)
 end
 
 local function card(parent,x,y,width,height)
-  local t=parent:CreateTexture(nil,"BACKGROUND")
-  t:SetColorTexture(0.065,0.085,0.10,0.65); t:SetPoint("TOPLEFT",x,y); t:SetSize(width,height)
-  return t
+  return T.Card(parent,x,y,width,height)
 end
 
 local function fitButtonText(control,width)
@@ -46,10 +44,10 @@ end
 local function flatButton(parent,text,x,y,w,fn)
   local b=CreateFrame("Button",nil,parent,"BackdropTemplate")
   b:SetBackdrop({bgFile="Interface\\Buttons\\WHITE8X8",edgeFile="Interface\\Buttons\\WHITE8X8",edgeSize=1})
-  b:SetBackdropColor(0.075,0.095,0.11,1); b:SetBackdropBorderColor(0.48,0.40,0.25,1)
-  b:SetNormalFontObject("GameFontHighlightSmall"); b:SetHighlightFontObject("GameFontNormalSmall")
+  b:SetBackdropColor(unpack(T.control)); b:SetBackdropBorderColor(unpack(T.border))
+  b:SetNormalFontObject("GameFontHighlightSmall"); b:SetHighlightFontObject("GameFontNormalSmall"); b:SetDisabledFontObject("GameFontDisableSmall")
   b:SetHighlightTexture("Interface\\Buttons\\WHITE8X8")
-  local highlight=b:GetHighlightTexture(); if highlight then highlight:SetVertexColor(0.8,0.65,0.25,0.18) end
+  local highlight=b:GetHighlightTexture(); if highlight then highlight:SetVertexColor(1,.82,.27,.12) end
   b:SetSize(w or 110,26); b:SetPoint("TOPLEFT",x,y); b:SetText(L(text)); b:SetScript("OnClick",fn)
   fitButtonText(b,w or 110)
   return b
@@ -106,7 +104,11 @@ local function selector(parent,text,x,y,width,choices,onSelect,searchable)
         if A.Combat() then return end
         onSelect(btn.choice); menu:Hide(); B:Options()
       end); menu.rows[i]=row end
-      row.choice=entry.key; row:SetText((searchable and entry.source and L(entry.source)..": " or "")..L(entry.name)); row:Show()
+      row.choice=entry.key; row:SetText((searchable and entry.source and L(entry.source)..": " or "")..L(entry.name))
+      local selected=control:GetText()==row:GetText()
+      row:SetBackdropColor(unpack(selected and {.17,.135,.065,1} or T.control))
+      row:SetBackdropBorderColor(unpack(selected and {.65,.52,.24,1} or T.border))
+      row:Show()
     end
   end
   if searchable then
@@ -122,6 +124,7 @@ local function selector(parent,text,x,y,width,choices,onSelect,searchable)
     menu.empty=label(menu.content,L("No matches"),8,-6,"GameFontDisableSmall"); menu.empty:Hide()
   end
   parent:HookScript("OnHide",function() menu:Hide() end)
+  T.Selector(control)
   return control
 end
 local function selectorArrow(control)
@@ -133,7 +136,7 @@ end
 
 local function check(parent,text,x,y,fn)
   local c=CreateFrame("CheckButton",nil,parent,"UICheckButtonTemplate")
-  c:SetSize(24,24); c:SetPoint("TOPLEFT",x,y); c.Text:SetText(L(text)); c:SetScript("OnClick",fn)
+  c:SetSize(24,24); c:SetPoint("TOPLEFT",x,y); c.Text:SetText(L(text)); c:SetScript("OnClick",fn); T.Check(c)
   return c
 end
 
@@ -152,14 +155,15 @@ end
 local function editbox(parent,x,y,w,numeric)
   local e=CreateFrame("EditBox",nil,parent,"InputBoxTemplate")
   e:SetSize(w or 64,22); e:SetPoint("TOPLEFT",x,y); e:SetAutoFocus(false); if numeric then e:SetNumeric(true) end
+  e:SetJustifyH("CENTER"); T.EditFocus(e)
   return e
 end
 
 local function panel(parent)
   local f=CreateFrame("Frame",nil,parent,"BackdropTemplate")
-  f:SetPoint("TOPLEFT",18,-206); f:SetPoint("BOTTOMRIGHT",-18,32)
+  f:SetPoint("TOPLEFT",190,-174); f:SetPoint("BOTTOMRIGHT",-18,32)
   f:SetBackdrop({bgFile="Interface\\Buttons\\WHITE8X8",edgeFile="Interface\\Buttons\\WHITE8X8",edgeSize=1})
-  f:SetBackdropColor(0.035,0.045,0.05,0.98); f:SetBackdropBorderColor(0.44,0.36,0.20,0.8)
+  f:SetBackdropColor(unpack(T.panel)); f:SetBackdropBorderColor(.38,.32,.20,.75)
   return f
 end
 
@@ -1009,7 +1013,7 @@ end
 function B:BuildHelperPage(parent)
   local f=panel(parent); parent.pages[TAB.Helpers]=f; self.helperWindow=f
   label(f,L("Everyday conveniences"),18,-16,"GameFontNormalLarge")
-  label(f,L("Choose optional helpers. PvP protection starts on; other helpers start off."),18,-43,"GameFontDisableSmall",680)
+  label(f,L("Optional conveniences, separate from your buff choices. PvP protection starts on."),18,-43,"GameFontDisableSmall",680)
   f.checks={}; f.descriptions={}; f.trackers={}
   local settings={
     {"helperDismiss",L("Dismiss a reminder for now"),L("Right-click a buff or item reminder to skip it until you change zones. Restore reminders below brings it back sooner.")},
@@ -1073,6 +1077,23 @@ function B:BuildHelperPage(parent)
   f.readinessIcon:SetSize(24,24); f.readinessIcon:SetPoint("TOPLEFT",18,-378)
   f.readinessIcon:SetTexture("Interface\\GLUES\\CHARACTERCREATE\\UI-CHARACTERCREATE-CLASSES")
   label(r,L("Class readiness"),52,-382,"GameFontNormalLarge")
+  f.oathCheck=check(r,L("Maintain assigned Oath"),18,-414,function(c)
+    if A.Combat() then return end
+    B.db.helperOath=c:GetChecked()==true; B:SyncReadiness(); B:RequestRefresh("Oath helper",0); B:Options()
+  end)
+  f.oathDescription=label(r,L("Oath of Light: one assigned recipient, out of combat. Assign yourself or a party/raid member below."),22,-442,"GameFontDisableSmall",650)
+  f.oathAssigned=label(r,"",22,-482,"GameFontHighlightSmall",320)
+  f.oathAssign=button(r,L("Use current target"),364,-474,190,function()
+    if A.Combat() then return end
+    local ok=B:SetOathAssignedFromTarget()
+    f.oathFeedback:SetText(L(ok and "Assignment saved." or "Select a friendly player first.")); B:Options()
+  end)
+  f.oathClear=button(r,L("Clear"),568,-474,110,function()
+    if A.Combat() then return end
+    B.db.oathAssigned={}; B.readinessPending=nil; B:InvalidateAura(); B:RequestRefresh("Oath assignment cleared",0); B:Options()
+  end)
+  f.oathFeedback=label(r,"",22,-505,"GameFontDisableSmall",650)
+  addHelp(f.oathCheck,L("Maintain assigned Oath"),L("Maintains Oath of Light on exactly one saved player. No automatic tank or healer choice. Existing Oaths from other paladins are preserved. Each cast requires your binding or click."))
   f.petCheck=check(r,L("Keep my pet ready"),18,-414,function(c)
     if A.Combat() then return end
     B.db.helperPet=c:GetChecked()==true; B:SyncReadiness(); B:RequestRefresh("pet helper",0); B:Options()
@@ -1101,7 +1122,7 @@ function B:BuildHelperPage(parent)
   local sm=f.soulMenu; sm:SetSize(400,394); sm:SetPoint("BOTTOMRIGHT",f.soulTarget,"TOPRIGHT",0,2)
   sm:SetFrameStrata("FULLSCREEN_DIALOG"); sm:SetFrameLevel(f:GetFrameLevel()+20); sm:SetClampedToScreen(true); sm:EnableMouse(true)
   sm:SetBackdrop({bgFile="Interface\\Buttons\\WHITE8X8",edgeFile="Interface\\Tooltips\\UI-Tooltip-Border",edgeSize=12})
-  sm:SetBackdropColor(.04,.04,.04,1); sm:Hide()
+  sm:SetBackdropColor(unpack(T.menu)); sm:SetBackdropBorderColor(unpack(T.border)); sm:Hide()
   sm:EnableKeyboard(true); sm:SetPropagateKeyboardInput(true)
   sm:SetScript("OnKeyDown",function(control,key)
     control:SetPropagateKeyboardInput(key~="ESCAPE")
@@ -1189,11 +1210,16 @@ end
 
 function B:UpdateHelperOptions()
   local f=self.helperWindow; if not f then return end
-  local class=self:ReadinessClass(); local warlock=class=="WARLOCK"
-  f.readiness:SetShown(warlock or class=="HUNTER"); f.demonMenu:Hide()
+  local class=self:ReadinessClass(); local warlock=class=="WARLOCK"; local paladin=class=="PALADIN"
+  f.readiness:SetShown(warlock or class=="HUNTER" or paladin); f.demonMenu:Hide()
   local classCoords=CLASS_ICON_TCOORDS and CLASS_ICON_TCOORDS[class]
-    or (warlock and {.75,1,.25,.5} or class=="HUNTER" and {0,.25,.25,.5})
+    or (warlock and {.75,1,.25,.5} or paladin and {0,.25,.5,.75} or class=="HUNTER" and {0,.25,.25,.5})
   if classCoords then f.readinessIcon:SetTexCoord(unpack(classCoords)) end
+  f.petCheck:SetShown(not paladin); f.petDescription:SetShown(not paladin)
+  for _,control in ipairs({f.oathCheck,f.oathDescription,f.oathAssigned,f.oathAssign,f.oathClear,f.oathFeedback}) do control:SetShown(paladin) end
+  f.oathCheck:SetChecked(self.db.helperOath==true)
+  local oath=self.db.oathAssigned
+  f.oathAssigned:SetText(L("Assigned player: ")..(type(oath)=="table" and oath.name or L("none")))
   f.petCheck:SetChecked(self.db.helperPet==true); f.stoneCheck:SetChecked(self.db.helperHealthstone==true)
   f.soulCheck:SetChecked(self.db.helperSoulstone==true)
   f.soulTarget:SetShown(warlock)
@@ -1241,7 +1267,7 @@ function B:UpdateHelperOptions()
   for _,entry in ipairs(trackers) do if entry.id==self.db.helperTracker then selected=true end end
   f.trackerHeading:SetText(L("Tracking"))
   f.treasure:SetShown(A.Known(2481)); f.treasure:SetChecked(self:HelperEnabled("helperTreasure"))
-  local trackerY=(warlock or class=="HUNTER") and -529 or -382
+  local trackerY=(warlock or class=="HUNTER" or paladin) and -529 or -382
   f.treasure:ClearAllPoints(); f.treasure:SetPoint("TOPLEFT",490,trackerY+2)
   f.trackerLine:ClearAllPoints(); f.trackerLine:SetPoint("TOPLEFT",18,trackerY+13); f.trackerLine:SetPoint("TOPRIGHT",-18,trackerY+13)
   f.trackerHeading:ClearAllPoints(); f.trackerHeading:SetPoint("TOPLEFT",18,trackerY)
@@ -1297,7 +1323,7 @@ function B:ShowQuickChoices(action,page)
   if not f then
     f=CreateFrame("Frame",nil,UIParent,"BackdropTemplate"); self.quickChoices=f
     f:SetSize(300,244); f:SetFrameStrata("FULLSCREEN_DIALOG"); f:SetClampedToScreen(true); f:EnableMouse(true)
-    f:SetBackdrop({bgFile="Interface\\Buttons\\WHITE8X8",edgeFile="Interface\\Tooltips\\UI-Tooltip-Border",edgeSize=12}); f:SetBackdropColor(.06,.06,.06,.98)
+    f:SetBackdrop({bgFile="Interface\\Buttons\\WHITE8X8",edgeFile="Interface\\Tooltips\\UI-Tooltip-Border",edgeSize=12}); f:SetBackdropColor(unpack(T.menu))
     label(f,"Choose, then use the main icon",12,-12,"GameFontNormalSmall")
     f.rows={}
     for i=1,6 do
@@ -1352,7 +1378,7 @@ function B:ChooseConsumable(family,anchor)
     f=CreateFrame("Frame","BuffTapItemPicker",self.options,"BackdropTemplate"); self.itemPicker=f
     f:SetSize(650,550); f:SetFrameStrata("FULLSCREEN_DIALOG"); f:SetClampedToScreen(true); f:EnableMouse(true)
     f:SetBackdrop({bgFile="Interface\\Buttons\\WHITE8X8",edgeFile="Interface\\Tooltips\\UI-Tooltip-Border",edgeSize=14})
-    f:SetBackdropColor(0.045,0.045,0.04,1); f:SetBackdropBorderColor(0.60,0.48,0.25,1)
+    f:SetBackdropColor(unpack(T.window)); f:SetBackdropBorderColor(.60,.48,.25,1)
     f.title=label(f,"Choose item",20,-18,"GameFontNormalLarge")
     button(f,L("Close"),550,-14,78,function() f:Hide() end)
     label(f,L("Search"),20,-59,"GameFontHighlightSmall")
@@ -1459,15 +1485,15 @@ function B:Options()
     f=CreateFrame("Frame","BuffTapOptions",UIParent,"BackdropTemplate"); self.options=f
     f:SetSize(OPTIONS_WIDTH,OPTIONS_HEIGHT); f:SetPoint("CENTER"); f:SetFrameStrata("DIALOG"); f:SetToplevel(true); f:SetClampedToScreen(true)
     f:SetBackdrop({bgFile="Interface\\Buttons\\WHITE8X8",edgeFile="Interface\\Tooltips\\UI-Tooltip-Border",tile=true,tileSize=16,edgeSize=14,insets={left=3,right=3,top=3,bottom=3}})
-    f:SetBackdropColor(0.035,0.035,0.035,1); f:SetBackdropBorderColor(0.60,0.48,0.25,1)
+    f:SetBackdropColor(unpack(T.window)); f:SetBackdropBorderColor(.60,.48,.25,1)
     f:EnableMouse(true); f:SetMovable(true); f:RegisterForDrag("LeftButton"); f:SetScript("OnDragStart",f.StartMoving); f:SetScript("OnDragStop",f.StopMovingOrSizing)
     if UISpecialFrames then table.insert(UISpecialFrames,"BuffTapOptions") end
 
     -- Share the actual banner artwork with onboarding.
     f.banner=B:AddMiniBanner(f,OPTIONS_WIDTH)
-    f.versionText=label(f,"v"..B.version,550,-22,"GameFontDisableSmall",70)
+    f.versionText=label(f.banner,"v"..B.version,800,-43,"GameFontDisableSmall",100)
     f.versionText:SetJustifyH("RIGHT")
-    f.closeButton=button(f,L("Close"),636,-16,100,function() f:Hide() end)
+    f.closeButton=button(f,L("Close"),808,-16,100,function() f:Hide() end)
     -- Keep explicit header artwork for Forever clients whose template leaves
     -- this control without visible button textures.
     f.closeButton:SetNormalTexture("Interface\\Buttons\\UI-Panel-Button-Up")
@@ -1477,8 +1503,8 @@ function B:Options()
       if texture then texture:SetTexCoord(0,0.625,0,0.6875) end
     end
     f.closeButton:SetSize(100,28)
-    f.statusText=label(f,"",200,-144,"GameFontHighlightSmall",536); f.statusText:SetWordWrap(false); f.statusText:SetJustifyH("RIGHT")
-    f.saveHint=label(f,L("Checkboxes, lists and sliders save immediately. Numeric fields: Enter to save; Escape to cancel."),18,-848,"GameFontDisableSmall",706)
+    f.statusText=label(f,"",220,-144,"GameFontHighlightSmall",688); f.statusText:SetWordWrap(false); f.statusText:SetJustifyH("RIGHT")
+    f.saveHint=label(f,L("Checkboxes, lists and sliders save immediately. Numeric fields: Enter to save; Escape to cancel."),190,-816,"GameFontDisableSmall",718)
     f.enable=check(f,L("Enable BuffTap"),24,-138,function(c) setAndRefresh("enabled",c:GetChecked()==true) end)
     line(f,-162)
 
@@ -1492,24 +1518,33 @@ function B:Options()
       if f.blessingMenu then f.blessingMenu:Hide() end
       for i,p in ipairs(f.pages) do p:SetShown(i==index) end
       for i,t in ipairs(f.tabs) do
-        if i==index then t:LockHighlight() else t:UnlockHighlight() end
+        if i==index then t:LockHighlight(); t:SetNormalFontObject("GameFontNormalSmall") else t:UnlockHighlight(); t:SetNormalFontObject("GameFontHighlightSmall") end
+        T.Navigation(t,i==index)
+        fitButtonText(t,116)
       end
+      if index==TAB.Camping or B.campOptionsWasOpen then B.campOptionsWasOpen=index==TAB.Camping; B:UpdateCamping() end
       if index==TAB.Profiles and f.profiles then B:SaveClassSetup(); B:UpdateProfileOptions() end
     end
     f.selectTab=setTab
-    local tabX=24
+    f.navBackground=card(f,18,-174,154,630)
+    local navIcons={"Spell_Nature_Regeneration","Spell_Holy_PrayerOfFortitude","Ability_Hunter_SniperShot","Ability_Tracking","INV_Potion_52","Spell_Fire_Fire","INV_Sword_04","INV_Misc_Gear_01","Spell_Holy_HolyBolt","INV_Misc_Book_09","INV_Misc_Spyglass_03"}
     for i,name in ipairs(names) do
       local idx=i
-      local width=TAB_WIDTHS[i]
-      local t=flatButton(f,name,tabX,-166,width,function() setTab(idx) end)
-      t:SetSize(width,30); f.tabs[i]=t
-      tabX=tabX+width+6
+      local t=flatButton(f,name,24,-180-(i-1)*40,142,function() setTab(idx) end)
+      t:SetSize(142,34); f.tabs[i]=t
+      local fs=t:GetFontString()
+      if fs then fs:ClearAllPoints(); fs:SetPoint("LEFT",34,0); fs:SetPoint("RIGHT",-6,0); fs:SetJustifyH("LEFT") end
+      t.icon=t:CreateTexture(nil,"ARTWORK"); t.icon:SetSize(18,18); t.icon:SetPoint("LEFT",9,0); t.icon:SetTexture("Interface\\Icons\\"..navIcons[i]); fitButtonText(t,116)
+      T.Navigation(t,false)
     end
+    local navRule=f:CreateTexture(nil,"BACKGROUND"); navRule:SetColorTexture(.45,.38,.25,.45); navRule:SetPoint("TOPLEFT",30,-650); navRule:SetSize(130,1)
+    label(f,"Every cast still needs your click or binding.",30,-676,"GameFontDisableSmall",126)
+    f.navHelp=button(f,L("How to buff"),30,-744,130,function() B:ShowWelcome(true) end)
 
     -- BUFFS PAGE
     local buffs=panel(f); f.pages[TAB.Buffs]=buffs
     label(buffs,L("Buffs"),18,-16,"GameFontNormalLarge")
-    f.buffInstruction=label(buffs,L("Use arrows to reorder. Buffs at the top are checked first."),18,-42,"GameFontDisableSmall",650)
+    f.buffInstruction=label(buffs,L("Choose your buffs. Move the most important ones to the top."),18,-42,"GameFontDisableSmall",650)
     label(buffs,L("Rebuff"),334,-66,"GameFontDisableSmall",70)
     label(buffs,L("Priority"),590,-66,"GameFontDisableSmall",70)
     local scroll=CreateFrame("ScrollFrame",nil,buffs,"UIPanelScrollFrameTemplate")
@@ -1518,7 +1553,7 @@ function B:Options()
 
     f.emptyBuffs=label(child,"No supported aura buffs for this class.",8,-12,"GameFontDisableSmall",610)
     local weapons=panel(f); f.pages[TAB.Weapons]=weapons
-    card(weapons,12,-98,698,110); f.coatingCard=card(weapons,12,-220,698,120); f.weaponTimingCard=card(weapons,12,-358,698,110)
+    f.weaponClassCard=card(weapons,12,-98,698,110); f.coatingCard=card(weapons,12,-220,698,120); f.weaponTimingCard=card(weapons,12,-358,698,110)
     f.weaponTitle=label(weapons,L("Weapon buffs"),18,-16,"GameFontNormalLarge")
     f.weaponHint=label(weapons,L("Maintain a preferred buff on each weapon using your normal BuffTap binding."),18,-42,"GameFontDisableSmall",660)
     f.weaponRetry=button(weapons,L("Retry reminders"),528,-16,154,function() B:RetryConsumableReminders(); B:Options() end)
@@ -1645,20 +1680,21 @@ function B:Options()
     local target=panel(f); f.pages[TAB.Target]=target
     label(target,L("Friendly target buffing"),18,-16,"GameFontNormalLarge")
 
-    label(target,"Click a friendly player and BuffTap can offer selected single-target buffs before returning to your normal queue.",18,-42,"GameFontDisableSmall",680)
+    label(target,"Target a friendly player to offer your selected buffs, then return to your normal queue.",18,-42,"GameFontDisableSmall",680)
     f.friendlyTarget=check(target,L("Enable friendly target buffing"),18,-76,function(s) setAndRefresh("friendlyTarget",s:GetChecked()==true); B:Options() end)
     addHelp(f.friendlyTarget,L("Friendly target buffing"),"This toggle inspects only the player you explicitly target. Nearby buffing is enabled separately and requires friendly nameplates. Target mode uses single-target versions. Grouped Paladin targets follow enabled blessing assignments; ungrouped targets use their independent target settings.")
     local nearby=panel(f); f.pages[TAB.Nearby]=nearby
     label(nearby,"Nearby buffing & players",18,-16,"GameFontNormalLarge")
-    flatButton(nearby,"Open nearby window",506,-16,176,function() B:ShowNearbySetup() end)
-    label(nearby,"Buff nearby players, or keep a compact player list for quick invitations.",18,-48,"GameFontDisableSmall",680)
+    button(nearby,"Open nearby window",506,-12,176,function() B:ShowNearbySetup() end)
+    label(nearby,"Buff nearby players, invite someone new, or use the player list on its own.",18,-48,"GameFontDisableSmall",680)
+    card(nearby,12,-76,698,88)
     f.nearbyEnable=check(nearby,"Enable nearby window",18,-92,function(c)
       if (c:GetChecked()==true)~=B.db.nearbyEnabled then B:ToggleNearby() end
       B:Options()
     end)
-    f.nearbyAll=check(nearby,"Show all nearby players",370,-92,function(c) B:SetNearbyView(c:GetChecked()==true); B:Options() end)
+    f.nearbyAll=check(nearby,"Show all nearby players",364,-92,function(c) B:SetNearbyView(c:GetChecked()==true); B:Options() end)
     f.nearbyBuffing=check(nearby,"Offer nearby buffs",18,-128,function(c) setAndRefresh("nearbyBuffing",c:GetChecked()==true); B:Options() end)
-    f.nearbyInvites=check(nearby,"Show invite / suggest buttons",370,-128,function(c) setAndRefresh("nearbyInvites",c:GetChecked()==true); B:Options() end)
+    f.nearbyInvites=check(nearby,"Show invite / suggest buttons",364,-128,function(c) setAndRefresh("nearbyInvites",c:GetChecked()==true); B:Options() end)
     addHelp(f.nearbyEnable,"Nearby window","Requires friendly player nameplates (normally Shift+V). Tracks up to 40 observed players, with five visible rows and a scrollbar. Shift-left-click the minimap icon toggles the window. Hidden during combat.")
     addHelp(f.nearbyAll,"Show all nearby players","Keep observed players listed after buffing. Group members appear only while a buff is queued. Use the small people icon in the window header to switch views.")
     addHelp(f.nearbyBuffing,"Offer nearby buffs","Uses your Target preferences for strangers and group settings for current group members. Every cast requires a click or binding, out of combat. Disable to use the all-players view for invites only.")
@@ -1666,14 +1702,19 @@ function B:Options()
     label(nearby,"Friendly player nameplates required. Five visible rows; scroll up to 40 players.",18,-176,"GameFontDisableSmall",680)
     line(nearby,-210)
     label(nearby,"Using the nearby window",18,-232,"GameFontNormalLarge")
-    label(nearby,"The all-players view keeps observed strangers listed after buffing. Group members appear only while an eligible group buff is queued.",18,-268,"GameFontHighlightSmall",660)
-    label(nearby,"Buff candidates appear first. The left-side + button invites. A > button suggests an invitation to your leader. Each action requires your click.",18,-316,"GameFontHighlightSmall",660)
-    label(nearby,"Buff offers use your Target preferences for strangers and Groups settings for party or raid members. PvP protection still applies.",18,-364,"GameFontHighlightSmall",660)
-    label(nearby,"The window stays five rows tall. Use the scrollbar in busy areas; a bound mouse wheel continues to buff.",18,-412,"GameFontHighlightSmall",660)
-    label(nearby,"Shift-left-click the minimap icon to toggle the window. Drag its header when unlocked. The window hides during combat.",18,-460,"GameFontDisableSmall",660)
+    card(nearby,12,-264,336,118); card(nearby,364,-264,346,118)
+    label(nearby,"Buffs first",24,-276,"GameFontNormal")
+    label(nearby,"Buff offers use your Target preferences for strangers and Groups settings for party or raid members. PvP protection still applies.",24,-304,"GameFontHighlightSmall",308)
+    label(nearby,"Invite / suggest",376,-276,"GameFontNormal")
+    label(nearby,"Buff candidates appear first. The left-side + button invites. A > button suggests an invitation to your leader. Each action requires your click.",376,-304,"GameFontHighlightSmall",316)
+    card(nearby,12,-394,698,94)
+    label(nearby,"Show all nearby players",24,-406,"GameFontNormal")
+    label(nearby,"The all-players view keeps observed strangers listed after buffing. Group members appear only while an eligible group buff is queued.",24,-434,"GameFontHighlightSmall",660)
+    label(nearby,"Five visible rows keep the window compact. Scroll over Nearby to browse players; use your buff binding after moving the pointer away.",18,-510,"GameFontHighlightSmall",660)
+    label(nearby,"Shift-left-click the minimap icon to toggle the window. Drag its header when unlocked. The window hides during combat.",18,-562,"GameFontDisableSmall",660)
     card(target,12,-108,698,84)
     label(target,"Default target refresh",18,-116,"GameFontNormal")
-    label(target,"Useful for passersby: a long buff can be refreshed much earlier here without changing party/raid timing.",18,-138,"GameFontDisableSmall",680)
+    label(target,"Refresh passing players earlier without changing your party or raid thresholds.",18,-138,"GameFontDisableSmall",680)
     f.targetDefaultSlider=compactSlider(target,30,1800,30,300,formatSeconds,function(_,value)
       B.db.targetSeconds=value; B:InvalidateAura("target"); B:RequestRefresh("target refresh default",0.08)
     end)
@@ -1734,7 +1775,7 @@ function B:Options()
     end
     f.selectConsumableView(false)
     label(consume,L("Consumables"),18,-16,"GameFontNormalLarge")
-    label(consume,"Choose the food, flask and elixir buffs you want to maintain.",18,-42,"GameFontDisableSmall",680)
+    label(consume,"Choose food, a flask, an elixir and an optional utility consumable.",18,-42,"GameFontDisableSmall",680)
     f.consumablesEnable=check(consume,"Enable consumable reminders",18,-72,function(c)
       if not A.Combat() then B.db.consumablesEnabled=c:GetChecked()==true; if B.InvalidateConsumables then B:InvalidateConsumables() end; B:RequestRefresh("consumables master",0); B:Options() end
     end)
@@ -1759,8 +1800,8 @@ function B:Options()
       row.choice=label(row,"Auto",82,-29,"GameFontHighlightSmall",420)
       row.prev=button(row,L("Choose"),584,-8,86,function(btn) B:ChooseConsumable(btn:GetParent().family,btn) end)
       row.inventory=label(row,"",450,-11,"GameFontHighlightSmall",120)
-      label(row,family.protectPresent and "Preserve active elixirs; remind after expiry" or "Rebuff at",42,-52,"GameFontDisableSmall",family.protectPresent and 390 or 62)
-      addHelp(row.enable,"Maintain this consumable buff","Enable this family to receive reminders for your selected food, flask or elixir. Enable consumable reminders above too. Preferences remain saved when supplies run out.")
+      label(row,family.protectPresent and (family.key=="utility" and "Preserve active utility; remind after expiry" or "Preserve active elixirs; remind after expiry") or "Rebuff at",42,-52,"GameFontDisableSmall",family.protectPresent and 390 or 62)
+      addHelp(row.enable,"Maintain this consumable buff","Enable this family to maintain its selected item. Utility maintains one choice; recognized active utility effects are preserved until expiry. Enable consumable reminders above too. Preferences stay saved when supplies run out.")
       row.threshold=compactSlider(row,30,1800,30,230,formatSeconds,function(slider,value)
         local fam=slider:GetParent().family
         if fam then B:SetConsumableThreshold(fam,value); B:InvalidateAura("player"); B:RequestRefresh("consumable threshold",0.08) end
@@ -1768,19 +1809,71 @@ function B:Options()
       row.threshold:SetPoint("TOPLEFT",108,-54)
       f.consumableRows[index]=row
     end
-    local campY=-116-(#(B.ConsumableFamilies or {}))*80-4
-    line(consume,campY)
-    label(consume,"Camp Benefits",18,campY-22,"GameFontNormal")
-    f.campStatus=label(consume,"Status: -",132,campY-22,"GameFontHighlightSmall",260)
-    label(consume,"Recognition only in this build; BuffTap will not guess individual camp effects or interact with camp objects.",18,campY-44,"GameFontDisableSmall",660)
+    local consumeFooterY=-116-(#(B.ConsumableFamilies or {}))*80-4
 
-    f.consumeRetry=button(consume,L("Retry reminders"),18,-450,154,function() B:RetryConsumableReminders(); B:Options() end)
+    f.consumeRetry=button(consume,L("Retry reminders"),18,consumeFooterY-80,154,function() B:RetryConsumableReminders(); B:Options() end)
     addHelp(f.consumeRetry,L("Retry reminders"),L("Restarts item loading and paused consumable reminders. Changed item effects remain blocked."))
-    f.consumePauseStatus=label(consume,"",186,-455,"GameFontHighlightSmall",496)
+    f.consumePauseStatus=label(consume,"",186,consumeFooterY-85,"GameFontHighlightSmall",496)
+
+    -- CAMPING PAGE
+    local camping=panel(f); f.pages[TAB.Camping]=camping; f.campingPage=camping; f.campingTab=TAB.Camping
+    local function campChange(key,value)
+      if A.Combat() then return end
+      B.db[key]=value; B:NormalizeCamping(); B:UpdateCamping(); B:UpdateCampingOptions()
+    end
+    label(camping,"Camping & sleeping bag",18,-16,"GameFontNormalLarge")
+    label(camping,"Independent camp and experience reminders. Your regular buff binding stays unchanged.",18,-42,"GameFontDisableSmall",660)
+    button(camping,"Open setup tray",520,-12,162,function() B:ToggleCampTray() end)
+    card(camping,12,-64,698,46)
+    f.campingStatus=label(camping,"",28,-75,"GameFontHighlightSmall",318)
+    f.sleepingStatus=label(camping,"",364,-75,"GameFontHighlightSmall",318)
+    card(camping,12,-116,698,98); card(camping,12,-232,698,110); card(camping,12,-350,698,126)
+    f.campingEnable=check(camping,"Separate camp reminder",18,-122,function(c) campChange("campReminder",c:GetChecked()==true) end)
+    f.campingSound=check(camping,"Sound",18,-182,function(c) campChange("campSound",c:GetChecked()==true) end)
+    f.campingAnywhere=check(camping,"Warn away from camp",364,-122,function(c) campChange("campAnywhere",c:GetChecked()==true) end)
+    addHelp(f.campingAnywhere,"Warn away from camp","Show the reminder outdoors when a tracked camp or sleeping bag benefit is missing or expiring, even with no camp nearby.")
+    f.campingTrack=check(camping,"Camp benefits",18,-152,function(c) campChange("campTrackBenefits",c:GetChecked()==true) end)
+    f.sleepingTrack=check(camping,"Sleeping bag XP",364,-152,function(c) campChange("campTrackBag",c:GetChecked()==true) end)
+    addHelp(f.sleepingTrack,"Sleeping bag XP","Tracks all three Well-Rested stacks and their remaining duration. Food reminders remain under Consumables.")
+    f.campingWarning=selector(camping,"",364,-181,318,function() return {{key=60,name="Warn: 1 minute"},{key=300,name="Warn: 5 minutes"},{key=600,name="Warn: 10 minutes"}} end,function(v) campChange("campWarning",v) end)
+    line(camping,-224)
+    label(camping,"Camp reminder appearance",18,-238,"GameFontNormalLarge")
+    label(camping,"Size",18,-275,"GameFontHighlightSmall")
+    f.campingSize=compactSlider(camping,24,96,4,160,function(v) return tostring(v).." px" end,function(_,v) campChange("campSize",v) end); f.campingSize:SetPoint("TOPLEFT",110,-274)
+    label(camping,"Opacity",364,-275,"GameFontHighlightSmall")
+    f.campingOpacity=compactSlider(camping,25,100,5,160,function(v) return tostring(v).."%" end,function(_,v) campChange("campOpacity",v/100) end); f.campingOpacity:SetPoint("TOPLEFT",456,-274)
+    f.campingEffect=selector(camping,"",18,-310,240,function() return {{key="none",name="Effect: None"},{key="soft",name="Effect: Soft glow"},{key="pulse",name="Effect: Pulse"},{key="pixel",name="Effect: Pixel border"},{key="autocast",name="Effect: Sparkles"},{key="proc",name="Effect: Spell glow"}} end,function(v) campChange("campEffectStyle",v) end)
+    f.campingColor=selector(camping,"",274,-310,196,function() return {{key="gold",name="Gold"},{key="cyan",name="Cyan"},{key="green",name="Green"},{key="red",name="Red"},{key="white",name="White"}} end,function(v) campChange("campEffectColor",v) end)
+    f.campingSpeed=selector(camping,"",486,-310,196,function() return {{key="slow",name="Slow"},{key="normal",name="Normal"},{key="fast",name="Fast"}} end,function(v) campChange("campEffectSpeed",v) end)
+    addHelp(f.campingColor,"Effect color","Changes only the camp reminder effect, not the regular buff icon.")
+    addHelp(f.campingSpeed,"Effect speed","Changes only the camp reminder animation speed.")
+    label(camping,"Reminder text",18,-350,"GameFontNormal")
+    f.campingCountdown=check(camping,"Show countdown",18,-374,function(v) campChange("campShowCountdown",v:GetChecked()==true) end)
+    f.campingStacks=check(camping,"Show sleeping bag stacks",364,-374,function(v) campChange("campShowStacks",v:GetChecked()==true) end)
+    f.campingTextFont=selector(camping,"",18,-412,176,function() return B:ReminderFonts(B.db.campTextFont) end,function(v) campChange("campTextFont",v) end)
+    f.campingTextSize=selector(camping,"",206,-412,96,function() return B:TextSizeChoices() end,function(v) campChange("campTextSize",v) end,"scroll")
+    f.campingTextColor=selector(camping,"",314,-412,176,function() return B:ReminderColors(true) end,function(v) campChange("campTextColor",v) end)
+    f.campingTextOutline=selector(camping,"",502,-412,180,function() return B:TextOutlineChoices() end,function(v) campChange("campTextOutline",v) end)
+    addHelp(f.campingTextFont,"Label font","Changes only the camp reminder text.")
+    addHelp(f.campingTextSize,"Text size","Game size restores the original game font size.")
+    addHelp(f.campingTextOutline,"Text outline","Choose an outline to keep text readable against the game world.")
+    label(camping,"Text spacing",18,-456,"GameFontHighlightSmall")
+    f.campingTextGap=compactSlider(camping,0,20,1,170,function(v) return tostring(v).." px" end,function(_,v) campChange("campTextGap",v) end); f.campingTextGap:SetPoint("TOPLEFT",110,-452)
+    button(camping,"Preview / move",18,-492,176,function() B:PreviewCampReminder() end)
+    button(camping,"Center",210,-492,98,function() B.db.campX=0; B.db.campY=0; B:PreviewCampReminder() end)
+    button(camping,"Reset camp look",324,-492,170,function()
+      if A.Combat() then return end
+      B.db.campSize=40; B.db.campOpacity=1; B.db.campX=100; B.db.campY=-180; B.db.campEffectStyle="soft"; B.db.campEffectColor="gold"; B.db.campEffectSpeed="normal"; B.db.campTextFont="default"; B.db.campTextSize=0; B.db.campTextColor="white"; B.db.campTextOutline="outline"; B.db.campTextGap=4; B.db.campShowCountdown=true; B.db.campShowStacks=true; B:PreviewCampReminder(); B:UpdateCampingOptions()
+    end)
+    label(camping,"Preview lasts 12 seconds. Drag the camp icon to position it.",18,-532,"GameFontDisableSmall",660)
+    f.campingPause=label(camping,"",18,-562,"GameFontHighlightSmall",470)
+    f.campingResume=button(camping,"Resume reminder",510,-492,172,function() B.campSnoozeSession=nil; B.campSnoozeUntil=nil; B:UpdateCamping(); B:UpdateCampingOptions() end)
+    label(camping,"Right-click the camp icon to snooze. Camp items and the sleeping bag are used from the setup tray; food stays under Consumables.",18,-588,"GameFontDisableSmall",660)
+    f:HookScript("OnHide",function() if not A.Combat() then B:UpdateCamping() end end)
 
     -- APPEARANCE PAGE
     local app=panel(f); f.pages[TAB.Appearance]=app
-    card(app,12,-10,698,88); card(app,12,-118,698,256); card(app,12,-390,698,128); card(app,12,-528,698,78)
+    card(app,12,-10,698,88); card(app,12,-118,698,286); card(app,12,-414,698,128); card(app,12,-552,698,62)
     label(app,L("Binding"),18,-16,"GameFontNormalLarge")
     f.bindingText=label(app,"Current: -",18,-46,"GameFontHighlight",280)
     button(app,L("Set binding"),310,-42,116,function() B:CaptureBinding() end)
@@ -1801,31 +1894,43 @@ function B:Options()
       for _,e in ipairs({f.sizeEdit,f.opacityEdit,f.xEdit,f.yEdit}) do e.unsaved=nil; e:ClearFocus() end
       B:InitDB(); B.appearance=nil; B:RequestRefresh("appearance",0); B:Options()
     end)
-    f.soundCheck=check(app,L("Enable reminder sound"),18,-488,function(s) setAndRefresh("sound",s:GetChecked()==true) end)
-    f.glowCheck=check(app,L("Glow"),18,-204,function(s) setAndRefresh("glow",s:GetChecked()==true) end)
-    f.pulseCheck=check(app,L("Pulse"),170,-204,function(s) setAndRefresh("pulse",s:GetChecked()==true) end)
-    f.buffNameCheck=check(app,L("Show buff name"),18,-238,function(s) setAndRefresh("showBuffName",s:GetChecked()==true) end)
-    f.targetNameCheck=check(app,L("Show buff recipient"),326,-238,function(s) setAndRefresh("showTargetName",s:GetChecked()==true) end)
+    f.soundCheck=check(app,L("Enable reminder sound"),18,-510,function(s) setAndRefresh("sound",s:GetChecked()==true) end)
+    f.effectButton=selector(app,"",18,-200,240,function() return {{key="none",name="Effect: None"},{key="soft",name="Effect: Soft glow"},{key="pulse",name="Effect: Pulse"},{key="pixel",name="Effect: Pixel border"},{key="autocast",name="Effect: Sparkles"},{key="proc",name="Effect: Spell glow"}} end,function(v) setAndRefresh("effectStyle",v) end)
+    f.effectColorButton=selector(app,"",274,-200,196,function() return {{key="gold",name="Gold"},{key="cyan",name="Cyan"},{key="green",name="Green"},{key="red",name="Red"},{key="white",name="White"}} end,function(v) setAndRefresh("effectColor",v) end)
+    f.effectSpeedButton=selector(app,"",486,-200,196,function() return {{key="slow",name="Slow"},{key="normal",name="Normal"},{key="fast",name="Fast"}} end,function(v) setAndRefresh("effectSpeed",v) end)
+    addHelp(f.effectButton,"Icon effect","Choose a border or glow. Effects stop when the reminder is hidden. Unsupported effects use a soft glow.")
+    addHelp(f.effectColorButton,"Effect color","Changes the icon effect color.")
+    addHelp(f.effectSpeedButton,"Effect speed","Changes the animation speed.")
+    f.buffNameCheck=check(app,L("Show buff name"),18,-236,function(s) setAndRefresh("showBuffName",s:GetChecked()==true) end)
+    f.targetNameCheck=check(app,L("Show buff recipient"),364,-236,function(s) setAndRefresh("showTargetName",s:GetChecked()==true) end)
     addHelp(f.targetNameCheck,"Buff recipient","Shows the name of whoever BuffTap is about to buff, including you when the current action is a self buff.")
-    f.timerCheck=check(app,L("Remaining time"),18,-272,function(s) setAndRefresh("showTimer",s:GetChecked()==true) end)
-    f.groupBadgeCheck=check(app,L("Group count"),326,-272,function(s) setAndRefresh("showGroupBadge",s:GetChecked()==true) end)
+    f.timerCheck=check(app,L("Remaining time"),18,-266,function(s) setAndRefresh("showTimer",s:GetChecked()==true) end)
+    f.groupBadgeCheck=check(app,L("Group count"),364,-266,function(s) setAndRefresh("showGroupBadge",s:GetChecked()==true) end)
     addHelp(f.timerCheck,L("Remaining time"),"Shows a small countdown only when the selected buff is already inside its rebuff window.")
     addHelp(f.groupBadgeCheck,L("Group count"),"Shows how many players need the buff when BuffTap selects a group-version spell.")
-    button(app,L("Move icon"),18,-318,108,function() B:MoveAnchor() end)
-    button(app,L("Center"),136,-318,90,function() if not A.Combat() then B.db.x=0; B.db.y=-180; B.appearance=nil; B:RequestRefresh("center icon",0); B:Options() end end)
-    f.resetLookButton=button(app,L("Reset look"),236,-318,100,function()
-      if not A.Combat() then B.db.showReminder=true; B.db.size=64; B.db.opacity=1; B.db.x=0; B.db.y=-180; B.db.glow=true; B.db.pulse=false; B.db.showBuffName=false; B.db.showTargetName=true; B.db.showTimer=false; B.db.showGroupBadge=true; B.db.labelFont="default"; B.db.labelColor="default"; B.appearance=nil; B:RequestRefresh("reset look",0); B:Options() end
+    button(app,L("Move icon"),18,-366,108,function() B:MoveAnchor() end)
+    button(app,L("Center"),136,-366,90,function() if not A.Combat() then B.db.x=0; B.db.y=-180; B.appearance=nil; B:RequestRefresh("center icon",0); B:Options() end end)
+    f.resetLookButton=button(app,L("Reset look"),236,-366,100,function()
+      if not A.Combat() then B.db.showReminder=true; B.db.size=64; B.db.opacity=1; B.db.x=0; B.db.y=-180; B.db.glow=true; B.db.pulse=false; B.db.effectStyle=nil; B.db.effectColor="gold"; B.db.effectSpeed="normal"; B.db.showBuffName=false; B.db.showTargetName=true; B.db.showTimer=false; B.db.showGroupBadge=true; B.db.labelFont="default"; B.db.labelColor="default"; B.db.labelSize=0; B.db.labelOutline=B:GameTextOutline(); B.db.labelGap=5; B.appearance=nil; B:RequestRefresh("reset look",0); B:Options() end
     end)
-    label(app,L("Enter saves fields. Move here or in Blizzard Edit Mode."),18,-354,"GameFontDisableSmall",380)
-    label(app,L("Label font"),350,-206,"GameFontHighlightSmall")
-    f.fontButton=selector(app,"",440,-200,242,function() return B:ReminderFonts() end,function(value) B.db.labelFont=value; B.appearance=nil; B:RequestRefresh("label font",0) end)
-    f.colorButton=selector(app,"",522,-318,160,function() return B:ReminderColors() end,function(value) B.db.labelColor=value; B.appearance=nil; B:RequestRefresh("label color",0) end)
+    local function textChange(key,value)
+      setAndRefresh(key,value)
+      if B.appearancePreview and B.appearancePreview:IsShown() then B:PreviewAppearance() end
+    end
+    f.fontButton=selector(app,"",18,-298,176,function() return B:ReminderFonts() end,function(v) textChange("labelFont",v) end)
+    f.labelSizeButton=selector(app,"",206,-298,96,function() return B:TextSizeChoices() end,function(v) textChange("labelSize",v) end,"scroll")
+    f.colorButton=selector(app,"",314,-298,176,function() return B:ReminderColors() end,function(v) textChange("labelColor",v) end)
+    f.labelOutlineButton=selector(app,"",502,-298,180,function() return B:TextOutlineChoices() end,function(v) textChange("labelOutline",v) end)
+    label(app,"Text spacing",18,-337,"GameFontHighlightSmall")
+    f.labelGap=compactSlider(app,0,20,1,170,function(v) return tostring(v).." px" end,function(_,v) textChange("labelGap",v) end); f.labelGap:SetPoint("TOPLEFT",110,-333)
+    addHelp(f.labelSizeButton,"Text size","Game size restores the original game font size.")
+    addHelp(f.labelOutlineButton,"Text outline","Choose an outline to keep text readable against the game world.")
     addHelp(f.fontButton,L("Label font"),L("Choose a built-in game font for reminder labels. Settings text stays unchanged."))
-    addHelp(f.colorButton,L("Label color"),L("Choose the color of reminder labels. Default keeps the group count gold."))
-    button(app,L("How to buff"),536,-350,146,function() B:ShowWelcome(true) end)
-    button(app,L("Preview appearance"),348,-318,150,function() B:PreviewAppearance() end)
-    line(app,-382)
-    label(app,L("Sounds"),18,-392,"GameFontNormal")
+    addHelp(f.colorButton,L("Label color"),L("Choose the color of reminder labels. White + gold count keeps the group count gold."))
+    button(app,L("How to buff"),536,-366,146,function() B:ShowWelcome(true) end)
+    button(app,L("Preview appearance"),348,-366,150,function() B:PreviewAppearance() end)
+    line(app,-406)
+    label(app,L("Sounds"),18,-420,"GameFontNormal")
     local function soundControl(kind,y)
       label(app,kind=="supply" and L("Supply sound") or L("Reminder sound"),18,y-5,"GameFontHighlightSmall",112)
       local key=kind=="supply" and "supplySound" or "reminderSound"
@@ -1834,19 +1939,19 @@ function B:Options()
       addHelp(choice,L("Sound"),L("Open the list to choose a sound.").."\n"..L("Game sounds and installed SharedMedia sounds are available. Search or scroll the list; Preview ignores the alert toggle. Missing media uses the default sound without forgetting your choice."))
       return choice
     end
-    f.reminderSoundButton=soundControl("reminder",-416)
-    f.supplySoundButton=soundControl("supply",-450)
-    label(app,L("Audio channel"),436,-420,"GameFontHighlightSmall",116)
-    f.channelButton=selector(app,"",550,-416,132,function() return {{key="Master",name="Master"},{key="SFX",name="Sound effects"}} end,function(value) B.db.soundChannel=value end)
+    f.reminderSoundButton=soundControl("reminder",-440)
+    f.supplySoundButton=soundControl("supply",-474)
+    label(app,L("Audio channel"),436,-445,"GameFontHighlightSmall",116)
+    f.channelButton=selector(app,"",550,-440,132,function() return {{key="Master",name="Master"},{key="SFX",name="Sound effects"}} end,function(value) B.db.soundChannel=value end)
     addHelp(f.channelButton,L("Audio channel"),L("Choose a sound and preview it. Master follows master volume; Sound effects follows effects volume."))
-    label(app,L("Minimum interval"),436,-454,"GameFontHighlightSmall",116)
+    label(app,L("Minimum interval"),436,-479,"GameFontHighlightSmall",116)
     f.soundInterval=compactSlider(app,5,60,5,80,formatSeconds,function(_,value) setAndRefresh("soundInterval",value) end)
-    f.soundInterval:SetPoint("TOPLEFT",550,-453)
-    label(app,L("Quick access"),200,-538,"GameFontNormal")
-    f.minimapCheck=check(app,L("Minimap button"),200,-564,function(s) B.db.minimap.hide=not s:GetChecked(); B:SyncBroker() end)
-    f.brokerCheck=check(app,L("Broker display"),440,-564,function(s) B.db.brokerEnabled=s:GetChecked()==true; B:SyncBroker(); B:Options() end)
+    f.soundInterval:SetPoint("TOPLEFT",550,-478)
+    label(app,L("Quick access"),200,-558,"GameFontNormal")
+    f.minimapCheck=check(app,L("Minimap button"),200,-582,function(s) B.db.minimap.hide=not s:GetChecked(); B:SyncBroker() end)
+    f.brokerCheck=check(app,L("Broker display"),440,-582,function(s) B.db.brokerEnabled=s:GetChecked()==true; B:SyncBroker(); B:Options() end)
     addHelp(f.brokerCheck,L("Broker display"),L("Requires a broker bar addon. Shows the next reminder, not a total missing-buff count. Disable takes effect after reloading the UI."))
-    f.resetAllButton=button(app,L("Reset all settings"),18,-540,156,function() f.resetConfirm:Show() end)
+    f.resetAllButton=button(app,L("Reset all settings"),18,-572,156,function() f.resetConfirm:Show() end)
     f.resetConfirm=CreateFrame("Frame",nil,app,"BackdropTemplate"); f.resetConfirm:SetSize(686,76); f.resetConfirm:SetPoint("TOPLEFT",16,-528)
     f.resetConfirm:SetFrameLevel(app:GetFrameLevel()+10)
     f.resetConfirm:SetBackdrop({bgFile="Interface\\Buttons\\WHITE8X8",edgeFile="Interface\\Buttons\\WHITE8X8",edgeSize=1})
@@ -1938,7 +2043,7 @@ function B:Options()
   self:UpdateProfileOptions()
   self:UpdateSupplyOptions()
   local paladin=A.Call(function() local _,token=UnitClass("player"); return token end)=="PALADIN"
-  f.buffInstruction:SetText(L("Use arrows to reorder. Buffs at the top are checked first."))
+  f.buffInstruction:SetText(L("Choose your buffs. Move the most important ones to the top."))
   f.targetBlessingPanel:SetShown(paladin); f.targetClassAware:SetChecked(self.db.targetClassBlessings)
   f.targetBlessingFallback:SetChecked(self.db.targetBlessingFallback)
   for _,pick in ipairs(f.targetBlessingPicks) do pick:SetShown(self.db.targetClassBlessings); pick.classLabel:SetShown(self.db.targetClassBlessings); pick:Update(); pick:SetAvailable(self.db.targetClassBlessings and (self.db.friendlyTarget or self.db.nearbyEnabled)) end
@@ -1952,6 +2057,7 @@ function B:Options()
   f.targetHeaders:ClearAllPoints(); f.targetHeaders:SetPoint("TOPLEFT",0,paladin and -300 or -204)
   f.targetScroll:ClearAllPoints(); f.targetScroll:SetPoint("TOPLEFT",14,paladin and -378 or -282); f.targetScroll:SetPoint("BOTTOMRIGHT",-34,54)
   f.pauseResting:SetChecked(self.db.pauseResting)
+  self:PolishOptionsSurfaces()
   f.enable:SetChecked(self.db.enabled)
   f.versionText:SetText("v"..self.version)
   f.friendlyTarget:SetChecked(self.db.friendlyTarget)
@@ -2136,23 +2242,14 @@ function B:Options()
     end
     local paused=false; for _ in pairs(self.effectPauses or {}) do paused=true; break end
     f.consumePauseStatus:SetText(paused and L("An effect was not observed. Its reminder is paused until you retry.") or "")
-    if f.campStatus and self.CampState then
-      local camp=self:CampState()
-      local text
-      if camp.unknown then text="Status: unavailable"
-      elseif camp.active then
-        text="Status: active"..(camp.remaining and (" - "..formatSeconds(camp.remaining).." remaining") or "")
-        if camp.benefits and #camp.benefits>0 then
-          local names={}; for _,benefit in ipairs(camp.benefits) do names[#names+1]=benefit.name end
-          text=text.."\nGranted: "..table.concat(names,", ")
-        end
-      else text="Status: not active" end
-      f.campStatus:SetText(text)
-    end
+
   end
 
-  for _,choice in ipairs(self:ReminderFonts()) do if choice.key==self.db.labelFont then f.fontButton:SetText(L(choice.name)) end end
+  for _,choice in ipairs(self:ReminderFonts()) do if choice.key==self:NormalizeTextFontKey(self.db.labelFont) then f.fontButton:SetText(L(choice.name)) end end
   for _,choice in ipairs(self:ReminderColors()) do if choice.key==self.db.labelColor then f.colorButton:SetText(L(choice.name)) end end
+  f.labelSizeButton:SetText(self:TextSizeLabel(self.db.labelSize))
+  for _,v in ipairs(self:TextOutlineChoices()) do if v.key==self.db.labelOutline then f.labelOutlineButton:SetText(L(v.name)) end end
+  f.labelGap.silent=true; f.labelGap:SetValue(self.db.labelGap); f.labelGap.silent=false
   f.bindingText:SetText("Current: "..(#self.db.keys>0 and table.concat(self.db.keys,", ") or "none"))
   for _,pair in ipairs({{f.sizeEdit,self.db.size},{f.opacityEdit,math.floor(self.db.opacity*100+0.5)},{f.xEdit,math.floor(self.db.x+0.5)},{f.yEdit,math.floor(self.db.y+0.5)}}) do
     if not pair[1].unsaved and pair[1]:HasFocus()~=true then pair[1]:SetText(tostring(pair[2])) end
@@ -2166,8 +2263,10 @@ function B:Options()
   f.brokerCheck:SetChecked(self.db.brokerEnabled)
   f.soundInterval.silent=true; f.soundInterval:SetValue(self.db.soundInterval); f.soundInterval.silent=false
   f.statusText:SetText(self:FriendlyStatus())
+  if self.action then f.statusText:SetTextColor(.56,.88,.72) else f.statusText:SetTextColor(unpack(T.muted)) end
   if self.appearancePreview and self.appearancePreview:IsShown() then self:PreviewAppearance() end
-  f.showReminderCheck:SetChecked(self.db.showReminder); f.soundCheck:SetChecked(self.db.sound); f.glowCheck:SetChecked(self.db.glow); f.pulseCheck:SetChecked(self.db.pulse)
+  self:UpdateCampingOptions()
+  f.showReminderCheck:SetChecked(self.db.showReminder); f.soundCheck:SetChecked(self.db.sound); f.effectButton:SetText(L(({none="Effect: None",soft="Effect: Soft glow",pulse="Effect: Pulse",pixel="Effect: Pixel border",autocast="Effect: Sparkles",proc="Effect: Spell glow"})[self:IconEffectStyle()] or "Effect: Soft glow")); f.effectColorButton:SetText(L(({gold="Gold",cyan="Cyan",green="Green",red="Red",white="White"})[self.db.effectColor] or "Gold")); f.effectSpeedButton:SetText(L(({slow="Slow",normal="Normal",fast="Fast"})[self.db.effectSpeed] or "Normal"))
   f.buffNameCheck:SetChecked(self.db.showBuffName); f.targetNameCheck:SetChecked(self.db.showTargetName)
   f.timerCheck:SetChecked(self.db.showTimer); f.groupBadgeCheck:SetChecked(self.db.showGroupBadge)
   f.profileCheck:SetChecked(self.profileEnabled==true)
@@ -2176,6 +2275,25 @@ function B:Options()
   local weaponClass=self.WeaponReminderClass and self:WeaponReminderClass()
   f.weaponUnavailable:Hide()
   f.weaponSectionHeading:SetText(L(weaponClass and "Poisons / class imbues" or "Hands to maintain"))
+  -- Classes without imbues choose their hands directly beside the coating rows.
+  local function place(control,x,y) control:ClearAllPoints(); control:SetPoint("TOPLEFT",x,y) end
+  local coatingY=weaponClass and -220 or -98
+  place(f.coatingCard,12,coatingY); place(f.coatingHeading,18,coatingY-4)
+  T.CardShown(f.weaponClassCard,weaponClass~=nil)
+  f.weaponSectionHeading:SetShown(weaponClass~=nil)
+  for i,hand in ipairs({"main","off"}) do
+    place(f.coatingPickers[hand],180,coatingY-30-(i-1)*48)
+    place(f.coatingHandLabels[hand],18,coatingY-36-(i-1)*48)
+    f.coatingHandLabels[hand]:SetShown(weaponClass~=nil)
+  end
+  place(f.weaponMain,18,weaponClass and -116 or coatingY-30)
+  place(f.weaponOff,18,weaponClass and -164 or coatingY-78)
+  local timingY=weaponClass and -358 or -236
+  place(f.weaponTimingCard,12,timingY); place(f.weaponTimingLabel,18,timingY-10)
+  place(f.weaponTiming,220,timingY-10); place(f.weaponReplace,18,timingY-54)
+  place(f.weaponHandsHint,18,weaponClass and -520 or -376)
+  place(f.weaponModeHint,18,weaponClass and -552 or -420)
+  place(f.weaponStatus,18,weaponClass and -578 or -458)
   f.weaponPoisonHint:SetShown(weaponClass=="ROGUE")
   for _,control in ipairs({f.weaponHint,f.weaponEnable,f.weaponApply,f.weaponMain,f.weaponOff,f.weaponTimingLabel,f.weaponTiming,f.weaponReplace,f.weaponStatus,f.weaponHandsHint}) do control:Show() end
   for _,pick in pairs(f.weaponPickers) do pick:SetShown(weaponClass~=nil); pick.menu:Hide() end
@@ -2330,6 +2448,30 @@ function B:Options()
 end
 
 
+function B:UpdateCampingOptions(state)
+  local f=self.options
+  if not f or not f.campingPage then return end
+  state=state or self:CampingState()
+  local camp=state.globalUnknown or state.campUnknown
+  local bag=state.globalUnknown or state.bagUnknown
+  f.campingStatus:SetText(L("Camp benefits").."\n"..(camp and L("Unavailable") or state.active and (state.remaining and formatSeconds(state.remaining) or L("active")) or L("missing")))
+  f.sleepingStatus:SetText(L("Sleeping bag XP").."\n"..(bag and L("Unavailable") or state.bagNotNeeded and L("not needed") or state.bagActive and (tostring(state.bagStacks).."/3"..(state.bagRemaining and " - "..formatSeconds(state.bagRemaining) or "")) or L("missing")))
+  f.campingEnable:SetChecked(self.db.campReminder); f.campingSound:SetChecked(self.db.campSound); f.campingAnywhere:SetChecked(self.db.campAnywhere); f.campingTrack:SetChecked(self.db.campTrackBenefits); f.sleepingTrack:SetChecked(self.db.campTrackBag)
+  f.campingWarning:SetText(L(self.db.campWarning==60 and "Warn: 1 minute" or self.db.campWarning==600 and "Warn: 10 minutes" or "Warn: 5 minutes"))
+  for _,entry in ipairs({{f.campingSize,self.db.campSize},{f.campingOpacity,math.floor(self.db.campOpacity*100+.5)}}) do entry[1].silent=true; entry[1]:SetValue(entry[2]); entry[1].silent=false end
+  f.campingEffect:SetText(L(({none="Effect: None",soft="Effect: Soft glow",pulse="Effect: Pulse",pixel="Effect: Pixel border",autocast="Effect: Sparkles",proc="Effect: Spell glow"})[self.db.campEffectStyle] or "Effect: Soft glow"))
+  f.campingColor:SetText(L(({gold="Gold",cyan="Cyan",green="Green",red="Red",white="White"})[self.db.campEffectColor] or "Gold"))
+  f.campingSpeed:SetText(L(({slow="Slow",normal="Normal",fast="Fast"})[self.db.campEffectSpeed] or "Normal"))
+  f.campingCountdown:SetChecked(self.db.campShowCountdown); f.campingStacks:SetChecked(self.db.campShowStacks)
+  for _,v in ipairs(self:ReminderFonts(self.db.campTextFont)) do if v.key==self:NormalizeTextFontKey(self.db.campTextFont) then f.campingTextFont:SetText(L(v.name)) end end
+  for _,v in ipairs(self:ReminderColors(true)) do if v.key==self.db.campTextColor then f.campingTextColor:SetText(L(v.name)) end end
+  f.campingTextSize:SetText(self:TextSizeLabel(self.db.campTextSize))
+  for _,v in ipairs(self:TextOutlineChoices()) do if v.key==self.db.campTextOutline then f.campingTextOutline:SetText(L(v.name)) end end
+  f.campingTextGap.silent=true; f.campingTextGap:SetValue(self.db.campTextGap); f.campingTextGap.silent=false
+  local paused=self.campSnoozeSession or (self.campSnoozeUntil and self.campSnoozeUntil>GetTime())
+  f.campingPause:SetText(L(paused and "Camp reminder snoozed" or "Camp reminder ready")); f.campingResume:SetShown(paused or false)
+end
+
 function B:PreviewAppearance()
   if A.Combat() then return end
   local f=self.appearancePreview
@@ -2353,7 +2495,7 @@ function B:PreviewAppearance()
     f.timer=label(f,"",4,-4,"GameFontHighlightSmall"); f.timer:ClearAllPoints(); f.timer:SetPoint("BOTTOMRIGHT",f,"BOTTOMRIGHT",-3,3); f.timer:SetJustifyH("RIGHT")
     f.count=label(f,"3+",4,-self.db.size+16,"GameFontHighlightSmall")
     f:SetScript("OnMouseDown",function() f:Hide() end)
-    f:SetScript("OnHide",function() if f.pulseAnimation then f.pulseAnimation:Stop() end end)
+    f:SetScript("OnHide",function() B:StopIconEffect(f) end)
     f:RegisterEvent("PLAYER_REGEN_DISABLED"); f:SetScript("OnEvent",function() f:Hide() end)
     addHelp(f,L("Preview appearance"),L("Move icon opens a safe preview that cannot cast spells."))
   end
@@ -2362,8 +2504,7 @@ function B:PreviewAppearance()
   f.recipient:ClearAllPoints(); f.recipient:SetPoint("TOP",f,"BOTTOM",0,-5)
   f.timer:SetText(L("%d sec",30)); f.timer:SetShown(self.db.showTimer)
   f.count:ClearAllPoints(); f.count:SetPoint("TOPLEFT",f,"TOPLEFT",4,-3); f.count:SetShown(self.db.showGroupBadge)
-  f.glow:SetShown(self.db.glow or self.db.pulse)
-  if f.pulseAnimation then if self.db.pulse then f.pulseAnimation:Play() else f.pulseAnimation:Stop() end end
+  self:ApplyIconEffect(f,true)
   if self.ApplyReminderStyle then self:ApplyReminderStyle(f) end
   f:Show()
 end

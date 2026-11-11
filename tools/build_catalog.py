@@ -3,9 +3,11 @@ import csv, json, hashlib, re, argparse
 
 ROOT=Path(__file__).resolve().parents[1]
 parser=argparse.ArgumentParser(description='Build BuffTap class data from Forever client DB2 exports.')
-parser.add_argument('--data',type=Path,default=ROOT/'research/review-0.8.1')
-DATA=parser.parse_args().data
-OUT=ROOT/'addon/BuffTap'
+parser.add_argument('--data',type=Path,required=True)
+parser.add_argument('--build',required=True)
+parser.add_argument('--output-root',type=Path,default=ROOT)
+args=parser.parse_args(); DATA=args.data; ROOT=args.output_root; OUT=ROOT/'addon/BuffTap'
+OUT.mkdir(parents=True,exist_ok=True); (ROOT/'tools').mkdir(exist_ok=True)
 # Product choices, not a source-code transcription. Keys/order are the public
 # SavedVariables compatibility contract; client facts are read only from DB2 CSVs.
 # class, kind, key, seed spell, enabled, coverage set (optional)
@@ -13,7 +15,6 @@ SPEC='''
 DRUID group gotw 21849 1 wild
 DRUID single motw 1126 1 wild
 DRUID single thorns 467 1
-DRUID self omen 16864 1
 DRUID self natures-grasp 16689 0
 MAGE group ab 23028 1 intellect
 MAGE single ai 1459 1 intellect
@@ -39,10 +40,6 @@ PALADIN blessing gbom 25782 1 might
 PALADIN blessing bom 19740 1 might
 PALADIN blessing gbow 25894 1 wisdom
 PALADIN blessing bow 19742 1 wisdom
-PALADIN blessing gbos 25895 0 salvation
-PALADIN blessing bos 1038 0 salvation
-PALADIN blessing gbol 25890 0 light
-PALADIN blessing bol 19977 0 light
 PALADIN self righteous-fury 25780 0
 PALADIN aura devotion 465 1 paladinaura
 PALADIN aura retribution 7294 0 paladinaura
@@ -96,16 +93,20 @@ ROGUE weapon wound-poison 13220 0
 ALL tracking find-herbs 2383 0 gathering
 ALL tracking find-minerals 2580 0 gathering
 '''
-PAIRS={'gotw':'motw','ab':'ai','pof':'fort','pos':'spirit','posp':'sp','gbok':'bok','gbom':'bom','gbow':'bow','gbos':'bos','gbol':'bol'}
+PAIRS={'gotw':'motw','ab':'ai','pof':'fort','pos':'spirit','posp':'sp','gbok':'bok','gbom':'bom','gbow':'bow'}
 TARGETS={'thorns':['WARRIOR','PALADIN','DRUID'], 'bom':['WARRIOR','ROGUE','HUNTER','PALADIN'], 'bow':['MAGE','WARLOCK','PRIEST','SHAMAN','DRUID','PALADIN']}
 MASK={'WARRIOR':1,'PALADIN':2,'HUNTER':4,'ROGUE':8,'PRIEST':16,'SHAMAN':64,'MAGE':128,'WARLOCK':256,'DRUID':1024,'ALL':0}
 def rows(file):
+    if file=='spellnames.csv' and not (DATA/file).exists(): file='SpellName.csv'
     with (DATA/file).open(encoding='utf-8-sig',newline='') as f: return list(csv.DictReader(f))
 names={int(r['ID']):r['Name_lang'] for r in rows('spellnames.csv')}
 levels={int(r['SpellID']):int(r['SpellLevel']) for r in rows('SpellLevels.csv') if r['DifficultyID']=='0'}
 icons={int(r['SpellID']):int(r['SpellIconFileDataID']) for r in rows('SpellMisc.csv') if r['DifficultyID']=='0' and int(r['SpellIconFileDataID'])>0}
 abilities=rows('SkillLineAbility.csv')
 subtexts={int(r['ID']):r['NameSubtext_lang'] for r in rows('Spell.csv')}
+passives={int(r['SpellID']) for r in rows('SpellMisc.csv') if r['DifficultyID']=='0' and int(r['Attributes_0']) & 64}
+ALIASES={'find-minerals':{8388},'seal-righteousness':{20154}}
+FALLBACK_LEVELS={5502:20,19028:40} # Zero/one client levels are not verified training requirements.
 effects={}
 for r in rows('SpellEffect.csv'): effects.setdefault(int(r['SpellID']),set()).add(int(r['Effect']))
 definitions=[]; coverage={}
@@ -122,11 +123,15 @@ for line in SPEC.splitlines():
         ids={i for i in ids if 2 not in effects.get(i,set()) and (i==seed or re.match(r'^Rank [0-9]+$',subtexts.get(i,'')))}
     # Retain the explicitly verified spell as a client alias even if its skill row is absent.
     ids.add(seed)
+    ids.update(ALIASES.get(key,set()))
+    ids-=passives
+    if not ids: raise ValueError(f"{key}: no active spells remain")
     ranks=sorted(ids,key=lambda i:(levels.get(i,0),i),reverse=True)
     d=dict(key=key,class_=cls,kind=kind,name=name,ranks=ranks,icon=icons.get(seed) or next((icons[i] for i in ranks if icons.get(i)),134400),defaultOn=on=='1')
     if group:
         d['coverage']=group[0]; coverage.setdefault(group[0],[]).append(name)
     else: d['covers']=[] if kind=='pet' else [name]
+    if key=='soul-link': d['auraIDs']=[25228]
     if key in PAIRS: d.update(singleKey=PAIRS[key],minNeed=2 if kind=='blessing' else 3)
     for g,s in PAIRS.items():
         if key==s: d['groupKey']=g
@@ -141,11 +146,11 @@ def lua(v):
     if isinstance(v,list): return '{'+','.join(lua(x) for x in v)+'}'
     if isinstance(v,dict): return '{'+','.join(('class' if k=='class_' else k)+'='+lua(x) for k,x in v.items())+'}'
     return str(v)
-lines=['-- This Source Code Form is subject to the Mozilla Public License, v. 2.0.', '-- See LICENSE-MPL-2.0.txt.', '-- Generated from Forever 1.60.1.70009 client tables by tools/build_catalog.py.', '-- Setting keys and ordering preserve BuffTap saved-profile compatibility.', 'local _,B=...', 'local coverage='+lua(coverage), 'B.Buffs={']
+lines=['-- This Source Code Form is subject to the Mozilla Public License, v. 2.0.', '-- See LICENSE-MPL-2.0.txt.', f'-- Generated from Forever {args.build} client tables by tools/build_catalog.py.', '-- Setting keys and ordering preserve BuffTap saved-profile compatibility.', 'local _,B=...', 'local coverage='+lua(coverage), 'B.Buffs={']
 lines += ['  '+lua(d)+',' for d in definitions]
 lines += ['}', 'for _,definition in ipairs(B.Buffs) do', '  if definition.coverage then definition.covers=coverage[definition.coverage]; definition.coverage=nil end', 'end', 'B.RankLevel={']
 allids={i for d in definitions for i in d['ranks']}
-lines += [f'  [{i}]={levels.get(i,1)},' for i in sorted(allids)]
+lines += [f'  [{i}]={FALLBACK_LEVELS.get(i,levels.get(i,1))},' for i in sorted(allids)]
 lines += ['}', 'B.GroupReagents={']
 groupids={i for d in definitions if 'singleKey' in d for i in d['ranks']}
 for r in sorted(rows('SpellReagents.csv'),key=lambda r:int(r['SpellID'])):
@@ -155,6 +160,6 @@ for r in sorted(rows('SpellReagents.csv'),key=lambda r:int(r['SpellID'])):
         if reagents: lines.append(f'  [{i}]='+lua(reagents)+',')
 lines += ['}', '']
 (OUT/'Catalog.lua').write_text('\n'.join(lines),encoding='utf-8')
-evidence={'build':'1.60.1.70009','source':'Blizzard DB2 tables exported through wago.tools','tables':{n:hashlib.sha256((DATA/n).read_bytes()).hexdigest() for n in ['spellnames.csv','SpellLevels.csv','SkillLineAbility.csv','SpellEffect.csv','SpellReagents.csv','Spell.csv','SpellMisc.csv']},'definitions':definitions,'ranks':len(allids)}
+evidence={'build':args.build,'source':'Blizzard DB2 tables exported through wago.tools','tables':{n:hashlib.sha256((DATA/('SpellName.csv' if n=='spellnames.csv' and not (DATA/n).exists() else n)).read_bytes()).hexdigest() for n in ['spellnames.csv','SpellLevels.csv','SkillLineAbility.csv','SpellEffect.csv','SpellReagents.csv','Spell.csv','SpellMisc.csv']},'definitions':definitions,'ranks':len(allids)}
 (ROOT/'tools/catalog-evidence.json').write_text(json.dumps(evidence,indent=2),encoding='utf-8')
 print(f'Generated {len(definitions)} families, {len(allids)} client spell records.')

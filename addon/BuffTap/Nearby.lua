@@ -475,12 +475,6 @@ local function hint(button,title,body)
   end)
   button:SetScript("OnLeave",function() GameTooltip:Hide() end)
 end
-function B:NearbyWheelBound()
-  for _,key in ipairs(self.db.keys or {}) do
-    if type(key)=="string" and (key:find("MOUSEWHEELUP",1,true) or key:find("MOUSEWHEELDOWN",1,true)) then return true end
-  end
-  return false
-end
 function B:NearbyDisplayList(list)
   local now,fresh,seen,out=GetTime(),{},{},{}
   for _,entry in ipairs(list) do fresh[entry.guid]=entry end
@@ -567,7 +561,7 @@ function B:CreateNearbyWindow()
   hint(f.countHelp,function()
     local n=self.nearbyCounts or {need=0,total=0}
     return n.need.." players with buffs queued / "..n.total.." nearby"
-  end,"Counts friendly players currently detected, up to 40. Buff candidates appear first. Group members with no queued buff stay hidden.")
+  end,"Counts friendly players currently detected, up to 40. Buff candidates appear first. Group members with no queued buff stay hidden. Mouse wheel over this window scrolls the list.")
   f.allPlayers=CreateFrame("Button",nil,c)
   f.allPlayers:SetFrameLevel(f:GetFrameLevel()+3)
   f.allPlayers:SetSize(14,16); f.allPlayers:SetPoint("TOPLEFT",154,-3)
@@ -593,11 +587,20 @@ function B:CreateNearbyWindow()
   f.dragHandle=CreateFrame("Frame",nil,c); f.dragHandle:SetSize(WIDTH-43,21); f.dragHandle:SetPoint("TOPLEFT")
   f.dragHandle:EnableMouse(true); f.dragHandle:RegisterForDrag("LeftButton")
   f.dragHandle:SetScript("OnDragStart",dragStart); f.dragHandle:SetScript("OnDragStop",dragStop)
-  f:SetScript("OnMouseWheel",function(_,delta)
-    if A.Combat() or not A.Number(delta) or self:NearbyWheelBound() then return end
-    self.nearbyOffset=math.max(0,math.min(math.max(0,#(self.nearbyDisplay or {})-ROWS),(self.nearbyOffset or 0)-(delta>0 and 1 or -1)))
+  local function scrollPlayers(surface,delta)
+    if A.Combat() or not A.Number(delta) or delta==0 then return end
+    self.nearbyHovered=nil; GameTooltip:Hide()
+    local step=delta>0 and math.ceil(delta) or math.floor(delta)
+    self.nearbyOffset=math.max(0,math.min(math.max(0,#(self.nearbyDisplay or {})-ROWS),(self.nearbyOffset or 0)-step))
     self:UpdateNearbyWindow()
-  end)
+    if surface and surface.entry then self.nearbyHovered=surface.entry.guid end
+  end
+  local function wheelSurface(surface)
+    surface:EnableMouseWheel(true); surface:SetScript("OnMouseWheel",scrollPlayers)
+    if type(surface.SetPropagateMouseWheel)=="function" then surface:SetPropagateMouseWheel(false) end
+  end
+  wheelSurface(f)
+
   f.scroll=CreateFrame("Slider",nil,c); f.scroll:SetSize(4,103); f.scroll:SetPoint("TOPLEFT",205,-25)
   f.scroll:SetOrientation("VERTICAL"); f.scroll:SetValueStep(1); f.scroll:SetObeyStepOnDrag(true)
   f.scroll.track=wash(f.scroll,"BACKGROUND",.5,.51,.49,.16); f.scroll.track:SetAllPoints()
@@ -623,7 +626,9 @@ function B:CreateNearbyWindow()
     row.invite:SetSize(20,20); row.invite:SetPoint("RIGHT",row,"LEFT",-4,0)
     row.invite.bg=wash(row.invite,"BACKGROUND",.055,.075,.095,.65); row.invite.bg:SetAllPoints()
     row.invite.hover=wash(row.invite,"HIGHLIGHT",.75,.60,.25,.25); row.invite.hover:SetAllPoints()
-    row.invite.text=label(row.invite,"+",5,-3); row.invite.text:SetTextColor(1,.82,0)
+    row.invite.text=label(row.invite,"+",0,0); row.invite.text:ClearAllPoints(); row.invite.text:SetAllPoints(row.invite); row.invite.text:SetJustifyH("CENTER"); row.invite.text:SetJustifyV("MIDDLE"); row.invite.text:SetWordWrap(false); row.invite.text:SetTextColor(1,.82,0)
+    row.invite.plusH=wash(row.invite,"OVERLAY",1,.82,0,1); row.invite.plusH:SetSize(8,2); row.invite.plusH:SetPoint("CENTER",row.invite,"CENTER",0,0)
+    row.invite.plusV=wash(row.invite,"OVERLAY",1,.82,0,1); row.invite.plusV:SetSize(2,8); row.invite.plusV:SetPoint("CENTER",row.invite,"CENTER",0,0)
     row.invite:RegisterForClicks("LeftButtonUp")
     row.invite:SetScript("OnClick",function() self:InviteNearby(row.entry) end)
     row.invite:SetScript("OnEnter",function()
@@ -665,6 +670,7 @@ function B:CreateNearbyWindow()
       else GameTooltip:AddLine("No buff queued. Buffs may be covered, excluded, or unavailable.",.7,.7,.7,true) end
       if button.action and not button.action.ready then GameTooltip:AddLine("Waiting for cooldown.",.8,.8,.7)
       elseif button.action then GameTooltip:AddLine("Click: next appropriate buff",1,.82,0) end
+      GameTooltip:AddLine("Mouse wheel: scroll players",.7,.7,.7,true)
       GameTooltip:Show()
     end)
     row:SetScript("OnLeave",function()
@@ -673,6 +679,9 @@ function B:CreateNearbyWindow()
       self:StartTimer("nearby-display",.1,function() if not A.Combat() then B:UpdateNearbyWindow() end end)
     end)
   end
+  -- Child buttons consume wheel input too, instead of casting or zooming behind the list.
+  for _,surface in ipairs({c,f.dragHandle,f.statusButton,f.countHelp,f.allPlayers,f.lock,f.close,f.scroll}) do wheelSurface(surface) end
+  for _,row in ipairs(f.rows) do wheelSurface(row); wheelSurface(row.invite) end
   local ok,result=pcall(RegisterStateDriver,f,"visibility","[combat] hide")
   if not ok or result==false then self.nearbySetupError="Secure combat visibility failed"; f:Hide(); return end
   f:Hide()
@@ -703,7 +712,7 @@ function B:UpdateNearbyWindow()
   end
   for _,t in ipairs(f.lock.shackle) do t:SetAlpha(self.db.nearbyLocked and 1 or .4) end
   f.lock.body:SetAlpha(self.db.nearbyLocked and 1 or .55)
-  f:EnableMouseWheel(not self:NearbyWheelBound())
+  f:EnableMouseWheel(true)
   self.nearbyOffset=math.max(0,math.min(self.nearbyOffset or 0,math.max(0,#display-ROWS)))
   f.scroll:SetMinMaxValues(0,math.max(0,#display-ROWS)); f.scroll:SetValue(self.nearbyOffset); f.scroll:SetShown(#display>ROWS)
   for i,row in ipairs(f.rows) do
@@ -735,6 +744,8 @@ function B:UpdateNearbyWindow()
       local invited=self.nearbyInvited and self.nearbyInvited[entry.guid]
       local inviteName,inviteMode=self:NearbyInviteName(entry)
       row.invite.text:SetText(invited and "..." or inviteMode=="SUGGEST_INVITE" and ">" or "+")
+      local plus=not invited and inviteMode~="SUGGEST_INVITE"
+      row.invite.plusH:SetShown(plus); row.invite.plusV:SetShown(plus); row.invite.text:SetShown(not plus)
       row.invite:SetShown(item.fresh and inviteName~=nil)
       row.marker:SetShown(row.action and row.action.ready and self.action and self.action.nearby and self.action.targetGUID==entry.guid or false)
       if not row:IsShown() then row:Show() end

@@ -1,12 +1,12 @@
 -- This Source Code Form is subject to the terms of the Mozilla Public
 -- License, v. 2.0. See LICENSE-MPL-2.0.txt.
--- Verified offline against Forever 1.60.1.70009 and item spell cross-checks.
+-- Originally curated from 1.60.1.70009; revalidated against 1.60.1.70888 and item tooltips.
 -- Runtime metadata must still match before a secure action is offered.
 local _,B=...
 
 -- Curated Forever maintenance consumables. This is intentionally small and
 -- whitelist-only: unknown consumables never become secure actions.
-B.ForeverDataBuild = "1.60.1.70009"
+B.ForeverDataBuild = "1.60.1.70888"
 B.CampBenefitsSpellID = 1229741
 -- Exact hidden auras used by Forever's Camp Benefits tooltip. These are
 -- recognition-only; similar stats do not suppress class-buff reminders.
@@ -242,3 +242,16 @@ elixir.items={
 }
 -- Recognize other verified elixirs without offering utility/legacy choices.
 elixir.auraSpellIDs={673,2367,2374,2378,3160,3164,3166,3219,3220,3222,3223,3593,7844,8212,11328,11334,11348,11349,11390,11396,11405,11474,16589,17535,17537,17538,17539,21920,24361,24363,27652,27653,417627,426606,426612,439959,1245244,1245249,1250918,1250920,1250922,1250924,1250925,1250926,1250928,1250931,1250932,1250940,1250941,1250942,1250944,1250948,1250971,1250972,1250974,1250976,1250978,1250979,1250981,1250984,1250985,1250986,1250988,1250989,1310077}
+
+-- Current 1.60.1.70888 ItemEffect/SpellEffect mappings, cross-checked against
+-- Forever item tooltips. One optional utility choice; existing effects are kept.
+B.ConsumableFamilies[#B.ConsumableFamilies+1]={
+  key="utility",name="Utility (selected)",defaultOn=false,defaultSeconds=60,pendingSeconds=2,
+  protectPresent=true,auraNames={"Firewater","Gift of Arthas","Dragonbreath Chili"},
+  items={
+    {id=246948,useSpell=17038,auraIDs={17038},name="Distilled Firewater",note="35 melee attack power and increased size for 20 min."},
+    {id=12820,useSpell=17038,auraIDs={17038},name="Winterfall Firewater",note="35 melee attack power and increased size for 20 min. Shares the Firewater effect."},
+    {id=12217,useSpell=15852,auraIDs={15852},name="Dragonbreath Chili",note="Occasional fire damage when striking enemies in melee for 10 min."},
+    {id=9088,useSpell=11371,auraIDs={11371},name="Gift of Arthas",note="10 Shadow resistance and a reactive disease effect for 30 min."},
+  },
+}

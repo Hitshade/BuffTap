@@ -20,7 +20,7 @@ test('Cached need still checks current range',setup+probe+"C_Spell.IsSpellInRang
 test('Dismissal suppresses cached need immediately',setup+probe+"BuffTap:DismissHelper(BuffTap.action); countRefresh(); assert(BuffTap.action.key=='thorns')")
 test('Memo expires within half a second without aura events',setup+probe+'now=now+.51; assert(countRefresh()>0)')
 test('Spellbook rebuild cannot reuse old memo',setup+probe+'BuffTap.bookDirty=true; assert(countRefresh()>0)')
-test('Diagnostic refresh builds fresh explanations',setup+probe+'BuffTap:Refresh(true); assert(builds>0 and #BuffTap.diagnostics>0)')
+test('Diagnostic refresh builds fresh explanations',setup+probe+"BuffTap.diagnostics={'stale'}; BuffTap:Refresh(true); assert(builds>0 and BuffTap.diagnostics[1]~='stale')")
 test('Disabling nearby drops transient memo',setup+probe+'BuffTap.db.nearbyEnabled=false; countRefresh(); assert(not next(BuffTap.nearbyNeedCache))')
 test('Removing nearby plate drops its memo',setup+probe+"BuffTap.nearbyEvents.scripts.OnEvent(nil,'NAME_PLATE_UNIT_REMOVED','nameplate1'); assert(not BuffTap.nearbyNeedCache.nameplate1)")
 test('Class list is shared inside one pass and rebuilt outside it', "BuffTap.classListPassActive=true; BuffTap.refreshClassList=nil; local a=BuffTap:ClassList(); assert(a==BuffTap:ClassList()); BuffTap.classListPassActive=nil; BuffTap.refreshClassList=nil; BuffTap.db.priorities.thorns=1; BuffTap.db.priorities.motw=2; assert(BuffTap:ClassList()[1].key=='thorns')")

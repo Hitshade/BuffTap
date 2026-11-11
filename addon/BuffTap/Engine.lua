@@ -4,7 +4,7 @@
 
 local _, B = ...
 _G.BuffTap = B
-B.version = "1.16.10"
+B.version = "1.17.0"
 B.API = {}
 local A = B.API
 
@@ -94,7 +94,7 @@ function B:InitDB()
     weaponReminder=true, weaponMainHand=true, weaponOffHand=true,
     weaponApply=false, weaponReplace=false, weaponChoices={}, weaponCoatings={}, weaponSeconds=60,
     nearbyEnabled=false, nearbyBuffing=true, nearbyShowAll=false, nearbyInvites=true, nearbyLocked=false, nearbyX=240, nearbyY=0, pvpProtection=true, helperDismiss=false, helperBounce=false, helperTracking=false, helperTreasure=false, helperCoverage=false,
-    helperDiscovery=false, helperThanks=false, helperThankEmote="THANK", helperQuick=false, helperTracker=0, helperPet=false, helperHealthstone=false, helperSoulstone=false, soulstoneParty="healer", soulstoneRaid="remind", soulstoneAssigned="", helperDemon=0,
+    helperDiscovery=false, helperThanks=false, helperThankEmote="THANK", helperQuick=false, helperTracker=0, helperPet=false, helperHealthstone=false, helperSoulstone=false, helperOath=false, oathAssigned={}, soulstoneParty="healer", soulstoneRaid="remind", soulstoneAssigned="", helperDemon=0,
     raidGroups={true,true,true,true,true,true,true,true}}
   for k,v in pairs(defaults) do
     if type(self.db[k]) ~= type(v) then self.db[k] = v end
@@ -103,6 +103,9 @@ function B:InitDB()
   if self.db.soulstoneParty~="healer" and self.db.soulstoneParty~="self" and self.db.soulstoneParty~="assigned" then self.db.soulstoneParty="healer" end
   if self.db.soulstoneRaid~="remind" and self.db.soulstoneRaid~="assigned" then self.db.soulstoneRaid="remind" end
   if #self.db.soulstoneAssigned>64 then self.db.soulstoneAssigned="" end
+  local oath=self.db.oathAssigned
+  if type(oath)~="table" or not A.Text(oath.guid) or not oath.guid:match("^Player%-")
+    or not A.Text(oath.name) or #oath.name>128 or oath.name:find("[%c|]") then self.db.oathAssigned={} end
   if not A.Number(self.db.helperDemon) or (self.db.helperDemon~=688 and self.db.helperDemon~=697 and self.db.helperDemon~=712 and self.db.helperDemon~=713 and self.db.helperDemon~=691) then self.db.helperDemon=0 end
   if self.NormalizeConvenience then self:NormalizeConvenience() end
   if self.NormalizeAlerts then self:NormalizeAlerts() end
@@ -188,6 +191,7 @@ function B:InitDB()
   end
   self.auraCache=self.auraCache or {}
   if self.InitSupplies then self:InitSupplies() end
+  if self.NormalizeCamping then self:NormalizeCamping() end
 end
 
 function B:ResetStats()

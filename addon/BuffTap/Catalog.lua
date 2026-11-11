@@ -1,6 +1,6 @@
 -- This Source Code Form is subject to the Mozilla Public License, v. 2.0.
 -- See LICENSE-MPL-2.0.txt.
--- Generated from Forever 1.60.1.70009 client tables by tools/build_catalog.py.
+-- Generated from Forever 1.60.1.70888 client tables by tools/build_catalog.py.
 -- Setting keys and ordering preserve BuffTap saved-profile compatibility.
 local _,B=...
 local coverage={wild={"Gift of the Wild","Mark of the Wild"},intellect={"Arcane Brilliance","Arcane Intellect"},magearmor={"Mage Armor","Ice Armor","Frost Armor"},magic={"Dampen Magic","Amplify Magic"},fortitude={"Prayer of Fortitude","Power Word: Fortitude"},spirit={"Prayer of Spirit","Divine Spirit"},shadow={"Prayer of Shadow Protection","Shadow Protection"},kings={"Greater Blessing of Kings","Blessing of Kings"},might={"Greater Blessing of Might","Blessing of Might"},wisdom={"Greater Blessing of Wisdom","Blessing of Wisdom"},paladinaura={"Devotion Aura","Retribution Aura","Concentration Aura","Shadow Resistance Aura","Frost Resistance Aura","Fire Resistance Aura"},seals={"Seal of Righteousness","Seal of the Crusader","Seal of Command","Seal of Justice","Seal of Light","Seal of Wisdom","Seal of Fury"},aspects={"Aspect of the Hawk","Aspect of the Monkey","Aspect of the Cheetah","Aspect of the Beast","Aspect of the Pack","Aspect of the Wild"},hunting={"Track Beasts","Track Humanoids","Track Undead","Track Hidden","Track Elementals","Track Demons","Track Giants","Track Dragonkin"},shields={"Water Shield","Lightning Shield"},imbues={"Windfury Weapon","Flametongue Weapon","Frostbrand Weapon","Rockbiter Weapon"},demonarmor={"Demon Armor","Demon Skin"},gathering={"Find Herbs","Find Minerals","Find Treasure","Find Fish"}}
@@ -8,7 +8,6 @@ B.Buffs={
   {key="gotw",class="DRUID",kind="group",name="Gift of the Wild",ranks={21850,21849},icon=136078,defaultOn=true,coverage="wild",singleKey="motw",minNeed=3},
   {key="motw",class="DRUID",kind="single",name="Mark of the Wild",ranks={9885,9884,8907,5234,6756,5232,1126},icon=136078,defaultOn=true,coverage="wild",groupKey="gotw"},
   {key="thorns",class="DRUID",kind="single",name="Thorns",ranks={9910,9756,8914,1075,782,467},icon=136104,defaultOn=true,covers={"Thorns"},target={"WARRIOR","PALADIN","DRUID"}},
-  {key="omen",class="DRUID",kind="self",name="Omen of Clarity",ranks={16864},icon=136017,defaultOn=true,covers={"Omen of Clarity"}},
   {key="natures-grasp",class="DRUID",kind="self",name="Nature's Grasp",ranks={17329,16813,16812,16811,16810,16689},icon=136063,defaultOn=false,covers={"Nature's Grasp"}},
   {key="ab",class="MAGE",kind="group",name="Arcane Brilliance",ranks={23028},icon=135869,defaultOn=true,coverage="intellect",singleKey="ai",minNeed=3},
   {key="ai",class="MAGE",kind="single",name="Arcane Intellect",ranks={10157,10156,1461,1460,1459},icon=135932,defaultOn=true,coverage="intellect",groupKey="ab"},
@@ -78,7 +77,7 @@ B.Buffs={
   {key="demon-skin",class="WARLOCK",kind="self",name="Demon Skin",ranks={696,687},icon=136185,defaultOn=false,coverage="demonarmor"},
   {key="unending-breath",class="WARLOCK",kind="single",name="Unending Breath",ranks={5697},icon=136148,defaultOn=false,covers={"Unending Breath"}},
   {key="detect-invis",class="WARLOCK",kind="single",name="Detect Invisibility",ranks={11743,2970,132},icon=136152,defaultOn=false,covers={"Detect Invisibility"}},
-  {key="soul-link",class="WARLOCK",kind="self",name="Soul Link",ranks={19028},auraIDs={25228},icon=136160,defaultOn=true,covers={"Soul Link"}},
+  {key="soul-link",class="WARLOCK",kind="self",name="Soul Link",ranks={19028},icon=136160,defaultOn=true,covers={"Soul Link"},auraIDs={25228}},
   {key="instant-poison",class="ROGUE",kind="weapon",name="Instant Poison",ranks={11343,11340,11342,11339,11341,11338,8691,8688,8687,8686,8681,8679},icon=132273,defaultOn=true,covers={"Instant Poison"}},
   {key="deadly-poison",class="ROGUE",kind="weapon",name="Deadly Poison",ranks={25351,25347,11358,11356,11357,11355,2837,2824,2835,2823},icon=132290,defaultOn=true,covers={"Deadly Poison"}},
   {key="crippling-poison",class="ROGUE",kind="weapon",name="Crippling Poison",ranks={11202,3421,3420,3408},icon=132274,defaultOn=false,covers={"Crippling Poison"}},
@@ -114,7 +113,6 @@ B.RankLevel={
   [1006]=40,
   [1008]=18,
   [1032]=40,
-  [1038]=26,
   [1075]=24,
   [1086]=30,
   [1126]=1,
@@ -267,7 +265,6 @@ B.RankLevel={
   [16811]=28,
   [16812]=38,
   [16813]=48,
-  [16864]=20,
   [17329]=58,
   [18137]=20,
   [19028]=40,
@@ -310,13 +307,10 @@ B.RankLevel={
   [19898]=56,
   [19899]=48,
   [19900]=60,
-  [19977]=40,
-  [19978]=50,
-  [19979]=60,
   [20043]=46,
   [20154]=1,
   [20162]=12,
-  [20163]=25,
+  [20163]=26,
   [20164]=22,
   [20165]=30,
   [20166]=38,
@@ -366,9 +360,7 @@ B.RankLevel={
   [25351]=60,
   [25780]=10,
   [25782]=52,
-  [25890]=60,
   [25894]=54,
-  [25895]=60,
   [25898]=60,
   [25916]=60,
   [25918]=60,
@@ -391,9 +383,7 @@ B.GroupReagents={
   [21850]={{17026,1}},
   [23028]={{17020,1}},
   [25782]={{21177,1}},
-  [25890]={{21177,1}},
   [25894]={{21177,1}},
-  [25895]={{21177,1}},
   [25898]={{21177,1}},
   [25916]={{21177,1}},
   [25918]={{21177,1}},

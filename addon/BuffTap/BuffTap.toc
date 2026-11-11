@@ -2,7 +2,7 @@
 ## Title: BuffTap
 ## Notes: One-tap buff maintenance for WoW Forever.
 ## Author: BuffTap contributors
-## Version: 1.16.10
+## Version: 1.17.0
 ## SavedVariables: BuffTapProfiles
 ## SavedVariablesPerCharacter: BuffTapDB
 ## OptionalDeps: LibSharedMedia-3.0, SharedMedia
@@ -10,6 +10,7 @@
 ## IconTexture: Interface\AddOns\BuffTap\Media\BuffTapIcon
 
 Libs/LibStub/LibStub.lua
+Libs/LibCustomGlow-1.0/LibCustomGlow-1.0.lua
 Libs/CallbackHandler-1.0/CallbackHandler-1.0.lua
 Libs/AceDB-3.0/AceDB-3.0.lua
 Libs/LibDataBroker-1.1/LibDataBroker-1.1.lua
@@ -33,7 +34,11 @@ Helpers.lua
 Safety.lua
 Readiness.lua
 Profiles.lua
+OptionsStyle.lua
 Options.lua
 ProfileOptions.lua
 Convenience.lua
+IconEffects.lua
+CampingData.lua
+Camping.lua
 Nearby.lua

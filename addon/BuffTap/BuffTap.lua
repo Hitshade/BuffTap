@@ -54,24 +54,7 @@ function B:ApplyReminderVisibility()
 end
 
 function B:UpdatePulse()
-  local b=self.button
-  if not b or not b.glow then return end
-  b.glow:SetShown(self.db and (self.db.glow or self.db.pulse) or false)
-  local ag=b.pulseAnimation
-  if ag then
-    local playing=false
-    if type(ag.IsPlaying)=="function" then
-      local ok,value=pcall(ag.IsPlaying,ag); playing=ok and value==true
-    end
-    if self.db and self.db.pulse and self.action then
-      if not playing and type(ag.Play)=="function" then pcall(ag.Play,ag) end
-    elseif playing and type(ag.Stop)=="function" then
-      pcall(ag.Stop,ag)
-      if b.glow.SetAlpha then b.glow:SetAlpha(1) end
-    end
-  elseif b.glow.SetAlpha then
-    b.glow:SetAlpha(1)
-  end
+  if self.ApplyIconEffect then self:ApplyIconEffect(self.button,self.action~=nil and self.db.showReminder~=false and not self.nearbyQuietAction) end
 end
 
 function B:CancelOverlayTimer()
@@ -146,6 +129,7 @@ function B:CreateButton()
   if not ok then self.setupError="secure state registration failed"; return end
   self.setupError=nil
 
+  b:HookScript("OnHide",function(frame) if not A.Combat() and B.StopIconEffect then B:StopIconEffect(frame) end end)
   b.icon=b:CreateTexture(nil,"ARTWORK"); b.icon:SetAllPoints()
   b.glow=b:CreateTexture(nil,"OVERLAY"); b.glow:SetAllPoints()
   b.glow:SetTexture("Interface\\Buttons\\CheckButtonHilight"); b.glow:SetBlendMode("ADD")
@@ -217,7 +201,7 @@ function B:CreateButton()
     if B:HelperSuppressed(action) then B:Commit(nil,"dismissed"); return end
     if action.source=="readiness" then
       if action.key=="healthstone" or action.key=="soulstone" or action.key=="weaponstone" then B.readinessInventory=nil end -- explicit click: recheck carried stock/capacity
-      if action.key=="soulstone" then B:InvalidateAura() end -- and fresh Soulstone coverage
+      if action.key=="soulstone" or action.key=="oath" then B:InvalidateAura() end -- fresh assigned-buff coverage
       if not B:Validate(action) then B:Commit(nil,"readiness changed before click") end
       return
     end
@@ -649,6 +633,11 @@ function B:DiagnosticsLines()
   out[#out+1]="C_Timer.After: "..tostring(C_Timer and type(C_Timer.After)=="function").." | spell range: "..tostring(C_Spell and type(C_Spell.IsSpellInRange)=="function")
   out[#out+1]="Consumables: "..(self.db and self.db.consumablesEnabled and "on" or "off").." | item count: "..tostring(C_Item and type(C_Item.GetItemCount)=="function").." | secure item provider: "..tostring(type(self.SelectConsumable)=="function")
   if self.WeaponReminderClass then out[#out+1]="Weapon reminder: "..self:WeaponReminderSummary()..(self.db.weaponApply and " | scroll application enabled" or " | manual alerts") end
+  if self.db and self.CampingState then
+    local camp=self:CampingState()
+    out[#out+1]="Camp setup: "..(self.db.campReminder and "reminder on" or "reminder off").." | near="..tostring(camp.near).." | unreadable="..tostring(camp.unknown).." | snoozed="..tostring(self.campSnoozeSession or (self.campSnoozeUntil and self.campSnoozeUntil>GetTime()) or false)
+    if self.campTrayError then out[#out+1]=self.campTrayError end
+  end
   if self.db and self.CampState then
     local camp=self:CampState()
     out[#out+1]="Camp Benefits: "..(camp.active and (camp.remaining and ("active ("..shortTime(camp.remaining)..")") or "active") or (camp.unknown and "unreadable" or "not active"))
@@ -915,6 +904,7 @@ SlashCmdList.BUFFTAP=function(text)
   end
   if A.Combat() then say("Settings and refresh are available after combat."); return end
   if cmd=="" or cmd=="config" then B:Options(); return
+  elseif cmd=="camp" then B:ToggleCampTray(); return
   elseif cmd=="helpers" then B:HelperOptions(); return
   elseif cmd=="supplies" then B:ShowSuppliesOptions(); return
   elseif cmd=="supplycheck" then B:ReportSupplies(); return
@@ -987,6 +977,7 @@ SlashCmdList.BUFFTAP=function(text)
   elseif cmd=="sound" or cmd=="glow" or cmd=="pulse" or cmd=="group" or cmd=="smartgroup" or cmd=="target" or cmd=="consumables" then
     if arg~="on" and arg~="off" then say("Use on or off."); return end
     local key=cmd=="smartgroup" and "smartGroup" or (cmd=="target" and "friendlyTarget" or (cmd=="consumables" and "consumablesEnabled" or cmd)); B.db[key]=arg=="on"
+    if cmd=="glow" or cmd=="pulse" then B.db.effectStyle=nil end
     if cmd=="consumables" and B.InvalidateConsumables then B:InvalidateConsumables() end
   else
     say("/bt config | bind | rebuff | target | targetrebuff | group | groups | groupneed | consumables | status | debug | profile | refresh | reset")

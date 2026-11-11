@@ -2,7 +2,7 @@
 local _,B=...
 local A=B.API
 -- An explicit allowlist prevents new buff/class options from becoming shared by accident.
-local shared={nearbyEnabled=true,nearbyBuffing=true,nearbyShowAll=true,nearbyInvites=true,nearbyLocked=true,nearbyX=true,nearbyY=true,showReminder=true,keys=true,size=true,opacity=true,x=true,y=true,glow=true,pulse=true,
+local shared={labelSize=true,labelOutline=true,labelGap=true,campTextFont=true,campTextColor=true,campTextSize=true,campTextOutline=true,campTextGap=true,campShowCountdown=true,campShowStacks=true,effectStyle=true,effectColor=true,effectSpeed=true,campReminder=true,campSize=true,campOpacity=true,campEffectStyle=true,campEffectColor=true,campEffectSpeed=true,campWarningVersion=true,campTrackBenefits=true,campTrackBag=true,campSound=true,campAnywhere=true,campWarning=true,campX=true,campY=true,nearbyEnabled=true,nearbyBuffing=true,nearbyShowAll=true,nearbyInvites=true,nearbyLocked=true,nearbyX=true,nearbyY=true,showReminder=true,keys=true,size=true,opacity=true,x=true,y=true,glow=true,pulse=true,
   showBuffName=true,showTargetName=true,showTimer=true,showGroupBadge=true,labelFont=true,labelColor=true,
   sound=true,reminderSound=true,supplySound=true,soundChannel=true,soundInterval=true,
   pvpProtection=true,pauseResting=true,helperDismiss=true,helperBounce=true,helperThanks=true,helperThankEmote=true,
@@ -12,7 +12,7 @@ local classKeys={"seconds","rebuffVersion","buffs","priorities","buffSeconds","g
   "blessingGroupOverrides","blessingRaidDefaults","blessingPartyMode","blessingPartyUniform","blessingPartyExcluded","groupBlessingPriorities","blessingAssignments","blessingClasses","buffGroups","buffClasses","buffGroupNeed","targetBuffs","targetBuffSeconds","raidGroups",
   "consumablesEnabled","consumableFamilies","consumableChoices","consumableSeconds","suppliesEnabled","suppliesChat","suppliesSound","suppliesReadyCheck","supplySettings",
   "weaponReminder","weaponMainHand","weaponOffHand","weaponApply","weaponReplace","weaponChoices","weaponCoatings","weaponSeconds",
-  "helperTracking","helperTreasure","helperTracker","helperCoverage","helperPet","helperHealthstone","helperSoulstone","helperDemon","soulstoneParty","soulstoneRaid","soulstoneAssigned"}
+  "helperTracking","helperTreasure","helperTracker","helperCoverage","helperPet","helperHealthstone","helperSoulstone","helperOath","oathAssigned","helperDemon","soulstoneParty","soulstoneRaid","soulstoneAssigned"}
 local function clone(value,seen,depth)
   local t=type(value)
   if t=="string" or t=="boolean" or (t=="number" and A.Number(value)) then return value end
@@ -103,6 +103,7 @@ function B:ClassCopySources(profile)
   table.sort(list); return list
 end
 function B:FinishProfileChange()
+  self.campPreviewUntil=nil
   if self.ClearAppearanceEdits then self:ClearAppearanceEdits() end
   self.helperThankSeen=nil; self.helperThankBaseline=nil; self.helperThankPending=nil; self.helperThankQueue={}
   self.helperThankRetries=0; self.helperThankRetryPending=nil; self:CancelTimer("thanks-send"); self:CancelTimer("thanks-settle")
@@ -110,6 +111,7 @@ function B:FinishProfileChange()
   self:InvalidateAura(); self:InvalidateRoster()
   -- Rebuild secure bindings immediately while these operations are out of combat.
   self:Refresh(); self:SaveClassSetup()
+  if self.UpdateCamping then self:UpdateCamping() end
 end
 function B:SelectSettingsProfile(name)
   if A.Combat() or not cleanName(name) or not self.profileDB.sv.profiles[name] then return false end

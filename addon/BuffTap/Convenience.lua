@@ -17,40 +17,108 @@ function B:AddMiniBanner(parent,width)
   h.art:SetTexCoord(0,1,176/770,596/770)
   return h
 end
-local colors={default={1,1,1},gold={1,.82,.1},cyan={.4,.9,1},green={.45,1,.65}}
-function B:ReminderFonts()
-  local choices={{key="default",name="Default font"}}
-  if type(UNIT_NAME_FONT)=="string" then choices[#choices+1]={key="names",name="Unit-name font"} end
-  if type(DAMAGE_TEXT_FONT)=="string" then choices[#choices+1]={key="numbers",name="Combat-number font"} end
-  if self.db and self.db.labelFont=="names" and type(UNIT_NAME_FONT)~="string" then choices[#choices+1]={key="names",name="Unit-name font (unavailable)"} end
-  if self.db and self.db.labelFont=="numbers" and type(DAMAGE_TEXT_FONT)~="string" then choices[#choices+1]={key="numbers",name="Combat-number font (unavailable)"} end
+local colors={default={1,1,1},gold={1,.82,.1},cyan={.4,.9,1},green={.45,1,.65},red={1,.3,.25},white={1,1,1}}
+function B:BaseTextFont(fontObject)
+  local object=type(fontObject)=="string" and _G[fontObject] or fontObject
+  if object and type(object.GetFont)=="function" then
+    local ok,path,size,flags=pcall(object.GetFont,object)
+    if ok and type(path)=="string" and A.Number(size) and size>0 then return path,size,type(flags)=="string" and flags or "" end
+  end
+end
+function B:GameFontLabel()
+  local path=self:BaseTextFont("GameFontHighlightSmall")
+  if not path then return self:Text("Game UI font") end
+  local face=path:match("([^/\\]+)%.[^%.]+$") or path
+  face=({FRIZQT__="Friz Quadrata",ARIALN="Arial Narrow",MORPHEUS="Morpheus",SKURRI="Skurri"})[face:upper()] or face
+  return self:Text("Game font: %s",face)
+end
+function B:TextSizeLabel(value)
+  if A.Number(value) and value>0 then return tostring(value).." px" end
+  local _,size=self:BaseTextFont("GameFontHighlightSmall")
+  return size and self:Text("Game: %s px",tostring(size)) or self:Text("Game size")
+end
+function B:GameTextOutline()
+  local _,_,flags=self:BaseTextFont("GameFontHighlightSmall")
+  if flags and flags:find("THICKOUTLINE",1,true) then return "thick" end
+  if flags and flags:find("OUTLINE",1,true) then return "outline" end
+  return "none"
+end
+local function sameFont(a,b)
+  return type(a)=="string" and type(b)=="string" and a:lower():gsub("/","\\")==b:lower():gsub("/","\\")
+end
+function B:NormalizeTextFontKey(key)
+  if key~="names" and key~="numbers" then return "default" end
+  local path=key=="names" and UNIT_NAME_FONT or DAMAGE_TEXT_FONT
+  local game=self:BaseTextFont("GameFontHighlightSmall")
+  if sameFont(path,game) then return "default" end
+  if key=="numbers" and sameFont(path,UNIT_NAME_FONT) then return "names" end
+  return key
+end
+function B:ReminderFonts(selected)
+  local choices={{key="default",name=self:GameFontLabel()}}
+  if type(UNIT_NAME_FONT)=="string" and self:NormalizeTextFontKey("names")=="names" then choices[#choices+1]={key="names",name="Unit-name font"} end
+  if type(DAMAGE_TEXT_FONT)=="string" and self:NormalizeTextFontKey("numbers")=="numbers" then choices[#choices+1]={key="numbers",name="Combat-number font"} end
+  selected=selected or (self.db and self.db.labelFont)
+  if selected=="names" and type(UNIT_NAME_FONT)~="string" then choices[#choices+1]={key="names",name="Unit-name font (unavailable)"} end
+  if selected=="numbers" and type(DAMAGE_TEXT_FONT)~="string" then choices[#choices+1]={key="numbers",name="Combat-number font (unavailable)"} end
   return choices
 end
-function B:ReminderColors()
-  return {{key="default",name="Text: default"},{key="gold",name="Text: gold"},{key="cyan",name="Text: cyan"},{key="green",name="Text: green"}}
+function B:ReminderColors(uniform)
+  local choices={}
+  if not uniform then choices[#choices+1]={key="default",name="Text: white + gold count"} end
+  for _,entry in ipairs({{key="gold",name="Text: gold"},{key="cyan",name="Text: cyan"},{key="green",name="Text: green"},{key="red",name="Text: red"},{key="white",name="Text: white"}}) do choices[#choices+1]=entry end
+  return choices
 end
 function B:NormalizeConvenience()
   local d=self.db
-  if d.labelFont~="names" and d.labelFont~="numbers" then d.labelFont="default" end
+  d.labelFont=self:NormalizeTextFontKey(d.labelFont)
   if not colors[d.labelColor] then d.labelColor="default" end
+  d.labelSize=A.Number(d.labelSize) and (d.labelSize==0 and 0 or math.max(8,math.min(20,math.floor(d.labelSize)))) or 0
+  d.labelGap=A.Number(d.labelGap) and math.max(0,math.min(20,math.floor(d.labelGap))) or 5
+  if not ({none=true,outline=true,thick=true})[d.labelOutline] then d.labelOutline=self:GameTextOutline() end
   if type(d.welcomeSeen)~="boolean" then d.welcomeSeen=false end
+end
+function B:TextSizeChoices()
+  local choices={{key=0,name=self:TextSizeLabel(0)}}
+  for i=8,20 do choices[#choices+1]={key=i,name=tostring(i).." px"} end
+  return choices
+end
+function B:TextOutlineChoices()
+  return {{key="none",name="Outline: none"},{key="outline",name="Outline: thin"},{key="thick",name="Outline: thick"}}
+end
+local outlines={none="",outline="OUTLINE",thick="THICKOUTLINE"}
+local fallbackFonts=setmetatable({},{__mode="k"})
+function B:ApplyLabelStyle(fs,settings,fontObject,defaultColor)
+  if not fs then return end
+  fs:SetFontObject(fontObject or "GameFontHighlightSmall")
+  local path,size,flags=self:BaseTextFont(fontObject or "GameFontHighlightSmall")
+  if not path then
+    local base=fallbackFonts[fs]
+    if not base then
+      local p,s,f=fs:GetFont()
+      if type(p)=="string" and A.Number(s) then base={p,s,f or ""}; fallbackFonts[fs]=base end
+    end
+    if base then path,size,flags=base[1],base[2],base[3] end
+  end
+  local chosen=settings.labelFont=="names" and UNIT_NAME_FONT or settings.labelFont=="numbers" and DAMAGE_TEXT_FONT
+  if type(chosen)=="string" then path=chosen end
+  if A.Number(settings.labelSize) and settings.labelSize>0 then size=settings.labelSize end
+  local outline=outlines[settings.labelOutline]
+  if outline~=nil then flags=outline end
+  if type(path)=="string" and A.Number(size) then fs:SetFont(path,size,flags or "") end
+  local col=settings.labelColor=="default" and defaultColor or colors[settings.labelColor]
+  col=col or colors.default
+  fs:SetTextColor(col[1],col[2],col[3])
 end
 function B:ApplyReminderStyle(frame)
   local d=self.db
-  local path=d.labelFont=="names" and UNIT_NAME_FONT or d.labelFont=="numbers" and DAMAGE_TEXT_FONT
-  local col=colors[d.labelColor] or colors.default
   for _,entry in ipairs({{frame.nameLabel,"GameFontHighlightSmall"},{frame.label or frame.recipient,"GameFontHighlightSmall"},{frame.timerLabel or frame.timer,"GameFontHighlightSmall"},{frame.groupLabel or frame.count,"GameFontNormalSmall"}}) do
-    local fs=entry[1]
-    if fs then
-      fs:SetFontObject(entry[2])
-      if type(path)=="string" then
-        local _,size,flags=fs:GetFont()
-        if A.Number(size) then fs:SetFont(path,size,flags) end
-      end
-      if d.labelColor=="default" and (fs==frame.groupLabel or fs==frame.count) then fs:SetTextColor(1,.82,.1)
-      else fs:SetTextColor(col[1],col[2],col[3]) end
-    end
+    self:ApplyLabelStyle(entry[1],d,entry[2],(entry[1]==frame.groupLabel or entry[1]==frame.count) and colors.gold or nil)
   end
+  local gap=d.labelGap or 5
+  if frame.nameLabel then frame.nameLabel:ClearAllPoints(); frame.nameLabel:SetPoint("BOTTOM",frame,"TOP",0,gap) end
+  local recipient=frame.label or frame.recipient
+  if recipient then recipient:ClearAllPoints(); recipient:SetPoint("TOP",frame,"BOTTOM",0,-gap) end
 end
 -- Session-only pause: one expiry timer, no saved timestamps or polling.
 function B:PauseReminders(minutes)
@@ -73,7 +141,7 @@ local function window(name,title,width,height)
   local f=CreateFrame("Frame",name,UIParent,"BackdropTemplate")
   f:SetSize(width,height); f:SetFrameStrata("FULLSCREEN_DIALOG"); f:SetToplevel(true); f:SetClampedToScreen(true); f:EnableMouse(true)
   f:SetBackdrop({bgFile="Interface\\Buttons\\WHITE8X8",edgeFile="Interface\\Tooltips\\UI-Tooltip-Border",edgeSize=12})
-  f:SetBackdropColor(.035,.045,.055,1)
+  f:SetBackdropColor(unpack(B.OptionsTheme.window)); f:SetBackdropBorderColor(.60,.48,.25,1)
   f.title=f:CreateFontString(nil,"OVERLAY","GameFontNormalLarge"); f.title:SetPoint("TOPLEFT",16,-16); f.title:SetText(B:Text(title))
   f:SetScript("OnEvent",function(s) s:Hide() end); f:RegisterEvent("PLAYER_REGEN_DISABLED")
   if name then UISpecialFrames[#UISpecialFrames+1]=name end
@@ -134,7 +202,7 @@ function B:ShowWelcome(force)
       row.text=row:CreateFontString(nil,"OVERLAY","GameFontHighlight"); row.text:SetPoint("TOPLEFT",32,0); row.text:SetWidth(476); row.text:SetJustifyH("LEFT"); row.text:SetWordWrap(true); row.text:SetText(self:Text(text)); f.steps[i]=row
     end
     f.binding=CreateFrame("Frame",nil,f,"BackdropTemplate"); f.binding:SetPoint("TOPLEFT",24,-300); f.binding:SetSize(512,48)
-    f.binding:SetBackdrop({bgFile="Interface\\Buttons\\WHITE8X8",edgeFile="Interface\\Buttons\\WHITE8X8",edgeSize=1}); f.binding:SetBackdropColor(.065,.11,.135,1); f.binding:SetBackdropBorderColor(.22,.35,.4,1)
+    f.binding:SetBackdrop({bgFile="Interface\\Buttons\\WHITE8X8",edgeFile="Interface\\Buttons\\WHITE8X8",edgeSize=1}); f.binding:SetBackdropColor(.043,.070,.085,1); f.binding:SetBackdropBorderColor(.22,.35,.4,1)
     f.bindingLabel=f.binding:CreateFontString(nil,"OVERLAY","GameFontHighlightSmall"); f.bindingLabel:SetPoint("LEFT",12,0); f.bindingLabel:SetWidth(220); f.bindingLabel:SetJustifyH("LEFT"); f.bindingLabel:SetText(self:Text("Your current binding"))
     f.body=f.binding:CreateFontString(nil,"OVERLAY","GameFontHighlight"); f.body:SetPoint("RIGHT",-12,0); f.body:SetWidth(258); f.body:SetJustifyH("RIGHT"); f.body:SetWordWrap(true); f.body:SetTextColor(.65,.9,1)
     f.hint=f:CreateFontString(nil,"OVERLAY","GameFontDisableSmall"); f.hint:SetPoint("TOPLEFT",24,-360); f.hint:SetWidth(512); f.hint:SetJustifyH("LEFT"); f.hint:SetWordWrap(true); f.hint:SetText(self:Text("Right-click the minimap icon for quick controls and pause."))

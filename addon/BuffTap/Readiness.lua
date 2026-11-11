@@ -61,6 +61,8 @@ function B:ReadinessEnabled(key)
   elseif key=="soulstone" then
     if db.helperSoulstone~=true then return false end
     return self:ReadinessClass()=="WARLOCK"
+  elseif key=="oath" then
+    return db.helperOath==true and self:ReadinessClass()=="PALADIN"
   elseif key=="weaponstone" then
     -- Implied by choosing Firestone/Spellstone for the main hand.
     -- Preferences are class-filtered, so a Warlock stone implies a Warlock.
@@ -71,7 +73,7 @@ function B:ReadinessEnabled(key)
   return false
 end
 function B:AnyReadinessEnabled()
-  return self:ReadinessEnabled("pet") or self:ReadinessEnabled("healthstone") or self:ReadinessEnabled("soulstone") or self:ReadinessEnabled("weaponstone")
+  return self:ReadinessEnabled("pet") or self:ReadinessEnabled("healthstone") or self:ReadinessEnabled("soulstone") or self:ReadinessEnabled("weaponstone") or self:ReadinessEnabled("oath")
 end
 function B:ReadinessDemons()
   local result={}
@@ -118,10 +120,11 @@ end
 function B:SyncReadiness()
   local pets=self:ReadinessEnabled("pet"); local hs=self:ReadinessEnabled("healthstone") or self:ReadinessEnabled("soulstone") or self:ReadinessEnabled("weaponstone")
   local state=tostring(pets)..":"..tostring(self:ReadinessEnabled("healthstone"))..":"..tostring(self:ReadinessEnabled("soulstone"))..":"..tostring(self:ReadinessEnabled("weaponstone"))
+  local oath=self:ReadinessEnabled("oath"); state=state..":"..tostring(oath)
   if state==self.readinessRegistration then return end
   self.readinessRegistration=state
   local wanted={}
-  if pets or hs then for _,e in ipairs(commonEvents) do wanted[e]=true end end
+  if pets or hs or oath then for _,e in ipairs(commonEvents) do wanted[e]=true end end
   if pets then for _,e in ipairs(petEvents) do wanted[e]=true end end
   self.readinessEvents=self.readinessEvents or {}
   for e in pairs(extraEvents) do
@@ -145,7 +148,7 @@ function B:SyncReadiness()
   self.readinessInventory=nil
   if not pets then self.readinessSettleUntil=nil end
   if self.readinessPending and not self:ReadinessEnabled(self.readinessPending.key) then self.readinessPending=nil end
-  if not pets and not hs then
+  if not pets and not hs and not oath then
     self.readinessStatus=nil; self.readinessPending=nil; self.readinessMounted=nil
     self:CancelReadinessWake()
   else
@@ -509,12 +512,70 @@ function B:WeaponStoneCandidate()
   end
   return nil,"Create "..choice.name.." not learned"
 end
+-- Oath is maintained on exactly one explicitly assigned GUID, never a group loop.
+local OATH=1328548
+function B:SetOathAssignedFromTarget()
+  if A.Combat() or self:ReadinessClass()~="PALADIN" then return false end
+  if A.Call(UnitExists,"target")~=true or A.Call(UnitIsPlayer,"target")~=true
+    or A.Call(UnitCanAssist,"player","target")~=true then return false end
+  local guid=A.Call(UnitGUID,"target")
+  local name=A.Call(GetUnitName,"target",true) or A.Call(UnitName,"target")
+  if not A.Text(guid) or not guid:match("^Player%-") or not A.Text(name) or #name>128 or name:find("[%c|]") then return false end
+  self.db.oathAssigned={guid=guid,name=name}; self.readinessPending=nil
+  self:InvalidateAura(); self:RequestRefresh("Oath assignment",0); return true
+end
+function B:OathAssignedUnit()
+  local wanted=self.db.oathAssigned
+  if type(wanted)~="table" or not A.Text(wanted.guid) then return nil,"no Oath recipient assigned" end
+  local units,why=soulstoneUnits()
+  if not units then return nil,why end
+  for _,unit in ipairs(units) do
+    if A.Call(UnitGUID,unit)==wanted.guid then return unit end
+  end
+  return nil,"assigned Oath recipient is not in your group"
+end
+function B:OathCandidate()
+  if not self:ReadinessEnabled("oath") then return nil,"Oath helper off" end
+  if not A.Known(OATH) or A.Call(C_Spell and C_Spell.IsSpellPassive,OATH)~=false then return nil,"Oath of Light not learned" end
+  local target,why=self:OathAssignedUnit()
+  if not target then return nil,why end
+  local mine=A.Call(UnitGUID,"player")
+  if not A.Text(mine) then return nil,"your identity is unreadable" end
+  local auras,err=self:GetAuras(target,false)
+  if not auras then return nil,err or "Oath recipient auras unreadable" end
+  for _,aura in ipairs(auras) do
+    if aura.spellId==OATH then
+      local owner=A.Text(aura.sourceUnit) and A.Call(UnitGUID,aura.sourceUnit) or nil
+      if not A.Text(owner) then owner=self:AuraCasterGUID(target,aura) end
+      if not A.Text(owner) then return nil,"Oath ownership unreadable" end
+      -- Preserve another paladin's Oath until coexistence is verified in-game.
+      if owner~=mine then return nil,"another paladin's Oath is active; preserved" end
+      if not A.Number(aura.expirationTime) or aura.expirationTime==0 then return nil,"your Oath is active" end
+      local remaining=aura.expirationTime-GetTime()
+      if remaining>30 then self:ConsiderWake(remaining-30); return nil,"your Oath is active" end
+    end
+  end
+  local result,reason=self:ReadinessSpell("oath",OATH,"maintain Oath of Light on your assigned recipient")
+  if not result then return nil,reason end
+  result.target=target; result.targetGUID=A.Call(UnitGUID,target)
+  result.targetName=A.Call(UnitName,target) or self.db.oathAssigned.name
+  return result
+end
+local watchedUnit=B.IsWatchedUnit
+function B:IsWatchedUnit(unit)
+  local wanted=self.db and self.db.oathAssigned
+  if self:ReadinessEnabled("oath") and A.Text(unit) and type(wanted)=="table" and A.Text(wanted.guid)
+    and A.Call(UnitGUID,unit)==wanted.guid then return true end
+  return watchedUnit(self,unit)
+end
+
 function B:ReadinessCandidate(key)
   if not self:ReadinessEnabled(key) then return nil,"helper off" end
   self:ExpireReadiness()
   local allowed,why=self:ReadinessContext()
   if not allowed then return nil,why end
   if self.readinessPending and self.readinessPending.key==key then return nil,"waiting for readiness cast/inventory update" end
+  if key=="oath" then return self:OathCandidate() end
   if key=="pet" then return self:PetReadinessCandidate() end
   if key=="healthstone" then return self:HealthstoneCandidate() end
   if key=="soulstone" then return self:SoulstoneCandidate() end
@@ -528,6 +589,7 @@ function B:ReadinessStillNeeded(previous)
     or current.itemID~=previous.itemID or current.target~=previous.target or current.targetGUID~=previous.targetGUID then return false,"readiness choice changed" end
   if self:HelperSuppressed(previous) then return false,"readiness dismissed" end
   if current.manual then return true end
+  if previous.key=="oath" then return true end
   -- All supported recovery/creation spells are cast-time spells. Never arm them
   -- while moving or when movement/resource state cannot be checked.
   local speed=A.Call(GetUnitSpeed,"player")
@@ -540,7 +602,7 @@ function B:ReadinessStillNeeded(previous)
 end
 function B:SelectReadiness()
   local manual
-  for _,key in ipairs({"pet","healthstone","soulstone","weaponstone"}) do
+  for _,key in ipairs({"pet","healthstone","soulstone","weaponstone","oath"}) do
     if self:ReadinessEnabled(key) then
       local ok,result,why=pcall(function()
         local candidate,reason=self:ReadinessCandidate(key)
@@ -572,7 +634,7 @@ function B:AfterReadinessClick(action,down)
 end
 function B:ReadinessEvent(event,unit,castGUID,spellID)
   local pets=self:ReadinessEnabled("pet"); local hs=self:ReadinessEnabled("healthstone") or self:ReadinessEnabled("soulstone") or self:ReadinessEnabled("weaponstone")
-  if not pets and not hs then return extraEvents[event] end
+  if not pets and not hs and not self:ReadinessEnabled("oath") then return extraEvents[event] end
   if event=="PLAYER_REGEN_DISABLED" then self.readinessPending=nil; self:CancelReadinessWake(); return end
   if event=="PLAYER_REGEN_ENABLED" then self:ExpireReadiness() end
   if event=="PLAYER_ENTERING_WORLD" or event=="ZONE_CHANGED_NEW_AREA" then

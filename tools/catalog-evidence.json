@@ -1,14 +1,14 @@
 {
-  "build": "1.60.1.70009",
+  "build": "1.60.1.70888",
   "source": "Blizzard DB2 tables exported through wago.tools",
   "tables": {
-    "spellnames.csv": "b9a0d125fd47e02c13790504e2f10c4e67a3e5d5c4a91295bd96514ba36610a6",
-    "SpellLevels.csv": "9eb3c7b6431e6f74395aa920033eb456d0ef7f70d75ca47c09c1ad62c2ca76bc",
-    "SkillLineAbility.csv": "55a870d9e414496a167ebff864d16228bfbf9d3c36788c14ac66f75a6fd1857e",
-    "SpellEffect.csv": "fdecddfd93a3c27b48d7bbbebc8cc733a502fa8d58de623646550f9a5cffeb00",
-    "SpellReagents.csv": "059ef7298300109f6351b537ab672fa3c7581780879ec6c3ccd03207915d4b1e",
-    "Spell.csv": "291e588d209182febd2f5f8554d13373aa8dc0262b33f325ac4fbe78e2791f93",
-    "SpellMisc.csv": "6e4c26027a38b519c2a61cbaf94b557d06cbf61b94c94377504957774ed7e145"
+    "spellnames.csv": "4358b3d1a2a859284b2f46cf614e6a1f85320be342acc1c4b68b625f30cf47a5",
+    "SpellLevels.csv": "c9ef7708478aaff1b5e488c58356df443ee7d6c08a53017819f9af37cd5bef5a",
+    "SkillLineAbility.csv": "13ef58a08253125e3e9dca642a39bc480187987e90cfbe5c8be30e1ab3c8be0a",
+    "SpellEffect.csv": "da2fb074eedb51bd1246ef53666044c0b757bdb67340c3969b712caa8481ac2b",
+    "SpellReagents.csv": "f37423f667c09a6aaada6f05bed12e6d307fe15b3596944e132492f7f1dc9cc8",
+    "Spell.csv": "3f4c3e7ca6f6c58b32c3865b8ceb6eec9bcff8e8d9facea62880f22def927bce",
+    "SpellMisc.csv": "4b3d573dae575c2051e71d524dc73ac3590c56aa102b69770675c0eb10508f85"
   },
   "definitions": [
     {
@@ -20,11 +20,11 @@
         21850,
         21849
       ],
+      "icon": 136078,
       "defaultOn": true,
       "coverage": "wild",
       "singleKey": "motw",
-      "minNeed": 3,
-      "icon": 136078
+      "minNeed": 3
     },
     {
       "key": "motw",
@@ -40,10 +40,10 @@
         5232,
         1126
       ],
+      "icon": 136078,
       "defaultOn": true,
       "coverage": "wild",
-      "groupKey": "gotw",
-      "icon": 136078
+      "groupKey": "gotw"
     },
     {
       "key": "thorns",
@@ -58,6 +58,7 @@
         782,
         467
       ],
+      "icon": 136104,
       "defaultOn": true,
       "covers": [
         "Thorns"
@@ -66,22 +67,7 @@
         "WARRIOR",
         "PALADIN",
         "DRUID"
-      ],
-      "icon": 136104
-    },
-    {
-      "key": "omen",
-      "class_": "DRUID",
-      "kind": "self",
-      "name": "Omen of Clarity",
-      "ranks": [
-        16864
-      ],
-      "defaultOn": true,
-      "covers": [
-        "Omen of Clarity"
-      ],
-      "icon": 136017
+      ]
     },
     {
       "key": "natures-grasp",
@@ -96,11 +82,11 @@
         16810,
         16689
       ],
+      "icon": 136063,
       "defaultOn": false,
       "covers": [
         "Nature's Grasp"
-      ],
-      "icon": 136063
+      ]
     },
     {
       "key": "ab",
@@ -110,11 +96,11 @@
       "ranks": [
         23028
       ],
+      "icon": 135869,
       "defaultOn": true,
       "coverage": "intellect",
       "singleKey": "ai",
-      "minNeed": 3,
-      "icon": 135869
+      "minNeed": 3
     },
     {
       "key": "ai",
@@ -128,10 +114,10 @@
         1460,
         1459
       ],
+      "icon": 135932,
       "defaultOn": true,
       "coverage": "intellect",
-      "groupKey": "ab",
-      "icon": 135932
+      "groupKey": "ab"
     },
     {
       "key": "mage-armor",
@@ -143,9 +129,9 @@
         22782,
         6117
       ],
+      "icon": 135991,
       "defaultOn": true,
-      "coverage": "magearmor",
-      "icon": 135991
+      "coverage": "magearmor"
     },
     {
       "key": "ice-armor",
@@ -158,9 +144,9 @@
         7320,
         7302
       ],
+      "icon": 135843,
       "defaultOn": false,
-      "coverage": "magearmor",
-      "icon": 135843
+      "coverage": "magearmor"
     },
     {
       "key": "frost-armor",
@@ -172,9 +158,9 @@
         7300,
         168
       ],
+      "icon": 135843,
       "defaultOn": false,
-      "coverage": "magearmor",
-      "icon": 135843
+      "coverage": "magearmor"
     },
     {
       "key": "dampen",
@@ -188,9 +174,9 @@
         8450,
         604
       ],
+      "icon": 136006,
       "defaultOn": false,
-      "coverage": "magic",
-      "icon": 136006
+      "coverage": "magic"
     },
     {
       "key": "amplify",
@@ -203,9 +189,9 @@
         8455,
         1008
       ],
+      "icon": 135907,
       "defaultOn": false,
-      "coverage": "magic",
-      "icon": 135907
+      "coverage": "magic"
     },
     {
       "key": "pof",
@@ -216,11 +202,11 @@
         21564,
         21562
       ],
+      "icon": 135941,
       "defaultOn": true,
       "coverage": "fortitude",
       "singleKey": "fort",
-      "minNeed": 3,
-      "icon": 135941
+      "minNeed": 3
     },
     {
       "key": "fort",
@@ -235,10 +221,10 @@
         1244,
         1243
       ],
+      "icon": 135987,
       "defaultOn": true,
       "coverage": "fortitude",
-      "groupKey": "pof",
-      "icon": 135987
+      "groupKey": "pof"
     },
     {
       "key": "pos",
@@ -248,11 +234,11 @@
       "ranks": [
         27681
       ],
+      "icon": 135946,
       "defaultOn": true,
       "coverage": "spirit",
       "singleKey": "spirit",
-      "minNeed": 3,
-      "icon": 135946
+      "minNeed": 3
     },
     {
       "key": "spirit",
@@ -265,10 +251,10 @@
         14818,
         14752
       ],
+      "icon": 135898,
       "defaultOn": true,
       "coverage": "spirit",
-      "groupKey": "pos",
-      "icon": 135898
+      "groupKey": "pos"
     },
     {
       "key": "posp",
@@ -278,11 +264,11 @@
       "ranks": [
         27683
       ],
+      "icon": 135945,
       "defaultOn": false,
       "coverage": "shadow",
       "singleKey": "sp",
-      "minNeed": 3,
-      "icon": 135945
+      "minNeed": 3
     },
     {
       "key": "sp",
@@ -294,10 +280,10 @@
         10957,
         976
       ],
+      "icon": 136121,
       "defaultOn": false,
       "coverage": "shadow",
-      "groupKey": "posp",
-      "icon": 136121
+      "groupKey": "posp"
     },
     {
       "key": "inner-fire",
@@ -312,11 +298,11 @@
         7128,
         588
       ],
+      "icon": 135926,
       "defaultOn": true,
       "covers": [
         "Inner Fire"
-      ],
-      "icon": 135926
+      ]
     },
     {
       "key": "fear-ward",
@@ -326,11 +312,11 @@
       "ranks": [
         6346
       ],
+      "icon": 135902,
       "defaultOn": false,
       "covers": [
         "Fear Ward"
-      ],
-      "icon": 135902
+      ]
     },
     {
       "key": "shadowform",
@@ -340,11 +326,11 @@
       "ranks": [
         15473
       ],
+      "icon": 136200,
       "defaultOn": false,
       "covers": [
         "Shadowform"
-      ],
-      "icon": 136200
+      ]
     },
     {
       "key": "shadowguard",
@@ -359,11 +345,11 @@
         19308,
         18137
       ],
+      "icon": 136051,
       "defaultOn": false,
       "covers": [
         "Shadowguard"
-      ],
-      "icon": 136051
+      ]
     },
     {
       "key": "touch-weakness",
@@ -378,11 +364,11 @@
         19261,
         2652
       ],
+      "icon": 136143,
       "defaultOn": false,
       "covers": [
         "Touch of Weakness"
-      ],
-      "icon": 136143
+      ]
     },
     {
       "key": "gbok",
@@ -392,11 +378,11 @@
       "ranks": [
         25898
       ],
+      "icon": 135993,
       "defaultOn": true,
       "coverage": "kings",
       "singleKey": "bok",
-      "minNeed": 2,
-      "icon": 135993
+      "minNeed": 2
     },
     {
       "key": "bok",
@@ -406,10 +392,10 @@
       "ranks": [
         20217
       ],
+      "icon": 135995,
       "defaultOn": true,
       "coverage": "kings",
-      "groupKey": "gbok",
-      "icon": 135995
+      "groupKey": "gbok"
     },
     {
       "key": "gbom",
@@ -420,6 +406,7 @@
         25916,
         25782
       ],
+      "icon": 135908,
       "defaultOn": true,
       "coverage": "might",
       "singleKey": "bom",
@@ -429,8 +416,7 @@
         "ROGUE",
         "HUNTER",
         "PALADIN"
-      ],
-      "icon": 135908
+      ]
     },
     {
       "key": "bom",
@@ -446,6 +432,7 @@
         19834,
         19740
       ],
+      "icon": 135906,
       "defaultOn": true,
       "coverage": "might",
       "groupKey": "gbom",
@@ -454,8 +441,7 @@
         "ROGUE",
         "HUNTER",
         "PALADIN"
-      ],
-      "icon": 135906
+      ]
     },
     {
       "key": "gbow",
@@ -466,6 +452,7 @@
         25918,
         25894
       ],
+      "icon": 135912,
       "defaultOn": true,
       "coverage": "wisdom",
       "singleKey": "bow",
@@ -477,8 +464,7 @@
         "SHAMAN",
         "DRUID",
         "PALADIN"
-      ],
-      "icon": 135912
+      ]
     },
     {
       "key": "bow",
@@ -493,6 +479,7 @@
         19850,
         19742
       ],
+      "icon": 135970,
       "defaultOn": true,
       "coverage": "wisdom",
       "groupKey": "gbow",
@@ -503,64 +490,7 @@
         "SHAMAN",
         "DRUID",
         "PALADIN"
-      ],
-      "icon": 135970
-    },
-    {
-      "key": "gbos",
-      "class_": "PALADIN",
-      "kind": "blessing",
-      "name": "Greater Blessing of Salvation",
-      "ranks": [
-        25895
-      ],
-      "defaultOn": false,
-      "coverage": "salvation",
-      "singleKey": "bos",
-      "minNeed": 2,
-      "icon": 135910
-    },
-    {
-      "key": "bos",
-      "class_": "PALADIN",
-      "kind": "blessing",
-      "name": "Blessing of Salvation",
-      "ranks": [
-        1038
-      ],
-      "defaultOn": false,
-      "coverage": "salvation",
-      "groupKey": "gbos",
-      "icon": 135967
-    },
-    {
-      "key": "gbol",
-      "class_": "PALADIN",
-      "kind": "blessing",
-      "name": "Greater Blessing of Light",
-      "ranks": [
-        25890
-      ],
-      "defaultOn": false,
-      "coverage": "light",
-      "singleKey": "bol",
-      "minNeed": 2,
-      "icon": 135909
-    },
-    {
-      "key": "bol",
-      "class_": "PALADIN",
-      "kind": "blessing",
-      "name": "Blessing of Light",
-      "ranks": [
-        19979,
-        19978,
-        19977
-      ],
-      "defaultOn": false,
-      "coverage": "light",
-      "groupKey": "gbol",
-      "icon": 135943
+      ]
     },
     {
       "key": "righteous-fury",
@@ -570,11 +500,11 @@
       "ranks": [
         25780
       ],
+      "icon": 135962,
       "defaultOn": false,
       "covers": [
         "Righteous Fury"
-      ],
-      "icon": 135962
+      ]
     },
     {
       "key": "devotion",
@@ -590,9 +520,9 @@
         10290,
         465
       ],
+      "icon": 135893,
       "defaultOn": true,
-      "coverage": "paladinaura",
-      "icon": 135893
+      "coverage": "paladinaura"
     },
     {
       "key": "retribution",
@@ -606,9 +536,9 @@
         10298,
         7294
       ],
+      "icon": 135873,
       "defaultOn": false,
-      "coverage": "paladinaura",
-      "icon": 135873
+      "coverage": "paladinaura"
     },
     {
       "key": "concentration",
@@ -618,9 +548,9 @@
       "ranks": [
         19746
       ],
+      "icon": 135933,
       "defaultOn": false,
-      "coverage": "paladinaura",
-      "icon": 135933
+      "coverage": "paladinaura"
     },
     {
       "key": "shadow-res-aura",
@@ -632,9 +562,9 @@
         19895,
         19876
       ],
+      "icon": 136192,
       "defaultOn": false,
-      "coverage": "paladinaura",
-      "icon": 136192
+      "coverage": "paladinaura"
     },
     {
       "key": "frost-res-aura",
@@ -646,9 +576,9 @@
         19897,
         19888
       ],
+      "icon": 135865,
       "defaultOn": false,
-      "coverage": "paladinaura",
-      "icon": 135865
+      "coverage": "paladinaura"
     },
     {
       "key": "fire-res-aura",
@@ -660,9 +590,9 @@
         19899,
         19891
       ],
+      "icon": 135824,
       "defaultOn": false,
-      "coverage": "paladinaura",
-      "icon": 135824
+      "coverage": "paladinaura"
     },
     {
       "key": "sense-undead",
@@ -672,11 +602,11 @@
       "ranks": [
         5502
       ],
+      "icon": 135974,
       "defaultOn": false,
       "covers": [
         "Sense Undead"
-      ],
-      "icon": 135974
+      ]
     },
     {
       "key": "seal-righteousness",
@@ -694,9 +624,9 @@
         21084,
         20154
       ],
+      "icon": 132325,
       "defaultOn": false,
-      "coverage": "seals",
-      "icon": 132325
+      "coverage": "seals"
     },
     {
       "key": "seal-crusader",
@@ -711,9 +641,9 @@
         20162,
         21082
       ],
+      "icon": 135924,
       "defaultOn": false,
-      "coverage": "seals",
-      "icon": 135924
+      "coverage": "seals"
     },
     {
       "key": "seal-command",
@@ -727,9 +657,9 @@
         20915,
         20375
       ],
+      "icon": 132347,
       "defaultOn": false,
-      "coverage": "seals",
-      "icon": 132347
+      "coverage": "seals"
     },
     {
       "key": "seal-justice",
@@ -739,9 +669,9 @@
       "ranks": [
         20164
       ],
+      "icon": 135971,
       "defaultOn": false,
-      "coverage": "seals",
-      "icon": 135971
+      "coverage": "seals"
     },
     {
       "key": "seal-light",
@@ -754,9 +684,9 @@
         20347,
         20165
       ],
+      "icon": 135917,
       "defaultOn": false,
-      "coverage": "seals",
-      "icon": 135917
+      "coverage": "seals"
     },
     {
       "key": "seal-wisdom",
@@ -768,9 +698,9 @@
         20356,
         20166
       ],
+      "icon": 135960,
       "defaultOn": false,
-      "coverage": "seals",
-      "icon": 135960
+      "coverage": "seals"
     },
     {
       "key": "seal-fury",
@@ -786,9 +716,9 @@
         1311656,
         1311649
       ],
+      "icon": 135957,
       "defaultOn": false,
-      "coverage": "seals",
-      "icon": 135957
+      "coverage": "seals"
     },
     {
       "key": "battle-shout",
@@ -804,11 +734,11 @@
         5242,
         6673
       ],
+      "icon": 132333,
       "defaultOn": true,
       "covers": [
         "Battle Shout"
-      ],
-      "icon": 132333
+      ]
     },
     {
       "key": "aspect-hawk",
@@ -824,9 +754,9 @@
         14318,
         13165
       ],
+      "icon": 136076,
       "defaultOn": true,
-      "coverage": "aspects",
-      "icon": 136076
+      "coverage": "aspects"
     },
     {
       "key": "aspect-monkey",
@@ -836,9 +766,9 @@
       "ranks": [
         13163
       ],
+      "icon": 132159,
       "defaultOn": false,
-      "coverage": "aspects",
-      "icon": 132159
+      "coverage": "aspects"
     },
     {
       "key": "aspect-cheetah",
@@ -848,9 +778,9 @@
       "ranks": [
         5118
       ],
+      "icon": 132242,
       "defaultOn": false,
-      "coverage": "aspects",
-      "icon": 132242
+      "coverage": "aspects"
     },
     {
       "key": "aspect-beast",
@@ -863,9 +793,9 @@
         1299445,
         13161
       ],
+      "icon": 132252,
       "defaultOn": false,
-      "coverage": "aspects",
-      "icon": 132252
+      "coverage": "aspects"
     },
     {
       "key": "aspect-pack",
@@ -875,9 +805,9 @@
       "ranks": [
         13159
       ],
+      "icon": 132267,
       "defaultOn": false,
-      "coverage": "aspects",
-      "icon": 132267
+      "coverage": "aspects"
     },
     {
       "key": "aspect-wild",
@@ -888,9 +818,9 @@
         20190,
         20043
       ],
+      "icon": 136074,
       "defaultOn": false,
-      "coverage": "aspects",
-      "icon": 136074
+      "coverage": "aspects"
     },
     {
       "key": "trueshot",
@@ -904,11 +834,11 @@
         1299348,
         1299346
       ],
+      "icon": 132329,
       "defaultOn": true,
       "covers": [
         "Trueshot Aura"
-      ],
-      "icon": 132329
+      ]
     },
     {
       "key": "track-beasts",
@@ -918,9 +848,9 @@
       "ranks": [
         1494
       ],
+      "icon": 132328,
       "defaultOn": true,
-      "coverage": "hunting",
-      "icon": 132328
+      "coverage": "hunting"
     },
     {
       "key": "track-humanoids",
@@ -930,9 +860,9 @@
       "ranks": [
         19883
       ],
+      "icon": 135942,
       "defaultOn": false,
-      "coverage": "hunting",
-      "icon": 135942
+      "coverage": "hunting"
     },
     {
       "key": "track-undead",
@@ -942,9 +872,9 @@
       "ranks": [
         19884
       ],
+      "icon": 136142,
       "defaultOn": false,
-      "coverage": "hunting",
-      "icon": 136142
+      "coverage": "hunting"
     },
     {
       "key": "track-hidden",
@@ -954,9 +884,9 @@
       "ranks": [
         19885
       ],
+      "icon": 132320,
       "defaultOn": false,
-      "coverage": "hunting",
-      "icon": 132320
+      "coverage": "hunting"
     },
     {
       "key": "track-elementals",
@@ -966,9 +896,9 @@
       "ranks": [
         19880
       ],
+      "icon": 135861,
       "defaultOn": false,
-      "coverage": "hunting",
-      "icon": 135861
+      "coverage": "hunting"
     },
     {
       "key": "track-demons",
@@ -978,9 +908,9 @@
       "ranks": [
         19878
       ],
+      "icon": 136217,
       "defaultOn": false,
-      "coverage": "hunting",
-      "icon": 136217
+      "coverage": "hunting"
     },
     {
       "key": "track-giants",
@@ -990,9 +920,9 @@
       "ranks": [
         19882
       ],
+      "icon": 132275,
       "defaultOn": false,
-      "coverage": "hunting",
-      "icon": 132275
+      "coverage": "hunting"
     },
     {
       "key": "track-dragonkin",
@@ -1002,9 +932,9 @@
       "ranks": [
         19879
       ],
+      "icon": 134153,
       "defaultOn": false,
-      "coverage": "hunting",
-      "icon": 134153
+      "coverage": "hunting"
     },
     {
       "key": "revive-pet",
@@ -1014,9 +944,9 @@
       "ranks": [
         982
       ],
+      "icon": 132163,
       "defaultOn": true,
-      "covers": [],
-      "icon": 132163
+      "covers": []
     },
     {
       "key": "water-shield",
@@ -1026,9 +956,9 @@
       "ranks": [
         408510
       ],
+      "icon": 132315,
       "defaultOn": false,
-      "coverage": "shields",
-      "icon": 132315
+      "coverage": "shields"
     },
     {
       "key": "lightning-shield",
@@ -1044,9 +974,9 @@
         325,
         324
       ],
+      "icon": 136051,
       "defaultOn": true,
-      "coverage": "shields",
-      "icon": 136051
+      "coverage": "shields"
     },
     {
       "key": "windfury",
@@ -1059,9 +989,9 @@
         8235,
         8232
       ],
+      "icon": 136018,
       "defaultOn": true,
-      "coverage": "imbues",
-      "icon": 136018
+      "coverage": "imbues"
     },
     {
       "key": "flametongue",
@@ -1076,9 +1006,9 @@
         8027,
         8024
       ],
+      "icon": 135814,
       "defaultOn": false,
-      "coverage": "imbues",
-      "icon": 135814
+      "coverage": "imbues"
     },
     {
       "key": "frostbrand",
@@ -1092,9 +1022,9 @@
         8038,
         8033
       ],
+      "icon": 135847,
       "defaultOn": false,
-      "coverage": "imbues",
-      "icon": 135847
+      "coverage": "imbues"
     },
     {
       "key": "rockbiter",
@@ -1110,9 +1040,9 @@
         8018,
         8017
       ],
+      "icon": 136086,
       "defaultOn": false,
-      "coverage": "imbues",
-      "icon": 136086
+      "coverage": "imbues"
     },
     {
       "key": "water-breathing",
@@ -1122,11 +1052,11 @@
       "ranks": [
         131
       ],
+      "icon": 136148,
       "defaultOn": false,
       "covers": [
         "Water Breathing"
-      ],
-      "icon": 136148
+      ]
     },
     {
       "key": "water-walking",
@@ -1136,11 +1066,11 @@
       "ranks": [
         546
       ],
+      "icon": 135863,
       "defaultOn": false,
       "covers": [
         "Water Walking"
-      ],
-      "icon": 135863
+      ]
     },
     {
       "key": "demon-armor",
@@ -1154,9 +1084,9 @@
         1086,
         706
       ],
+      "icon": 136185,
       "defaultOn": true,
-      "coverage": "demonarmor",
-      "icon": 136185
+      "coverage": "demonarmor"
     },
     {
       "key": "demon-skin",
@@ -1167,9 +1097,9 @@
         696,
         687
       ],
+      "icon": 136185,
       "defaultOn": false,
-      "coverage": "demonarmor",
-      "icon": 136185
+      "coverage": "demonarmor"
     },
     {
       "key": "unending-breath",
@@ -1179,11 +1109,11 @@
       "ranks": [
         5697
       ],
+      "icon": 136148,
       "defaultOn": false,
       "covers": [
         "Unending Breath"
-      ],
-      "icon": 136148
+      ]
     },
     {
       "key": "detect-invis",
@@ -1195,11 +1125,11 @@
         2970,
         132
       ],
+      "icon": 136152,
       "defaultOn": false,
       "covers": [
         "Detect Invisibility"
-      ],
-      "icon": 136152
+      ]
     },
     {
       "key": "soul-link",
@@ -1209,11 +1139,14 @@
       "ranks": [
         19028
       ],
+      "icon": 136160,
       "defaultOn": true,
       "covers": [
         "Soul Link"
       ],
-      "icon": 136160
+      "auraIDs": [
+        25228
+      ]
     },
     {
       "key": "instant-poison",
@@ -1234,11 +1167,11 @@
         8681,
         8679
       ],
+      "icon": 132273,
       "defaultOn": true,
       "covers": [
         "Instant Poison"
-      ],
-      "icon": 132273
+      ]
     },
     {
       "key": "deadly-poison",
@@ -1257,11 +1190,11 @@
         2835,
         2823
       ],
+      "icon": 132290,
       "defaultOn": true,
       "covers": [
         "Deadly Poison"
-      ],
-      "icon": 132290
+      ]
     },
     {
       "key": "crippling-poison",
@@ -1274,11 +1207,11 @@
         3420,
         3408
       ],
+      "icon": 132274,
       "defaultOn": false,
       "covers": [
         "Crippling Poison"
-      ],
-      "icon": 132274
+      ]
     },
     {
       "key": "mind-poison",
@@ -1293,11 +1226,11 @@
         5763,
         5761
       ],
+      "icon": 136066,
       "defaultOn": false,
       "covers": [
         "Mind-numbing Poison"
-      ],
-      "icon": 136066
+      ]
     },
     {
       "key": "wound-poison",
@@ -1314,11 +1247,11 @@
         13220,
         13219
       ],
+      "icon": 134197,
       "defaultOn": false,
       "covers": [
         "Wound Poison"
-      ],
-      "icon": 134197
+      ]
     },
     {
       "key": "find-herbs",
@@ -1328,9 +1261,9 @@
       "ranks": [
         2383
       ],
+      "icon": 133939,
       "defaultOn": false,
-      "coverage": "gathering",
-      "icon": 133939
+      "coverage": "gathering"
     },
     {
       "key": "find-minerals",
@@ -1341,10 +1274,10 @@
         8388,
         2580
       ],
+      "icon": 136025,
       "defaultOn": false,
-      "coverage": "gathering",
-      "icon": 136025
+      "coverage": "gathering"
     }
   ],
-  "ranks": 292
+  "ranks": 285
 }

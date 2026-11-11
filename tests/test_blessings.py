@@ -62,7 +62,7 @@ CreateFrame=function(...)
  return frame
 end
 BuffTap:Options(); local f=BuffTap.options; f.expandedBlessing='WARRIOR'; BuffTap:Options()
-assert(f.height==868 and f.blessingDetail.height==202)
+assert(f.height==836 and f.blessingDetail.height==202)
 for _,row in ipairs(f.blessingRows) do assert(-row.points[3]+row.height<574) end
 assert(#f.blessingPlayerRows==5)
 ''')
@@ -79,7 +79,7 @@ local f=BuffTap.options; f.expandedBlessing='SHAMAN'; f.blessingPlayerOffset=100
 assert(f.blessingPlayerOffset==4 and f.blessingPlayerRows[1].entry.unit=='raid6' and f.blessingPlayerRows[5].entry.unit=='raid10')
 ''')
 
-test('Header navigation fits between borders and stays above page content',setup+"""
+test('Sidebar navigation fits beside the unchanged page area',setup+"""
 local original=CreateFrame
 CreateFrame=function(...)
  local frame=original(...)
@@ -89,15 +89,15 @@ CreateFrame=function(...)
  return frame
 end
 BuffTap:Options(); local f=BuffTap.options
-local previousRight=18
+local previousBottom=174
 for _,tab in ipairs(f.tabs) do
  local x,y=tab.points[2],tab.points[3]
- assert(x>=previousRight+6 and x+tab.width<=f.width-24)
- assert(-y+tab.height< -f.pages[1].points[3])
- previousRight=x+tab.width
+ assert(x==24 and tab.width==142 and x+tab.width< f.pages[1].points[2])
+ assert(-y>=previousBottom+6 and -y+tab.height<=804)
+ previousBottom=-y+tab.height
 end
-assert(f.tabs[5].width>f.tabs[1].width and f.tabs[7].width>f.tabs[6].width)
-assert(f.height-206-32==630) -- Preserve the existing page area.
+assert(f.width==932 and #f.tabs==11)
+assert(f.height-174-32==630) -- Preserve the existing page area.
 """)
 test('Header Close hides options and all tabs still select their own page',setup+"""
 BuffTap:Options(); local f=BuffTap.options
@@ -109,7 +109,7 @@ UIParent.GetWidth=function() return 700 end; UIParent.GetHeight=function() retur
 local original=CreateFrame
 CreateFrame=function(...) local f=original(...); f.SetScale=function(self,s) self.scale=s end; return f end
 BuffTap:Options(); local f=BuffTap.options
-assert(f.scale*760<=668 and f.scale*868<=618)
+assert(f.scale*932<=668 and f.scale*836<=618)
 """)
 
 print(f'ALL {len(tests)} SCENARIOS PASSED')
