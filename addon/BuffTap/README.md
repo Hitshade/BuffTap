@@ -58,6 +58,10 @@ Open **Customization** to adjust your binding, appearance, sounds and quick acce
 
 Use first-use guidance to get started, and right-click the minimap icon for quick controls or a temporary pause. Open settings from the **draggable minimap button** or enable an optional **LibDataBroker display** alongside, or in place of, the standard reminder. Native game icons and automatic Spanish, German, French, and Brazilian Portuguese localization keep the interface familiar; untranslated text falls back to English.
 
+## Solo, Party and Raid preferences
+
+Use the selectors inside Buffs, Weapons and Consumables to prepare different choices for each group context. Party and Raid follow Solo until a preference is changed. Use Solo settings restores inheritance for that section. Group context switches automatically out of combat; choosing a selector only changes which preferences you are editing. Groups has separate five-player Party and Raid preferences for recipient filters, enablement and group-spell thresholds. Paladins retain their separate blessing plans and Greater Blessing controls. Existing group preferences are preserved in both; neither Groups setup inherits Solo.
+
 ## Get started
 
 Install **BuffTap** in your client's `Interface/AddOns` folder, open **`/bt`**, choose your buffs, and start scrolling. Nearby has its own settings page; friendly player nameplates are required.

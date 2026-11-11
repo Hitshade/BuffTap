@@ -73,9 +73,9 @@ end
 
 function B:SupplyDefinitions()
   local entries,seen={},{}
-  if self.db.weaponReminder and (self:WeaponReminderClass()=="ROGUE" or self:ItemImbueClass(self:WeaponReminderClass())) then
+  if self:Preference("weaponReminder") and (self:WeaponReminderClass()=="ROGUE" or self:ItemImbueClass(self:WeaponReminderClass())) then
     for _,hand in ipairs({"main","off"}) do
-      local active=hand=="main" and self.db.weaponMainHand or hand=="off" and self.db.weaponOffHand
+      local active=hand=="main" and self:Preference("weaponMainHand") or hand=="off" and self:Preference("weaponOffHand")
       if self:ItemImbueClass(self:WeaponReminderClass()) and hand=="off" then active=false end
       local choice=active and self:WeaponPreference(hand)
       local slot=hand=="main" and 16 or 17
@@ -89,11 +89,11 @@ function B:SupplyDefinitions()
       end
     end
   end
-  if self.db.weaponReminder then
+  if self:Preference("weaponReminder") then
     for _,hand in ipairs({"main","off"}) do
       local choice=self:CoatingPreference(hand)
       local slot=hand=="main" and 16 or 17
-      local active=self.db[hand=="main" and "weaponMainHand" or "weaponOffHand"]~=false
+      local active=self:Preference(hand=="main" and "weaponMainHand" or "weaponOffHand")~=false
       if active and choice and self:CoatingWeaponMatches(slot,choice)==true and not seen[choice.key] then
         local ids,effects={},{}
         for _,pair in ipairs(choice.items) do ids[#ids+1]=pair[1]; effects[pair[1]]=pair[2] end

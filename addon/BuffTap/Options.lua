@@ -177,6 +177,7 @@ end
 
 local function setAndRefresh(key,value)
   if A.Combat() then return end
+  if B:SetEditorPreference(key,value) then return end
   B.db[key]=value; B:InitDB(); B.appearance=nil; B:RequestRefresh("setting",0)
 end
 
@@ -198,7 +199,7 @@ local function rebuffSlider(parent)
     value=math.floor(value/5+0.5)*5
     self.valueText:SetText(formatSeconds(value))
     if self.silent or A.Combat() then return end
-    B.db.seconds=value; B:InitDB(); B:RequestRefresh("global rebuff threshold",0.08)
+    B:EditorSettings("buffs").seconds=value; B:InitDB(); B:RequestRefresh("global rebuff threshold",0.08)
   end)
   return s
 end
@@ -275,9 +276,10 @@ end
 -- Match the group's legacy fallback, rather than target-only class suitability.
 local function groupDefaultOrder(class,scope)
   local order={}
-  for _,def in ipairs(B.blessingClassList or B:ClassList()) do
-    if def.kind=="blessing" and not def.singleKey and B:Enabled(def) and B:GroupClassAllowed(def,class)
-      and (not scope or scope==0 or B:GroupSelected(def,scope)) then order[#order+1]=def.key end
+  local settings=B:SituationPreview(B:EditingGroupContext()=="Raid" and "raid" or "party","buffs")
+  for _,def in ipairs(B:ClassList(settings)) do
+    if def.kind=="blessing" and not def.singleKey and B:Enabled(def,settings) and B:GroupClassAllowed(def,class,B:EditingGroupContext())
+      and (not scope or scope==0 or B:GroupSelected(def,scope,B:EditingGroupContext())) then order[#order+1]=def.key end
   end
   return order
 end
@@ -491,7 +493,7 @@ function B:BuildBlessingOptions(parent)
   label(casting,"Greater Blessings",18,-16,"GameFontNormalLarge")
   label(casting,"Use a Greater Blessing when this many recipients need it.",18,-43,"GameFontDisableSmall",424)
   f.blessingThreshold=compactSlider(casting,2,5,1,180,function(v) return tostring(v).."+" end,function(_,v)
-    B.db.blessingNeed=v; B:NormalizeGroupNeeds(); B:RequestRefresh("blessing threshold",0.08)
+    B:GroupEditorSettings().blessingNeed=v; B:NormalizeGroupNeeds(B:EditingGroupContext()); B:RequestRefresh("blessing threshold",0.08)
   end); f.blessingThreshold:SetPoint("TOPLEFT",22,-72)
   label(casting,"Same-class assignments must agree across the full group.",18,-100,"GameFontDisableSmall",424)
   button(casting,"Done",332,-119,110,function() casting:Hide() end); casting:Hide()
@@ -514,7 +516,7 @@ function B:BuildBlessingOptions(parent)
   end
   f.blessingSelected=check(p,"Buff this group",180,-170,function(c)
     if A.Combat() then return end
-    B:SetRaidGroupColumn(f.blessingScope,c:GetChecked()==true); B:InvalidateAura(); B:RequestRefresh("raid responsibility",0); B:Options()
+    B:SetRaidGroupColumn(f.blessingScope,c:GetChecked()==true,B:EditingGroupContext()); B:InvalidateAura(); B:RequestRefresh("raid responsibility",0); B:Options()
   end)
   f.blessingInherit=button(p,"Use raid defaults",549,-171,154,function()
     if B:ResetBlessingScope(f.blessingScope) then f.expandedBlessing=nil; B:Options() end
@@ -617,7 +619,7 @@ function B:BuildBlessingOptions(parent)
   f.blessingFooter=label(p,"",18,-604,"GameFontDisableSmall",686)
   f.followBuffSettings=button(p,"Use Buffs settings",18,-574,164,function()
     if A.Combat() then return end
-    B.db.blessingAssignments=false; f.expandedBlessing=nil; B:InvalidateAura(); B:RequestRefresh("follow Buffs settings",0); B:Options()
+    B:GroupEditorSettings().blessingAssignments=false; f.expandedBlessing=nil; B:InvalidateAura(); B:RequestRefresh("follow Buffs settings",0); B:Options()
   end)
   addHelp(f.followBuffSettings,"Use Buffs settings","Stop explicit party and raid blessing assignments. Existing plans stay saved. Group blessings follow enabled Buffs, priorities and recipient filters instead.")
   f.blessingFilterButton=button(p,"Buffs recipient filters",190,-574,188,function() B:ToggleBlessingFilters() end)
@@ -645,14 +647,14 @@ function B:ToggleBlessingFilters()
   end,function(key) p.key=key; p:Sync() end)
   p.pick.ownerPanel=p
   p.icon=p:CreateTexture(nil,"ARTWORK"); p.icon:SetSize(24,24); p.icon:SetPoint("TOPLEFT",402,-78)
-  label(p,"Recipient groups (party uses G1)",18,-117,"GameFontNormal")
+  p.groupHeading=label(p,"Recipient groups",18,-117,"GameFontNormal")
   p.groups={}; p.classes={}
   for i=1,8 do
     local group=i
     p.groups[i]=check(p,"G"..i,18+(i-1)*73,-137,function(c)
       if A.Combat() then return end
-      local def=B:FindBuff(p.key); B:EnsureBuffGroups(def)[group]=c:GetChecked()==true
-      B:NormalizeBuffGroups(def); B:InvalidateAura(); B:RequestRefresh("blessing recipient group",0)
+      local def=B:FindBuff(p.key); B:EnsureBuffGroups(def,B:EditingGroupContext())[group]=c:GetChecked()==true
+      B:NormalizeBuffGroups(def,B:EditingGroupContext()); B:InvalidateAura(); B:RequestRefresh("blessing recipient group",0)
     end)
   end
   label(p,"Recipient classes",18,-181,"GameFontNormal")
@@ -660,18 +662,20 @@ function B:ToggleBlessingFilters()
     local token=class
     p.classes[token]=check(p,(LOCALIZED_CLASS_NAMES_MALE and LOCALIZED_CLASS_NAMES_MALE[token]) or token:sub(1,1)..token:sub(2):lower(),18+((i-1)%3)*195,-204-math.floor((i-1)/3)*25,function(c)
       if A.Combat() then return end
-      B.db.buffClasses[p.key]=B.db.buffClasses[p.key] or {}; B.db.buffClasses[p.key][token]=c:GetChecked()==true
+      B:GroupEditorSettings().buffClasses[p.key]=B:GroupEditorSettings().buffClasses[p.key] or {}; B:GroupEditorSettings().buffClasses[p.key][token]=c:GetChecked()==true
       B:InvalidateAura(); B:RequestRefresh("blessing recipient class",0)
     end)
   end
   p.Sync=function(self)
     local def=B:FindBuff(self.key); self.pick:SetText(blessingName(self.key)); self.icon:SetTexture(blessingIcon(self.key))
-    for group,c in ipairs(self.groups) do c:SetChecked(B:GroupSelected(def,group)) end
-    for class,c in pairs(self.classes) do c:SetChecked(B:GroupClassAllowed(def,class)) end
+    local raid=B:EditingGroupContext()=="Raid"
+    self.groupHeading:SetText(L(raid and "Raid groups" or "Party recipients"))
+    for group,c in ipairs(self.groups) do c:SetShown(raid or group==1); c.Text:SetText(raid and "G"..group or L("Include party")); c:SetChecked(B:GroupSelected(def,group,B:EditingGroupContext())) end
+    for class,c in pairs(self.classes) do c:SetChecked(B:GroupClassAllowed(def,class,B:EditingGroupContext())) end
   end
   button(p,"Reset this blessing",18,-296,170,function()
     if A.Combat() then return end
-    B.db.buffGroups[p.key]=nil; B.db.buffClasses[p.key]=nil; p:Sync(); B:InvalidateAura(); B:RequestRefresh("reset blessing filters",0)
+    B:GroupEditorSettings().buffGroups[p.key]=nil; B:GroupEditorSettings().buffClasses[p.key]=nil; p:Sync(); B:InvalidateAura(); B:RequestRefresh("reset blessing filters",0)
   end)
   button(p,"Done",480,-296,120,function() p:Hide(); B:Options() end)
   p:SetScript("OnHide",function() p.pick.menu:Hide() end)
@@ -724,21 +728,22 @@ function B:UpdateBlessingOptions()
   self:EnsureBlessingPlans()
   local raid=f.blessingContext=="Raid"; local scope=raid and f.blessingScope or 0
   local plan=self:BlessingPlan(f.blessingContext,scope); local same=plan.mode=="same"
-  local editable=self.db.blessingAssignments and not A.Combat()
+  local editable=self:GroupEditorSettings().blessingAssignments and not A.Combat()
   f.blessingTitle:SetText(L(raid and "Raid buffing" or "Party buffing"))
-  f.blessingIntro:SetText(L(not raid and self.db.blessingPartyExcluded and "Party excluded by your previous setup. Enable party / raid here to include it." or not self.db.blessingAssignments and "Using Buffs settings. Choose a mode below to set group assignments." or raid and "Set raid defaults, then customize individual groups where needed." or "Set blessings by class for a five-player party. You can prepare this while solo."))
-  for _,pair in ipairs({{f.partyView,not raid},{f.raidView,raid},{f.blessingByClass,not same and self.db.blessingAssignments},{f.blessingSame,same and self.db.blessingAssignments}}) do
+  f.blessingIntro:SetText(L(not raid and self.db.blessingPartyExcluded and "Party excluded by your previous setup. Enable party / raid here to include it." or not self:GroupEditorSettings().blessingAssignments and "Using Buffs settings. Choose a mode below to set group assignments." or raid and "Set raid defaults, then customize individual groups where needed." or "Set blessings by class for a five-player party. You can prepare this while solo."))
+  for _,pair in ipairs({{f.partyView,not raid},{f.raidView,raid},{f.blessingByClass,not same and self:GroupEditorSettings().blessingAssignments},{f.blessingSame,same and self:GroupEditorSettings().blessingAssignments}}) do
     pair[1]:SetBackdropColor(pair[2] and .20 or .075,pair[2] and .18 or .095,pair[2] and .08 or .11,1)
   end
-  f.blessingGroupEnable:SetChecked(self.db.group and (raid or not self.db.blessingPartyExcluded)); f.blessingSmart:SetChecked(self.db.smartGroup)
-  f.blessingThreshold.silent=true; f.blessingThreshold:SetValue(self.db.blessingNeed); f.blessingThreshold.valueText:SetText(self.db.blessingNeed.."+"); f.blessingThreshold.silent=false
+  f.blessingGroupEnable.Text:SetText(L(raid and "Enable raid buffing" or "Enable party buffing"))
+  f.blessingGroupEnable:SetChecked(self:GroupEditorSettings().group and (raid or not self.db.blessingPartyExcluded)); f.blessingSmart:SetChecked(self:GroupEditorSettings().smartGroup)
+  f.blessingThreshold.silent=true; f.blessingThreshold:SetValue(self:GroupEditorSettings().blessingNeed); f.blessingThreshold.valueText:SetText(self:GroupEditorSettings().blessingNeed.."+"); f.blessingThreshold.silent=false
   local roster=self:Roster(); local active=self:BlessingAssignmentsActive(); self.blessingClassList=self:ClassList()
   for i,c in ipairs(f.blessingScopeButtons) do
     local group=i-1; c:SetShown(raid)
     local selected=scope==group
     c:SetBackdropColor(selected and .20 or .075,selected and .18 or .095,selected and .08 or .11,1)
     if group>0 then
-      local excluded=not self.db.raidGroups[group]; local effective=self:BlessingPlan("Raid",group)
+      local excluded=not self:GroupEditorSettings().raidGroups[group]; local effective=self:BlessingPlan("Raid",group)
       c:SetText((excluded and "X " or "").."G"..group)
       c:SetAlpha(excluded and .55 or 1)
       local summary=effective.mode=="same" and blessingName(effective.blessing) or L("By class")
@@ -755,7 +760,7 @@ function B:UpdateBlessingOptions()
       addHelp(c,"Raid group "..group,excluded and "Not buffing this group. Its assignments remain saved." or summary..". "..(self.db.blessingGroupOverrides[group] and "Custom group assignments." or "Inherited from raid defaults.").." Click to inspect or edit.")
     end
   end
-  f.blessingSelected:SetShown(raid and scope>0); f.blessingSelected:SetChecked(scope>0 and self.db.raidGroups[scope] or false)
+  f.blessingSelected:SetShown(raid and scope>0); f.blessingSelected:SetChecked(scope>0 and self:GroupEditorSettings().raidGroups[scope] or false)
   f.blessingInherit:SetShown(raid and scope>0 and self.db.blessingGroupOverrides[scope]~=nil)
   f.copyPartyBlessings:SetShown(raid)
   local modeY=raid and -208 or -111
@@ -773,12 +778,12 @@ function B:UpdateBlessingOptions()
   f.blessingUniformLabel:ClearAllPoints(); f.blessingUniformLabel:SetPoint("TOPLEFT",24,modeY-61)
   f.blessingUniformHelp:ClearAllPoints(); f.blessingUniformHelp:SetPoint("TOPLEFT",24,modeY-98)
   f.blessingUniformHelp:SetText(L("This blessing applies to everyone. Saved class and player choices are inactive in this mode."))
-  f.followBuffSettings:SetShown(self.db.blessingAssignments)
-  f.blessingFilterButton:SetShown(not same or not self.db.blessingAssignments)
-  f.blessingFilterButton:ClearAllPoints(); f.blessingFilterButton:SetPoint("TOPLEFT",self.db.blessingAssignments and 190 or 18,-574)
+  f.followBuffSettings:SetShown(self:GroupEditorSettings().blessingAssignments)
+  f.blessingFilterButton:SetShown(not same or not self:GroupEditorSettings().blessingAssignments)
+  f.blessingFilterButton:ClearAllPoints(); f.blessingFilterButton:SetPoint("TOPLEFT",self:GroupEditorSettings().blessingAssignments and 190 or 18,-574)
   if f.blessingFilters then f.blessingFilters:Sync() end
   local mixed=false
-  if active and self.db.smartGroup and f.blessingContext==self:BlessingContext() then
+  if active and self:GroupEditorSettings().smartGroup and f.blessingContext==self:BlessingContext() then
     for _,entry in ipairs(roster) do
       local key=self:BlessingChoice(entry)
       if key and key~="skip" and not self:BlessingGreaterSafe(key,entry.class,roster) then mixed=true; break end
@@ -799,7 +804,7 @@ function B:UpdateBlessingOptions()
     row.players:SetEnabled(#entries>0 and not A.Combat()); row.players:SetAlpha(#entries>0 and 1 or 0.4)
     row.players.arrow:SetTexture(f.expandedBlessing==row.class and "Interface\\ChatFrame\\UI-ChatIcon-ScrollUp-Up" or "Interface\\ChatFrame\\UI-ChatIcon-ScrollDown-Up")
     local chosen=self:GroupBlessingSettings(row.class,scope,true,f.blessingContext); local status="Current settings"
-    if self.db.blessingAssignments then
+    if self:GroupEditorSettings().blessingAssignments then
       status=#entries==0 and "No group players" or "Individual"
       if not active then status="Party / raid inactive"
       elseif chosen=="skip" then status="Skipped"
@@ -808,7 +813,7 @@ function B:UpdateBlessingOptions()
         if first=="skip" then status="Skipped / excluded"
         elseif not def or not self:Resolve(def,entries[1].unit) then status="Not learned / target level"
         elseif not self:BlessingGreaterSafe(first,row.class,roster) then status="Individual: mixed / excluded"
-        elseif not self.db.smartGroup then status="Individual: Greater off"
+        elseif not self:GroupEditorSettings().smartGroup then status="Individual: Greater off"
         elseif #entries>=self:BlessingGroupNeed(self:FindBuff(def.groupKey)) then status="|cff88dd88Greater allowed|r"
         else status="Individual: below threshold" end
       end
@@ -955,7 +960,7 @@ end
 
 local function logicalBuffs()
   local out={}
-  for _,b in ipairs(B:ClassList()) do
+  for _,b in ipairs(B:ClassList(B:EditorSettings("buffs"))) do
     local supported=B:Supported(b)
     if supported and not b.singleKey then out[#out+1]=b end
   end
@@ -968,7 +973,7 @@ function B:MoveBuffPriority(key,destination)
   for i,def in ipairs(list) do if def.key==key then from=i end; if def.key==destination then to=i end end
   if not from or not to or from==to then return false end
   table.insert(list,to,table.remove(list,from))
-  for i,def in ipairs(list) do self.db.priorities[def.key]=i end
+  for i,def in ipairs(list) do self:EditorSettings("buffs").priorities[def.key]=i end
   self.blessingClassList=nil; self:InvalidateAura(); self:RequestRefresh("buff order",0); self:Options()
   return true
 end
@@ -987,11 +992,12 @@ local function targetAssignableBuffs()
   return B:TargetAssignableBuffs()
 end
 
-local function consumableChoiceLabel(family)
-  local id=B.ConsumableChoiceID and B:ConsumableChoiceID(family)
+local function consumableChoiceLabel(family,settings)
+  settings=settings or B:EditorSettings("consumables")
+  local id=B.ConsumableChoiceID and B:ConsumableChoiceID(family,settings)
   if not id then
     if family.explicitChoice then return L("Choose an item"),134400 end
-    local item=B.PreferredConsumableItem and B:PreferredConsumableItem(family)
+    local item=B.PreferredConsumableItem and B:PreferredConsumableItem(family,settings)
     if item then
       local info=B.ConsumableItemInfo and B:ConsumableItemInfo(item.id,item)
       local name=(info and info.name) or item.name or ("Item "..tostring(item.id))
@@ -1329,7 +1335,9 @@ function B:ShowQuickChoices(action,page)
     for i=1,6 do
       local row=flatButton(f,"",12,-34-(i-1)*28,274,function(s)
         if A.Combat() or not s.itemID then return end
-        B:SetConsumableChoice(f.family,s.itemID); f:Hide(); B:RequestRefresh("quick item choice",0)
+        if f.situation then B:SetSituationValue(f.situation,"consumables","consumableChoices",s.itemID,f.family.key)
+        else B:SetConsumableChoice(f.family,s.itemID) end
+        f:Hide(); B:RequestRefresh("quick item choice",0)
       end)
       row.icon=row:CreateTexture(nil,"ARTWORK"); row.icon:SetSize(22,22); row.icon:SetPoint("LEFT",2,0)
       row.itemName=label(row,"",30,-5,"GameFontHighlightSmall",202); row.itemName:SetWordWrap(false)
@@ -1338,13 +1346,14 @@ function B:ShowQuickChoices(action,page)
     end
     button(f,"<",12,-210,34,function() B:ShowQuickChoices(B.action,(f.page or 1)-1) end)
     button(f,">",52,-210,34,function() B:ShowQuickChoices(B.action,(f.page or 1)+1) end)
-    button(f,"All items",92,-210,92,function() f:Hide(); B:ChooseConsumable(f.family) end)
+    button(f,"All items",92,-210,92,function() f:Hide(); B:ChooseConsumable(f.family,nil,f.situation) end)
     button(f,L("Close"),192,-210,94,function() f:Hide() end)
   end
   local choices={}
   for _,item in ipairs(family.items or {}) do if self:ConsumableCount(item.id)>0 then choices[#choices+1]=item end end
   if #choices==0 then f:Hide(); return end
-  f.family=family; f.page=math.max(1,math.min(page or 1,math.ceil(#choices/6)))
+  f.family=family; f.situation=self:SituationValues(self.situationCurrent,"consumables") and self.situationCurrent or nil
+  f.page=math.max(1,math.min(page or 1,math.ceil(#choices/6)))
   f:ClearAllPoints(); f:SetPoint("TOPLEFT",self.button,"TOPRIGHT",8,0)
   for i,row in ipairs(f.rows) do
     local item=choices[(f.page-1)*6+i]
@@ -1371,7 +1380,7 @@ function B:UpdateCoverageDisplay()
 end
 
 -- Fixed visible row pool: catalog scrolling never creates hundreds of widgets.
-function B:ChooseConsumable(family,anchor)
+function B:ChooseConsumable(family,anchor,situation)
   if A.Combat() then return end
   local f=self.itemPicker
   if not f then
@@ -1386,14 +1395,14 @@ function B:ChooseConsumable(family,anchor)
     f.bags=check(f,L("In bags only"),410,-54,function() f.offset=0; B:UpdateConsumablePicker() end)
     f.auto=flatButton(f,"",20,-90,606,function()
       if A.Combat() then return end
-      B:SetConsumableChoice(f.family,nil); B:InvalidateConsumables(); B:RequestRefresh("auto selected",0); B:Options(); B:UpdateConsumablePicker()
+      if f.situation then B:SetSituationValue(f.situation,"consumables","consumableChoices",nil,f.family.key) else B:SetConsumableChoice(f.family,nil); B:InvalidateConsumables(); B:RequestRefresh("auto selected",0) end; B:Options(); B:UpdateConsumablePicker()
     end)
     label(f,L("Item"),66,-127,"GameFontNormalSmall"); label(f,L("In bags"),518,-127,"GameFontNormalSmall")
     f.rows={}
     for i=1,8 do
       local row=flatButton(f,"",20,-147-(i-1)*34,580,function(btn)
         if A.Combat() then return end
-        B:SetConsumableChoice(f.family,btn.itemID); B:InvalidateConsumables(); B:RequestRefresh("item selected",0)
+        if f.situation then B:SetSituationValue(f.situation,"consumables","consumableChoices",btn.itemID,f.family.key) else B:SetConsumableChoice(f.family,btn.itemID); B:InvalidateConsumables(); B:RequestRefresh("item selected",0) end
         B:Options(); B:UpdateConsumablePicker()
       end)
       row:SetHeight(32)
@@ -1429,7 +1438,7 @@ function B:ChooseConsumable(family,anchor)
     if UISpecialFrames then table.insert(UISpecialFrames,"BuffTapItemPicker") end
   end
   f:ClearAllPoints(); f:SetPoint("CENTER",self.options,"CENTER")
-  f.family=family; f.offset=0; f.bags:SetChecked(true); f.search:SetText("")
+  f.family=family; f.situation=situation; f.offset=0; f.bags:SetChecked(true); f.search:SetText("")
   self:UpdateConsumablePicker(); f:Show()
 end
 
@@ -1437,7 +1446,7 @@ function B:UpdateConsumablePicker()
   local f=self.itemPicker
   if not f or not f.family or A.Combat() then return end
   local family=f.family; local list={}; local query=(f.search:GetText() or ""):lower()
-  local selected=self:ConsumableChoiceID(family)
+  local selected=self:ConsumableChoiceID(family,f.situation and self:SituationPreview(f.situation,"consumables") or self.db)
   for _,item in ipairs(family.items or {}) do
     local count=self:ConsumableCount(item.id)
     if not f.bags:GetChecked() or count>0 then
@@ -1456,7 +1465,7 @@ function B:UpdateConsumablePicker()
   f.maxOffset=math.max(0,#list-8); f.offset=math.max(0,math.min(f.offset or 0,f.maxOffset))
   f.scroll.silent=true; f.scroll:SetMinMaxValues(0,math.max(1,f.maxOffset)); f.scroll:SetValue(f.offset); f.scroll.silent=false
   f.scroll:SetShown(f.maxOffset>0); f.empty:SetShown(#list==0)
-  f.title:SetText(L("Choose %s",L(family.name)))
+  f.title:SetText(L("Choose %s",L(family.name))..(f.situation and " - "..L(({solo="Solo",party="Party",raid="Raid"})[f.situation]) or ""))
   f.auto:SetShown(not family.explicitChoice)
   f.auto:SetText((not selected and "(o) " or "( ) ")..L("Auto - first usable supported item"))
   for i,row in ipairs(f.rows) do
@@ -1470,7 +1479,7 @@ function B:UpdateConsumablePicker()
       addHelp(row,item.name,item.note or "Supported item; availability is checked again before use."); row:Show()
     else row.itemID=nil; row:Hide() end
   end
-  local choice=consumableChoiceLabel(family)
+  local choice=consumableChoiceLabel(family,f.situation and self:SituationPreview(f.situation,"consumables") or self.db)
   f.summary:SetText(L("Selected: %s",choice)..(selected and ("  -  "..L("%d in bags",self:ConsumableCount(selected))) or ""))
   local note=family.protectPresent and L("One elixir choice. Existing elixir buffs are preserved until expiry.") or L("One choice at a time. Your selection stays saved when out of stock.")
   for _,item in ipairs(family.items or {}) do if item.id==selected and item.note then note=note.."\n"..item.note; break end end
@@ -1527,7 +1536,7 @@ function B:Options()
     end
     f.selectTab=setTab
     f.navBackground=card(f,18,-174,154,630)
-    local navIcons={"Spell_Nature_Regeneration","Spell_Holy_PrayerOfFortitude","Ability_Hunter_SniperShot","Ability_Tracking","INV_Potion_52","Spell_Fire_Fire","INV_Sword_04","INV_Misc_Gear_01","Spell_Holy_HolyBolt","INV_Misc_Book_09","INV_Misc_Spyglass_03"}
+    local navIcons={"Spell_Nature_Regeneration","Spell_Holy_PrayerOfFortitude","Ability_Hunter_SniperShot","Ability_Tracking","INV_Potion_52","Spell_Fire_Fire","INV_Sword_04","INV_Misc_Gear_01","Spell_Holy_HolyBolt","INV_Misc_Book_09","INV_Misc_Spyglass_03","INV_Misc_Map_01"}
     for i,name in ipairs(names) do
       local idx=i
       local t=flatButton(f,name,24,-180-(i-1)*40,142,function() setTab(idx) end)
@@ -1541,8 +1550,10 @@ function B:Options()
     label(f,"Every cast still needs your click or binding.",30,-676,"GameFontDisableSmall",126)
     f.navHelp=button(f,L("How to buff"),30,-744,130,function() B:ShowWelcome(true) end)
 
+    f.setupBadge=label(f.banner,"",638,-82,"GameFontDisableSmall",254)
     -- BUFFS PAGE
     local buffs=panel(f); f.pages[TAB.Buffs]=buffs
+    local buffsPage=buffs; buffs=CreateFrame("Frame",nil,buffsPage); buffs:SetPoint("TOPLEFT",0,-60); buffs:SetPoint("BOTTOMRIGHT",0,0)
     label(buffs,L("Buffs"),18,-16,"GameFontNormalLarge")
     f.buffInstruction=label(buffs,L("Choose your buffs. Move the most important ones to the top."),18,-42,"GameFontDisableSmall",650)
     label(buffs,L("Rebuff"),334,-66,"GameFontDisableSmall",70)
@@ -1552,7 +1563,9 @@ function B:Options()
     local child=CreateFrame("Frame",nil,scroll); child:SetSize(660,1); scroll:SetScrollChild(child); f.buffChild=child; f.buffRows={}
 
     f.emptyBuffs=label(child,"No supported aura buffs for this class.",8,-12,"GameFontDisableSmall",610)
+    self:BuildContextControls(buffsPage,"buffs",{label=label,flatButton=flatButton,button=button,addHelp=addHelp})
     local weapons=panel(f); f.pages[TAB.Weapons]=weapons
+    local weaponsPage=weapons; weapons=CreateFrame("Frame",nil,weaponsPage); weapons:SetPoint("TOPLEFT",0,-60); weapons:SetPoint("BOTTOMRIGHT",0,0)
     f.weaponClassCard=card(weapons,12,-98,698,110); f.coatingCard=card(weapons,12,-220,698,120); f.weaponTimingCard=card(weapons,12,-358,698,110)
     f.weaponTitle=label(weapons,L("Weapon buffs"),18,-16,"GameFontNormalLarge")
     f.weaponHint=label(weapons,L("Maintain a preferred buff on each weapon using your normal BuffTap binding."),18,-42,"GameFontDisableSmall",660)
@@ -1603,22 +1616,23 @@ function B:Options()
       f.coatingPickers[handKey]=pick
     end
     f.weaponTimingLabel=label(weapons,L("Refresh before expiry"),18,-368,"GameFontNormal")
-    f.weaponTiming=compactSlider(weapons,0,300,15,270,formatSeconds,function(v) setAndRefresh("weaponSeconds",v) end)
+    f.weaponTiming=compactSlider(weapons,0,300,15,270,formatSeconds,function(_,v) setAndRefresh("weaponSeconds",v) end)
     f.weaponTiming:SetPoint("TOPLEFT",220,-368)
     f.weaponReplace=check(weapons,"Replace a different buff with my preference",18,-412,function(c) setAndRefresh("weaponReplace",c:GetChecked()==true) end)
     addHelp(f.weaponReplace,"Replacing an existing weapon buff","Off by default. Enable only if you want your preferred buff to replace another recognized buff. Unknown coating data always uses a manual fallback.")
-    f.weaponPoisonHint=label(weapons,"Poison ranks: highest carried usable rank. Preferences stay saved when out of stock.",18,-486,"GameFontDisableSmall",660)
-    f.weaponHandsHint=label(weapons,"Oils and stones use a separate temporary-enchant slot. Only compatible melee weapons are eligible; shields, held items, ranged weapons and fishing poles are excluded.",18,-520,"GameFontDisableSmall",660)
-    f.weaponModeHint=label(weapons,"",18,-552,"GameFontDisableSmall",660)
-    f.weaponStatus=label(weapons,"",18,-578,"GameFontHighlightSmall",660)
+    f.weaponPoisonHint=label(weapons,"Poison ranks: highest carried usable rank. Preferences stay saved when out of stock.",18,-472,"GameFontDisableSmall",660)
+    f.weaponHandsHint=label(weapons,"Oils and stones use a separate temporary-enchant slot. Only compatible melee weapons are eligible; shields, held items, ranged weapons and fishing poles are excluded.",18,-500,"GameFontDisableSmall",660)
+    f.weaponModeHint=label(weapons,"",18,-530,"GameFontDisableSmall",660)
+    f.weaponStatus=label(weapons,"",18,-550,"GameFontHighlightSmall",660)
     f.weaponUnavailable=label(weapons,"Class imbues are available to Rogues, Shamans and Mages.",18,-72,"GameFontDisableSmall",660)
+    self:BuildContextControls(weaponsPage,"weapons",{label=label,flatButton=flatButton,button=button,addHelp=addHelp})
     local timingLabel=buffs:CreateFontString(nil,"OVERLAY","GameFontNormal")
     timingLabel:SetPoint("BOTTOMLEFT",18,88); timingLabel:SetText(L("Default rebuff threshold"))
     local timingHint=buffs:CreateFontString(nil,"OVERLAY","GameFontDisableSmall")
     timingHint:SetPoint("LEFT",timingLabel,"RIGHT",12,0); timingHint:SetText(L("Used until a buff is customized."))
     f.rebuffSlider=rebuffSlider(buffs); f.rebuffSlider:SetPoint("BOTTOMLEFT",18,54)
     local resetBuffs=button(buffs,L("Reset buffs"),0,0,100,function()
-      if not A.Combat() then B.db.buffs={}; B.db.priorities={}; B.db.buffSeconds={}; B:Refresh(); B:Options() end
+      if not A.Combat() then B:EditorSettings("buffs").buffs={}; B:EditorSettings("buffs").priorities={}; B:EditorSettings("buffs").buffSeconds={}; B:Refresh(); B:Options() end
     end)
     resetBuffs:ClearAllPoints(); resetBuffs:SetPoint("BOTTOMRIGHT",-18,14)
 
@@ -1630,8 +1644,11 @@ function B:Options()
     else
       f.blessingPanel=CreateFrame("Frame",nil,groupPage); f.blessingPanel:SetAllPoints()
 
-      label(groups,L("Party & raid buffing"),18,-16,"GameFontNormalLarge")
-      label(groups,L("Manage shared settings, then customize each buff below. Party members use G1."),18,-38,"GameFontDisableSmall",680)
+      f.groupTitle=label(groups,L("Party & raid buffing"),18,-16,"GameFontNormalLarge")
+      f.groupContext=B:ActiveGroupContext()
+      f.groupParty=flatButton(groups,"Party",510,-13,92,function() if not A.Combat() then f.groupContext="Party"; B:Options() end end)
+      f.groupRaid=flatButton(groups,"Raid",610,-13,92,function() if not A.Combat() then f.groupContext="Raid"; B:Options() end end)
+      f.groupIntro=label(groups,"",18,-38,"GameFontDisableSmall",680)
       f.groupEnable=check(groups,L("Enable party / raid"),18,-58,function(s) setAndRefresh("group",s:GetChecked()==true); B:Options() end)
       f.smartGroup=check(groups,L("Use group spells automatically"),290,-58,function(s) setAndRefresh("smartGroup",s:GetChecked()==true); B:Options() end)
       local shared=CreateFrame("Frame",nil,groups); shared:SetPoint("TOPLEFT",0,-112); shared:SetSize(704,80); shared:Show()
@@ -1642,13 +1659,13 @@ function B:Options()
       f.perBuffHeading=label(groups,L("Per-buff customization"),18,-218,"GameFontNormalLarge")
       label(groups,L("Select a buff below to customize its party/raid groups, recipient classes and group-spell threshold."),18,-242,"GameFontDisableSmall",686)
       label(groups,L("These filters apply only to party/raid buffing. Personal and open-world target buffs stay separate."),18,-596,"GameFontDisableSmall",686)
-      label(shared,L("All buffs"),18,-10,"GameFontNormal")
+      f.groupAllLabel=label(shared,L("All buffs"),18,-10,"GameFontNormal")
       f.groupChecks={}
       for i=1,8 do
         local idx=i
         local c=check(shared,"G"..i,108+(i-1)*68,-5,function(s)
           if A.Combat() then return end
-          B:SetRaidGroupColumn(idx,s:GetChecked()==true)
+          B:SetRaidGroupColumn(idx,s:GetChecked()==true,B:EditingGroupContext())
           B:RequestRefresh("raid group master",0)
           B:Options()
         end)
@@ -1659,7 +1676,7 @@ function B:Options()
       end
       label(shared,L("Group threshold"),18,-48,"GameFontHighlight",110)
       f.groupNeedSlider=compactSlider(shared,2,5,1,150,function(v) return tostring(v).."+" end,function(_,v)
-        B.db.groupNeed=v; B:NormalizeGroupNeeds(); B:InitDB(); B:RequestRefresh("group threshold default",0.08)
+        B:GroupEditorSettings().groupNeed=v; B:NormalizeGroupNeeds(B:EditingGroupContext()); B:InitDB(); B:RequestRefresh("group threshold default",0.08)
       end)
       f.groupNeedSlider:SetScript("OnMouseUp",function() if not A.Combat() then B:Options() end end)
       f.groupNeedSlider:SetPoint("TOPLEFT",128,-45)
@@ -1764,6 +1781,7 @@ function B:Options()
     local consumePanel=panel(f); f.pages[TAB.Consumables]=consumePanel
     local consume=CreateFrame("Frame",nil,consumePanel); consume:SetPoint("TOPLEFT",0,-36); consume:SetPoint("BOTTOMRIGHT",0,0)
     f.consumableBody=consume
+    local consumePage=consume; consume=CreateFrame("Frame",nil,consumePage); consume:SetPoint("TOPLEFT",0,-60); consume:SetPoint("BOTTOMRIGHT",0,0)
     self:BuildSupplyOptions(consumePanel)
     local buffView=flatButton(consumePanel,"Buff items",18,-8,104,function() f.selectConsumableView(false) end)
     local supplyView=flatButton(consumePanel,L("Supplies"),132,-8,104,function() f.selectConsumableView(true) end)
@@ -1777,7 +1795,7 @@ function B:Options()
     label(consume,L("Consumables"),18,-16,"GameFontNormalLarge")
     label(consume,"Choose food, a flask, an elixir and an optional utility consumable.",18,-42,"GameFontDisableSmall",680)
     f.consumablesEnable=check(consume,"Enable consumable reminders",18,-72,function(c)
-      if not A.Combat() then B.db.consumablesEnabled=c:GetChecked()==true; if B.InvalidateConsumables then B:InvalidateConsumables() end; B:RequestRefresh("consumables master",0); B:Options() end
+      if not A.Combat() then B:EditorSettings("consumables").consumablesEnabled=c:GetChecked()==true; if B.InvalidateConsumables then B:InvalidateConsumables() end; B:RequestRefresh("consumables master",0); B:Options() end
     end)
     f.consumeBuild=label(consume,"Data: -",410,-77,"GameFontDisableSmall",260)
     line(consume,-108)
@@ -1790,7 +1808,7 @@ function B:Options()
       row.enable=check(row,"",8,-8,function(c)
         local fam=c:GetParent().family
         if fam and not A.Combat() then
-          B.db.consumableFamilies[fam.key]=c:GetChecked()==true
+          B:EditorSettings("consumables").consumableFamilies[fam.key]=c:GetChecked()==true
           if B.InvalidateConsumables then B:InvalidateConsumables() end
           B:RequestRefresh("consumable family",0); B:Options()
         end
@@ -1798,22 +1816,24 @@ function B:Options()
       row.icon=row:CreateTexture(nil,"ARTWORK"); row.icon:SetSize(30,30); row.icon:SetPoint("TOPLEFT",42,-8); row.icon:SetTexture(134400)
       row.name=label(row,family.name,82,-8,"GameFontHighlight",210)
       row.choice=label(row,"Auto",82,-29,"GameFontHighlightSmall",420)
-      row.prev=button(row,L("Choose"),584,-8,86,function(btn) B:ChooseConsumable(btn:GetParent().family,btn) end)
+      row.prev=button(row,L("Choose"),584,-8,86,function(btn) B:ChooseConsumable(btn:GetParent().family,btn,B:EditorContext("consumables")) end)
       row.inventory=label(row,"",450,-11,"GameFontHighlightSmall",120)
       label(row,family.protectPresent and (family.key=="utility" and "Preserve active utility; remind after expiry" or "Preserve active elixirs; remind after expiry") or "Rebuff at",42,-52,"GameFontDisableSmall",family.protectPresent and 390 or 62)
       addHelp(row.enable,"Maintain this consumable buff","Enable this family to maintain its selected item. Utility maintains one choice; recognized active utility effects are preserved until expiry. Enable consumable reminders above too. Preferences stay saved when supplies run out.")
       row.threshold=compactSlider(row,30,1800,30,230,formatSeconds,function(slider,value)
         local fam=slider:GetParent().family
-        if fam then B:SetConsumableThreshold(fam,value); B:InvalidateAura("player"); B:RequestRefresh("consumable threshold",0.08) end
+        if fam then B:SetSituationValue(B:EditorContext("consumables"),"consumables","consumableSeconds",value,fam.key); B:InvalidateAura("player"); B:RequestRefresh("consumable threshold",0.08) end
       end)
       row.threshold:SetPoint("TOPLEFT",108,-54)
       f.consumableRows[index]=row
     end
     local consumeFooterY=-116-(#(B.ConsumableFamilies or {}))*80-4
 
-    f.consumeRetry=button(consume,L("Retry reminders"),18,consumeFooterY-80,154,function() B:RetryConsumableReminders(); B:Options() end)
+    f.consumeRetry=button(consume,L("Retry reminders"),18,consumeFooterY-48,154,function() B:RetryConsumableReminders(); B:Options() end)
     addHelp(f.consumeRetry,L("Retry reminders"),L("Restarts item loading and paused consumable reminders. Changed item effects remain blocked."))
-    f.consumePauseStatus=label(consume,"",186,consumeFooterY-85,"GameFontHighlightSmall",496)
+    f.consumePauseStatus=label(consume,"",186,consumeFooterY-53,"GameFontHighlightSmall",496)
+
+    self:BuildContextControls(consumePage,"consumables",{label=label,flatButton=flatButton,button=button,addHelp=addHelp})
 
     -- CAMPING PAGE
     local camping=panel(f); f.pages[TAB.Camping]=camping; f.campingPage=camping; f.campingTab=TAB.Camping
@@ -1966,7 +1986,6 @@ function B:Options()
     local profiles=panel(f); f.pages[TAB.Profiles]=profiles
     self:BuildProfileOptions(profiles,{label=label,button=button,check=check,selector=selector})
 
-    -- DIAGNOSTICS PAGE
     local diag=panel(f); f.pages[TAB.Diagnostics]=diag
     label(diag,L("Diagnostics & performance"),18,-16,"GameFontNormalLarge")
     f.diagVersion=label(diag,"",550,-20,"GameFontHighlightSmall",144)
@@ -2041,6 +2060,7 @@ function B:Options()
   if A.Number(width) and A.Number(height) then f:SetScale(math.min(1,(width-32)/OPTIONS_WIDTH,(height-32)/OPTIONS_HEIGHT)) end
   self:UpdateHelperOptions()
   self:UpdateProfileOptions()
+  self:UpdateContextControls(); f.setupBadge:SetText(self:SituationBadge())
   self:UpdateSupplyOptions()
   local paladin=A.Call(function() local _,token=UnitClass("player"); return token end)=="PALADIN"
   f.buffInstruction:SetText(L("Choose your buffs. Move the most important ones to the top."))
@@ -2067,16 +2087,22 @@ function B:Options()
   f.nearbyInvites:SetChecked(self.db.nearbyInvites~=false)
   f.targetDefaultSlider.silent=true; f.targetDefaultSlider:SetValue(self.db.targetSeconds); f.targetDefaultSlider.valueText:SetText(formatSeconds(self.db.targetSeconds)); f.targetDefaultSlider.silent=false
   if not paladin then
-    f.groupEnable:SetChecked(self.db.group); f.smartGroup:SetChecked(self.db.smartGroup)
+    local raid=B:EditingGroupContext()=="Raid"
+    T.Navigation(f.groupParty,not raid); T.Navigation(f.groupRaid,raid)
+    f.groupTitle:SetText(L(raid and "Raid buffing" or "Party buffing"))
+    f.groupIntro:SetText(L(raid and "Choose raid groups, recipient classes and group-spell thresholds." or "Preferences for your five-player party. Raid settings are separate."))
+    f.groupEnable.Text:SetText(L(raid and "Enable raid buffing" or "Enable party buffing"))
+    f.groupEnable:SetChecked(self:GroupEditorSettings().group); f.smartGroup:SetChecked(self:GroupEditorSettings().smartGroup)
     for i=1,8 do
-      local state=self:GroupColumnState(i)
+      local state=self:GroupColumnState(i,B:EditingGroupContext())
       local c=f.groupChecks[i]
+      c:SetShown(raid or i==1); c.Text:SetText(raid and "G"..i or L("Include party"))
       c:SetChecked(state=="on")
       if c.mixedDash then c.mixedDash:SetShown(state=="mixed") end
     end
-    f.groupNeedSlider.silent=true; f.groupNeedSlider:SetValue(self.db.groupNeed); f.groupNeedSlider.valueText:SetText(tostring(self.db.groupNeed).."+"); f.groupNeedSlider.silent=false
-    local smartAlpha=(self.db.group and self.db.smartGroup) and 1 or 0.45
-    if self.db.group and self.db.smartGroup then f.groupNeedSlider:Enable() else f.groupNeedSlider:Disable() end
+    f.groupNeedSlider.silent=true; f.groupNeedSlider:SetValue(self:GroupEditorSettings().groupNeed); f.groupNeedSlider.valueText:SetText(tostring(self:GroupEditorSettings().groupNeed).."+"); f.groupNeedSlider.silent=false
+    local smartAlpha=(self:GroupEditorSettings().group and self:GroupEditorSettings().smartGroup) and 1 or 0.45
+    if self:GroupEditorSettings().group and self:GroupEditorSettings().smartGroup then f.groupNeedSlider:Enable() else f.groupNeedSlider:Disable() end
     f.groupNeedSlider:SetAlpha(smartAlpha)
 
     for _,r in ipairs(f.assignRows) do r:Hide() end
@@ -2093,15 +2119,15 @@ function B:Options()
         row.icon=row:CreateTexture(nil,"ARTWORK"); row.icon:SetSize(32,32); row.icon:SetPoint("TOPLEFT",8,-4)
         row.name=label(row,"",48,-5,"GameFontNormalLarge",402)
         row.detail=label(row,"",48,-29,"GameFontDisableSmall",402)
-        label(row,L("Raid groups"),8,-60,"GameFontNormal")
+        row.groupHeading=label(row,L("Raid groups"),8,-60,"GameFontNormal")
         row.checks={}
         for i=1,8 do
           local idx=i
           local c=check(row,tostring(i),8+(i-1)*54,-78,function(s)
             local parent=s:GetParent(); local def=parent.def
             if def and not A.Combat() then
-              local map=B:EnsureBuffGroups(def); map[idx]=s:GetChecked()==true
-              B:NormalizeBuffGroups(def); B:ReconcileRaidGroupColumn(idx)
+              local map=B:EnsureBuffGroups(def,B:EditingGroupContext()); map[idx]=s:GetChecked()==true
+              B:NormalizeBuffGroups(def,B:EditingGroupContext()); B:ReconcileRaidGroupColumn(idx,B:EditingGroupContext())
               B:RequestRefresh("buff group assignment",0); B:Options()
             end
           end)
@@ -2109,12 +2135,12 @@ function B:Options()
         end
         row.need=compactSlider(row,2,5,1,62,function(v) return tostring(v).."+" end,function(slider,value)
           local def=slider:GetParent().def
-          if def then B:SetGroupNeed(def,value); B:RequestRefresh("group threshold",0) end
+          if def then B:SetGroupNeed(def,value,B:EditingGroupContext()); B:RequestRefresh("group threshold",0) end
         end)
         row.need:SetPoint("TOPLEFT",165,-263)
         row.needLabel=label(row,"Group spell at",8,-263,"GameFontHighlightSmall",140)
         label(row,"Recipient classes",8,-116,"GameFontNormal")
-        label(row,"Recipients must match group AND class. Party uses group 1.\nPersonal buffs and open-world targets ignore these filters.",8,-221,"GameFontDisableSmall",450)
+        row.filterHint=label(row,"",8,-221,"GameFontDisableSmall",450)
         row.classes={}
         for i,class in ipairs(B.RecipientClasses) do
           local token=class
@@ -2123,8 +2149,8 @@ function B:Options()
             local def=row.def
             if not def or A.Combat() then return end
             local key=B:RootKey(def)
-            B.db.buffClasses[key]=B.db.buffClasses[key] or {}
-            B.db.buffClasses[key][token]=s:GetChecked()==true
+            B:GroupEditorSettings().buffClasses[key]=B:GroupEditorSettings().buffClasses[key] or {}
+            B:GroupEditorSettings().buffClasses[key][token]=s:GetChecked()==true
             B:RequestRefresh("buff class assignment",0); B:Options()
           end)
           c:SetSize(20,20)
@@ -2132,12 +2158,12 @@ function B:Options()
           row.classes[token]=c
         end
         row.resetClasses=button(row,L("Reset"),374,-258,80,function()
-          if row.def and not A.Combat() then B.db.buffClasses[B:RootKey(row.def)]=nil; B:RequestRefresh("reset classes",0); B:Options() end
+          if row.def and not A.Combat() then B:GroupEditorSettings().buffClasses[B:RootKey(row.def)]=nil; B:RequestRefresh("reset classes",0); B:Options() end
         end)
         row.allClasses=button(row,"All classes",280,-258,86,function()
           if not row.def or A.Combat() then return end
           local map={}; for _,class in ipairs(B.RecipientClasses) do map[class]=true end
-          B.db.buffClasses[B:RootKey(row.def)]=map; B:RequestRefresh("all classes",0); B:Options()
+          B:GroupEditorSettings().buffClasses[B:RootKey(row.def)]=map; B:RequestRefresh("all classes",0); B:Options()
         end)
         f.assignRows[rowIndex]=row
       end
@@ -2154,11 +2180,13 @@ function B:Options()
       if f.selectedAssignment==b.key then select:LockHighlight() else select:UnlockHighlight() end
       local groupDef=b.groupKey and self:FindBuff(b.groupKey)
       row.detail:SetText(groupDef and (L("Group")..": "..spellLabel(groupDef)) or L("Single-target only"))
-      for i=1,8 do row.checks[i]:SetChecked(self:GroupSelected(b,i)) end
-      for class,c in pairs(row.classes) do c:SetChecked(self:GroupClassAllowed(b,class)) end
+      row.groupHeading:SetText(L(raid and "Raid groups" or "Party recipients"))
+      row.filterHint:SetText(L(raid and "Recipients must match group AND class. Personal buffs and open-world targets ignore these filters." or "Choose which classes in your party receive this buff. Personal buffs and open-world targets ignore these filters."))
+      for i=1,8 do row.checks[i]:SetShown(raid or i==1); row.checks[i].Text:SetText(raid and tostring(i) or L("Include party")); row.checks[i]:SetChecked(self:GroupSelected(b,i,B:EditingGroupContext())) end
+      for class,c in pairs(row.classes) do c:SetChecked(self:GroupClassAllowed(b,class,B:EditingGroupContext())) end
       if groupDef then
-        row.needLabel:Show(); row.need:Show(); row.need.valueText:Show(); row.need.silent=true; row.need:SetValue(self:GroupNeed(groupDef)); row.need.valueText:SetText(tostring(self:GroupNeed(groupDef)).."+"); row.need.silent=false
-        if self.db.group and self.db.smartGroup then row.need:Enable(); row.need:SetAlpha(1) else row.need:Disable(); row.need:SetAlpha(0.45) end
+        row.needLabel:Show(); row.need:Show(); row.need.valueText:Show(); row.need.silent=true; row.need:SetValue(self:GroupNeed(groupDef,B:EditingGroupContext())); row.need.valueText:SetText(tostring(self:GroupNeed(groupDef,B:EditingGroupContext())).."+"); row.need.silent=false
+        if self:GroupEditorSettings().group and self:GroupEditorSettings().smartGroup then row.need:Enable(); row.need:SetAlpha(1) else row.need:Disable(); row.need:SetAlpha(0.45) end
       else row.need:Hide(); row.need.valueText:Hide(); row.needLabel:Hide() end
     end
     f.assignList:SetHeight(math.max(1,#assignmentBuffs*42))
@@ -2211,29 +2239,29 @@ function B:Options()
   f.targetChild:SetHeight(math.max(1,#targetBuffs*52))
 
   if f.consumablesEnable then
-    f.consumablesEnable:SetChecked(self.db.consumablesEnabled==true)
+    f.consumablesEnable:SetChecked(self:EditorSettings("consumables").consumablesEnabled==true)
     f.consumeBuild:Hide()
     if self.RebuildConsumableCache then self:RebuildConsumableCache(false) end
     for index,family in ipairs(self.ConsumableFamilies or {}) do
       local row=f.consumableRows[index]
       if row then
-        row.enable:SetChecked(self.ConsumableFamilySelected and self:ConsumableFamilySelected(family) or false)
+        row.enable:SetChecked(self.ConsumableFamilySelected and self:ConsumableFamilySelected(family,self:EditorSettings("consumables")) or false)
         local choice,icon=consumableChoiceLabel(family)
         row.choice:SetText(choice)
         row.icon:SetTexture(icon or 134400)
-        local preferred=self.PreferredConsumableItem and self:PreferredConsumableItem(family)
+        local preferred=self.PreferredConsumableItem and self:PreferredConsumableItem(family,self:EditorSettings("consumables"))
         local current=preferred and self:ConsumableCount(preferred.id) or 0
         row.inventory:SetText(current>0 and ("|cff88dd88"..current.." in bags|r") or "No usable stock")
         addHelp(row,"Supported items in bags",self:ConsumableInventorySummary(family,20))
-        local active=self:ConsumableFamilyEnabled(family)
+        local active=self:ConsumableFamilyEnabled(family,self:EditorSettings("consumables"))
         if active then row.threshold:Enable(); row.threshold:SetAlpha(1) else row.threshold:Disable(); row.threshold:SetAlpha(0.45) end
-        local threshold=self:ConsumableThreshold(family)
+        local threshold=self:ConsumableThreshold(family,self:EditorSettings("consumables"))
         row.threshold.silent=true; row.threshold:SetValue(threshold); row.threshold.valueText:SetText(formatSeconds(threshold)); row.threshold.silent=false
         row.prev:ClearAllPoints(); row.prev:SetPoint("TOPLEFT",584,-8); row.prev:SetSize(86,26); row.prev:SetText(L("Choose"))
-        row.prev:SetScript("OnClick",function() B:ChooseConsumable(family,row.prev) end)
+        row.prev:SetScript("OnClick",function() B:ChooseConsumable(family,row.prev,B:EditorContext("consumables")) end)
         row.prev:Show()
         if family.protectPresent then row.threshold:Hide(); row.threshold.valueText:Hide() end
-        local chosen=self:ConsumableChoiceID(family)
+        local chosen=self:ConsumableChoiceID(family,self:EditorSettings("consumables"))
         if chosen then
           local count=self:ConsumableCount(chosen)
           row.inventory:SetText(count>0 and ("|cff88dd88"..count.." in bags|r") or "|cffffbb44Out of stock|r")
@@ -2270,7 +2298,7 @@ function B:Options()
   f.buffNameCheck:SetChecked(self.db.showBuffName); f.targetNameCheck:SetChecked(self.db.showTargetName)
   f.timerCheck:SetChecked(self.db.showTimer); f.groupBadgeCheck:SetChecked(self.db.showGroupBadge)
   f.profileCheck:SetChecked(self.profileEnabled==true)
-  f.rebuffSlider.silent=true; f.rebuffSlider:SetValue(self.db.seconds); f.rebuffSlider.valueText:SetText(formatSeconds(self.db.seconds)); f.rebuffSlider.silent=false
+  f.rebuffSlider.silent=true; f.rebuffSlider:SetValue(self:EditorSettings("buffs").seconds); f.rebuffSlider.valueText:SetText(formatSeconds(self:EditorSettings("buffs").seconds)); f.rebuffSlider.silent=false
 
   local weaponClass=self.WeaponReminderClass and self:WeaponReminderClass()
   f.weaponUnavailable:Hide()
@@ -2291,23 +2319,23 @@ function B:Options()
   local timingY=weaponClass and -358 or -236
   place(f.weaponTimingCard,12,timingY); place(f.weaponTimingLabel,18,timingY-10)
   place(f.weaponTiming,220,timingY-10); place(f.weaponReplace,18,timingY-54)
-  place(f.weaponHandsHint,18,weaponClass and -520 or -376)
-  place(f.weaponModeHint,18,weaponClass and -552 or -420)
-  place(f.weaponStatus,18,weaponClass and -578 or -458)
+  place(f.weaponHandsHint,18,weaponClass and -500 or -376)
+  place(f.weaponModeHint,18,weaponClass and -530 or -420)
+  place(f.weaponStatus,18,weaponClass and -550 or -458)
   f.weaponPoisonHint:SetShown(weaponClass=="ROGUE")
   for _,control in ipairs({f.weaponHint,f.weaponEnable,f.weaponApply,f.weaponMain,f.weaponOff,f.weaponTimingLabel,f.weaponTiming,f.weaponReplace,f.weaponStatus,f.weaponHandsHint}) do control:Show() end
   for _,pick in pairs(f.weaponPickers) do pick:SetShown(weaponClass~=nil); pick.menu:Hide() end
-  f.weaponEnable:SetChecked(self.db.weaponReminder==true); f.weaponApply:SetText(L(self.db.weaponApply and "Remind and apply" or "Remind only"))
+  f.weaponEnable:SetChecked(self:EditorSettings("weapons").weaponReminder==true); f.weaponApply:SetText(L(self.db.weaponApply and "Remind and apply" or "Remind only"))
   f.weaponModeHint:SetText(L(self.db.weaponApply and "Your scroll or click applies the selected weapon buff, out of combat." or "Alerts only: apply weapon buffs manually. Your preferences remain saved."))
-  f.weaponMain:SetChecked(self.db.weaponMainHand~=false); f.weaponOff:SetChecked(self.db.weaponOffHand~=false)
+  f.weaponMain:SetChecked(self:EditorSettings("weapons").weaponMainHand~=false); f.weaponOff:SetChecked(self:EditorSettings("weapons").weaponOffHand~=false)
   f.weaponReplace:SetChecked(self.db.weaponReplace==true)
   f.weaponOff:SetShown(weaponClass=="ROGUE" or not weaponClass)
-  f.weaponTiming.silent=true; f.weaponTiming:SetValue(self.db.weaponSeconds); f.weaponTiming.valueText:SetText(formatSeconds(self.db.weaponSeconds)); f.weaponTiming.silent=false
+  f.weaponTiming.silent=true; f.weaponTiming:SetValue(self:EditorSettings("weapons").weaponSeconds); f.weaponTiming.valueText:SetText(formatSeconds(self:EditorSettings("weapons").weaponSeconds)); f.weaponTiming.silent=false
   local status=self:WeaponReminderSummary()
   f.weaponStatus:SetText(status)
   for hand,pick in pairs(f.weaponPickers) do
     pick:SetShown(weaponClass~=nil and (hand=="main" or weaponClass=="ROGUE"))
-    local handKey=hand; local selected=self:WeaponPreference(hand)
+    local handKey=hand; local selected=self:WeaponPreference(hand,self:EditorSettings("weapons"))
     pick:SetText(selected and selected.name or L("Choose preferred buff"))
     local src=selected and self:WeaponChoiceSource(selected)
     local preferredIcon=selected and A.Call(C_Spell and C_Spell.GetSpellTexture,selected.ranks[#selected.ranks])
@@ -2320,7 +2348,7 @@ function B:Options()
       local row=pick.menu.rows[i]
       if not row then row=flatButton(pick.menu.child,"",0,-(i-1)*28,466,function(control)
         if A.Combat() then return end
-        B.db.weaponChoices[control.hand]=control.choice; B.weaponPending=nil; B:InvalidateSupplies(false); B:RequestRefresh("weapon preference",0); B:Options()
+        B:EditorSettings("weapons").weaponChoices[control.hand]=control.choice; B.weaponPending=nil; B:InvalidateSupplies(false); B:RequestRefresh("weapon preference",0); B:Options()
       end); row.icon=row:CreateTexture(nil,"ARTWORK"); row.icon:SetSize(22,22); row.icon:SetPoint("LEFT",4,0); pick.menu.rows[i]=row end
       row.hand=handKey; row.choice=choiceKey
       local source,why=self:WeaponChoiceSource(choiceKey and choice or nil)
@@ -2335,7 +2363,7 @@ function B:Options()
 
   for hand,pick in pairs(f.coatingPickers) do
     pick.menu:Hide()
-    local selected=self:CoatingPreference(hand)
+    local selected=self:CoatingPreference(hand,self:EditorSettings("weapons"))
     local src=selected and self:WeaponChoiceSource(selected)
     pick:SetText(selected and selected.name or L("None")); fitButtonText(pick,420)
     pick.icon:SetShown(selected~=nil)
@@ -2347,7 +2375,7 @@ function B:Options()
       if not row then
         row=flatButton(pick.menu.child,"",0,-(i-1)*28,466,function(control)
           if A.Combat() then return end
-          B.db.weaponCoatings[control.hand]=control.choice; B.weaponPending=nil; B:InvalidateSupplies(false); B:RequestRefresh("coating preference",0); B:Options()
+          B:EditorSettings("weapons").weaponCoatings[control.hand]=control.choice; B.weaponPending=nil; B:InvalidateSupplies(false); B:RequestRefresh("coating preference",0); B:Options()
         end)
         row.icon=row:CreateTexture(nil,"ARTWORK"); row.icon:SetSize(22,22); row.icon:SetPoint("LEFT",4,0); pick.menu.rows[i]=row
       end
@@ -2371,7 +2399,7 @@ function B:Options()
       row=CreateFrame("Frame",nil,f.buffChild,"BackdropTemplate"); row:SetSize(650,54)
       row:SetBackdrop({bgFile="Interface\\Buttons\\WHITE8X8"}); row:SetBackdropColor(0.04,0.075,0.11,0.82)
       row.check=check(row,"",8,-15,function(s)
-        local def=s:GetParent().def; if def and not A.Combat() then B.db.buffs[def.key]=s:GetChecked()==true; B:RequestRefresh("buff toggle",0) end
+        local def=s:GetParent().def; if def and not A.Combat() then B:EditorSettings("buffs").buffs[def.key]=s:GetChecked()==true; B:RequestRefresh("buff toggle",0) end
       end)
       row.icon=row:CreateTexture(nil,"ARTWORK"); row.icon:SetSize(34,34); row.icon:SetPoint("TOPLEFT",42,-10)
       row.name=label(row,"",84,-8,"GameFontHighlight",220)
@@ -2380,7 +2408,7 @@ function B:Options()
       row.rebuff=compactSlider(row,15,180,5,104,formatSeconds,function(slider,value)
         local parent=slider:GetParent(); local def=parent.def
         if def then
-          B.db.buffSeconds[def.key]=value
+          B:EditorSettings("buffs").buffSeconds[def.key]=value
           if parent.default then parent.default:Enable(); parent.default:SetAlpha(1) end
           B:RequestRefresh("buff rebuff threshold",0.08)
         end
@@ -2388,7 +2416,7 @@ function B:Options()
       row.rebuff:SetPoint("TOPLEFT",322,-20)
       row.default=button(row,L("Default"),486,-16,58,function(btn)
         local def=btn:GetParent().def
-        if def and not A.Combat() then B.db.buffSeconds[def.key]=nil; B:RequestRefresh("rebuff default",0); B:Options() end
+        if def and not A.Combat() then B:EditorSettings("buffs").buffSeconds[def.key]=nil; B:RequestRefresh("rebuff default",0); B:Options() end
       end)
       addHelp(row.default,"Use default timing","Remove this buff's custom refresh timing and use the default rebuff threshold below. This does not reset its priority or enable setting.")
       for _,direction in ipairs({-1,1}) do
@@ -2405,13 +2433,13 @@ function B:Options()
       end
       row.order=editbox(row,610,-17,28,true)
       row.order:SetScript("OnEnterPressed",function(s)
-        local def=s:GetParent().def; if def and not A.Combat() then B.db.priorities[def.key]=math.max(1,tonumber(s:GetText()) or def.order); B:RequestRefresh("priority",0) end; s:ClearFocus(); B:Options()
+        local def=s:GetParent().def; if def and not A.Combat() then B:EditorSettings("buffs").priorities[def.key]=math.max(1,tonumber(s:GetText()) or def.order); B:RequestRefresh("priority",0) end; s:ClearFocus(); B:Options()
       end)
       row.order:SetScript("OnEscapePressed",function(s) s:ClearFocus(); B:Options() end)
       addHelp(row.order,"Buff priority","Lower numbers are checked first. Set the same priority for equal ordering; your enabled buffs determine what can be offered.")
       f.buffRows[visible]=row
     end
-    row.def=b; row:ClearAllPoints(); row:SetPoint("TOPLEFT",0,-(visible-1)*58); row:Show(); row.check:SetChecked(self:Enabled(b)); row.name:SetText(spellLabel(b)); row.icon:SetTexture(buffIcon(b))
+    row.def=b; row:ClearAllPoints(); row:SetPoint("TOPLEFT",0,-(visible-1)*58); row:Show(); row.check:SetChecked(self:Enabled(b,self:EditorSettings("buffs"))); row.name:SetText(spellLabel(b)); row.icon:SetTexture(buffIcon(b))
     local groupName=pairedGroupName(b)
     if b.groupKey then
       local groupDef=self:FindBuff(b.groupKey)
@@ -2428,10 +2456,10 @@ function B:Options()
       row.detail:SetText((groupName or (groupDef and spellLabel(groupDef)) or L("group spell"))..": "..unlearnedText())
     end
     row.up:SetEnabled(visible>1); row.down:SetEnabled(visible<#list)
-    if row.order:HasFocus()~=true then row.order:SetText(tostring(self.db.priorities[b.key] or b.order)) end
-    local threshold=self:RebuffSeconds(b)
+    if row.order:HasFocus()~=true then row.order:SetText(tostring(self:EditorSettings("buffs").priorities[b.key] or b.order)) end
+    local threshold=self:RebuffSeconds(b,self:EditorSettings("buffs"))
     row.rebuff.silent=true; row.rebuff:SetValue(threshold); row.rebuff.valueText:SetText(formatSeconds(threshold)); row.rebuff.silent=false
-    if self.db.buffSeconds[b.key]~=nil then row.default:Enable(); row.default:SetAlpha(1) else row.default:Disable(); row.default:SetAlpha(0.45) end
+    if type(self:EditorSettings("buffs").buffSeconds[b.key])=="number" then row.default:Enable(); row.default:SetAlpha(1) else row.default:Disable(); row.default:SetAlpha(0.45) end
   end
   f.emptyBuffs:SetShown(visible==0)
   f.buffChild:SetHeight(math.max(1,visible*58))
@@ -2577,4 +2605,8 @@ function B:OpenOptionsCategory()
   end
   self:Options()
 end
+
+
+
+
 

@@ -1,0 +1,90 @@
+PASS Highest known rank, exact secure spell and binding
+PASS Applied buffs advance and release overrides
+PASS Aura failures and secret records fail closed
+PASS Global secrecy cannot reuse cached auras
+PASS Mouse click refuses changed target identity
+PASS Combat clears payload, bindings and timers without insecure writes
+PASS Quick target uses its own threshold at click
+PASS Unrelated target changes are idle with target mode off
+PASS Unwatched raid auras and unrelated item/spell loads are ignored
+PASS Repeated wake replacement leaves only one timer
+PASS Rapid target changes keep a bounded timer set
+PASS Threshold wake restores action at the configured time
+PASS Unknown external range is never a castable action
+PASS Smart group does not count out of range members
+PASS Smart group chooses group spell for verified recipients
+PASS Higher priority single stays ahead of lower group family
+PASS Mark recipient accepts rank trained ten levels higher
+PASS Malformed saved keys, priorities and group maps recover
+PASS Old overlay and threshold settings migrate
+PASS All options pages build and move control opens
+PASS Consumables default off and never query inventory at idle
+PASS Whitelist item creates exact secure item action
+PASS Physical mouse down does not block mouse up item use
+PASS Right click never marks an item consumed
+PASS Successful item spell confirms settling, failed clicks do not
+PASS Disappearing bag item rejected during prepare and click
+PASS Unloaded metadata cannot create an item action
+PASS Questionmark icon cannot create an item action
+PASS Changed mapping is quarantined locally and Auto falls back
+PASS A broken preferred item does not block another family
+PASS Food eating aura suppresses repeated use until Well Fed
+PASS Existing flask recognized by ID regardless of language
+PASS Inventory cache is not rescanned on ordinary aura refreshes
+PASS Water Shield satisfies Lightning Shield without overwriting
+PASS Missing rogue poison is a manual unbound alert
+PASS Weapon enchant event clears a satisfied manual alert
+PASS Coated main hand advances reminder to off hand
+PASS Shield off hand does not request a poison
+PASS Unreadable weapon enchant state fails closed
+PASS Unreadable main hand does not hide missing off hand
+PASS Zero item sentinel is treated as an empty hand
+PASS Unchanged manual reminder uses the safe fast path
+PASS Castable class buff precedes manual weapon reminder
+PASS Castable consumable precedes manual weapon reminder
+PASS Camp Benefits reports exact granted additions
+PASS Catalog excludes known wrong spell IDs
+PASS New Aspect and Seal IDs remain known-spell gated
+PASS No permanent OnUpdate on supported client
+PASS Group reagent missing falls back to single
+PASS Confirmed flask use pauses after bounded second observation
+PASS Confirmed flask with effect does not quarantine
+PASS Saved per-buff group overrides retain mixed state
+PASS Greater blessing never replaces higher-priority owned family
+PASS Raid subgroup assignments exclude unassigned recipients
+PASS Dead and offline targets skipped without blocking other members
+PASS Empty spellbook retry stops and book event recovers
+PASS Metadata changes in combat applied safely on exit
+PASS Missing optional item APIs do not break class spell selection
+PASS Appearance changes preserve selected secure action
+PASS Hundreds of idle aura refreshes reuse rank and roster caches
+PASS Every target class advances Mark to Thorns
+PASS Group class defaults and overrides share single and group families
+PASS Party class and group filters intersect
+PASS Class filters leave personal buffs independent
+PASS Group cast falls back when subgroup contains excluded class
+PASS Paladin opt-out target follows priority without class filters
+PASS Paladin group sorting skips filtered higher priority family
+PASS Malformed class maps recover safely
+PASS Class option toggles and reset persist correctly
+PASS Priest multiple explicit target buffs advance in order
+PASS Egg is offered and Well Fed clears it
+PASS Manual low level eating suppresses all buff actions
+PASS Manual nutritious food does not prompt repeated consumption
+PASS Different Well Fed effect preserves the existing meal
+PASS XP bonus alone does not substitute for a food buff
+PASS Explicit missing food never substitutes another item
+PASS Selected elixir uses exact spell mapping
+PASS Existing different elixir is preserved even near expiration
+PASS Elixir default preserves legacy Ferocity preference
+PASS Removed potion family cannot become a secure item action
+PASS Picker keeps absent choices and filters inventory
+PASS Expanded inventory uses cache on ordinary aura refresh
+PASS Picker scrolling clamps and search resets the visible range
+PASS Auto and explicit selection remain mutually exclusive
+PASS Missing selected food remains visible in selection summary
+PASS Group buff selection and all-classes controls keep other assignments
+PASS Picker closes with options and combat prevents changes
+PASS Item data event replaces placeholder with the native item icon
+
+88 scenarios passed under Lua 5.1. Mocked APIs; no in-client cast or visual verification.

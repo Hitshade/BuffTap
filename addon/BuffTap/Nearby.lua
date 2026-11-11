@@ -272,7 +272,7 @@ function B:NearbyCandidates(force)
   return out
 end
 function B:NearbyGroupActions(unit)
-  if self.db.nearbyBuffing==false or not self.db.group or not self:NearbyRecipientSafe(unit) then return {} end
+  if self.db.nearbyBuffing==false or not self:GroupPreference("group") or not self:NearbyRecipientSafe(unit) then return {} end
   local entry
   local guid=A.Call(UnitGUID,unit)
   for _,member in ipairs(self:Roster()) do
@@ -519,6 +519,7 @@ function B:NearbyDisplayList(list)
   return out
 end
 function B:SetNearbyRowPayload(row,action)
+  if action and action.situationRevision==nil then action.situationRevision=self.situationRevision or 0 end
   local ready=action and action.ready~=false
   local macro=ready and action.macroText or nil
   local spell=ready and action.nearbyGroup and action.id or nil
@@ -652,6 +653,7 @@ function B:CreateNearbyWindow()
     row:SetScript("PreClick",function(button,mouse,down)
       if A.Combat() then return end
       local action=button.action; self:SetNearbyRowPayload(button,nil)
+      if self:SyncSituation() then self:NoteNearbyClick(nil); self:RequestRefresh("setup changed before nearby click",0); return end
       local ok,valid=pcall(self.ValidateNearby,self,action)
       if ok and valid and mouse=="LeftButton" then
         if not action.nearbyGroup and not self:PrepareNearbyCast(action) then self:NoteNearbyClick(nil); return end

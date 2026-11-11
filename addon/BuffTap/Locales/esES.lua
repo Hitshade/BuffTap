@@ -510,3 +510,24 @@ B.Locales.esES["Buff nearby players, invite someone new, or use the player list 
 B.Locales.esES["Optional conveniences, separate from your buff choices. PvP protection starts on."]="Ayudas opcionales, separadas de tus beneficios. La protección JcJ empieza activada."
 B.Locales.esES["Buffs first"]="Primero los beneficios"
 B.Locales.esES["Five visible rows keep the window compact. Scroll over Nearby to browse players; use your buff binding after moving the pointer away."]="Cinco filas visibles mantienen la ventana compacta. Desplázate dentro para ver jugadores; saca el cursor para usar tu tecla de beneficios."
+
+-- Context preferences.
+B.Locales.esES["Solo"]="Solo"
+B.Locales.esES["Party"]="Grupo"
+B.Locales.esES["Raid"]="Banda"
+B.Locales.esES["Active setup: %s"]="Configuración: %s"
+B.Locales.esES["Setup change waits until combat ends"]="El cambio espera al final del combate"
+B.Locales.esES["Use Solo settings"]="Usar ajustes de Solo"
+B.Locales.esES["Baseline preferences. Party and Raid inherit unchanged choices."]="Preferencias base. Grupo y banda heredan las opciones sin cambios."
+B.Locales.esES["Custom choices. Unchanged preferences still follow Solo."]="Opciones personalizadas. Las demás preferencias siguen las de Solo."
+B.Locales.esES["Following Solo. Change a preference below to customize this setup."]="Sigue Solo. Cambia una preferencia para personalizar esta configuración."
+
+-- Independent party and raid preferences.
+B.Locales.esES["Party buffing"]="Beneficios de grupo"
+B.Locales.esES["Raid buffing"]="Beneficios de banda"
+B.Locales.esES["Enable party buffing"]="Activar beneficios de grupo"
+B.Locales.esES["Enable raid buffing"]="Activar beneficios de banda"
+B.Locales.esES["Include party"]="Incluir grupo"
+B.Locales.esES["Party recipients"]="Destinatarios del grupo"
+B.Locales.esES["Preferences for your five-player party. Raid settings are separate."]="Preferencias para tu grupo de cinco. Los ajustes de banda son independientes."
+B.Locales.esES["Choose raid groups, recipient classes and group-spell thresholds."]="Elige grupos de banda, clases y umbrales de hechizos de grupo."

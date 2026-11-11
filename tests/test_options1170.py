@@ -44,7 +44,7 @@ test('Repeated options rendering reuses its frames', '''
 
 test('Visual options preserve current secure action and profile identity', '''
  local before=BuffTap.action; local id=before.id; local target=before.target; local profile=BuffTap.profileDB:GetCurrentProfile()
- BuffTap:Options(); for i=1,11 do BuffTap.options.selectTab(i) end
+ BuffTap:Options(); for i=1,12 do BuffTap.options.selectTab(i) end
  assert(BuffTap.action.id==id and BuffTap.action.target==target)
  assert(BuffTap.profileDB:GetCurrentProfile()==profile)
 ''')

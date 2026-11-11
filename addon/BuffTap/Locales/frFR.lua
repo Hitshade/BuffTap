@@ -510,3 +510,24 @@ B.Locales.frFR["Buff nearby players, invite someone new, or use the player list 
 B.Locales.frFR["Optional conveniences, separate from your buff choices. PvP protection starts on."]="Des aides facultatives, distinctes de vos améliorations. La protection JcJ est activée au départ."
 B.Locales.frFR["Buffs first"]="Améliorations en priorité"
 B.Locales.frFR["Five visible rows keep the window compact. Scroll over Nearby to browse players; use your buff binding after moving the pointer away."]="Cinq lignes visibles gardent la fenêtre compacte. Faites défiler la liste dans la fenêtre, puis sortez le pointeur pour utiliser votre raccourci d’amélioration."
+
+-- Context preferences.
+B.Locales.frFR["Solo"]="Solo"
+B.Locales.frFR["Party"]="Groupe"
+B.Locales.frFR["Raid"]="Raid"
+B.Locales.frFR["Active setup: %s"]="Configuration : %s"
+B.Locales.frFR["Setup change waits until combat ends"]="Changement après le combat"
+B.Locales.frFR["Use Solo settings"]="Utiliser les réglages solo"
+B.Locales.frFR["Baseline preferences. Party and Raid inherit unchanged choices."]="Réglages de base. Groupe et raid héritent des choix inchangés."
+B.Locales.frFR["Custom choices. Unchanged preferences still follow Solo."]="Choix personnalisés. Les autres réglages suivent toujours le solo."
+B.Locales.frFR["Following Solo. Change a preference below to customize this setup."]="Suit le solo. Modifiez un réglage ci-dessous pour personnaliser ce contexte."
+
+-- Independent party and raid preferences.
+B.Locales.frFR["Party buffing"]="Améliorations de groupe"
+B.Locales.frFR["Raid buffing"]="Améliorations de raid"
+B.Locales.frFR["Enable party buffing"]="Activer les améliorations de groupe"
+B.Locales.frFR["Enable raid buffing"]="Activer les améliorations de raid"
+B.Locales.frFR["Include party"]="Inclure le groupe"
+B.Locales.frFR["Party recipients"]="Destinataires du groupe"
+B.Locales.frFR["Preferences for your five-player party. Raid settings are separate."]="Préférences pour votre groupe de cinq. Les réglages de raid sont séparés."
+B.Locales.frFR["Choose raid groups, recipient classes and group-spell thresholds."]="Choisissez les groupes de raid, les classes et les seuils des sorts de groupe."

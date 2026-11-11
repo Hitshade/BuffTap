@@ -66,7 +66,7 @@ function B:ReadinessEnabled(key)
   elseif key=="weaponstone" then
     -- Implied by choosing Firestone/Spellstone for the main hand.
     -- Preferences are class-filtered, so a Warlock stone implies a Warlock.
-    if not db.weaponReminder or db.weaponApply~=true or db.weaponMainHand==false then return false end
+    if not self:Preference("weaponReminder") or db.weaponApply~=true or self:Preference("weaponMainHand")==false then return false end
     local choice=self.WeaponPreference and self:WeaponPreference("main")
     return choice~=nil and choice.class=="WARLOCK" and stoneCreation[choice.key]~=nil
   end
@@ -163,7 +163,7 @@ function B:ReadinessContext()
   if A.Call(IsMounted)~=false or A.Call(UnitInVehicle,"player")~=false then return false,"mounted, vehicle or state unreadable" end
   local cast,err=A.Call(UnitCastingInfo,"player"); local channel,cerr=A.Call(UnitChannelInfo,"player")
   if err or cerr or cast~=nil or channel~=nil then return false,"casting / channeling or state unreadable" end
-  if self.db.consumablesEnabled and self.db.consumableFamilies.food then
+  if self:Preference("consumablesEnabled") and self:Preference("consumableFamilies").food then
     local auras=self:GetAuras("player",false)
     if not auras then return false,"eating state unreadable" end
     for _,aura in ipairs(auras) do if self.EatingSpellIDs[aura.spellId] then return false,"eating" end end

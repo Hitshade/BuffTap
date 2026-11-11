@@ -7,7 +7,7 @@ local shared={labelSize=true,labelOutline=true,labelGap=true,campTextFont=true,c
   sound=true,reminderSound=true,supplySound=true,soundChannel=true,soundInterval=true,
   pvpProtection=true,pauseResting=true,helperDismiss=true,helperBounce=true,helperThanks=true,helperThankEmote=true,
   helperQuick=true,helperDiscovery=true,minimap=true,brokerEnabled=true}
-local classKeys={"seconds","rebuffVersion","buffs","priorities","buffSeconds","group","smartGroup","groupNeed","blessingNeed",
+local classKeys={"groupContextSettings","situationSettings","seconds","rebuffVersion","buffs","priorities","buffSeconds","group","smartGroup","groupNeed","blessingNeed",
   "salvationVersion","salvationMigration","friendlyTarget","targetSeconds","targetClassBlessings","targetBlessingFallback","targetBlessingClasses","targetBlessingPriorities",
   "blessingGroupOverrides","blessingRaidDefaults","blessingPartyMode","blessingPartyUniform","blessingPartyExcluded","groupBlessingPriorities","blessingAssignments","blessingClasses","buffGroups","buffClasses","buffGroupNeed","targetBuffs","targetBuffSeconds","raidGroups",
   "consumablesEnabled","consumableFamilies","consumableChoices","consumableSeconds","suppliesEnabled","suppliesChat","suppliesSound","suppliesReadyCheck","supplySettings",

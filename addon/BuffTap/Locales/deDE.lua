@@ -510,3 +510,24 @@ B.Locales.deDE["Buff nearby players, invite someone new, or use the player list 
 B.Locales.deDE["Optional conveniences, separate from your buff choices. PvP protection starts on."]="Optionale Hilfen, getrennt von deinen Zaubern. Der PvP-Schutz ist anfangs aktiv."
 B.Locales.deDE["Buffs first"]="Stärkungszauber zuerst"
 B.Locales.deDE["Five visible rows keep the window compact. Scroll over Nearby to browse players; use your buff binding after moving the pointer away."]="Fünf sichtbare Zeilen halten das Fenster kompakt. Scrolle im Fenster, um Spieler anzusehen. Bewege den Zeiger heraus, um die Stärkungstaste zu nutzen."
+
+-- Context preferences.
+B.Locales.deDE["Solo"]="Solo"
+B.Locales.deDE["Party"]="Gruppe"
+B.Locales.deDE["Raid"]="Schlachtzug"
+B.Locales.deDE["Active setup: %s"]="Aktiv: %s"
+B.Locales.deDE["Setup change waits until combat ends"]="Wechsel wartet auf das Kampfende"
+B.Locales.deDE["Use Solo settings"]="Solo-Einstellungen verwenden"
+B.Locales.deDE["Baseline preferences. Party and Raid inherit unchanged choices."]="Basis-Einstellungen. Gruppe und Schlachtzug übernehmen unveränderte Optionen."
+B.Locales.deDE["Custom choices. Unchanged preferences still follow Solo."]="Eigene Auswahl. Unveränderte Optionen folgen weiterhin Solo."
+B.Locales.deDE["Following Solo. Change a preference below to customize this setup."]="Folgt Solo. Ändere unten eine Option, um diese Situation anzupassen."
+
+-- Independent party and raid preferences.
+B.Locales.deDE["Party buffing"]="Gruppenstärkung"
+B.Locales.deDE["Raid buffing"]="Schlachtzugsstärkung"
+B.Locales.deDE["Enable party buffing"]="Gruppenstärkung aktivieren"
+B.Locales.deDE["Enable raid buffing"]="Schlachtzugsstärkung aktivieren"
+B.Locales.deDE["Include party"]="Gruppe einschließen"
+B.Locales.deDE["Party recipients"]="Gruppenempfänger"
+B.Locales.deDE["Preferences for your five-player party. Raid settings are separate."]="Einstellungen für deine Fünfergruppe. Schlachtzugseinstellungen sind getrennt."
+B.Locales.deDE["Choose raid groups, recipient classes and group-spell thresholds."]="Wähle Schlachtzugsgruppen, Empfängerklassen und Schwellen für Gruppenzauber."

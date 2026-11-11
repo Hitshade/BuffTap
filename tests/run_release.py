@@ -51,4 +51,7 @@ import test_performance_beta
 import test_corrections11611
 import test_camping
 import test_options1170
+import test_situations
 print('TOTAL',len(__import__('test_bufftap').tests))
+import test_group_contexts
+print('FINAL_TOTAL',len(__import__('test_bufftap').tests))

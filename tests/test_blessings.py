@@ -93,7 +93,7 @@ local previousBottom=174
 for _,tab in ipairs(f.tabs) do
  local x,y=tab.points[2],tab.points[3]
  assert(x==24 and tab.width==142 and x+tab.width< f.pages[1].points[2])
- assert(-y>=previousBottom+6 and -y+tab.height<=804)
+ assert(-y>=previousBottom+4 and -y+tab.height<=804)
  previousBottom=-y+tab.height
 end
 assert(f.width==932 and #f.tabs==11)

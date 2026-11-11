@@ -181,7 +181,7 @@ function B:WeaponCoatingState(slot)
   if not enchant then enchant,err=paperDollEnchant(slot) end
   if not enchant then return {known=false,weapon=true,reason=err} end
   if enchant.remaining and enchant.remaining>0 then
-    local threshold=self.db.weaponApply and self.db.weaponSeconds or 0
+    local threshold=self.db.weaponApply and self:Preference("weaponSeconds") or 0
     self:ConsiderWake(enchant.remaining>threshold and enchant.remaining-threshold or enchant.remaining)
   end
   enchant.weapon=true
@@ -192,10 +192,10 @@ function B:WeaponCoatingState(slot)
 end
 
 local function selectManualReminder(self)
-  if not (self.db and self.db.weaponReminder) then return nil,"weapon reminders disabled" end
+  if not (self.db and self:Preference("weaponReminder")) then return nil,"weapon reminders disabled" end
   local class=self:WeaponReminderClass()
   if not class or itemImbueClasses[class] or not self:WeaponReminderAvailable() then return nil,"no learned coating ability" end
-  local enabled={main=self.db.weaponMainHand~=false,off=class=="ROGUE" and self.db.weaponOffHand~=false}
+  local enabled={main=self:Preference("weaponMainHand")~=false,off=class=="ROGUE" and self:Preference("weaponOffHand")~=false}
   local unreadableReason
   for _,hand in ipairs(HANDS) do
     if enabled[hand.key] then
@@ -220,21 +220,21 @@ end
 
 local function validateManualReminder(self,action)
   if not (action and action.manual and action.source=="weapon-reminder" and action.slot) then return false end
-  if not (self.db and self.db.weaponReminder and self:WeaponReminderAvailable()) then return false end
+  if not (self.db and self:Preference("weaponReminder") and self:WeaponReminderAvailable()) then return false end
   if action.slot==17 and self:WeaponReminderClass()~="ROGUE" then return false end
-  if action.slot==16 and self.db.weaponMainHand==false then return false end
-  if action.slot==17 and self.db.weaponOffHand==false then return false end
+  if action.slot==16 and self:Preference("weaponMainHand")==false then return false end
+  if action.slot==17 and self:Preference("weaponOffHand")==false then return false end
   local state=self:WeaponCoatingState(action.slot)
   return state.known and state.weapon and not state.hasEnchant
 end
 
 function B:ImbueReminderSummary()
   if not self:WeaponReminderClass() then return "not applicable" end
-  if not (self.db and self.db.weaponReminder) then return "disabled" end
+  if not (self.db and self:Preference("weaponReminder")) then return "disabled" end
   if not self.db.weaponApply and not self:WeaponReminderAvailable() then return "waiting for a learned poison or imbue" end
   local parts={}
   for _,hand in ipairs(HANDS) do
-    local enabled=hand.key=="main" and self.db.weaponMainHand~=false or hand.key=="off" and self:WeaponReminderClass()=="ROGUE" and self.db.weaponOffHand~=false
+    local enabled=hand.key=="main" and self:Preference("weaponMainHand")~=false or hand.key=="off" and self:WeaponReminderClass()=="ROGUE" and self:Preference("weaponOffHand")~=false
     if enabled then
       local state=self:WeaponCoatingState(hand.slot)
       if state.known and not state.weapon then parts[#parts+1]=hand.label..": no weapon"
@@ -250,8 +250,8 @@ function B:WeaponChoice(key)
   for _,choice in ipairs(self.WeaponChoices) do if choice.key==key and choice.class==class then return choice end end
 end
 
-function B:WeaponPreference(hand)
-  return self:WeaponChoice(self.db.weaponChoices[hand])
+function B:WeaponPreference(hand,settings)
+  return self:WeaponChoice((settings and settings.weaponChoices or self:Preference("weaponChoices"))[hand])
 end
 
 function B:WeaponChoiceSource(choice)
@@ -306,7 +306,7 @@ end
 
 function B:WeaponNeed(state,choice)
   if not state.known or not state.weapon then return false end
-  local threshold=self.db.weaponSeconds or 60
+  local threshold=self:Preference("weaponSeconds") or 60
   if state.remaining and state.remaining>threshold then self:ConsiderWake(state.remaining-threshold) end
   if not state.hasEnchant then return true,"missing" end
   if not choice or not state.modern then return false end
@@ -372,10 +372,10 @@ end
 function B:SelectImbueReminder()
   if not self.db.weaponApply and not itemImbueClasses[self:WeaponReminderClass()] then return selectManualReminder(self) end
   if itemImbueClasses[self:WeaponReminderClass()] and not self:WeaponPreference("main") then return nil,"no learned coating ability" end
-  if not self.db.weaponReminder or not self:WeaponReminderClass() then return nil,"weapon reminders disabled" end
+  if not self:Preference("weaponReminder") or not self:WeaponReminderClass() then return nil,"weapon reminders disabled" end
   local fallback,why
   for _,hand in ipairs(HANDS) do
-    if (hand.key=="main" or self:WeaponReminderClass()=="ROGUE") and self.db[hand.key=="main" and "weaponMainHand" or "weaponOffHand"]~=false then
+    if (hand.key=="main" or self:WeaponReminderClass()=="ROGUE") and self:Preference(hand.key=="main" and "weaponMainHand" or "weaponOffHand")~=false then
       local action,err=self:WeaponActionFor(hand)
       if action and not (self.HelperSuppressed and self:HelperSuppressed(action)) then
         if not action.manual then return action end
@@ -388,18 +388,19 @@ function B:SelectImbueReminder()
 end
 
 function B:ValidateWeaponReminder(action)
+  if not self:SituationActionCurrent(action) then return false end
   if action.coating then
-    if not self.db.weaponReminder then return false end
+    if not self:Preference("weaponReminder") then return false end
     local hand=action.slot==16 and {slot=16,key="main",coating=true} or action.slot==17 and {slot=17,key="off",coating=true}
-    if not hand or self.db[hand.key=="main" and "weaponMainHand" or "weaponOffHand"]==false then return false end
+    if not hand or self:Preference(hand.key=="main" and "weaponMainHand" or "weaponOffHand")==false then return false end
     local fresh=self:WeaponActionFor(hand)
     return fresh~=nil and fresh.manual==action.manual and fresh.preference==action.preference and fresh.weaponID==action.weaponID and fresh.itemID==action.itemID and fresh.id==action.id
   end
   if not self.db.weaponApply and not itemImbueClasses[self:WeaponReminderClass()] then return action.manual and validateManualReminder(self,action) end
-  if not self.db.weaponReminder then return false end
+  if not self:Preference("weaponReminder") then return false end
   local hand=action.slot==16 and HANDS[1] or action.slot==17 and HANDS[2]
   if action.slot==17 and self:WeaponReminderClass()~="ROGUE" then return false end
-  if not hand or self.db[hand.key=="main" and "weaponMainHand" or "weaponOffHand"]==false then return false end
+  if not hand or self:Preference(hand.key=="main" and "weaponMainHand" or "weaponOffHand")==false then return false end
   local fresh=self:WeaponActionFor(hand)
   return fresh~=nil and fresh.manual==action.manual and fresh.preference==action.preference
     and fresh.weaponID==action.weaponID and fresh.itemID==action.itemID and fresh.id==action.id
@@ -415,7 +416,7 @@ end
 function B:CoatingChoice(key)
   for _,choice in ipairs(self.CoatingChoices or {}) do if choice.key==key then return choice end end
 end
-function B:CoatingPreference(hand) return self:CoatingChoice(self.db.weaponCoatings[hand]) end
+function B:CoatingPreference(hand,settings) return self:CoatingChoice((settings and settings.weaponCoatings or self:Preference("weaponCoatings"))[hand]) end
 function B:NormalizeCoatings()
   for hand,key in pairs(self.db.weaponCoatings) do
     if (hand~="main" and hand~="off") or not A.Text(key) or not self:CoatingChoice(key) then self.db.weaponCoatings[hand]=nil end
@@ -469,10 +470,10 @@ end
 function B:SelectWeaponReminder()
   local action,why=self:SelectImbueReminder()
   if action and not action.manual then return action end
-  if not self.db.weaponReminder then return action,why end
+  if not self:Preference("weaponReminder") then return action,why end
   local fallback=action
   for _,hand in ipairs(HANDS) do
-    if self.db[hand.key=="main" and "weaponMainHand" or "weaponOffHand"]~=false and self:CoatingPreference(hand.key) then
+    if self:Preference(hand.key=="main" and "weaponMainHand" or "weaponOffHand")~=false and self:CoatingPreference(hand.key) then
       local candidate,err=self:WeaponActionFor({slot=hand.slot,key=hand.key,coating=true})
       if candidate and not (self.HelperSuppressed and self:HelperSuppressed(candidate)) then
         if not candidate.manual then return candidate end
@@ -485,12 +486,12 @@ function B:SelectWeaponReminder()
 end
 
 function B:WeaponReminderSummary()
-  if not self.db.weaponReminder then return "disabled" end
+  if not self:Preference("weaponReminder") then return "disabled" end
   local parts={}
   if self:WeaponReminderClass() then parts[#parts+1]=self:ImbueReminderSummary() end
   for _,hand in ipairs(HANDS) do
     local choice=self:CoatingPreference(hand.key)
-    if choice and self.db[hand.key=="main" and "weaponMainHand" or "weaponOffHand"]~=false then
+    if choice and self:Preference(hand.key=="main" and "weaponMainHand" or "weaponOffHand")~=false then
       local matched=self:CoatingWeaponMatches(hand.slot,choice)
       local state=matched and self:TemporaryCoatingState(hand.slot)
       local need,reason
@@ -503,11 +504,11 @@ function B:WeaponReminderSummary()
 end
 
 function B:WeaponInventoryRelevant()
-  if not self.db.weaponReminder then return false end
+  if not self:Preference("weaponReminder") then return false end
   if self:WeaponReminderClass()=="ROGUE" and self.db.weaponApply then return true end
-  if itemImbueClasses[self:WeaponReminderClass()] and self.db.weaponMainHand~=false and self:WeaponPreference("main") then return true end
+  if itemImbueClasses[self:WeaponReminderClass()] and self:Preference("weaponMainHand")~=false and self:WeaponPreference("main") then return true end
   for _,hand in ipairs(HANDS) do
-    if self.db[hand.key=="main" and "weaponMainHand" or "weaponOffHand"]~=false and self:CoatingPreference(hand.key) then return true end
+    if self:Preference(hand.key=="main" and "weaponMainHand" or "weaponOffHand")~=false and self:CoatingPreference(hand.key) then return true end
   end
   return false
 end

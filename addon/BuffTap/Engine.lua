@@ -4,7 +4,7 @@
 
 local _, B = ...
 _G.BuffTap = B
-B.version = "1.17.0"
+B.version = "1.17.1"
 B.API = {}
 local A = B.API
 
@@ -192,6 +192,7 @@ function B:InitDB()
   self.auraCache=self.auraCache or {}
   if self.InitSupplies then self:InitSupplies() end
   if self.NormalizeCamping then self:NormalizeCamping() end
+  self:NormalizeSituations(); self:NormalizeGroupContexts(); self:SyncSituation()
 end
 
 function B:ResetStats()
@@ -205,8 +206,8 @@ function B:Supported(b)
   end
   return true
 end
-function B:ClassList()
-  if self.classListPassActive and self.refreshClassList then return self.refreshClassList,self.refreshClassError end
+function B:ClassList(settings)
+  if not settings and self.classListPassActive and self.refreshClassList then return self.refreshClassList,self.refreshClassError end
   local ok,_,class = pcall(UnitClass, "player")
   if not ok or not A.Text(class) then return {}, "class unavailable" end
   local list = {}
@@ -228,23 +229,25 @@ function B:ClassList()
   end
   table.sort(list, function(a,b)
     local ax=a.singleKey or a.key; local bx=b.singleKey or b.key
-    local x,y = self.db.priorities[ax], self.db.priorities[bx]
+    local priorities=settings and settings.priorities or self:Preference("priorities")
+    local x,y = priorities[ax], priorities[bx]
     x = type(x)=="number" and x or a.order
     y = type(y)=="number" and y or b.order
     if x == y then return (a.catalogOrder or 0) < (b.catalogOrder or 0) end
     return x < y
   end)
-  if self.classListPassActive then self.refreshClassList=list end
+  if not settings and self.classListPassActive then self.refreshClassList=list end
   return list
 end
 function B:FindBuff(key)
   for _,v in ipairs(self.Buffs) do if v.key==key then return v end end
 end
-function B:RebuffSeconds(b)
+function B:RebuffSeconds(b,settings)
   local key=b and (b.singleKey or b.key)
-  local value=key and self.db.buffSeconds and self.db.buffSeconds[key]
+  local values=settings and settings.buffSeconds or self:Preference("buffSeconds")
+  local value=key and values and values[key]
   if type(value)=="number" then return math.max(15,math.min(180,value)) end
-  return self.db.seconds
+  return settings and settings.seconds or self:Preference("seconds")
 end
 
 -- Read native state on demand; events drive updates, with no location polling.
@@ -445,29 +448,32 @@ function B:TargetAssignableBuffs()
   return out
 end
 
-function B:GroupNeed(b)
+function B:GroupNeed(b,context)
+  local settings=self:GroupSettings(context,false)
   local key=self:RootKey(b)
-  local value=key and self.db.buffGroupNeed and self.db.buffGroupNeed[key]
+  local value=key and settings.buffGroupNeed and settings.buffGroupNeed[key]
   if type(value)=="number" then return math.max(2,math.min(5,math.floor(value+0.5))) end
-  if b and (b.kind=="blessing" or b.classWide) then return self.db.blessingNeed or b.minNeed or 2 end
-  return self.db.groupNeed or (b and b.minNeed) or 3
+  if b and (b.kind=="blessing" or b.classWide) then return settings.blessingNeed or b.minNeed or 2 end
+  return settings.groupNeed or (b and b.minNeed) or 3
 end
 
-function B:SetGroupNeed(b,value)
+function B:SetGroupNeed(b,value,context)
+  local settings=context and self:GroupSettings(context,true) or self.db
   local key=self:RootKey(b)
   if not key then return end
   local pair=b and b.groupKey and self:FindBuff(b.groupKey) or b
-  local fallback=(pair and (pair.kind=="blessing" or pair.classWide)) and self.db.blessingNeed or self.db.groupNeed
+  local fallback=(pair and (pair.kind=="blessing" or pair.classWide)) and settings.blessingNeed or settings.groupNeed
   value=math.max(2,math.min(5,math.floor((tonumber(value) or fallback or 3)+0.5)))
-  if value==(fallback or 3) then self.db.buffGroupNeed[key]=nil else self.db.buffGroupNeed[key]=value end
+  if value==(fallback or 3) then settings.buffGroupNeed[key]=nil else settings.buffGroupNeed[key]=value end
 end
 
-function B:NormalizeGroupNeeds()
-  for key,value in pairs(self.db.buffGroupNeed or {}) do
+function B:NormalizeGroupNeeds(context)
+  local settings=context and self:GroupSettings(context,true) or self.db
+  for key,value in pairs(settings.buffGroupNeed or {}) do
     local b=self:FindBuff(key)
     local pair=b and b.groupKey and self:FindBuff(b.groupKey) or b
-    local fallback=(pair and (pair.kind=="blessing" or pair.classWide)) and self.db.blessingNeed or self.db.groupNeed
-    if not b or value==(fallback or 3) then self.db.buffGroupNeed[key]=nil end
+    local fallback=(pair and (pair.kind=="blessing" or pair.classWide)) and settings.blessingNeed or settings.groupNeed
+    if not b or value==(fallback or 3) then settings.buffGroupNeed[key]=nil end
   end
 end
 
@@ -475,41 +481,45 @@ function B:RootKey(b)
   return b and (b.singleKey or b.key) or nil
 end
 
-function B:GroupSelected(b, group)
+function B:GroupSelected(b, group,context)
+  local settings=self:GroupSettings(context,false)
   group=tonumber(group)
   if not group or group<1 or group>8 then return false end
   local key=self:RootKey(b)
-  local map=key and self.db.buffGroups and self.db.buffGroups[key]
+  local map=key and settings.buffGroups and settings.buffGroups[key]
   if type(map)=="table" and type(map[group])=="boolean" then return map[group] end
-  return self.db.raidGroups and self.db.raidGroups[group]==true
+  return settings.raidGroups and settings.raidGroups[group]==true
 end
 
-function B:EnsureBuffGroups(b)
+function B:EnsureBuffGroups(b,context)
+  local settings=context and self:GroupSettings(context,true) or self.db
   local key=self:RootKey(b)
   if not key then return nil end
-  if type(self.db.buffGroups[key])~="table" then
+  if type(settings.buffGroups[key])~="table" then
     local map={}
-    for i=1,8 do map[i]=self.db.raidGroups[i]==true end
-    self.db.buffGroups[key]=map
+    for i=1,8 do map[i]=settings.raidGroups[i]==true end
+    settings.buffGroups[key]=map
   end
-  return self.db.buffGroups[key]
+  return settings.buffGroups[key]
 end
 
-function B:BuffGroupsDifferFromDefault(b)
+function B:BuffGroupsDifferFromDefault(b,context)
+  local settings=self:GroupSettings(context,false)
   local key=self:RootKey(b)
-  local map=key and self.db.buffGroups and self.db.buffGroups[key]
+  local map=key and settings.buffGroups and settings.buffGroups[key]
   if type(map)~="table" then return false end
   for i=1,8 do
-    if (map[i]==true) ~= (self.db.raidGroups[i]==true) then return true end
+    if (map[i]==true) ~= (settings.raidGroups[i]==true) then return true end
   end
   return false
 end
 
-function B:NormalizeBuffGroups(b)
+function B:NormalizeBuffGroups(b,context)
+  local settings=context and self:GroupSettings(context,true) or self.db
   local key=self:RootKey(b)
-  if not key or not self.db.buffGroups then return false end
-  if type(self.db.buffGroups[key])=="table" and not self:BuffGroupsDifferFromDefault(b) then
-    self.db.buffGroups[key]=nil
+  if not key or not settings.buffGroups then return false end
+  if type(settings.buffGroups[key])=="table" and not self:BuffGroupsDifferFromDefault(b,context) then
+    settings.buffGroups[key]=nil
     return true
   end
   return false
@@ -526,58 +536,63 @@ function B:GroupAssignableBuffs()
   return out
 end
 
-function B:NormalizeAllBuffGroups()
-  for _,b in ipairs(self:GroupAssignableBuffs()) do self:NormalizeBuffGroups(b) end
+function B:NormalizeAllBuffGroups(context)
+  local settings=self:GroupSettings(context,false)
+  for _,b in ipairs(self:GroupAssignableBuffs()) do self:NormalizeBuffGroups(b,context) end
 end
 
-function B:ReconcileRaidGroupColumn(group)
+function B:ReconcileRaidGroupColumn(group,context)
+  local settings=context and self:GroupSettings(context,true) or self.db
   group=tonumber(group)
   if not group or group<1 or group>8 then return end
   local buffs=self:GroupAssignableBuffs()
   if #buffs==0 then return end
 
-  local first=self:GroupSelected(buffs[1],group)
+  local first=self:GroupSelected(buffs[1],group,context)
   for i=2,#buffs do
-    if self:GroupSelected(buffs[i],group) ~= first then
+    if self:GroupSelected(buffs[i],group,context) ~= first then
       return -- Mixed assignments: keep the current default unchanged.
     end
   end
 
   -- If every per-buff row now agrees, promote that common value to the default.
-  self.db.raidGroups[group]=first==true
-  self:NormalizeAllBuffGroups()
+  settings.raidGroups[group]=first==true
+  self:NormalizeAllBuffGroups(context)
 end
 
-function B:GroupColumnState(group)
+function B:GroupColumnState(group,context)
+  local settings=self:GroupSettings(context,false)
   local buffs=self:GroupAssignableBuffs()
-  if #buffs==0 then return self.db.raidGroups[group] and "on" or "off" end
-  local first=self:GroupSelected(buffs[1],group)
+  if #buffs==0 then return settings.raidGroups[group] and "on" or "off" end
+  local first=self:GroupSelected(buffs[1],group,context)
   for i=2,#buffs do
-    if self:GroupSelected(buffs[i],group) ~= first then return "mixed" end
+    if self:GroupSelected(buffs[i],group,context) ~= first then return "mixed" end
   end
   return first and "on" or "off"
 end
 
-function B:SetRaidGroupColumn(group,value)
+function B:SetRaidGroupColumn(group,value,context)
+  local settings=context and self:GroupSettings(context,true) or self.db
   group=tonumber(group)
   if not group or group<1 or group>8 then return end
   value=value==true
-  self.db.raidGroups[group]=value
+  settings.raidGroups[group]=value
   for _,b in ipairs(self:GroupAssignableBuffs()) do
     local key=self:RootKey(b)
-    local map=key and self.db.buffGroups[key]
+    local map=key and settings.buffGroups[key]
     if type(map)=="table" then map[group]=value end
-    self:NormalizeBuffGroups(b)
+    self:NormalizeBuffGroups(b,context)
   end
 end
 
-function B:Enabled(b)
+function B:Enabled(b,settings)
   -- Group versions inherit the single-buff toggle so users manage one logical buff.
   if b.singleKey then
     local single=self:FindBuff(b.singleKey)
-    if single then return self:Enabled(single) end
+    if single then return self:Enabled(single,settings) end
   end
-  local v = self.db.buffs[b.key]
+  local values=settings and settings.buffs or self:Preference("buffs")
+  local v = values[b.key]
   if v ~= nil then return v == true end
   -- One blessing family at a time by default.
   if b.kind == "blessing" then return b.key == "bok" end
@@ -980,6 +995,7 @@ function B:AddRangeBlocked(action)
 end
 
 function B:Validate(action)
+  if not self:SituationActionCurrent(action) then return false,"setup changed before validation" end
   if self.CastRetryBlocked and self:CastRetryBlocked(action) then return false,"recipient temporarily skipped after cast failure" end
   local paused=self:ReminderPauseReason(); if paused then return false,paused end
   if action and action.source=="readiness" then
@@ -1046,14 +1062,14 @@ end
 
 function B:Roster()
   local now=GetTime()
-  if self.db.group and self.rosterCache and now-(self.rosterCache.at or 0)<=5 then
+  if self:GroupPreference("group") and self.rosterCache and now-(self.rosterCache.at or 0)<=5 then
     if self.stats then self.stats.rosterHits=(self.stats.rosterHits or 0)+1 end
     return self.rosterCache.list
   end
   if self.stats then self.stats.rosterBuilds=(self.stats.rosterBuilds or 0)+1 end
   local playerClass=A.Call(function() local _,c=UnitClass("player"); return c end)
   local roster={{unit="player",group=1,class=A.Text(playerClass) and playerClass or nil,selected=true,rosterOrder=0}}
-  if not self.db.group then return roster end
+  if not self:GroupPreference("group") then return roster end
   local raid=A.Call(IsInRaid)==true
   if raid then
     local n=A.Call(GetNumGroupMembers) or 0
@@ -1235,7 +1251,7 @@ function B:SetBlessingPlanMode(context,scope,mode,blessing)
     end
     map.mode=mode; if blessing then map.blessing=blessing end
   end
-  self.db.blessingAssignments=true
+  self:GroupSettings(context,true).blessingAssignments=true
   self:InvalidateAura(); self:RequestRefresh("blessing plan mode",0); return true
 end
 function B:ResetBlessingScope(scope)
@@ -1246,6 +1262,7 @@ function B:CopyPartyBlessingsToRaid()
   if A.Combat() then return false end
   self:InitBlessingPlans()
   self.db.blessingRaidDefaults={classes=copyBlessingTable(self.db.blessingClasses),priorities=copyBlessingTable(self.db.groupBlessingPriorities),mode=self.db.blessingPartyMode,blessing=self.db.blessingPartyUniform}
+  self:GroupSettings("Raid",true).blessingAssignments=self:GroupPreference("blessingAssignments","Party")
   self:InvalidateAura(); self:RequestRefresh("copy party blessings",0); return true
 end
 function B:GetBlessingPlayer(guid,context)
@@ -1292,7 +1309,7 @@ function B:NormalizeBlessingAssignments()
   end
 end
 function B:BlessingGroupNeed(def)
-  if def and def.kind=="blessing" and self:BlessingAssignmentsActive() then return self.db.blessingNeed end
+  if def and def.kind=="blessing" and self:BlessingAssignmentsActive() then return self:GroupPreference("blessingNeed") end
   return self:GroupNeed(def)
 end
 function B:BlessingLearned(key)
@@ -1301,7 +1318,7 @@ function B:BlessingLearned(key)
   return false
 end
 function B:BlessingAssignmentsActive()
-  if not (self.db and self.db.blessingAssignments and self.db.group) then return false end
+  if not (self.db and self:GroupPreference("blessingAssignments") and self:GroupPreference("group")) then return false end
   local class=A.Call(function() local _,token=UnitClass("player"); return token end)
   if class~="PALADIN" then return false end
   local count=A.Call(GetNumSubgroupMembers)
@@ -1310,7 +1327,7 @@ end
 function B:BlessingGroupAllowed(entry)
   local context=self:BlessingContext()
   return entry and A.Number(entry.group) and ((context=="Party" and not self.db.blessingPartyExcluded)
-    or (context=="Raid" and self.db.raidGroups[entry.group]==true))
+    or (context=="Raid" and self:GroupPreference("raidGroups")[entry.group]==true))
 end
 function B:BlessingChoice(entry)
   if not self:BlessingAssignmentsActive() then return nil end
@@ -1397,9 +1414,9 @@ function B:BlessingActionAllowed(action)
 end
 
 B.RecipientClasses={"WARRIOR","PALADIN","HUNTER","ROGUE","PRIEST","SHAMAN","MAGE","WARLOCK","DRUID"}
-function B:GroupClassAllowed(b,class)
+function B:GroupClassAllowed(b,class,context)
   local root=self:FindBuff(self:RootKey(b)) or b
-  local map=self.db.buffClasses[self:RootKey(b)]
+  local map=self:GroupPreference("buffClasses",context)[self:RootKey(b)]
   if type(map)=="table" and type(map[class])=="boolean" then return map[class] end
   if not root.target then return true end
   for _,c in ipairs(root.target) do if c==class then return true end end
@@ -1492,7 +1509,7 @@ function B:Select()
 
   if self:BGSelfMode() then return self:SelectBGSelf() end
 
-  if self.db.consumablesEnabled and self.db.consumableFamilies.food then
+  if self:Preference("consumablesEnabled") and self:Preference("consumableFamilies").food then
     local eatingAuras=self:GetAuras("player",false)
     for _,aura in ipairs(eatingAuras or {}) do
       if self.EatingSpellIDs and self.EatingSpellIDs[aura.spellId] then
@@ -1597,7 +1614,7 @@ function B:Select()
       -- Count only verified, in-range group-rank recipients. Restrict Greater
       -- Blessings to a class whose assigned members all belong to this family.
       local groupDef=b.groupKey and self:FindBuff(b.groupKey)
-      if self.db.group and self.db.smartGroup and groupDef and (self:Enabled(groupDef) or (blessingPlan and b.kind=="blessing")) then
+      if self:GroupPreference("group") and self:GroupPreference("smartGroup") and groupDef and (self:Enabled(groupDef) or (blessingPlan and b.kind=="blessing")) then
         local buckets={}
         for _,need in ipairs(missing) do
           local entry=need.entry
@@ -1687,7 +1704,7 @@ function B:Select()
     local ok,action,why=pcall(self.SelectConsumable,self)
     if not ok then self.lastError="consumable provider failed"; return nil,"consumable provider unavailable" end
     if action then return action,"ready" end
-    if self.db.consumablesEnabled and why and why~="consumables disabled" then self:AddDiag("consumables: "..tostring(why)) end
+    if self:Preference("consumablesEnabled") and why and why~="consumables disabled" then self:AddDiag("consumables: "..tostring(why)) end
   end
 
   if self.TrackingAction then
@@ -1706,7 +1723,7 @@ function B:Select()
     local ok,action,why=pcall(self.SelectWeaponReminder,self)
     if not ok then self.lastError="weapon reminder provider failed"; return nil,"weapon reminder unavailable" end
     if action and not (self.HelperSuppressed and self:HelperSuppressed(action)) then action.selectedAt=GetTime(); return action,action.manual and "manual application required" or "weapon application ready" end
-    if self.db.weaponReminder and why and why~="weapon coatings present" and why~="no learned coating ability" then
+    if self:Preference("weaponReminder") and why and why~="weapon coatings present" and why~="no learned coating ability" then
       self:AddDiag("weapon reminder: "..tostring(why))
     end
   end

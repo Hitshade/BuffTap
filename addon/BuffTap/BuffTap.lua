@@ -195,6 +195,7 @@ function B:CreateButton()
     if button and button~="LeftButton" then return end
     local ok=guarded("click validation",function()
     if A.Combat() then return end
+    if B:SyncSituation() then B:Commit(nil,"setup changed before click"); B:RequestRefresh("setup changed",0); return end
     local action=B.action
     local paused=B:ReminderPauseReason(); if paused then B:Commit(nil,paused); return end
     if not action then return end
@@ -268,6 +269,7 @@ function B:Commit(action,reason)
   if A.Combat() then self.dirty=true; return end
   local b=self.button
   if not b then return end
+  if action and action.situationRevision==nil then action.situationRevision=self.situationRevision or 0 end
   self.nearbyQuietAction=action and action.nearby==true or false
   if action and action.source=="consumable" and not self:ValidateConsumable(action,false,true) then action=nil; reason="item changed before preparation" end
   if action and action.source=="weapon-reminder" and not self:ValidateWeaponReminder(action) then action=nil; reason="weapon reminder changed before display" end
@@ -540,7 +542,8 @@ end
 function B:Refresh(captureDiagnostics)
   if not self.db then return end
   if self.SyncReadiness then self:SyncReadiness() end
-  if A.Combat() then self.dirty=true; return end
+  if A.Combat() then self.dirty=true; self:SyncSituation(); return end
+  self:SyncSituation()
   if self.stats then self.stats.refreshes=(self.stats.refreshes or 0)+1 end
   self:CancelRefreshTimer()
   local profileStart
@@ -607,7 +610,7 @@ function B:IsWatchedUnit(unit)
   if not A.Public(unit) or type(unit)~="string" then return false end
   if self.db and self.db.nearbyEnabled and self.nearbyUnits and self.nearbyUnits[unit] then return true end
   if unit=="player" then return true end
-  if self.db and (self.db.group or (self.ReadinessEnabled and self:ReadinessEnabled("soulstone"))) and (unit:match("^party%d+$") or unit:match("^raid%d+$")) then return true end
+  if self.db and (self:GroupPreference("group") or (self.ReadinessEnabled and self:ReadinessEnabled("soulstone"))) and (unit:match("^party%d+$") or unit:match("^raid%d+$")) then return true end
   if unit=="target" and self.db and self.db.friendlyTarget then
     return A.Call(UnitExists,"target")==true and A.Call(UnitCanAssist,"player","target")==true
   end
@@ -623,6 +626,7 @@ function B:DiagnosticsLines()
     out[#out+1]="Reason: "..tostring(a.reason).." | range: "..tostring(a.rangeSource or "not checked")
   else out[#out+1]="Next: none" end
   out[#out+1]="Solo thanks: "..tostring(self.helperThankStatus or "not observed")
+  out[#out+1]="Setup: "..self:SituationSummary()
   out[#out+1]="PvP protection: "..(self.db and self.db.pvpProtection and "on" or "off")
   if self.buffDataUnavailable then out[#out+1]="Buff information unavailable or incomplete; missing coverage cannot be assumed." end
   if self.ownershipUnavailable then out[#out+1]="Blessing ownership unavailable; replacing your own blessing is prevented." end
@@ -631,7 +635,7 @@ function B:DiagnosticsLines()
   if self.refreshDue then out[#out+1]="Next event scan: "..string.format("%.1fs",math.max(0,self.refreshDue-GetTime())).." ("..tostring(self.refreshReason or "scheduled")..")" end
   if self.wakeDue then out[#out+1]="Next exact wake: "..string.format("%.1fs",math.max(0,self.wakeDue-GetTime())).." ("..tostring(self.wakeReason or "threshold/cooldown")..")" end
   out[#out+1]="C_Timer.After: "..tostring(C_Timer and type(C_Timer.After)=="function").." | spell range: "..tostring(C_Spell and type(C_Spell.IsSpellInRange)=="function")
-  out[#out+1]="Consumables: "..(self.db and self.db.consumablesEnabled and "on" or "off").." | item count: "..tostring(C_Item and type(C_Item.GetItemCount)=="function").." | secure item provider: "..tostring(type(self.SelectConsumable)=="function")
+  out[#out+1]="Consumables: "..(self.db and self:Preference("consumablesEnabled") and "on" or "off").." | item count: "..tostring(C_Item and type(C_Item.GetItemCount)=="function").." | secure item provider: "..tostring(type(self.SelectConsumable)=="function")
   if self.WeaponReminderClass then out[#out+1]="Weapon reminder: "..self:WeaponReminderSummary()..(self.db.weaponApply and " | scroll application enabled" or " | manual alerts") end
   if self.db and self.CampingState then
     local camp=self:CampingState()
@@ -669,16 +673,17 @@ end
 function B:Status(verbose)
   if verbose and self.db and not A.Combat() then self:Refresh(true) end
   say("v" .. self.version .. " | " .. (A.Combat() and "combat: disabled; refresh on exit" or self.reason or "initializing"))
+  say("Setup: "..self:SituationSummary())
   say("Binding: " .. (#self.db.keys>0 and table.concat(self.db.keys,", ") or "none"))
-  say("Rebuff default: " .. tostring(self.db.seconds) .. " seconds")
+  say("Rebuff default: " .. tostring(self:Preference("seconds")) .. " seconds")
   say("Friendly target buffing: " .. (self.db.friendlyTarget and "on" or "off") .. " | default target refresh: " .. tostring(self.db.targetSeconds or 300) .. " seconds")
   say("Solo thanks: "..tostring(self.helperThankStatus or "not observed"))
   say("PvP protection: "..(self.db.pvpProtection and "on" or "off").." | blocked="..tostring(self.pvpBlocked==true).." | aura data unavailable="..tostring(self.buffDataUnavailable==true).." | ownership unknown="..tostring(self.ownershipUnavailable==true).." | temporary retry="..tostring(self.deferredBlocked==true))
-  say("Consumables: " .. (self.db.consumablesEnabled and "on" or "off") .. " | curated data build " .. tostring(self.ForeverDataBuild or "unknown"))
-  if self.db.group then
+  say("Consumables: " .. (self:Preference("consumablesEnabled") and "on" or "off") .. " | curated data build " .. tostring(self.ForeverDataBuild or "unknown"))
+  if self:GroupPreference("group") then
     local groups={}
     for i=1,8 do
-      local state=self.GroupColumnState and self:GroupColumnState(i) or (self.db.raidGroups[i] and "on" or "off")
+      local state=self.GroupColumnState and self:GroupColumnState(i) or (self:GroupPreference("raidGroups")[i] and "on" or "off")
       if state=="on" then groups[#groups+1]=tostring(i) elseif state=="mixed" then groups[#groups+1]=tostring(i).."*" end
     end
     say("Group buffing: on | groups: " .. (#groups>0 and table.concat(groups,",") or "none") .. " | * = mixed assignment")
@@ -807,7 +812,7 @@ local itemRequested=event=="ITEM_DATA_LOAD_RESULT" and A.Number(arg) and ((B.ite
     if B.ObserveConsumableUse then B:ObserveConsumableUse() end
     if B.InvalidateConsumables then B:InvalidateConsumables() end
     if B.RefreshInventoryWindows then B:RefreshInventoryWindows() end
-    if not B.db.consumablesEnabled and not B.db.group and not B.powerBlocked and not (B.WeaponInventoryRelevant and B:WeaponInventoryRelevant()) then return end
+    if not B:Preference("consumablesEnabled") and not B:GroupPreference("group") and not B.powerBlocked and not (B.WeaponInventoryRelevant and B:WeaponInventoryRelevant()) then return end
   elseif event=="ITEM_DATA_LOAD_RESULT" then
     if not itemRequested then return end
     if B.InvalidateConsumables then B:InvalidateConsumables(arg) end
@@ -818,6 +823,7 @@ local itemRequested=event=="ITEM_DATA_LOAD_RESULT" and A.Number(arg) and ((B.ite
   elseif event=="UNIT_CONNECTION" then
     if A.Text(arg) then B:InvalidateAura(arg) end
   elseif event=="GROUP_ROSTER_UPDATE" then
+    B:SyncSituation()
     local n=A.Call(GetNumSubgroupMembers)
     if A.Call(IsInRaid)==false and A.Number(n) and n==0 then B.blessingPlayers=nil end
     B:InvalidateRoster(); B:InvalidateAura()
@@ -948,11 +954,11 @@ SlashCmdList.BUFFTAP=function(text)
       B:SetGroupNeed(def,value)
     else
       local value=tonumber(arg); if not value then say("Specify 2 through 5 players."); return end
-      B.db.groupNeed=math.max(2,math.min(5,math.floor(value+0.5))); B:NormalizeGroupNeeds(); B:InitDB()
+      B:GroupSettings(nil,true).groupNeed=math.max(2,math.min(5,math.floor(value+0.5))); B:NormalizeGroupNeeds(B:ActiveGroupContext()); B:InitDB()
     end
   elseif cmd=="blessingneed" then
     local value=tonumber(arg); if not value then say("Specify 2 through 5 players."); return end
-    B.db.blessingNeed=math.max(2,math.min(5,math.floor(value+0.5))); B:NormalizeGroupNeeds(); B:InitDB()
+    B:GroupSettings(nil,true).blessingNeed=math.max(2,math.min(5,math.floor(value+0.5))); B:NormalizeGroupNeeds(B:ActiveGroupContext()); B:InitDB()
   elseif cmd=="targetrebuff" then
     local buffKey,value=arg:match("^(%S+)%s+(%d+)$")
     if buffKey then

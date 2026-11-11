@@ -81,19 +81,22 @@ function B:ConsumableFamily(key)
   for _,family in ipairs(self.ConsumableFamilies or {}) do if family.key==key then return family end end
 end
 
-function B:ConsumableFamilySelected(family)
+function B:ConsumableFamilySelected(family,settings)
   if not self.db or not family then return false end
-  local value=self.db.consumableFamilies and self.db.consumableFamilies[family.key]
+  local values=settings and settings.consumableFamilies or self:Preference("consumableFamilies")
+  local value=values and values[family.key]
   if type(value)=="boolean" then return value end
   return family.defaultOn==true
 end
 
-function B:ConsumableFamilyEnabled(family)
-  return self.db and self.db.consumablesEnabled==true and self:ConsumableFamilySelected(family)
+function B:ConsumableFamilyEnabled(family,settings)
+  local enabled; if settings then enabled=settings.consumablesEnabled else enabled=self:Preference("consumablesEnabled") end
+  return self.db and enabled==true and self:ConsumableFamilySelected(family,settings)
 end
 
-function B:ConsumableThreshold(family)
-  local value=family and self.db and self.db.consumableSeconds and self.db.consumableSeconds[family.key]
+function B:ConsumableThreshold(family,settings)
+  local values=settings and settings.consumableSeconds or self:Preference("consumableSeconds")
+  local value=family and values and values[family.key]
   if type(value)=="number" then return math.max(30,math.min(1800,value)) end
   return family and family.defaultSeconds or 300
 end
@@ -105,9 +108,10 @@ function B:SetConsumableThreshold(family,value)
   else self.db.consumableSeconds[family.key]=value end
 end
 
-function B:ConsumableChoiceID(family)
+function B:ConsumableChoiceID(family,settings)
   if not family then return nil end
-  local chosen=self.db and self.db.consumableChoices and self.db.consumableChoices[family.key]
+  local values=settings and settings.consumableChoices or self:Preference("consumableChoices")
+  local chosen=values and values[family.key]
   if type(chosen)=="number" then
     for _,item in ipairs(family.items or {}) do if item.id==chosen then return chosen end end
   end
@@ -294,11 +298,11 @@ function B:ConsumableFamilyState(family,auras)
   return true,"missing",0,nil,nil
 end
 
-function B:PreferredConsumableItem(family)
+function B:PreferredConsumableItem(family,settings)
   if not family then return nil,"unknown family" end
   local cache=self:RebuildConsumableCache(false)
   if cache and cache.error and not next(cache.counts or {}) then return nil,cache.error end
-  local chosen=self:ConsumableChoiceID(family)
+  local chosen=self:ConsumableChoiceID(family,settings)
   if chosen then
     for _,item in ipairs(family.items or {}) do
       if item.id==chosen then
@@ -313,6 +317,7 @@ function B:PreferredConsumableItem(family)
 end
 
 function B:ValidateConsumable(action,forceAura,forceInventory)
+  if not self:SituationActionCurrent(action) then return false,"setup changed before item validation" end
   if not action or action.source~="consumable" then return false,"not a consumable action" end
   local family=self:ConsumableFamily(action.familyKey)
   if not family or not self:ConsumableFamilyEnabled(family) then return false,"consumable family disabled" end
@@ -410,7 +415,7 @@ function B:ResolveConsumableItem(family,item)
 end
 
 function B:ResolveConsumable(family)
-  local chosen=self:ConsumableChoiceID(family)
+  local chosen=self:ConsumableChoiceID(family,settings)
   if family.explicitChoice and not chosen then return nil,"choose an item in options" end
   local reason="no supported item in bags"
   for _,item in ipairs(family.items or {}) do
@@ -428,7 +433,7 @@ function B:ResolveConsumable(family)
 end
 
 function B:SelectConsumable()
-  if not self.db or not self.db.consumablesEnabled then return nil,"consumables disabled" end
+  if not self.db or not self:Preference("consumablesEnabled") then return nil,"consumables disabled" end
   if self.stats then self.stats.consumableSelects=(self.stats.consumableSelects or 0)+1 end
   self:RebuildConsumableCache(false)
   for _,family in ipairs(self.ConsumableFamilies or {}) do
@@ -501,3 +506,5 @@ function B:CampState(auras)
   end
   return {active=false,spellID=spellID}
 end
+
+

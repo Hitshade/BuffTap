@@ -510,3 +510,24 @@ B.Locales.ptBR["Buff nearby players, invite someone new, or use the player list 
 B.Locales.ptBR["Optional conveniences, separate from your buff choices. PvP protection starts on."]="Ajudas opcionais, separadas dos seus bônus. A proteção JxJ começa ativada."
 B.Locales.ptBR["Buffs first"]="Bônus primeiro"
 B.Locales.ptBR["Five visible rows keep the window compact. Scroll over Nearby to browse players; use your buff binding after moving the pointer away."]="Cinco linhas visíveis mantêm a janela compacta. Role dentro dela para ver jogadores; tire o cursor para usar sua tecla de bônus."
+
+-- Context preferences.
+B.Locales.ptBR["Solo"]="Solo"
+B.Locales.ptBR["Party"]="Grupo"
+B.Locales.ptBR["Raid"]="Raide"
+B.Locales.ptBR["Active setup: %s"]="Configuração: %s"
+B.Locales.ptBR["Setup change waits until combat ends"]="A mudança aguarda o fim do combate"
+B.Locales.ptBR["Use Solo settings"]="Usar opções Solo"
+B.Locales.ptBR["Baseline preferences. Party and Raid inherit unchanged choices."]="Preferências base. Grupo e raide herdam as opções não alteradas."
+B.Locales.ptBR["Custom choices. Unchanged preferences still follow Solo."]="Escolhas próprias. As demais preferências continuam seguindo Solo."
+B.Locales.ptBR["Following Solo. Change a preference below to customize this setup."]="Segue Solo. Altere uma preferência abaixo para personalizar esta configuração."
+
+-- Independent party and raid preferences.
+B.Locales.ptBR["Party buffing"]="Bônus de grupo"
+B.Locales.ptBR["Raid buffing"]="Bônus de raide"
+B.Locales.ptBR["Enable party buffing"]="Ativar bônus de grupo"
+B.Locales.ptBR["Enable raid buffing"]="Ativar bônus de raide"
+B.Locales.ptBR["Include party"]="Incluir grupo"
+B.Locales.ptBR["Party recipients"]="Destinatários do grupo"
+B.Locales.ptBR["Preferences for your five-player party. Raid settings are separate."]="Preferências para seu grupo de cinco. As opções de raide são separadas."
+B.Locales.ptBR["Choose raid groups, recipient classes and group-spell thresholds."]="Escolha grupos de raide, classes e limites para feitiços de grupo."
