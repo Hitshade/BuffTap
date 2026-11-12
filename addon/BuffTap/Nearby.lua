@@ -639,11 +639,30 @@ function B:SetNearbyRowPayload(row,action)
   row:SetAttribute("type1",nil); row:SetAttribute("macrotext",macro); row:SetAttribute("spell",spell); row:SetAttribute("unit",unit)
   if kind then row:SetAttribute("type1",kind) end
 end
+-- Nearby is scaled, so its GetCenter and SetPoint offsets are in its own units while
+-- UIParent's centre is in UI units. Save the offset in UI units and convert when anchoring,
+-- otherwise a scaled window jumps away from where it was dropped.
+local function relativeScale(f)
+  local fs=type(f.GetEffectiveScale)=="function" and f:GetEffectiveScale() or 1
+  local us=type(UIParent.GetEffectiveScale)=="function" and UIParent:GetEffectiveScale() or 1
+  if not A.Number(fs) or not A.Number(us) or fs<=0 or us<=0 then return 1,1 end
+  return fs/us,us
+end
+function B:NearbyCenterOffset(f)
+  local x,y=f:GetCenter(); local px,py=UIParent:GetCenter()
+  if not (A.Number(x) and A.Number(y) and A.Number(px) and A.Number(py)) then return end
+  local r=relativeScale(f)
+  return x*r-px,y*r-py
+end
+function B:PlaceNearbyFrame(f,x,y)
+  local r=relativeScale(f)
+  f:ClearAllPoints(); f:SetPoint("CENTER",UIParent,"CENTER",x/r,y/r)
+end
 function B:CreateNearbyWindow()
   if self.nearbyFrame or A.Combat() then return end
   if type(RegisterStateDriver)~="function" then self.nearbySetupError="Secure combat visibility is unavailable"; return end
   local f=CreateFrame("Frame","BuffTapNearbyWindow",UIParent,"SecureHandlerStateTemplate")
-  self.nearbyFrame=f; f:SetSize(WIDTH+24,HEIGHT); f:SetFrameStrata("DIALOG"); f:SetClampedToScreen(true); f:SetFrameLevel(120)
+  self.nearbyFrame=f; f:SetSize(WIDTH+24,HEIGHT); f:SetFrameStrata("LOW"); f:SetClampedToScreen(true); f:SetFrameLevel(120)
   f:SetMovable(true); f:EnableMouse(false); f:RegisterForDrag("LeftButton")
   local c=CreateFrame("Frame",nil,f); f.content=c; c:SetSize(WIDTH,HEIGHT); c:SetPoint("TOPLEFT",24,0); c:EnableMouse(false)
   f.header=wash(c,"BACKGROUND",.055,.07,.09,.50); f.header:SetPoint("TOPLEFT"); f.header:SetWidth(WIDTH); f.header:SetHeight(21)
@@ -689,8 +708,10 @@ function B:CreateNearbyWindow()
   local function dragStop()
     if A.Combat() then return end
     f:StopMovingOrSizing(); self.nearbyDragging=false
-    local x,y=f:GetCenter(); local px,py=UIParent:GetCenter()
-    if A.Number(x) and A.Number(y) and A.Number(px) and A.Number(py) then self.db.nearbyX=x-px; self.db.nearbyY=y-py end
+    if type(f.SetUserPlaced)=="function" then f:SetUserPlaced(false) end
+    local x,y=self:NearbyCenterOffset(f)
+    if x then self.db.nearbyX=x; self.db.nearbyY=y end
+    f.positionX=nil
     self:UpdateNearbyWindow()
   end
   f:SetScript("OnDragStart",dragStart); f:SetScript("OnDragStop",dragStop)
@@ -838,6 +859,9 @@ function B:UpdateNearbyWindow()
   self:CreateNearbyWindow()
   local f=self.nearbyFrame; if not f or self.nearbySetupError then return end
   local right=self.db.nearbyButtonSide=="right"
+  -- A glanceable list belongs under Blizzard's panels (professions, bags); players can keep it on top.
+  local strata=self.db.nearbyOnTop==true and "DIALOG" or "LOW"
+  if f.strata~=strata then f:SetFrameStrata(strata); f.strata=strata end
   local layoutKey=table.concat({WIDTH,ROWS,scale,self.db.nearbyOpacity,right and "R" or "L"},":")
   if f.layoutKey~=layoutKey then
     f.layoutKey=layoutKey; f:SetSize(WIDTH+24,HEIGHT); f:SetScale(scale); f.content:SetSize(WIDTH,HEIGHT)
@@ -861,7 +885,7 @@ function B:UpdateNearbyWindow()
   local display=self:NearbyDisplayList(list)
   local x,y=self.db.nearbyX,self.db.nearbyY
   x=A.Number(x) and x or 240; y=A.Number(y) and y or 0
-  if f.positionX~=x or f.positionY~=y then f:ClearAllPoints(); f:SetPoint("CENTER",UIParent,"CENTER",x,y); f.positionX=x; f.positionY=y end
+  if f.positionX~=x or f.positionY~=y or f.positionScale~=scale then self:PlaceNearbyFrame(f,x,y); f.positionX=x; f.positionY=y; f.positionScale=scale end
   local counts=self.nearbyCounts or {need=0,total=0}
   f.count:SetText(counts.need.."/"..counts.total)
   if f.allPlayers.showAll~=self.db.nearbyShowAll then

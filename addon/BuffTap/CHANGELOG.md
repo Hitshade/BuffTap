@@ -1,3 +1,10 @@
+# BuffTap 1.19.3
+
+- The Nearby window now sits under interface windows such as professions and bags instead of covering them. A new "Keep above other windows" option on the Nearby page restores the old behaviour.
+- Fix: the Nearby window jumped away from where you dropped it when its scale was not 100%. Its position is now saved in screen units, so it also stays centred when you change the scale. Edit Mode uses the same fix.
+
+---
+
 # BuffTap 1.19.2
 
 Release summary. Internal builds 1.19.2-beta1 to beta8 are listed below.

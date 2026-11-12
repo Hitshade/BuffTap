@@ -287,7 +287,11 @@ local function editMover(key,caption,iconTexture)
     if A.Combat() then return end
     local x,y=s:GetCenter(); local cx,cy=UIParent:GetCenter()
     if A.Number(x) and A.Number(y) and A.Number(cx) and A.Number(cy) then
-      if key=="nearby" then B.db.nearbyX=x-cx; B.db.nearbyY=y-cy else B.db.campX=x-cx; B.db.campY=y-cy end
+      if key=="nearby" then
+        local nx,ny=x-cx,y-cy
+        if B.NearbyCenterOffset then nx,ny=B:NearbyCenterOffset(s) end
+        if nx then B.db.nearbyX=nx; B.db.nearbyY=ny end
+      else B.db.campX=x-cx; B.db.campY=y-cy end
     end
   end
   f.savePosition=savePosition; f:SetScript("OnDragStop",savePosition)
@@ -301,7 +305,8 @@ function B:ShowEditMovers()
     local f=self.editNearby; local width,rows,scale=240,5,1
     if self.NearbyLayout then width,rows,scale=self:NearbyLayout() end
     f:SetScale(A.Number(scale) and scale or 1); f:SetSize(width+24,29+rows*21)
-    f:ClearAllPoints(); f:SetPoint("CENTER",UIParent,"CENTER",A.Number(d.nearbyX) and d.nearbyX or 240,A.Number(d.nearbyY) and d.nearbyY or 0); f:Show()
+    local nx,ny=A.Number(d.nearbyX) and d.nearbyX or 240,A.Number(d.nearbyY) and d.nearbyY or 0
+    if self.PlaceNearbyFrame then self:PlaceNearbyFrame(f,nx,ny) else f:ClearAllPoints(); f:SetPoint("CENTER",UIParent,"CENTER",nx,ny) end; f:Show()
   elseif self.editNearby then self.editNearby:Hide() end
   if d.campReminder==true then
     self.editCamp=self.editCamp or editMover("camp","Camp reminder — drag to move",135805)

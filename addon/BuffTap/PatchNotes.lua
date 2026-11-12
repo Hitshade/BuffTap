@@ -2,6 +2,9 @@
 local _,B=...
 -- Keep the ten most recent releases within a 24 KiB content ceiling.
 B.PatchNotes={
+ {version="1.19.3",title="Nearby window fixes",items={
+  "Interface windows such as professions and bags now open on top of the Nearby window. Turn on Keep above other windows on the Nearby page for the old behaviour.",
+  "Fixed the Nearby window jumping away from where you drop it when its scale is not 100%."}},
  {version="1.19.2",title="A guided setup and smarter defaults",items={
   "A one-time setup for each character: recommended settings, class presets (like a Paladin blessing plan or Shaman caster or healer), and copying settings from another character. Reopen it with /bufftap setup.",
   "Smarter defaults for every class, so situational buffs stay off and buff requests fit your class.",
@@ -41,10 +44,7 @@ B.PatchNotes={
  {version="1.16.8",title="Safer detection and clearer status",items={
   "Improved solo-thanks identification and protection against misdirected emotes.",
   "Improved cooldown recovery and clarified why a buff may be unavailable.",
-  "Expanded supported battleground self buffs while respecting restricted buff information."}},
- {version="1.16.7",title="More reliable solo thanks",items={
-  "Solo thanks recognizes helpful effects from identifiable players beyond a fixed spell list.",
-  "Improved provider checks and explanations when a thank-you cannot be sent."}}
+  "Expanded supported battleground self buffs while respecting restricted buff information."}}
 }
 function B:PatchNotesUnread()
   return self.profileDB and self.db.optionsPatchDot~=false and self.profileDB.global.patchNotesSeen~=self.version
