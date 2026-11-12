@@ -1,3 +1,150 @@
+# BuffTap 1.18.0
+
+Release summary. Internal builds 1.18.0-beta1 to beta9 are listed below.
+
+- Redesigned settings window: sidebar with icons, page headers, rounded controls, switches, Inter typeface, accent colour and window scale.
+- Sliders show their units (sec, px, %, players) inside the value field; the range is in the tooltip.
+- New: pause consumable and weapon reminders while resting (Consumables and Weapons pages).
+- Reminder previews, Nearby appearance settings and in-game patch notes for the ten most recent versions.
+- Fixed: undefined-global reads in group preference loading, consumable resolution and the item picker.
+- `/bt reset` requires `/bt reset confirm`; the window and slash command share one reset path.
+- Translated the missing settings text in deDE, frFR, esES and ptBR and removed unused translation keys.
+
+---
+
+# BuffTap 1.18.0-beta9
+
+Internal build. Not published.
+
+- Design pass: one type scale, 16 px card padding, collapsible patch notes, slider ranges moved to tooltips.
+- Buffs rows: faint outline with hover highlight, unchecked rows dimmed, Default shown only for customized timing, read-only priority rank.
+- Group thresholds are labelled in players. Long translated button labels step down a size instead of overflowing.
+- No test suites run.
+
+---
+
+# BuffTap 1.18.0-beta8
+
+Internal build. Not published.
+
+- Implemented review items 1 to 10, the resting pause for consumables and weapons, slider units, and borderless list rows.
+- No test suites run.
+
+---
+
+# BuffTap 1.18.0-beta7
+
+Internal visual redesign build. Not published.
+
+- Redesigned the settings window: rounded surfaces with a soft shadow, a header holding the banner, status and master switch, a full-height sidebar and a taller page area.
+- New typeface for the settings window: Inter (SIL Open Font License), with Arial Narrow as a fallback.
+- Rebuilt controls: rounded buttons with hover and pressed states, accent primary actions and red-outlined reset actions, on/off switches for settings, compact checkboxes for lists and grids, rounded fields and dropdowns, pill-shaped sliders and thin scrollbars.
+- Page headers now show the page icon; section titles use consistent small capitals inside their boxes.
+- Fixed stray value labels (for example "40 px", "100%", "5 sec" and duplicated slider values) and the overlapping "45 sec" text in buff rows.
+- Fixed left-aligned button text, weapon checkboxes touching their section border, and profile buttons touching their box edges.
+- Replaced the old yellow arrow buttons with matching chevrons.
+- No settings, callbacks or saved data changed. No test suites run.
+
+---
+
+# BuffTap 1.18.0-beta6
+
+Internal visual redesign build. Not published.
+
+- Modernized the options window: flat dark surfaces, hairline borders and a single clean typeface throughout.
+- New sidebar with matching line icons, an accent bar on the selected page and dimmed icons for the others.
+- Open page headers with a large title and a divider, replacing the boxed title band.
+- Redrawn controls: flat checkboxes with an accent fill, round slider thumbs, dropdown chevrons, flat text fields with an accent focus outline, and thin scrollbars.
+- Customization sub-tabs use an underline style; Solo/Party/Raid switches use a segmented style.
+- Added small generated interface textures (checkmark, chevron, slider thumb and twelve sidebar icons).
+- No settings, callbacks or saved data changed. No test suites run.
+
+---
+
+# BuffTap 1.18.0-beta5
+
+Internal visual correction build. Not published.
+
+- Added separation between weapon application controls and the oils/stones section.
+- Added bottom padding beneath label-visibility checkboxes in both reminder editors.
+- Matched helper-card heights and checkbox insets; aligned solo-thanks and tracking captions.
+- Inset the default rebuff controls and Reset buffs button from their section border.
+- Retained ten versions of patch notes. No test suites run and no gameplay changes.
+
+---
+
+# BuffTap 1.18.0-beta4
+
+Internal visual correction build. Not published.
+
+- Matched gold borders across page frames, title bands, preview panels and section boxes.
+- Preserved native page borders while replacing Nearby, Camping and Customization content.
+- Aligned full-width section boxes and title insets, added missing section outlines, and matched slider fills to thumb centers.
+- Removed the duplicate weapon description and improved the patch-history link's font and padding.
+- Kept the ten-version patch history. No test suites run and no gameplay changes.
+
+---
+
+# BuffTap 1.18.0-beta3
+
+Internal visual correction build. Not published.
+
+- Applied the same four-sided border to shared title and section boxes.
+- Kept each page border in place when positioning its content, so title areas stay inside the page frame.
+- Used explicit Buffs/Weapons content references instead of relying on native child order.
+- Expanded the in-game patch history from five to ten versions, using the existing release notes.
+- No test suites run, as requested. No changes to buffing behavior or profile preferences.
+
+---
+
+# BuffTap 1.18.0-beta2
+
+Internal visual correction build. Not published.
+
+- Corrected the Patch notes panel background template so options initialization can finish and apply the shared headers and layouts.
+- Kept pages and customization subpanels hidden until selected, preventing initial overlap.
+- Kept native checkbox artwork at 24 x 24 instead of stretching it to label width.
+- Removed the old slider track and thumb behind the new slider controls.
+- Added a matching title-area background on every options page.
+- Buffing logic, scanning, profiles and gameplay behavior are unchanged.
+
+No test suites were run for this correction, as requested. Native in-game visual confirmation is still needed.
+
+---
+
+# BuffTap 1.18.0-beta1
+
+Internal testing build. Not published.
+
+## Consistent options
+
+- Retained the BuffTap banner and vertical navigation, with matching page headings, section cards, spacing and action controls.
+- Aligned Solo / Party / Raid editing controls across Buffs, Weapons and Consumables, and Party / Raid controls in Groups. Descriptions explain automatic application and inheritance in plain language.
+- Standardized sliders with a numeric field on the left, immediate saving, keyboard entry, cancellation and focused-input protection.
+- Kept precise buff-icon coordinates in Binding & sound.
+
+## Appearance and previews
+
+- Added separate Buff reminder and Camping reminder editors with live sample displays. Samples use the real icon effects and text styling without casting, changing targets or playing notification sounds.
+- Grouped binding, sound and quick-access settings together.
+- Added gold, class-colour and custom-hex interface accents, a colour picker where supported, window scale and a reduced-animation preference.
+- Preserved warning colours and player-class colours. Dark custom accents are brightened for readable contrast.
+- Moved Camping appearance into Customization with a direct shortcut from Camping.
+
+## Nearby and patch notes
+
+- Added Nearby scale, width, background-opacity, position-lock and visible-row controls. Choose 2–40 rows, limited by screen space; extra players remain available by scrolling.
+- Kept a stable footprint when switching player-list views. Layout changes defer until out of combat and secure row payloads are cleared when hidden.
+- Added Patch notes with five recent updates, short nontechnical explanations, contribution thanks and a copyable link to older history. An optional unread dot uses one shared seen-version marker.
+
+## Compatibility
+
+- New shared appearance preferences participate in named-profile copying. Class-specific buff, weapon, consumable and group preferences retain their existing behavior.
+- Retained existing spell selection, PvP checks, aura protection, click validation and scanning logic.
+- Uses the existing banner, icon assets and libraries; no new artwork pack or UI dependency.
+
+---
+
 # BuffTap 1.17.1
 
 ## Preferences for Solo, Party and Raid

@@ -1,19 +1,24 @@
-# BuffTap 1.17.1
+# BuffTap 1.18.0
 
-## Preferences for Solo, Party and Raid
+## A redesigned settings window
 
-- Added Solo, Party and Raid selectors directly to Buffs, Weapons and Consumables. You can prepare any setup while ungrouped; selecting a setup edits it without activating it.
-- Solo is the baseline. Party and Raid independently inherit unchanged preferences. Changing one setting leaves the rest following Solo, and Use Solo settings restores inheritance for that section.
-- Added separate five-player Party and Raid preferences to Groups for every class. Existing group settings are preserved in both before customization, with independent enablement, recipient filters and group-spell thresholds.
-- Party shows simple party inclusion controls. Raid retains G1–G8 responsibility controls and per-buff group filters.
-- Paladins retain separate blessing plans, class choices and player exceptions, with independent Party/Raid assignment enablement, Greater Blessing settings and thresholds. Explicit assignments remain authoritative.
-- Context changes apply automatically out of combat. Changes during combat wait until combat ends, and a stale prepared action is cancelled before casting.
-- Context preferences remain character-specific. Explicit same-class profile copying includes them; shared-only and cross-class copies do not import them.
+- Rebuilt the settings window with a new sidebar, page icons, rounded controls, on/off switches and the Inter typeface. The BuffTap banner stays at the top.
+- Sliders now show what they measure (seconds, pixels, percent or players) inside their value fields. Hover a slider to see its range. Type a number and press Enter to save, or Escape to cancel.
+- Preview your buff and camping reminders while adjusting their appearance. Previews never cast, target or play alerts.
+- Choose gold, your class colour or a custom colour for the interface accent. The window size can be scaled.
+- Nearby has its own appearance settings: scale, width, background and visible rows.
+- Patch notes now live inside the addon, covering the ten most recent versions. The newest release opens first; click any other version to expand it.
+- Buffs list: unchecked buffs are dimmed, Default appears only when a buff has its own timing, and the arrows reorder priority.
+
+## New option
+
+- Pause consumable and weapon reminders while resting in cities and inns, separately from buff reminders. Find it on the Consumables and Weapons pages. Thanks to waggz81 for the idea.
 
 ## Corrections
 
-- Corrected the weapon refresh slider's numeric value handling.
-- Kept item labels, stock previews and timing controls matched to the setup being edited.
-- Invalidated roster and Nearby selection caches when the active setup changes.
+- Item choices now show the client's localized item names.
+- Party and raid group preferences are no longer exposed to a name clash with other addons when loading.
+- `/bt reset` now asks for confirmation: type `/bt reset confirm`.
+- Many settings texts are now translated in German, French, Spanish and Brazilian Portuguese.
 
-Weapon application and replacement permissions remain common explicit choices. Target preferences remain separate. Battlegrounds, arenas and unavailable group state use Solo buff/weapon/consumable preferences with the existing client restrictions intact.
+Every cast still requires your click or key binding. Your existing settings, profiles and Solo, Party and Raid preferences are kept.

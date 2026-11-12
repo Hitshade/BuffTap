@@ -4,7 +4,7 @@
 
 local _, B = ...
 _G.BuffTap = B
-B.version = "1.17.1"
+B.version = "1.18.0"
 B.API = {}
 local A = B.API
 
@@ -92,6 +92,7 @@ function B:InitDB()
     consumablesEnabled=false, consumableFamilies={}, consumableChoices={}, consumableSeconds={},
     suppliesEnabled=false, suppliesChat=false, suppliesSound=false, suppliesReadyCheck=false, supplySettings={},
     weaponReminder=true, weaponMainHand=true, weaponOffHand=true,
+    consumablesPauseResting=false, weaponsPauseResting=false,
     weaponApply=false, weaponReplace=false, weaponChoices={}, weaponCoatings={}, weaponSeconds=60,
     nearbyEnabled=false, nearbyBuffing=true, nearbyShowAll=false, nearbyInvites=true, nearbyLocked=false, nearbyX=240, nearbyY=0, pvpProtection=true, helperDismiss=false, helperBounce=false, helperTracking=false, helperTreasure=false, helperCoverage=false,
     helperDiscovery=false, helperThanks=false, helperThankEmote="THANK", helperQuick=false, helperTracker=0, helperPet=false, helperHealthstone=false, helperSoulstone=false, helperOath=false, oathAssigned={}, soulstoneParty="healer", soulstoneRaid="remind", soulstoneAssigned="", helperDemon=0,
@@ -192,6 +193,7 @@ function B:InitDB()
   self.auraCache=self.auraCache or {}
   if self.InitSupplies then self:InitSupplies() end
   if self.NormalizeCamping then self:NormalizeCamping() end
+  if self.NormalizeVisualOptions then self:NormalizeVisualOptions() end
   self:NormalizeSituations(); self:NormalizeGroupContexts(); self:SyncSituation()
 end
 
@@ -251,6 +253,11 @@ function B:RebuffSeconds(b,settings)
 end
 
 -- Read native state on demand; events drive updates, with no location polling.
+-- Optional per-category pause in cities and inns. Buff reminders are unaffected.
+function B:CategoryRestingPause(category)
+  local key=category=="weapons" and "weaponsPauseResting" or category=="consumables" and "consumablesPauseResting"
+  if key and self.db and self.db[key] and A.Call(IsResting)==true then return "paused while resting" end
+end
 function B:ReminderPauseReason()
   if self.pauseUntil and GetTime()<self.pauseUntil then return "temporary pause" end
   if self.editModeActive then return "editing reminder" end

@@ -19,6 +19,7 @@ end
 function B:ApplyIconEffect(frame,enabled,settings)
   if not frame or not frame.glow or B.API.Combat() then return end
   local d=settings or self.db or {}; local style=enabled and self:IconEffectStyle(d) or "none"
+  if self.db and self.db.optionsReduceMotion and style~="none" then style="soft" end
   local color=colors[d.effectColor] or colors.gold
   local speed=({slow=.5,normal=1,fast=1.5})[d.effectSpeed] or 1
   local key=style..":"..tostring(d.effectColor)..":"..tostring(d.effectSpeed)

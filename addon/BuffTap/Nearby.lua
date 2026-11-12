@@ -612,7 +612,7 @@ function B:CreateNearbyWindow()
     if self.nearbyOffset~=offset then self.nearbyOffset=offset; self:UpdateNearbyWindow() end
   end)
   f.rows={}
-  for i=1,ROWS do
+  for i=1,MAX_UNITS do
     local row=CreateFrame("Button",nil,c,"SecureActionButtonTemplate")
     f.rows[i]=row; row:SetSize(WIDTH,20); row:SetPoint("TOPLEFT",0,-25-(i-1)*ROW_HEIGHT)
     row:RegisterForClicks("AnyDown","AnyUp"); row:SetAttribute("useOnKeyDown",true)
@@ -693,8 +693,22 @@ function B:UpdateNearbyWindow()
   if not self.db.nearbyEnabled and not self.nearbyUserOpened then
     if self.nearbyFrame then self.nearbyFrame:Hide() end; return
   end
+  local width,rows,scale=self:NearbyLayout(); WIDTH,ROWS,HEIGHT=width,rows,29+rows*ROW_HEIGHT
   self:CreateNearbyWindow()
   local f=self.nearbyFrame; if not f or self.nearbySetupError then return end
+  local layoutKey=table.concat({WIDTH,ROWS,scale,self.db.nearbyOpacity},":")
+  if f.layoutKey~=layoutKey then
+    f.layoutKey=layoutKey; f:SetSize(WIDTH+24,HEIGHT); f:SetScale(scale); f.content:SetSize(WIDTH,HEIGHT)
+    f.header:SetWidth(WIDTH); f.header:SetColorTexture(.055,.07,.09,self.db.nearbyOpacity)
+    f.line:SetWidth(WIDTH); f.dragHandle:SetWidth(WIDTH-43)
+    f.lock:ClearAllPoints(); f.lock:SetPoint("TOPLEFT",WIDTH-34,-3)
+    f.close:ClearAllPoints(); f.close:SetPoint("TOPLEFT",WIDTH-17,-3)
+    f.allPlayers:ClearAllPoints(); f.allPlayers:SetPoint("TOPLEFT",WIDTH-56,-3)
+    f.count:SetWidth(WIDTH-135); f.countHelp:SetWidth(WIDTH-131)
+    f.status:SetWidth(WIDTH-12); f.statusButton:SetWidth(WIDTH-12)
+    f.scroll:ClearAllPoints(); f.scroll:SetPoint("TOPLEFT",WIDTH-5,-25); f.scroll:SetHeight(ROWS*ROW_HEIGHT-2)
+    for _,row in ipairs(f.rows) do row:SetWidth(WIDTH); row.wash:SetColorTexture(.055,.075,.095,self.db.nearbyOpacity*.68); row.idle:ClearAllPoints(); row.idle:SetPoint("RIGHT",-8,0); row.style=nil end
+  end
   local list=self:NearbyPlayers()
   if not self.db.enabled or not self.db.nearbyEnabled or not platesOn() or self:ReminderPauseReason() then self.nearbyDisplay=nil end
   local display=self:NearbyDisplayList(list)
@@ -718,7 +732,7 @@ function B:UpdateNearbyWindow()
   self.nearbyOffset=math.max(0,math.min(self.nearbyOffset or 0,math.max(0,#display-ROWS)))
   f.scroll:SetMinMaxValues(0,math.max(0,#display-ROWS)); f.scroll:SetValue(self.nearbyOffset); f.scroll:SetShown(#display>ROWS)
   for i,row in ipairs(f.rows) do
-    local item=display[i+self.nearbyOffset]; local entry=item and item.entry
+    local item=i<=ROWS and display[i+self.nearbyOffset] or nil; local entry=item and item.entry
     row.entry=entry; row.action=item and item.fresh and nextAction(entry) or nil
     self:SetNearbyRowPayload(row,row.action)
     if entry then

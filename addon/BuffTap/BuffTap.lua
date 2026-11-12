@@ -6,6 +6,13 @@ local ADDON,B = ...
 local A = B.API
 local function L(key,...) return B:Text(key,...) end
 local function say(s) if DEFAULT_CHAT_FRAME then DEFAULT_CHAT_FRAME:AddMessage("|cff59d6b2BuffTap|r " .. L(s)) end end
+-- One reset path for the settings window and /bt reset confirm: settings plus every derived cache.
+function B:ResetEverything()
+  if A.Combat() then return false end
+  self:ResetCharacterSettings(); self.helperDismissed={}; self.helperThankSeen=nil; self.bookDirty=true
+  self.resolveCache=nil; self.rankChoiceCache=nil; self.coverCache=nil; self:InvalidateRoster(); self:InvalidateAura(); self.appearance=nil
+  return true
+end
 B.Print = say
 
 local function publicError(err)
@@ -920,7 +927,10 @@ SlashCmdList.BUFFTAP=function(text)
     if arg=="" then B:CaptureBinding(); return end
     local keys={}; for key in arg:upper():gmatch("[^,%s]+") do keys[#keys+1]=key end; B.db.keys=B:NormalizeBindings(keys)
   elseif cmd=="unbind" then B.db.keys={}
-  elseif cmd=="reset" then B:ResetCharacterSettings(); B.helperDismissed={}; B.helperThankSeen=nil; B.bookDirty=true; B.resolveCache=nil; B.rankChoiceCache=nil; B.coverCache=nil; B:InvalidateRoster(); B:InvalidateAura(); if B.options then B.options:Hide() end
+  elseif cmd=="reset" then
+    -- Destructive: requires an explicit confirmation word, like the button in the settings window.
+    if arg~="confirm" then say("This erases this character's BuffTap settings. Type /bt reset confirm to continue."); return end
+    B:ResetEverything(); if B.options then B.options:Hide() end
   elseif cmd=="toggle" then B.db.enabled=not B.db.enabled
   elseif cmd=="refresh" then B.bookDirty=true
   elseif cmd=="enable" or cmd=="disable" then

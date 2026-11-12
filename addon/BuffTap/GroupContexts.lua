@@ -21,7 +21,7 @@ local function clean(owner,values)
       out[key]={}
       for name,v in pairs(type(value)=="table" and value or {}) do
         local def=type(name)=="string" and owner:FindBuff(name)
-        if def and (not class or def.class==class) then
+        if def then
           if key=="buffGroupNeed" then if A.Number(v) then out[key][name]=math.max(2,math.min(5,math.floor(v+.5))) end
           elseif type(v)=="table" then
             local map={}; out[key][name]=map

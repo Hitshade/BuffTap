@@ -389,6 +389,7 @@ end
 
 function B:ValidateWeaponReminder(action)
   if not self:SituationActionCurrent(action) then return false end
+  if self:CategoryRestingPause("weapons") then return false end
   if action.coating then
     if not self:Preference("weaponReminder") then return false end
     local hand=action.slot==16 and {slot=16,key="main",coating=true} or action.slot==17 and {slot=17,key="off",coating=true}
@@ -468,6 +469,7 @@ function B:TemporaryCoatingState(slot)
   return state
 end
 function B:SelectWeaponReminder()
+  local resting=self:CategoryRestingPause("weapons"); if resting then return nil,"weapon reminders "..resting end
   local action,why=self:SelectImbueReminder()
   if action and not action.manual then return action end
   if not self:Preference("weaponReminder") then return action,why end

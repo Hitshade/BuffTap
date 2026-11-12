@@ -319,6 +319,7 @@ end
 function B:ValidateConsumable(action,forceAura,forceInventory)
   if not self:SituationActionCurrent(action) then return false,"setup changed before item validation" end
   if not action or action.source~="consumable" then return false,"not a consumable action" end
+  local resting=self:CategoryRestingPause("consumables"); if resting then return false,"consumables "..resting end
   local family=self:ConsumableFamily(action.familyKey)
   if not family or not self:ConsumableFamilyEnabled(family) then return false,"consumable family disabled" end
 
@@ -415,7 +416,7 @@ function B:ResolveConsumableItem(family,item)
 end
 
 function B:ResolveConsumable(family)
-  local chosen=self:ConsumableChoiceID(family,settings)
+  local chosen=self:ConsumableChoiceID(family)
   if family.explicitChoice and not chosen then return nil,"choose an item in options" end
   local reason="no supported item in bags"
   for _,item in ipairs(family.items or {}) do
@@ -434,6 +435,7 @@ end
 
 function B:SelectConsumable()
   if not self.db or not self:Preference("consumablesEnabled") then return nil,"consumables disabled" end
+  local resting=self:CategoryRestingPause("consumables"); if resting then return nil,"consumables "..resting end
   if self.stats then self.stats.consumableSelects=(self.stats.consumableSelects or 0)+1 end
   self:RebuildConsumableCache(false)
   for _,family in ipairs(self.ConsumableFamilies or {}) do
