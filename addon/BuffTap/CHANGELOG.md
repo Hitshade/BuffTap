@@ -1,3 +1,107 @@
+# BuffTap 1.19.2
+
+Release summary. Internal builds 1.19.2-beta1 to beta8 are listed below.
+
+- One-time setup for each character, shown after any login cinematic and reopened with /bufftap setup: "Set me up" or "Leave me alone", recommended settings that only change what you haven't touched, and copying settings from another character.
+- Class presets: Paladin blessing plan (Kings first once learned, Wisdom for Priests, Druids, Shamans and healers), Druid Thorns on tanks, optional Fear Ward on tanks, Shaman caster or healer imbue, and class readiness for Hunters, Warlocks and Paladins.
+- Smarter built-in defaults for every class: situational buffs such as Dampen Magic, Amplify Magic and Shadow Protection stay off, Arcane Intellect and Divine Spirit go to mana users, and buff requests fit your class.
+- Nearby guide on first use: a preview of the window with the invite, join and request buttons explained, quick choices, and a button to turn on friendly nameplates. The setup explains why Nearby helps your class.
+- Nearby shows full player names by default, with a "Show full names" option.
+- BuffTap's own sounds for supplies (Glass chime) and camp (Warm bell), with a separate camp sound setting.
+- Edit Mode now also moves the Nearby window and the camp reminder.
+- Reset and clear buttons ask for a second click.
+- Fixes: the camp reminder preview offset, see-through dropdowns, and the old welcome card appearing after setup.
+
+---
+
+# BuffTap 1.19.2-beta8
+
+Internal build. Not published.
+
+- Paladin setup plan puts Kings first once it is learned: Kings for Warriors, Rogues, Hunters, Mages, Warlocks, Paladins and tanks; Wisdom for Priests, Druids, Shamans and healers. Before Kings, Might for physical classes and Wisdom for mana users.
+
+---
+
+# BuffTap 1.19.2-beta7
+
+Internal build. Not published.
+
+- Edit Mode now also moves the Nearby window (when Nearby is on) and the camp reminder icon (when the camp reminder is on), using placeholders so you can place them anytime outside combat.
+- Setup: the Nearby offer now explains the benefit for your class (non-buffers get invites and buff requests) and opens the guide first; Nearby turns on from there.
+
+---
+
+# BuffTap 1.19.2-beta6
+
+Internal build. Not published.
+
+One-time setup additions:
+- Copy settings from another character (alts), including buff and class settings when the source is the same class.
+- Change binding and Customize reminders buttons on the last page; an optional Modern square icon choice.
+- Shaman: choose caster (Flametongue) or healer (Flametongue and Water Shield); melee keeps Windfury.
+- Tips for roles (Mark target role, Guess tanks from stance) and the minimap icon's quick controls.
+- The Nearby guide offers to turn on friendly nameplates when they are off.
+
+---
+
+# BuffTap 1.19.2-beta5
+
+Internal build. Not published.
+
+- Nearby introduction: the first time you turn Nearby on (from the setup, the settings or the minimap), a short guide shows a drawn example of the window and explains the + invite, the blue arrow (ask to join) and the buff request tile. Quick choices turn on party invites, buff requests and the all-players view. Reopen it with "How Nearby works" on the Nearby page. Players who already use Nearby are not interrupted.
+
+---
+
+# BuffTap 1.19.2-beta4
+
+Internal build. Not published.
+
+Buffing defaults reviewed class by class, so new characters work well without setup:
+- Situational buffs are no longer offered to friendly targets unless you allow them: Dampen and Amplify Magic, Shadow Protection, Fear Ward, Water Breathing and Walking, Unending Breath, Detect Invisibility.
+- Arcane Intellect and Divine Spirit go to mana users by default (not Warriors or Rogues), in groups and to nearby players. Your own class choices still win.
+- Paladins without Blessing of Kings maintain Blessing of Might by default; with Kings, Kings only.
+- Low-level fallbacks are on: Rockbiter Weapon until Windfury, Aspect of the Monkey until Hawk.
+- The one-time setup no longer needs Mage, Priest or Shaman presets for these; it keeps Thorns on tanks, the Paladin blessing plan, optional Fear Ward on tanks and class readiness.
+
+---
+
+# BuffTap 1.19.2-beta3
+
+Internal build. Not published.
+
+- Fix: the one-time setup now appears on its own for new characters. A new character's intro cinematic hid it and that counted as "Leave me alone"; only an explicit choice (or the X button) finishes it now, and it waits while the UI is hidden.
+- The setup replaces the old first-use card; its "how to buff" tip with your binding is on the last page.
+- Supply alerts now default to Glass chime and camp alerts to Warm bell. Alerts still on the old default (Ding) switch once.
+- Buff requests default to what helps your class: no Blessing of Might for casters, no Arcane Intellect or Divine Spirit for Warriors and Rogues. Your own ticks still win.
+- Situational buffs stay opt-in: Shadow Protection is no longer requested by default, and the Priest Fear Ward setup is listed as optional rather than preselected.
+- The one-time setup points out Class readiness for Hunters, Warlocks and Paladins and offers to turn on the pet, Healthstone, Soulstone or Oath reminders.
+
+---
+
+# BuffTap 1.19.2-beta2
+
+Internal build. Not published.
+
+- One-time setup: class presets for every class, each offered only when you have not set it up yourself:
+  - Paladin: a full blessing plan for party and raid (Might for Warriors, Rogues and Hunters; Wisdom for casters; Kings for Druids, Shamans and Paladins when known), plus Kings (or Might) for tanks and Wisdom for healers.
+  - Druid: Thorns on tanks. Mage: Arcane Intellect for mana users only. Priest: Divine Spirit for mana users only, and Fear Ward on tanks when known.
+  - Shaman: Rockbiter Weapon until Windfury is learned.
+  - Warrior, Hunter, Warlock and Rogue defaults already match the recommendation; the setup says so.
+
+---
+
+# BuffTap 1.19.2-beta1
+
+Internal build. Not published.
+
+- One-time setup: new players get a short guided setup; existing players see it once after updating. "Leave me alone" changes nothing. "Set me up" lists recommended settings (alert sounds, BuffTap chime, solo thanks, pause while resting, PvP protection, stop repeated stronger-buff errors, class-colour highlight) and only preselects ones you never changed. Class setups: Thorns on tanks (Druid), Arcane Intellect and Divine Spirit for mana users only (Mage, Priest). Points out Nearby and offers to turn it on. Reopen any time with /bufftap setup.
+- Camp reminder has its own sound (default: Warm bell).
+- Nearby shows full names (first name and surname) by default, with an option for first names only. The default width grows from 210 to 240 px once.
+- New installs use the class colour as the highlight colour.
+- Fix: the camp preview card is no longer offset from the cards above and below it.
+
+---
+
 # BuffTap 1.19.1
 
 

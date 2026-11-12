@@ -377,7 +377,8 @@ function T.InsetCards(root)
   if #cards==0 then return end
   for _,item in ipairs(items) do
     local object=item.object
-    if object.visualInsetX~=item.x then
+    -- GetPoint can return 443.9999 for 444, so compare with a tolerance rather than exact equality.
+    if not object.visualInsetX or math.abs(object.visualInsetX-item.x)>.5 then
       for _,card in ipairs(cards) do
         if item.ax>=card.x and item.ax<card.x+CARD_PAD and item.ay<=card.y and item.ay>card.y-card.h then
           local shift=card.x+CARD_PAD-item.ax

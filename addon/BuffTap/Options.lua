@@ -972,6 +972,7 @@ function B:CaptureBinding()
       if #keys==0 then return end
       B.db.keys=keys; f:Hide(); B.appearance=nil; B:RequestRefresh("binding",0); B:Status(false)
       if B.options and B.options:IsShown() then B:Options() end
+      if B.onboarding and B.onboarding:IsShown() and B.OnboardingFeaturesPage then B:OnboardingFeaturesPage() end
     end
     f:SetScript("OnKeyDown",function(_,key)
       if key=="ESCAPE" then f:Hide(); return end
@@ -1281,7 +1282,7 @@ function B:UpdateHelperOptions()
   f.readiness:SetShown(warlock or class=="HUNTER" or paladin); f.demonMenu:Hide()
   f.requestEnable:SetChecked(self.db.nearbyRequests==true)
   if not f.requestMessage:HasFocus() then f.requestMessage:SetText(self.db.requestMessage~="" and self.db.requestMessage or self:Text("Hi! Could I get %s, please? Thank you!")) end
-  for key,c in pairs(f.requestChecks) do c:SetChecked(self.db.requestBuffs[key]~=false); c:SetEnabled(self.db.nearbyRequests==true) end
+  for key,c in pairs(f.requestChecks) do c:SetChecked(self:RequestEnabled(self:FindBuff(key) or {key=key})); c:SetEnabled(self.db.nearbyRequests==true) end
   f.thanksResting:SetChecked(self.db.helperThanksResting==true)
   local classCoords=CLASS_ICON_TCOORDS and CLASS_ICON_TCOORDS[class]
     or (warlock and {.75,1,.25,.5} or paladin and {0,.25,.5,.75} or class=="HUNTER" and {0,.25,.25,.5})
@@ -2043,8 +2044,8 @@ function B:Options()
     line(app,-406)
     label(app,L("Sounds"),18,-420,"GameFontNormal")
     local function soundControl(kind,y)
-      label(app,kind=="supply" and L("Supply sound") or L("Reminder sound"),18,y-5,"GameFontHighlightSmall",112)
-      local key=kind=="supply" and "supplySound" or "reminderSound"
+      label(app,kind=="supply" and L("Supply sound") or kind=="camp" and L("Camp sound") or L("Reminder sound"),18,y-5,"GameFontHighlightSmall",112)
+      local key=kind=="supply" and "supplySound" or kind=="camp" and "campAlertSound" or "reminderSound"
       local choice=selector(app,"",138,y,180,function() return B:SoundChoices() end,function(value) B.db[key]=value end,true)
       button(app,L("Preview"),326,y,90,function() if not B:PlayAlert(kind,true) then B.Print(L("Sound preview unavailable.")) end end)
       addHelp(choice,L("Sound"),L("Open the list to choose a sound.").."\n"..L("Game sounds and installed SharedMedia sounds are available. Search or scroll the list; Preview ignores the alert toggle. Missing media uses the default sound without forgetting your choice."))
@@ -2052,6 +2053,7 @@ function B:Options()
     end
     f.reminderSoundButton=soundControl("reminder",-440)
     f.supplySoundButton=soundControl("supply",-474)
+    f.campSoundButton=soundControl("camp",-508)
     label(app,L("Audio channel"),436,-445,"GameFontHighlightSmall",116)
     f.channelButton=selector(app,"",550,-440,132,function() return {{key="Master",name="Master"},{key="SFX",name="Sound effects"}} end,function(value) B.db.soundChannel=value end)
     addHelp(f.channelButton,L("Audio channel"),L("Choose a sound and preview it. Master follows master volume; Sound effects follows effects volume."))
@@ -2397,6 +2399,7 @@ function B:Options()
   for _,choice in ipairs(self:SoundChoices()) do
     if choice.key==self.db.reminderSound then f.reminderSoundButton:SetText(L(choice.name)) end
     if choice.key==self.db.supplySound then f.supplySoundButton:SetText(L(choice.name)) end
+    if f.campSoundButton and choice.key==self.db.campAlertSound then f.campSoundButton:SetText(L(choice.name)) end
   end
   f.channelButton:SetText(L(self.db.soundChannel=="Master" and L("Master") or L("Sound effects")))
   f.minimapCheck:SetChecked(not self.db.minimap.hide)

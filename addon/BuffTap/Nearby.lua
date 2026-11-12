@@ -5,6 +5,31 @@ local A=B.API
 local MAX_UNITS,ROWS=40,5
 local WIDTH,HEIGHT,ROW_HEIGHT=210,134,21
 local targetChoice=B.TargetBlessingChoice
+-- Forever's second UnitName return is the character's surname (not a realm).
+function B:NearbySurname(unit)
+  local ok,_,surname=pcall(UnitName,unit)
+  if ok and type(surname)=="string" and surname~="" and not surname:find("[%c|]") then return surname end
+end
+-- Buff requests default to what helps your class: Intellect and Spirit for mana users, Might and Wisdom
+-- for the classes their catalog entries target, everything else for everyone. A saved choice always wins.
+local MANA_USERS={MAGE=true,WARLOCK=true,PRIEST=true,SHAMAN=true,DRUID=true,PALADIN=true,HUNTER=true}
+function B:RequestUseful(def,class)
+  if not def or not class then return false end
+  if def.target then for _,c in ipairs(def.target) do if c==class then return true end end; return false end
+  if def.key=="ai" or def.key=="spirit" then return MANA_USERS[class]==true end
+  -- Situational protection (raid shadow damage) is opt-in, not an everyday request.
+  if def.key=="sp" then return false end
+  return true
+end
+function B:RequestEnabled(def)
+  local saved=self.db.requestBuffs[def.key]
+  if saved~=nil then return saved==true end
+  return self:RequestUseful(def,A.Class("player"))
+end
+function B:NearbyDisplayName(entry)
+  if self.db.nearbyFullNames~=false and entry.surname then return entry.name.." "..entry.surname end
+  return entry.name
+end
 function B:TargetBlessingChoice(entry)
   if A.Class("player")~="PALADIN" then return nil end
   local choice=targetChoice(self,entry)
@@ -27,6 +52,8 @@ local function plateSetting()
   return nil,"unavailable"
 end
 local function platesOn() return plateSetting()==true end
+-- For the Nearby introduction: true/false and the client setting name, or nil when unknown.
+function B:FriendlyPlatesState() return plateSetting() end
 -- Discover and validate by nameplate GUID; the secure macro targets by exact name.
 function B:NearbyCastName(action)
   if not action or A.Call(UnitGUID,action.target)~=action.targetGUID then return nil,"recipient identity changed" end
@@ -263,7 +290,7 @@ function B:NearbyCandidates(force)
       local actions=self:NearbyActions(entry)
       local name=A.Call(UnitName,unit)
       if #actions>0 and A.Text(name) then
-        out[#out+1]={unit=unit,guid=guid,name=name,class=entry.class,actions=actions,order=self.nearbyOrder[guid] or 0}
+        out[#out+1]={unit=unit,guid=guid,name=name,surname=B:NearbySurname(unit),class=entry.class,actions=actions,order=self.nearbyOrder[guid] or 0}
       end
     end
   end
@@ -326,7 +353,8 @@ function B:NearbyPlayers()
         seen[guid]=true; self.nearbyCounts.total=self.nearbyCounts.total+1
         local grouped=self:NearbyGroupMember(unit)
         local groupActions=grouped and self:NearbyGroupActions(unit) or {}
-        local entry=byGUID[guid] or {unit=unit,guid=guid,name=name,class=class,actions=groupActions,order=self.nearbyOrder[guid] or 0}
+        local entry=byGUID[guid] or {unit=unit,guid=guid,name=name,surname=B:NearbySurname(unit),class=class,actions=groupActions,order=self.nearbyOrder[guid] or 0}
+        entry.surname=entry.surname or B:NearbySurname(unit)
         local needs=#entry.actions>0
         if needs then self.nearbyCounts.need=self.nearbyCounts.need+1 end
         if needs or (self.db.nearbyShowAll and not grouped) then out[#out+1]=entry end
@@ -390,9 +418,9 @@ function B:RequestableBuffs(entry)
   local scan=self:GetAuras("player",false); if not scan then return nil end
   local list,blessing,hasBlessing={},nil,nil
   for _,def in ipairs(self:CoverageDefinitions()) do
-    if def.class==entry.class and self.db.requestBuffs[def.key]~=false then
+    if def.class==entry.class and self:RequestEnabled(def) then
       local eligible=true
-      if def.target then eligible=false; for _,class in ipairs(def.target) do if class==myClass then eligible=true end end end
+      if def.target and self.db.requestBuffs[def.key]~=true then eligible=false; for _,class in ipairs(def.target) do if class==myClass then eligible=true end end end
       if eligible then
         if def.kind=="blessing" then
           if hasBlessing==nil then
@@ -855,11 +883,11 @@ function B:UpdateNearbyWindow()
     row.entry=entry; row.action=item and item.fresh and nextAction(entry) or nil
     self:SetNearbyRowPayload(row,row.action)
     if entry then
-      local parts={entry.guid,entry.name,entry.class}
+      local parts={entry.guid,self:NearbyDisplayName(entry),entry.class}
       for _,action in ipairs(entry.actions) do parts[#parts+1]=tostring(action.id)..":"..tostring(action.icon) end
       local style=table.concat(parts,"|")
       if row.style~=style then
-        row.style=style; row.name:SetText(entry.name)
+        row.style=style; row.name:SetText(self:NearbyDisplayName(entry))
         local coords=CLASS_ICON_TCOORDS and CLASS_ICON_TCOORDS[entry.class]
         row.classIcon:SetTexture("Interface\\GLUES\\CHARACTERCREATE\\UI-CHARACTERCREATE-CLASSES")
         if coords then row.classIcon:SetTexCoord(unpack(coords)); row.classIcon:Show() else row.classIcon:Hide() end
@@ -919,6 +947,8 @@ end
 
 function B:ToggleNearby()
   if A.Combat() then self.Print("Nearby mode can be changed after combat."); return end
+  -- The first time Nearby is turned on, explain it and offer invites and requests first.
+  if not self.db.nearbyEnabled and not self.db.nearbyIntroSeen and self.ShowNearbyIntro then self:ShowNearbyIntro(true); return end
   self.db.nearbyEnabled=not self.db.nearbyEnabled
   self.nearbyUserOpened=self.db.nearbyEnabled
   self:SyncNearby(); self.nearbySnapshot=nil; self:RequestRefresh("nearby shortcut",0)

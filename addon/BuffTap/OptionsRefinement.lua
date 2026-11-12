@@ -168,16 +168,16 @@ function B:BuildRefinedOptions(ui,tabs)
   T.Variant(ui.button(binding,"Set binding",398,-46,134,function() B:CaptureBinding() end),"primary")
   T.Confirm(ui.button(binding,"Clear",546,-46,142,function() B.db.keys={}; B.appearance=nil; B:RequestRefresh("clear binding",0); B:Options() end))
   ui.label(binding,"The binding is active only when a valid action is ready.",26,-94,"GameFontDisableSmall",650)
-  section(ui,binding,"Sounds",12,-148,692,208)
-  for i,entry in ipairs({{f.reminderSoundButton,"Reminder sound","reminder"},{f.supplySoundButton,"Supply sound","supply"}}) do
+  section(ui,binding,"Sounds",12,-148,692,250)
+  for i,entry in ipairs({{f.reminderSoundButton,"Reminder sound","reminder"},{f.supplySoundButton,"Supply sound","supply"},{f.campSoundButton,"Camp sound","camp"}}) do
     local y=-190-(i-1)*42; ui.label(binding,entry[2],26,y-5,"GameFontHighlightSmall",130); place(entry[1],binding,166,y,330,26)
     local kind=entry[3]; ui.button(binding,"Preview",510,y,178,function() B:PlayAlert(kind,true) end)
   end
-  ui.label(binding,"Audio channel",26,-280,"GameFontHighlightSmall",130); place(f.channelButton,binding,166,-274,196,26)
-  ui.label(binding,"Minimum interval",380,-280,"GameFontHighlightSmall",130); place(f.soundInterval,binding,510,-274,178,24)
-  place(f.soundCheck,binding,26,-320)
-  section(ui,binding,"Quick access",12,-378,692,116); place(f.minimapCheck,binding,26,-420); place(f.brokerCheck,binding,360,-420)
-  place(f.resetAllButton,binding,26,-460,174,26); reparent(f.resetConfirm,binding); f.resetConfirm:ClearAllPoints(); f.resetConfirm:SetPoint("TOPLEFT",16,-420); f.resetConfirm:Hide()
+  ui.label(binding,"Audio channel",26,-322,"GameFontHighlightSmall",130); place(f.channelButton,binding,166,-316,196,26)
+  ui.label(binding,"Minimum interval",380,-322,"GameFontHighlightSmall",130); place(f.soundInterval,binding,510,-316,178,24)
+  place(f.soundCheck,binding,26,-362)
+  section(ui,binding,"Quick access",12,-420,692,116); place(f.minimapCheck,binding,26,-462); place(f.brokerCheck,binding,360,-462)
+  place(f.resetAllButton,binding,26,-502,174,26); reparent(f.resetConfirm,binding); f.resetConfirm:ClearAllPoints(); f.resetConfirm:SetPoint("TOPLEFT",16,-462); f.resetConfirm:Hide()
   local interface=f.appearancePanes.interface
   section(ui,interface,"Interface",12,-12,692,278)
   ui.label(interface,"Accent colour",26,-62,"GameFontHighlightSmall",180)
@@ -229,35 +229,40 @@ end
 function B:RefineNearbyPage(ui,tabs)
   local f=self.options; local p=f.pages[tabs.Nearby]; clearPage(p)
   place(f.nearbyEnable,p,480,-15,220,24)
-  section(ui,p,"Player list",12,-72,692,146)
+  section(ui,p,"Player list",12,-72,692,182)
   place(f.nearbyBuffing,p,26,-112); place(f.nearbyAll,p,374,-112); place(f.nearbyInvites,p,26,-154)
   T.Variant(ui.button(p,"Open nearby window",486,-150,198,function() B:ShowNearbySetup() end),"primary")
-  ui.label(p,"Friendly player nameplates are required (normally Shift+V). Tracks up to 40 observed players.",26,-190,"GameFontDisableSmall",650)
-  section(ui,p,"Window appearance",12,-236,692,306)
+  ui.button(p,"How Nearby works",486,-188,198,function() B:ShowNearbyIntro(false) end)
+  f.nearbyFullNames=ui.check(p,"Show full names (first name and surname)",26,-188,function(c)
+    if A.Combat() then return end
+    B.db.nearbyFullNames=c:GetChecked()==true; if B.nearbyFrame then B:UpdateNearbyWindow() end
+  end)
+  ui.label(p,"Friendly player nameplates are required (normally Shift+V). Tracks up to 40 observed players.",26,-226,"GameFontDisableSmall",650)
+  section(ui,p,"Window appearance",12,-272,692,306)
   for i,spec in ipairs({{"nearbyScale","Scale",70,150,5,100,"%"},{"nearbyRows","Visible rows",2,40,1},{"nearbyWidth","Width",180,360,5,nil,"px"},{"nearbyOpacity","Background",0,100,5,100,"%"}}) do
-    local key=spec[1]; local y=-280-(i-1)*44
+    local key=spec[1]; local y=-316-(i-1)*44
     ui.label(p,spec[2],26,y-3,"GameFontHighlightSmall",182)
     local s=ui.slider(p,spec[3],spec[4],spec[5],462,tostring,function(_,v) B:VisualSetting(key,spec[6] and v/spec[6] or v) end)
     s:SetPoint("TOPLEFT",226,y); s.visualKey=key; s.visualMultiplier=spec[6]; if spec[7] then s:SetUnit(spec[7]) end; s:SetFieldWidth(80); f.refinedSliders[#f.refinedSliders+1]=s
   end
   -- Button side sits in the slider column as a fifth row, split evenly across the slider width.
-  ui.label(p,"Invite and request buttons",26,-459,"GameFontHighlightSmall",190)
+  ui.label(p,"Invite and request buttons",26,-495,"GameFontHighlightSmall",190)
   f.nearbySide={}
   for i,spec in ipairs({{"left","Left side"},{"right","Right side"}}) do
     local side=spec[1]
-    local b=ui.flatButton(p,spec[2],226+(i-1)*235,-454,227,function()
+    local b=ui.flatButton(p,spec[2],226+(i-1)*235,-490,227,function()
       if A.Combat() then return end
       B.db.nearbyButtonSide=side; if B.nearbyFrame then B:UpdateNearbyWindow() end; B:Options()
     end)
     b:SetHeight(24); b.navStyle="segment"; b.side=side; f.nearbySide[i]=b
   end
-  ui.label(p,"Rows are limited to the space on your screen. Extra players remain available by scrolling. Layout changes apply out of combat.",26,-500,"GameFontDisableSmall",650)
-  f.nearbyLock=ui.check(p,"Lock window position",26,-574,function(c) B.db.nearbyLocked=c:GetChecked()==true; if B.nearbyFrame then B:UpdateNearbyWindow() end end)
-  T.Confirm(ui.button(p,"Restore window defaults",450,-568,234,function()
-    B.db.nearbyScale=1; B.db.nearbyRows=5; B.db.nearbyWidth=210; B.db.nearbyOpacity=.5; B.db.nearbyX=240; B.db.nearbyY=0; B.db.nearbyButtonSide="left"
+  ui.label(p,"Rows are limited to the space on your screen. Extra players remain available by scrolling. Layout changes apply out of combat.",26,-536,"GameFontDisableSmall",650)
+  f.nearbyLock=ui.check(p,"Lock window position",26,-610,function(c) B.db.nearbyLocked=c:GetChecked()==true; if B.nearbyFrame then B:UpdateNearbyWindow() end end)
+  T.Confirm(ui.button(p,"Restore window defaults",450,-604,234,function()
+    B.db.nearbyScale=1; B.db.nearbyRows=5; B.db.nearbyWidth=240; B.db.nearbyOpacity=.5; B.db.nearbyX=240; B.db.nearbyY=0; B.db.nearbyButtonSide="left"
     if B.nearbyFrame then B.nearbyFrame.positionX=nil; B.nearbyFrame.positionY=nil; B:UpdateNearbyWindow() end; B:Options()
   end))
-  ui.label(p,"Buff candidates appear first. + sends a party invite; > suggests an invite to your leader. Each buff or invite needs your click.",26,-616,"GameFontDisableSmall",650)
+  ui.label(p,"Buff candidates appear first. + sends a party invite; > suggests an invite to your leader. Each buff or invite needs your click.",26,-652,"GameFontDisableSmall",650)
 end
 function B:BuildPatchNotesPage(ui,tabs)
   local f=self.options; local p=CreateFrame("Frame",nil,f,"BackdropTemplate"); p:Hide(); p:SetPoint("TOPLEFT",B.OptionsPageLeft,B.OptionsPageTop); p:SetPoint("BOTTOMRIGHT",B.OptionsPageRight,B.OptionsPageBottom); T.Surface(p,"panel"); f.pages[tabs.PatchNotes]=p
@@ -424,7 +429,7 @@ function B:UpdateRefinedOptions()
   if f.labelPositionButton then f.labelPositionButton:SetText(self:Text(positions[self.db.labelPosition] or "Split")) end
   if f.swipeCheck then f.swipeCheck:SetChecked(self.db.showSwipe==true) end
   if f.rangeCheck then f.rangeCheck:SetChecked(self.db.showOutOfRange==true) end
-  f.reduceMotion:SetChecked(self.db.optionsReduceMotion); f.nearbyLock:SetChecked(self.db.nearbyLocked==true)
+  f.reduceMotion:SetChecked(self.db.optionsReduceMotion); f.nearbyLock:SetChecked(self.db.nearbyLocked==true); if f.nearbyFullNames then f.nearbyFullNames:SetChecked(self.db.nearbyFullNames~=false) end
   for _,b in ipairs(f.nearbySide or {}) do T.Navigation(b,b.side==(self.db.nearbyButtonSide=="right" and "right" or "left")) end
   f.patchUnread:SetChecked(self.db.optionsPatchDot~=false); f.patchDot:SetShown(self:PatchNotesUnread() and true or false)
   if f.weaponHint then f.weaponHint:Hide() end

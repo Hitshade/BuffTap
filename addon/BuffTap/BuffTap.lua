@@ -950,6 +950,7 @@ SlashCmdList.BUFFTAP=function(text)
   if A.Combat() then say("Settings and refresh are available after combat."); return end
   if cmd=="" or cmd=="config" then B:Options(); return
   elseif cmd=="camp" then B:ToggleCampTray(); return
+  elseif cmd=="setup" then B:ShowOnboarding(true); return
   elseif cmd=="helpers" then B:HelperOptions(); return
   elseif cmd=="supplies" then B:ShowSuppliesOptions(); return
   elseif cmd=="supplycheck" then B:ReportSupplies(); return

@@ -499,7 +499,7 @@ function B:UpdateCamping()
   if not state.globalUnknown and (not self.db.campTrackBenefits or not state.campUnknown) and (not self.db.campTrackBag or not state.bagUnknown) and not needsCamp and not needsBag then self.campAlerted=false end
   if needed and not preview and not dragging and not self.campAlerted then
     self.campAlerted=true
-    if self.db.campSound then self:PlayAlert("reminder",true) end
+    if self.db.campSound then self:PlayAlert("camp",true) end
   end
   if not needed and self.campSnoozeMenu then self.campSnoozeMenu:Hide() end
   if needed then self:CreateCampReminder() end

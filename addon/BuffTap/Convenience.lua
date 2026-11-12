@@ -83,6 +83,8 @@ function B:NormalizeConvenience()
   if d.labelPosition~="above" and d.labelPosition~="below" then d.labelPosition="split" end
   for _,key in ipairs({"showSwipe","showOutOfRange","helperThanksResting","nearbyRequests"}) do if type(d[key])~="boolean" then d[key]=false end end
   if d.nearbyButtonSide~="right" then d.nearbyButtonSide="left" end
+  -- Players who already use Nearby have seen what it does; the introduction is for first-time use.
+  if d.nearbyEnabled==true then d.nearbyIntroSeen=true end
   if type(d.requestMessage)~="string" or #d.requestMessage>200 then d.requestMessage="" end
   for key,value in pairs(d.requestBuffs) do if type(key)~="string" or type(value)~="boolean" then d.requestBuffs[key]=nil end end
 end
@@ -261,8 +263,63 @@ function B:ShowWelcome(force)
   self.welcome:ClearAllPoints(); self.welcome:SetPoint("CENTER",UIParent,"CENTER",0,0); self.welcome:Show(); self.welcome:Raise(); self.db.welcomeSeen=true
 end
 function B:ScheduleWelcome()
-  if not self.db or self.db.welcomeSeen then return end
+  if not self.db then return end
+  -- The one-time setup comes first; it schedules the "How to buff" card for new players when it closes.
+  if self.OnboardingPending and self:OnboardingPending() then self:StartTimer("welcome",3,function() B:ShowOnboarding() end); return end
+  if self.db.welcomeSeen then return end
   self:StartTimer("welcome",2,function() B:ShowWelcome() end)
+end
+-- Edit Mode placeholders for the Nearby window and the camp reminder. They are plain
+-- frames, so dragging never touches the secure Nearby window; the real frames follow the
+-- saved position when Edit Mode closes.
+local function editMover(key,caption,iconTexture)
+  local f=window(nil,"",100,40); f.title:SetText(""); f.moverKey=key
+  f:SetMovable(true); f:RegisterForDrag("LeftButton")
+  if iconTexture then
+    f.icon=f:CreateTexture(nil,"ARTWORK"); f.icon:SetPoint("TOPLEFT",4,-4); f.icon:SetPoint("BOTTOMRIGHT",-4,4); f.icon:SetTexture(iconTexture)
+  else
+    f.label=f:CreateFontString(nil,"OVERLAY","GameFontNormal"); f.label:SetPoint("CENTER"); f.label:SetText(B:Text("Nearby players"))
+  end
+  f.caption=f:CreateFontString(nil,"OVERLAY","GameFontNormal"); f.caption:SetPoint("TOP",f,"BOTTOM",0,-6); f.caption:SetText(B:Text(caption))
+  f:SetScript("OnDragStart",function(s) if not A.Combat() then s.dragging=true; s:StartMoving() end end)
+  local function savePosition(s)
+    s:StopMovingOrSizing(); s.dragging=false
+    if A.Combat() then return end
+    local x,y=s:GetCenter(); local cx,cy=UIParent:GetCenter()
+    if A.Number(x) and A.Number(y) and A.Number(cx) and A.Number(cy) then
+      if key=="nearby" then B.db.nearbyX=x-cx; B.db.nearbyY=y-cy else B.db.campX=x-cx; B.db.campY=y-cy end
+    end
+  end
+  f.savePosition=savePosition; f:SetScript("OnDragStop",savePosition)
+  f:SetScript("OnEvent",function(s) if s.dragging then s:StopMovingOrSizing(); s.dragging=false end; s:Hide() end)
+  return f
+end
+function B:ShowEditMovers()
+  local d=self.db
+  if d.nearbyEnabled then
+    self.editNearby=self.editNearby or editMover("nearby","BuffTap Nearby — drag to move")
+    local f=self.editNearby; local width,rows,scale=240,5,1
+    if self.NearbyLayout then width,rows,scale=self:NearbyLayout() end
+    f:SetScale(A.Number(scale) and scale or 1); f:SetSize(width+24,29+rows*21)
+    f:ClearAllPoints(); f:SetPoint("CENTER",UIParent,"CENTER",A.Number(d.nearbyX) and d.nearbyX or 240,A.Number(d.nearbyY) and d.nearbyY or 0); f:Show()
+  elseif self.editNearby then self.editNearby:Hide() end
+  if d.campReminder==true then
+    self.editCamp=self.editCamp or editMover("camp","Camp reminder — drag to move",135805)
+    local f=self.editCamp; local size=A.Number(d.campSize) and d.campSize or 40
+    f:SetSize(size,size); f:ClearAllPoints(); f:SetPoint("CENTER",UIParent,"CENTER",A.Number(d.campX) and d.campX or 100,A.Number(d.campY) and d.campY or 0); f:Show()
+  elseif self.editCamp then self.editCamp:Hide() end
+end
+function B:HideEditMovers()
+  for _,f in ipairs({self.editNearby,self.editCamp}) do
+    if f then
+      if f.dragging and not A.Combat() then f.savePosition(f) end
+      f:StopMovingOrSizing(); f.dragging=false; f:Hide()
+    end
+  end
+  if not A.Combat() then
+    if self.nearbyFrame and self.UpdateNearbyWindow then self:UpdateNearbyWindow() end
+    if self.UpdateCamping then self:UpdateCamping() end
+  end
 end
 -- Only an unprotected preview participates in editing. No Blizzard system registration,
 -- protected frame hooks, layout mutation or assumptions about retail-only templates.
@@ -290,10 +347,12 @@ function B:SetEditModeActive(active)
       f:SetScript("OnEvent",function(s) s:StopMovingOrSizing(); s:Hide(); B.editModeActive=false; B.dirty=true end)
     end
     local f=self.editAnchor; f:SetSize(self.db.size,self.db.size); f:ClearAllPoints(); f:SetPoint("CENTER",UIParent,"CENTER",self.db.x,self.db.y); f:Show()
+    self:ShowEditMovers()
   elseif self.editAnchor then
     if self.editAnchor.dragging and not A.Combat() then self.editAnchor.savePosition(self.editAnchor) end
     self.editAnchor:StopMovingOrSizing(); self.editAnchor.dragging=false; self.editAnchor:Hide()
   end
+  if not active then self:HideEditMovers() end
   if not A.Combat() then self:Refresh(false) else self.dirty=true end
 end
 function B:SyncEditMode()

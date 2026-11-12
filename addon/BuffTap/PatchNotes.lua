@@ -2,6 +2,16 @@
 local _,B=...
 -- Keep the ten most recent releases within a 24 KiB content ceiling.
 B.PatchNotes={
+ {version="1.19.2",title="A guided setup and smarter defaults",items={
+  "A one-time setup for each character: recommended settings, class presets (like a Paladin blessing plan or Shaman caster or healer), and copying settings from another character. Reopen it with /bufftap setup.",
+  "Smarter defaults for every class, so situational buffs stay off and buff requests fit your class.",
+  "A Nearby guide with a preview of the window, quick invite and request choices, and full player names.",
+  "BuffTap's own sounds for supplies and camp, with a separate camp sound setting.",
+  "Edit Mode now also moves the Nearby window and the camp reminder."}},
+ {version="1.19.1",title="BuffTap's own sounds",items={
+  "BuffTap's own alert sounds: Marimba rise (the new reminder default), Glass chime, Warm bell and Harp arpeggio.",
+  "The sounds are shared with other addons through SharedMedia when it is installed.",
+  "Fixed see-through dropdown menus on some settings pages."}},
  {version="1.19.0",title="Roles, requests and a modern icon",items={
   "Give party and raid buffs to tanks or healers only, and give a class's tank a different blessing.",
   "Nearby can ask a passing player for a buff you are missing, and request to join a player's group.",
@@ -34,15 +44,7 @@ B.PatchNotes={
   "Expanded supported battleground self buffs while respecting restricted buff information."}},
  {version="1.16.7",title="More reliable solo thanks",items={
   "Solo thanks recognizes helpful effects from identifiable players beyond a fixed spell list.",
-  "Improved provider checks and explanations when a thank-you cannot be sent."}},
- {version="1.16.6",title="Nearby players and party invitations",items={
-  "Added a dedicated Nearby page and an optional view that keeps nearby players listed after buffing.",
-  "Added party invite and suggest-invite buttons, with buff candidates shown first.",
-  "Improved Nearby counters, list stability and Diagnostics."}},
- {version="1.16.5",title="Buff ranks and thank-you reliability",items={
-  "Corrected Mark of the Wild rank choices for lower-level recipients.",
-  "Improved solo-thanks handling of delayed buff information and quick successive providers.",
-  "Clarified the unlearned Gift of the Wild label."},thanks="Thank you for the reports and continued testing."}
+  "Improved provider checks and explanations when a thank-you cannot be sent."}}
 }
 function B:PatchNotesUnread()
   return self.profileDB and self.db.optionsPatchDot~=false and self.profileDB.global.patchNotesSeen~=self.version

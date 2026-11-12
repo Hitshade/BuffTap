@@ -60,7 +60,7 @@ function B:SoundChoices()
   -- BuffTap's own sounds are listed once, above; skip their SharedMedia copies.
   local own={}; for _,sound in ipairs(bundled) do own["BuffTap: "..sound.name]=true end
   for _,name in ipairs(names) do if not own[name] then choices[#choices+1]={key="lsm:"..name,name=name,source="SharedMedia"} end end
-  for _,field in ipairs({"reminderSound","supplySound"}) do
+  for _,field in ipairs({"reminderSound","supplySound","campAlertSound"}) do
     local key=self.db and self.db[field]
     if type(key)=="string" and key:sub(1,4)=="lsm:" and (not media or not playable(media[key:sub(5)])) then
       local found=false; for _,choice in ipairs(choices) do if choice.key==key then found=true; break end end
@@ -71,20 +71,27 @@ function B:SoundChoices()
 end
 function B:NormalizeAlerts()
   -- 1.19.1: the BuffTap marimba becomes the reminder default; the old default (Ding) stays available.
-  if self.db.alertSoundVersion~=1 then
+  local version=A.Number(self.db.alertSoundVersion) and self.db.alertSoundVersion or 0
+  if version<1 then
     if self.db.reminderSound==nil or self.db.reminderSound=="default" then self.db.reminderSound="marimba" end
-    self.db.alertSoundVersion=1
   end
+  -- 1.19.2: supply and camp alerts also default to BuffTap sounds (Glass chime and Warm bell).
+  if version<2 then
+    if self.db.supplySound==nil or self.db.supplySound=="default" then self.db.supplySound="glass" end
+    if self.db.campAlertSound==nil or self.db.campAlertSound=="default" then self.db.campAlertSound="bell" end
+  end
+  self.db.alertSoundVersion=2
   self:RegisterSharedSounds()
   local valid={}; for _,sound in ipairs(bundled) do valid[sound.key]=true end
   for _,definition in ipairs(definitions) do
     local id=definition.id or (type(SOUNDKIT)=="table" and SOUNDKIT[definition.constant])
     if A.Number(id) and id>0 then valid[definition.key]=true end
   end
-  for _,key in ipairs({"reminderSound","supplySound"}) do
+  for _,key in ipairs({"reminderSound","supplySound","campAlertSound"}) do
     local value=self.db[key]
     local shared=type(value)=="string" and value:sub(1,4)=="lsm:" and #value>4 and #value<=512
-    if not valid[value] and not shared then self.db[key]="default" end
+    -- Unknown or retired choices fall back to the BuffTap default for that alert.
+    if not valid[value] and not shared then self.db[key]=key=="campAlertSound" and "bell" or key=="supplySound" and "glass" or "marimba" end
   end
   if self.db.soundChannel~="Master" and self.db.soundChannel~="SFX" then self.db.soundChannel="Master" end
   local interval=self.db.soundInterval
@@ -97,7 +104,7 @@ function B:PlayAlert(kind,preview)
   if not preview and not (kind=="supply" and self.db.suppliesSound or kind~="supply" and self.db.sound) then return false end
   local now=GetTime()
   if not preview and self.lastAlertSound and now-self.lastAlertSound<self.db.soundInterval then return false end
-  local selected=self.db[kind=="supply" and "supplySound" or "reminderSound"]
+  local selected=self.db[kind=="supply" and "supplySound" or kind=="camp" and "campAlertSound" or "reminderSound"]
   local player,value=PlaySound,12867
   if type(selected)=="string" and selected:sub(1,4)=="lsm:" then
     local media=mediaTable(); local sound=media and media[selected:sub(5)]

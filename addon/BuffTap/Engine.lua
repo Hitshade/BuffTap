@@ -4,7 +4,7 @@
 
 local _, B = ...
 _G.BuffTap = B
-B.version = "1.19.1"
+B.version = "1.19.2"
 B.API = {}
 local A = B.API
 
@@ -86,7 +86,7 @@ function B:InitDB()
   if type(self.db.showGroupBadge)~="boolean" and type(self.db.showGroupIndicator)=="boolean" then self.db.showGroupBadge=self.db.showGroupIndicator end
   self.db.showRemaining=nil; self.db.showGroupIndicator=nil
   local defaults = {enabled=true, showReminder=true, size=64, opacity=1, x=0, y=-180,
-    seconds=45, rebuffVersion=1, sound=false, reminderSound="marimba", alertSoundVersion=0, supplySound="default", soundChannel="Master", soundInterval=5, glow=true, pulse=false, group=false, smartGroup=true,
+    seconds=45, rebuffVersion=1, sound=false, reminderSound="marimba", alertSoundVersion=0, supplySound="glass", campAlertSound="bell", soundChannel="Master", soundInterval=5, glow=true, pulse=false, group=false, smartGroup=true,
     groupNeed=3, blessingNeed=2, friendlyTarget=false, targetSeconds=300, keys={"MOUSEWHEELDOWN"}, buffs={}, priorities={}, buffSeconds={},
     pauseResting=false, targetClassBlessings=true, targetBlessingFallback=true, targetBlessingClasses={}, targetBlessingPriorities={}, groupBlessingPriorities={}, blessingAssignments=false, blessingClasses={}, blessingGroupOverrides={}, buffGroups={}, buffClasses={}, buffGroupNeed={}, targetBuffs={}, targetBuffSeconds={}, showBuffName=false, showTargetName=true, showTimer=false, showGroupBadge=true,
     consumablesEnabled=false, consumableFamilies={}, consumableChoices={}, consumableSeconds={},
@@ -439,7 +439,10 @@ function B:TargetBuffEnabled(b)
   local value=self.db.targetBuffs and self.db.targetBuffs[key]
   if b.classWide then return value==true end
   if type(value)=="boolean" then return value end
-  return true
+  -- Unset: everyday buffs are offered to friendly targets, situational ones (Dampen/Amplify Magic,
+  -- Shadow Protection, Fear Ward, Water Breathing, Unending Breath...) stay opt-in.
+  local root=self:FindBuff(key) or b
+  return root.defaultOn==true
 end
 
 function B:TargetRebuffSeconds(b)
@@ -605,8 +608,13 @@ function B:Enabled(b,settings)
   local values=settings and settings.buffs or self:Preference("buffs")
   local v = values[b.key]
   if v ~= nil then return v == true end
-  -- One blessing family at a time by default.
-  if b.kind == "blessing" then return b.key == "bok" end
+  -- One blessing family at a time by default (one Paladin's blessings replace each other):
+  -- Kings when it is known (talent), otherwise Might, which every Paladin learns early.
+  if b.kind == "blessing" then
+    if b.key=="bok" then return true end
+    if b.key=="bom" then local kings=self:FindBuff("bok"); return not (kings and self:Resolve(kings,"player")) end
+    return false
+  end
   if b.key=="ice-armor" or b.key=="frost-armor" or b.key=="demon-skin" then return true end
   return b.defaultOn == true
 end
