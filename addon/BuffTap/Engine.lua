@@ -4,7 +4,7 @@
 
 local _, B = ...
 _G.BuffTap = B
-B.version = "1.19.3"
+B.version = "1.20.0"
 B.API = {}
 local A = B.API
 
@@ -51,6 +51,16 @@ function A.Class(unit)
   if ok and A.Text(class) then return class end
 end
 function A.Combat() return not InCombatLockdown or InCombatLockdown() end
+-- Forever is the "camelot" game type (project 18). Checked by game type, not version text, so it
+-- keeps working after Forever patches past 1.60; the 16xxx interface number is the fallback.
+function B:IsForever()
+  -- Any one sign is enough, so a missing constant can never switch Forever's behaviour off.
+  local project=rawget(_G,"WOW_PROJECT_ID")
+  if A.Number(project) and project==(rawget(_G,"WOW_PROJECT_CAMELOT") or 18) then return true end
+  local ok,version,_,_,toc=pcall(GetBuildInfo)
+  if ok and A.Number(toc) and toc>=16000 and toc<17000 then return true end
+  return ok and A.Text(version) and version:match("^1%.6%d%.")~=nil or false
+end
 local foldCache,foldCount={},0
 local function fold(v)
   if not A.Text(v) then return "" end
@@ -86,7 +96,7 @@ function B:InitDB()
   if type(self.db.showGroupBadge)~="boolean" and type(self.db.showGroupIndicator)=="boolean" then self.db.showGroupBadge=self.db.showGroupIndicator end
   self.db.showRemaining=nil; self.db.showGroupIndicator=nil
   local defaults = {enabled=true, showReminder=true, size=64, opacity=1, x=0, y=-180,
-    seconds=45, rebuffVersion=1, sound=false, reminderSound="marimba", alertSoundVersion=0, supplySound="glass", campAlertSound="bell", soundChannel="Master", soundInterval=5, glow=true, pulse=false, group=false, smartGroup=true,
+    seconds=45, rebuffVersion=1, sound=false, reminderSound="marimba", alertSoundVersion=0, supplySound="glass", campAlertSound="bell", soundChannel="Master", soundInterval=5, glow=true, pulse=false, group=true, smartGroup=true,
     groupNeed=3, blessingNeed=2, friendlyTarget=false, targetSeconds=300, keys={"MOUSEWHEELDOWN"}, buffs={}, priorities={}, buffSeconds={},
     pauseResting=false, targetClassBlessings=true, targetBlessingFallback=true, targetBlessingClasses={}, targetBlessingPriorities={}, groupBlessingPriorities={}, blessingAssignments=false, blessingClasses={}, blessingGroupOverrides={}, buffGroups={}, buffClasses={}, buffGroupNeed={}, targetBuffs={}, targetBuffSeconds={}, showBuffName=false, showTargetName=true, showTimer=false, showGroupBadge=true,
     consumablesEnabled=false, consumableFamilies={}, consumableChoices={}, consumableSeconds={},
@@ -94,14 +104,24 @@ function B:InitDB()
     weaponReminder=true, weaponMainHand=true, weaponOffHand=true,
     consumablesPauseResting=false, weaponsPauseResting=false,
     weaponApply=false, weaponReplace=false, weaponChoices={}, weaponCoatings={}, weaponSeconds=60,
-    nearbyEnabled=false, nearbyBuffing=true, nearbyShowAll=false, nearbyInvites=true, nearbyLocked=false, nearbyOnTop=false, nearbyX=240, nearbyY=0, pvpProtection=true, helperDismiss=false, helperBounce=false, helperTracking=false, helperTreasure=false, helperCoverage=false,
+    nearbyEnabled=false, nearbyBuffing=true, nearbyShowAll=false, nearbyInvites=true, nearbyLocked=false, nearbyOnTop=false, nearbyFont="default", nearbyFontSize=0, nearbyFontOutline="none", nearbyShowLevel=false, nearbyMarkSocial=true, nearbyKeys={}, effectUrgency=false, effectOnce=false, nearbyManaFloor=0, consumablesInstanceOnly=false, buffPets=false, helperDismissMinutes=10, helperThankDelay=0, readyCheckTopUp=true, pauseNotes=true, blockIgnored=true, blacklistTargets=true, blacklistInInstances=true, blockedPlayers={}, blockedGuilds={}, nearbyX=240, nearbyY=0, pvpProtection=true, helperDismiss=true, helperBounce=false, helperTracking=false, helperTreasure=false, helperCoverage=false,
     helperDiscovery=false, helperThanks=false, helperThankEmote="THANK", helperQuick=false, helperTracker=0, helperPet=false, helperHealthstone=false, helperSoulstone=false, helperOath=false, oathAssigned={}, soulstoneParty="healer", soulstoneRaid="remind", soulstoneAssigned="", helperDemon=0,
     raidGroups={true,true,true,true,true,true,true,true},
     buffRoles={}, blessingRoleChoices={}, roleMarks={}, roleGuess=false, helperThanksResting=false,
     nearbyRequests=false, requestMessage="", requestBuffs={}, nearbyButtonSide="left",
     iconStyle="classic", campIconStyle="classic", labelPosition="split", showSwipe=false, showOutOfRange=false}
+  -- 1.20.0: right-click dismiss is on for 10 minutes on new characters; existing ones keep their choice.
+  local existingDismiss=type(self.db.helperDismiss)=="boolean" and self.db.helperDismissMinutes==nil
   for k,v in pairs(defaults) do
     if type(self.db[k]) ~= type(v) then self.db[k] = v end
+  end
+  if existingDismiss then self.db.helperDismissMinutes=0 end
+  -- 1.20.0: party and raid buffing turns on once for everyone; later choices are kept.
+  if self.db.groupDefaultVersion~=1 then
+    self.db.group=true
+    local root=self.db.groupContextSettings
+    if type(root)=="table" then for _,context in ipairs({"Party","Raid"}) do if type(root[context])=="table" then root[context].group=true end end end
+    self.db.groupDefaultVersion=1
   end
   if not A.Number(self.db.helperTracker) or (self.db.helperTracker~=2383 and self.db.helperTracker~=2580 and self.db.helperTracker~=43308) then self.db.helperTracker=0 end
   if self.db.soulstoneParty~="healer" and self.db.soulstoneParty~="self" and self.db.soulstoneParty~="assigned" then self.db.soulstoneParty="healer" end
@@ -147,6 +167,20 @@ function B:InitDB()
     self.db[k] = math.max(limits[1], math.min(limits[2], v))
   end
   if type(self.db.buffSeconds) ~= "table" then self.db.buffSeconds = {} end
+  self.db.nearbyKeys=self:NormalizeBindings(type(self.db.nearbyKeys)=="table" and self.db.nearbyKeys or {})
+  for _,key in ipairs({"blockedPlayers","blockedGuilds"}) do
+    local list=rawget(self.db,key) or self.db[key]
+    if type(list)~="table" or list==defaults[key] then list={} end
+    for name,value in pairs(list) do if type(name)~="string" or name=="" or value~=true then list[name]=nil end end
+    self.db[key]=list
+  end
+  local floor=tonumber(self.db.nearbyManaFloor) or 0; self.db.nearbyManaFloor=math.max(0,math.min(50,math.floor(floor/5+.5)*5))
+  local dismiss=tonumber(self.db.helperDismissMinutes) or 0; self.db.helperDismissMinutes=(dismiss==5 or dismiss==10 or dismiss==15 or dismiss==30) and dismiss or 0
+  local delay=tonumber(self.db.helperThankDelay) or 0; self.db.helperThankDelay=(delay==2 or delay==5) and delay or 0
+  local styles={none=true,soft=true,pulse=true,pixel=true,autocast=true,proc=true,shine=true,ripple=true,bounce=true,orbit=true}
+  if self.db.effectStyle~=nil and not styles[self.db.effectStyle] then self.db.effectStyle=nil end
+  for _,key in ipairs({"consumablesInstanceOnly","buffPets","effectUrgency","effectOnce"}) do if type(self.db[key])~="boolean" then self.db[key]=false end end
+  for _,key in ipairs({"readyCheckTopUp","pauseNotes","blockIgnored","blacklistTargets","blacklistInInstances"}) do if type(self.db[key])~="boolean" then self.db[key]=true end end
   if type(self.db.buffGroups) ~= "table" then self.db.buffGroups = {} end
   if type(self.db.buffGroupNeed) ~= "table" then self.db.buffGroupNeed = {} end
   if type(self.db.targetBuffs) ~= "table" then self.db.targetBuffs = {} end
@@ -167,7 +201,7 @@ function B:InitDB()
   self.consumableDirty=true
   for key,value in pairs(self.db.buffSeconds) do
     if type(value) ~= "number" or value ~= value then self.db.buffSeconds[key] = nil
-    else self.db.buffSeconds[key] = math.max(15, math.min(180, value)) end
+    else self.db.buffSeconds[key] = math.max(0, math.min(600, value)) end
   end
   for key,value in pairs(self.db.buffGroupNeed) do
     if type(value) ~= "number" or value ~= value then self.db.buffGroupNeed[key] = nil
@@ -178,7 +212,7 @@ function B:InitDB()
   end
   for key,value in pairs(self.db.targetBuffSeconds) do
     if type(value) ~= "number" or value ~= value then self.db.targetBuffSeconds[key] = nil
-    else self.db.targetBuffSeconds[key] = math.max(30, math.min(1800, math.floor(value/30 + 0.5)*30)) end
+    else self.db.targetBuffSeconds[key] = math.max(0, math.min(1800, math.floor(value/30 + 0.5)*30)) end
   end
   self.db.keys=self:NormalizeBindings(self.db.keys)
   for key,value in pairs(self.db.priorities) do
@@ -252,17 +286,56 @@ function B:RebuffSeconds(b,settings)
   local key=b and (b.singleKey or b.key)
   local values=settings and settings.buffSeconds or self:Preference("buffSeconds")
   local value=key and values and values[key]
-  if type(value)=="number" then return math.max(15,math.min(180,value)) end
+  if type(value)=="number" then return math.max(0,math.min(600,value)) end
   return settings and settings.seconds or self:Preference("seconds")
+end
+-- Buff lengths, so settings can show the timing that is really used. Seen durations are kept
+-- account-wide; until a buff has been seen, common lengths stand in.
+local KNOWN_DURATIONS={motw=1800,gotw=3600,thorns=600,ai=1800,ab=3600,fort=1800,pof=3600,spirit=1800,pos=3600,sp=600,posp=1200,["inner-fire"]=600,["mage-armor"]=1800,["ice-armor"]=1800,["frost-armor"]=1800,dampen=600,amplify=600}
+-- Keyed by the aura's own name: a Mark of the Wild check can see a Gift of the Wild aura.
+function B:NoteBuffDuration(name,duration)
+  if not A.Text(name) or name=="" or not A.Number(duration) or duration<=0 then return end
+  local value=math.floor(duration+.5)
+  local seen=self.buffDurations; if not seen then seen={}; self.buffDurations=seen end
+  if seen[name]==value then return end
+  seen[name]=value
+  local store=self.profileDB and self.profileDB.global
+  if store then if type(store.buffDurations)~="table" then store.buffDurations={} end; store.buffDurations[name]=value end
+end
+function B:BuffDuration(b)
+  if not b then return nil end
+  local key=A.Text(b.name) and b.name
+  local store=self.profileDB and self.profileDB.global and self.profileDB.global.buffDurations
+  local seen=key and ((self.buffDurations and self.buffDurations[key]) or (type(store)=="table" and store[key]))
+  return A.Number(seen) and seen or KNOWN_DURATIONS[b.key]
+end
+-- The timing a buff gets without its own setting: under 2 minutes, when it wears off; an hour
+-- or more, at least 5 minutes early; otherwise the general default. Matches B:Missing.
+function B:DefaultRebuffSeconds(b,base)
+  if b and (b.noTimer or b.stance) then return 0 end
+  local duration=self:BuffDuration(b)
+  if duration and duration<120 then return 0 end
+  if duration and duration>=2700 then return math.max(base or 0,300) end
+  return base
 end
 
 -- Read native state on demand; events drive updates, with no location polling.
 -- Optional per-category pause in cities and inns. Buff reminders are unaffected.
+-- With a separate Nearby key, the main key covers only you and your group.
+function B:NearbyOnMainKey() return #(self.db and self.db.nearbyKeys or {})==0 end
+function B:InGroupInstance()
+  local ok,inside,kind=pcall(IsInInstance)
+  return ok and A.Public(inside) and A.Public(kind) and inside==true and (kind=="party" or kind=="raid") or false
+end
 function B:CategoryRestingPause(category)
   local key=category=="weapons" and "weaponsPauseResting" or category=="consumables" and "consumablesPauseResting"
   if key and self.db and self.db[key] and A.Call(IsResting)==true then return "paused while resting" end
+  if category=="consumables" and self.db and self.db.consumablesInstanceOnly==true then
+    if not self:InGroupInstance() then return "paused outside dungeons and raids" end
+  end
 end
 function B:ReminderPauseReason()
+  if self.loadingUntil and GetTime()<self.loadingUntil then return "loading" end
   if self.pauseUntil and GetTime()<self.pauseUntil then return "temporary pause" end
   if self.editModeActive then return "editing reminder" end
   if A.Call(IsMounted)==true then return "mounted" end
@@ -449,7 +522,7 @@ function B:TargetRebuffSeconds(b)
   if b and b.kind=="blessing" and self.db.targetClassBlessings then return self.db.targetSeconds or 300 end
   local key=self:RootKey(b)
   local value=key and self.db.targetBuffSeconds and self.db.targetBuffSeconds[key]
-  if type(value)=="number" then return math.max(30,math.min(1800,value)) end
+  if type(value)=="number" then return math.max(0,math.min(1800,value)) end
   return self.db.targetSeconds or 300
 end
 
@@ -893,6 +966,9 @@ function B:SelectBGSelf()
 end
 
 function B:Missing(b,action,auras,rebuffSeconds)
+  -- Breath buffs and Aquatic Form are only worth a reminder while the breath timer runs.
+  -- A friendly player you target yourself can still get one any time, for fun or before a swim.
+  if b.underwater and not self.underwater and not (b.kind~="self" and action and action.target=="target") then return false,"not underwater",0,nil,nil end
   self.coverCache=self.coverCache or {}
   local cacheKey=b.key .. ":" .. action.id
   local cached=self.coverCache[cacheKey]
@@ -930,7 +1006,21 @@ function B:Missing(b,action,auras,rebuffSeconds)
       if not A.Number(a.duration) or a.duration<=0 then
         return false,"present (duration unknown)",0,nil,nil
       end
+      if self.NoteBuffDuration then self:NoteBuffDuration(a.name,a.duration) end
       local configured=type(rebuffSeconds)=="number" and rebuffSeconds or self:RebuffSeconds(b)
+      -- Default timing follows the buff's real length: very short buffs wait until they wear off,
+      -- hour-long buffs refresh 5 minutes early. A buff's own timing always wins.
+      local custom=self:Preference("buffSeconds"); custom=type(custom)=="table" and type(custom[b.singleKey or b.key])=="number"
+      if type(rebuffSeconds)=="number" then
+        -- Friendly targets and Nearby players: their own refresh default, with the same short-buff rule.
+        local targetCustom=self.db.targetBuffSeconds; targetCustom=type(targetCustom)=="table" and type(targetCustom[self:RootKey(b)])=="number"
+        if not targetCustom and a.duration<120 then configured=0 end
+      elseif not custom then
+        if a.duration<120 then configured=0 elseif a.duration>=2700 then configured=math.max(configured,300) end
+      end
+      configured=self.EarlyTopUpSeconds and self:EarlyTopUpSeconds(configured,a.duration) or configured
+      -- Short charge-style buffs such as Nature's Grasp only remind once they are gone.
+      if b.noTimer then configured=0 end
       local threshold=math.min(a.duration*0.5,configured)
       local remaining=math.max(0,a.expirationTime-now)
       shownThreshold=math.max(shownThreshold,threshold)
@@ -1088,7 +1178,12 @@ function B:Roster()
   if self.stats then self.stats.rosterBuilds=(self.stats.rosterBuilds or 0)+1 end
   local playerClass=A.Call(function() local _,c=UnitClass("player"); return c end)
   local roster={{unit="player",group=1,class=A.Text(playerClass) and playerClass or nil,selected=true,rosterOrder=0}}
-  if not self:GroupPreference("group") then return roster end
+  if not self:GroupPreference("group") then
+    if self.db and self.db.buffPets==true and A.Call(UnitExists,"pet")==true and A.Call(UnitIsDeadOrGhost,"pet")==false then
+      roster[2]={unit="pet",group=1,pet=true,selected=true,rosterOrder=901}
+    end
+    return roster
+  end
   local raid=A.Call(IsInRaid)==true
   if raid then
     local n=A.Call(GetNumGroupMembers) or 0
@@ -1120,6 +1215,16 @@ function B:Roster()
       end
     end
   end
+  if self.db and self.db.buffPets==true then
+    local count=#roster
+    for i=1,count do
+      local owner=roster[i].unit
+      local pet=owner=="player" and "pet" or owner:gsub("^party","partypet"):gsub("^raid","raidpet")
+      if pet~=owner and A.Call(UnitExists,pet)==true and A.Call(UnitIsDeadOrGhost,pet)==false then
+        roster[#roster+1]={unit=pet,group=roster[i].group,pet=true,selected=true,rosterOrder=900+i}
+      end
+    end
+  end
   self.rosterCache={at=now,list=roster}
   return roster
 end
@@ -1131,6 +1236,9 @@ function B:FriendlyTargetEntry(unit,nearby,checkOnly)
   if A.Call(UnitIsUnit,unit,"player") == true then return nil,"self target" end
   if A.Call(UnitCanAssist,"player",unit) ~= true then return nil,"target not friendly" end
   if A.Call(UnitIsDeadOrGhost,unit) ~= false then return nil,"target dead or unreadable" end
+  local blocked=self.BlockReason and (nearby or self.db.blacklistTargets~=false) and self:BlockReason(unit)
+  if blocked then return nil,blocked end
+  if self.ManaFloorReached and self:ManaFloorReached() then self.powerBlocked=true; self.manaFloorBlocked=true; return nil,"saving mana" end
 
   -- Prefer UnitIsPlayer when the client exposes it. Fall back to the stable
   -- Player- GUID prefix so this mode never starts buffing friendly NPCs/pets.
@@ -1520,7 +1628,7 @@ function B:BuffRoleMode(b,context)
 end
 -- Party/raid recipient check for one buff: by class (default), or by role regardless of class.
 function B:GroupRecipientAllowed(b,entry,context)
-  if not entry then return false end
+  if not entry or entry.pet then return false end
   local mode=self:BuffRoleMode(b,context)
   if mode=="class" then return self:GroupClassAllowed(b,entry.class,context) end
   local role=self:UnitRole(entry.unit)
@@ -1542,6 +1650,8 @@ function B:SetBlessingRoleChoice(role,class,key,context)
 end
 
 function B:RecipientAllowed(b,entry)
+  -- Pets only receive single-target buffs; group spells and blessings follow players.
+  if entry.pet then return b.kind=="single" and self.db.buffPets==true end
   -- Explicit targets and personal maintenance are independent of group assignments.
   if b.kind=="blessing" and self:BlessingAssignmentsActive() and (not entry.quickTarget or entry.blessingAssigned) then
     return self:BlessingChoice(entry)==(b.singleKey or b.key)
@@ -1610,7 +1720,7 @@ function B:Select()
   self.rangeBlocked=false
   self.rangeBlockedActions={}
   self.rangeBlockedKeys={}
-  self.powerBlocked=false
+  self.powerBlocked=false; self.manaFloorBlocked=nil
   self.manaBlocked=false
   self.cooldownBlocked=false
   self.dataPending=false
@@ -1845,7 +1955,7 @@ function B:Select()
       self:AddDiag("weapon reminder: "..tostring(why))
     end
   end
-  if self.SelectNearby then
+  if self.SelectNearby and self:NearbyOnMainKey() then
     local nearby=self:SelectNearby()
     if nearby then return nearby,"nearby player" end
   end

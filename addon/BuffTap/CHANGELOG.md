@@ -1,3 +1,53 @@
+# BuffTap 1.20.0
+
+- Fix: the reminder could pop up (and play its sound) right after login or a loading screen, before the game had reported your buffs. BuffTap now waits 4 seconds after loading, then checks once.
+- Smarter default timing: buffs under 2 minutes (such as Nature's Grasp) remind when they wear off, and buffs of 45 minutes or more refresh 5 minutes early. Food now reminds 1 minute before it ends (was 5), flasks 5 minutes (was 10) and Elixir of Ferocity 1 minute (was 3). The same rules apply in party and raid, and short buffs also wait until they wear off on friendly targets and Nearby players. Timing you set yourself is kept.
+- Party and raid buffing is on by default. This update turns it on once for every character; turning it off on the Groups page afterwards sticks.
+- Right-click dismiss is on by default for new characters and lasts 10 minutes (new 10 minute choice). Existing characters keep their setting.
+- Import from another class keeps everything except settings tied to that class's spells (buff choices, blessings, class tools) and says what was skipped.
+- Four new icon effects for the buff and camp reminders: Shine (a light sweep), Ripple (an expanding ring), Bounce (a small hop) and Orbit (a small comet circling the icon). They run on their own, without the soft glow underneath. Two new options for the buff reminder: Urgency colour (amber in the last half of the refresh window, red once the buff is gone) and Flash once, then settle.
+- Clearer status when nothing needs doing: "All your buffs are up", with a note when no players are nearby or nearby players already have your buffs, and a separate message when a buff is due but the player is out of range.
+- The live status line moved from the header to the bottom bar of the settings window, so it is no longer cut off. The old "save immediately" note there is gone.
+- The Buffs page is now called My buffs, with a shorter description.
+- Profile lists show each profile in its class colour with the class in brackets when all of its characters share a class.
+- "Move buff reminder" and "Move camping reminder" now open the same Move BuffTap frames mode and return to the tab you came from. The export and import window, the Done bar and the Nearby right-click menu use the settings window's styling.
+- Customization > Binding & sound: "Move BuffTap frames" shows the buff reminder, Nearby and camp movers with a Done button, without opening Blizzard's Edit Mode.
+- Setup: new recommendations (party and raid buffing, right-click dismiss) and an updated "Worth knowing" page covering the blacklist, the Nearby key, Mana reserve, ready check top-ups, export and import, and the smart underwater buffs. The Buffs page labels breathing buffs and Aquatic Form "Reminds when underwater".
+- Page headers: the page switch sits at the top right with its label first and the switch at the right edge, and shortcuts such as Customize look sit right below it with the same right edge, on every page. More space between the header text and the line under it. Dropdown lists match their box width and show five rows.
+- Groups page: "Use group spells automatically", "Buff pets" and "Top up at ready checks" sit inside the Shared group settings box.
+- Customization > Buff reminder: "Show icon" is the first row of the Icon box, and the preview note is centred.
+- Diagnostics: the report box is taller, so most reports fit without scrolling.
+- Profiles: any profile except the active one can be deleted. If other characters (including deleted ones) still use it, the confirmation says how many, and they start a fresh profile at their next login.
+- Timing sliders on My buffs and Target show the timing a buff really gets when you have not set your own, for example 5 minutes for hour-long buffs and "When gone" for short ones. Your own timing can now range from "When gone" up to 10 minutes. BuffTap learns each buff's length the first time it sees it.
+
+- Blacklist page (in the menu under Nearby): never offer buffs or invites to players you name, whole guilds, or anyone on your ignore list (on by default). Add by typing a name, from your target, or by right-clicking a name in the Nearby window. Guild names must match exactly, including accents and special characters. Rules: apply to players you target yourself (on by default) and optionally ignore the blacklist in dungeons and raids. Your own group is never affected.
+- Nearby window name tags, at the right end of the name next to the buffs: a blue heart for friends (character or Battle.net), a green shield for your guild, a red flag for PvP-flagged players (shown even with PvP protection off, since buffing them flags you; faded when their status can't be read) and a red crossed circle for blacklisted players. The buff icon or dash keeps its own place, and the dash is now centred like the icons. In the buff-only view, the counter notes how many were left out for PvP or the blacklist. Hover a row for details. Turn off friend and guild tags on the Nearby page.
+- The Nearby window's people toggle has a new round-headed icon (same size).
+- Right-click a blacklisted name in the Nearby window to remove the player or their guild from the blacklist.
+- Fix: the Nearby buff request button could show for a player with nothing to request (for example a blacklisted player, or one whose information was not ready yet).
+- Nearby window: right-click a name to whisper, invite, add to your ignore list, or blacklist the player or their guild.
+- Optional Nearby key (Customization > Binding & sound): a second key that buffs the top player in the Nearby window. With it set, your main key covers only you and your group.
+- Mana reserve (Nearby page, a slider from 0 to 50%; 0 is off): pause buffs for players outside your group while your mana is below that level. Your own and your group's buffs are unaffected. The status shows why it is waiting.
+- Ready check top-up (Groups page, on by default): during a ready check, buffs with less than half their time left count as missing.
+- Long buffs (20 minutes or more) top up a little earlier inside dungeons and raids: at 10% of their duration, up to 5 minutes.
+- Consumables: new "Only in dungeons and raids" option next to "Pause while resting".
+- Dismiss a reminder for now: choose until zone change (as before), 5, 15 or 30 minutes.
+- Buff pets (Groups page, off by default): single-target buffs such as Mark of the Wild for your pet and your group's pets. Blessings and group spells stay with players.
+- Solo thanks: optional short random delay before the emote.
+- Unending Breath and Water Breathing only remind for you, your group and Nearby while the breath timer is running. A friendly player you target yourself can get them any time. Druids can turn on an Aquatic Form reminder for the same moment (Buffs page, off by default).
+- Profiles page: export your settings as a text string and import them on another character or account. Buff settings only import onto the same class.
+- Diagnostics: capture the Debug, Status, Nearby and Supplies reports on the page instead of in chat, and "Copy for a report" selects everything for Ctrl+C. Player names are hidden by default.
+- When reminders stop because the game is not sharing buff information (some battlegrounds), BuffTap says so once per zone. Turn it off on the Diagnostics page.
+- Settings window: "Customize look" sits in the header on Buffs, Consumables, Weapons and Camping; retry and reset buttons sit at the bottom right; the Helpers page has more room; Export and Import sit in a Share settings box on Profiles; the Supplies view no longer leaves an empty gap; the header status uses smaller text so it is not cut off; patch notes scroll in smaller steps; Mana reserve replaces "Buff others at".
+
+- New smooth icons for the Nearby invite (+) and request to join (arrow) buttons, also used in the Nearby guide.
+- Nearby window options (size, rows, width, background, button side, text and position) moved to a new Customization > Nearby window tab. The Nearby page now shows the Nearby guide in its place, updated with the name tags and with more space between its paragraphs; the separate "How Nearby works" button is gone.
+- Nearby text options: font, size and outline, under Customization > Nearby window. The font list now has all four game fonts (Friz Quadrata, Arial Narrow, Morpheus, Skurri) plus any font registered through SharedMedia. A SharedMedia font that is later uninstalled falls back to the game font. The BuffTap title and the counter use the same font and outline, capped at 13 px so they fit the header. Rows grow to fit larger text. Restore window defaults resets them.
+- New "Show level" option on the Nearby page shows each player's level before their name, for example (28) Bob Loblaw. Off by default; players too high to read show (??).
+- Forever is now recognised by its game type instead of its version number, so solo thanks keeps writing names correctly after future Forever patches.
+
+---
+
 # BuffTap 1.19.3
 
 - The Nearby window now sits under interface windows such as professions and bags instead of covering them. A new "Keep above other windows" option on the Nearby page restores the old behaviour.

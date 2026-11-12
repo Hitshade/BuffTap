@@ -26,7 +26,7 @@ function B:NormalizeCamping()
   if not ({none=true,outline=true,thick=true})[d.campTextOutline] then d.campTextOutline="outline" end
   d.campSize=A.Number(d.campSize) and math.max(24,math.min(96,d.campSize)) or 40
   d.campOpacity=A.Number(d.campOpacity) and math.max(.25,math.min(1,d.campOpacity)) or 1
-  if not ({none=true,soft=true,pulse=true,pixel=true,autocast=true,proc=true})[d.campEffectStyle] then d.campEffectStyle="soft" end
+  if not ({none=true,soft=true,pulse=true,pixel=true,autocast=true,proc=true,shine=true,ripple=true,bounce=true,orbit=true})[d.campEffectStyle] then d.campEffectStyle="soft" end
   if not ({gold=true,cyan=true,green=true,red=true,white=true})[d.campEffectColor] then d.campEffectColor="gold" end
   if not ({slow=true,normal=true,fast=true})[d.campEffectSpeed] then d.campEffectSpeed="normal" end
   d.campWarning=A.Number(d.campWarning) and math.max(60,math.min(1800,d.campWarning)) or 300

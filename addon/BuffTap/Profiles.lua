@@ -2,7 +2,7 @@
 local _,B=...
 local A=B.API
 -- An explicit allowlist prevents new buff/class options from becoming shared by accident.
-local shared={iconStyle=true,campIconStyle=true,labelPosition=true,showSwipe=true,showOutOfRange=true,optionsPatchDot=true,optionsScale=true,optionsAccentMode=true,optionsAccentColor=true,optionsReduceMotion=true,nearbyScale=true,nearbyRows=true,nearbyWidth=true,nearbyNameVersion=true,nearbyFullNames=true,nearbyOpacity=true,labelSize=true,labelOutline=true,labelGap=true,campTextFont=true,campTextColor=true,campTextSize=true,campTextOutline=true,campTextGap=true,campShowCountdown=true,campShowStacks=true,effectStyle=true,effectColor=true,effectSpeed=true,campReminder=true,campSize=true,campOpacity=true,campEffectStyle=true,campEffectColor=true,campEffectSpeed=true,campWarningVersion=true,campTrackBenefits=true,campTrackBag=true,campSound=true,campAnywhere=true,campWarning=true,campX=true,campY=true,nearbyEnabled=true,nearbyBuffing=true,nearbyShowAll=true,nearbyInvites=true,nearbyLocked=true,nearbyOnTop=true,nearbyX=true,nearbyY=true,showReminder=true,keys=true,size=true,opacity=true,x=true,y=true,glow=true,pulse=true,
+local shared={iconStyle=true,campIconStyle=true,labelPosition=true,showSwipe=true,showOutOfRange=true,optionsPatchDot=true,optionsScale=true,optionsAccentMode=true,optionsAccentColor=true,optionsReduceMotion=true,nearbyScale=true,nearbyRows=true,nearbyWidth=true,nearbyNameVersion=true,nearbyFullNames=true,nearbyOpacity=true,labelSize=true,labelOutline=true,labelGap=true,campTextFont=true,campTextColor=true,campTextSize=true,campTextOutline=true,campTextGap=true,campShowCountdown=true,campShowStacks=true,effectStyle=true,effectColor=true,effectSpeed=true,effectUrgency=true,effectOnce=true,campReminder=true,campSize=true,campOpacity=true,campEffectStyle=true,campEffectColor=true,campEffectSpeed=true,campWarningVersion=true,campTrackBenefits=true,campTrackBag=true,campSound=true,campAnywhere=true,campWarning=true,campX=true,campY=true,nearbyEnabled=true,nearbyBuffing=true,nearbyShowAll=true,nearbyInvites=true,nearbyLocked=true,nearbyOnTop=true,nearbyFont=true,nearbyFontSize=true,nearbyFontOutline=true,nearbyShowLevel=true,nearbyMarkSocial=true,nearbyKeys=true,nearbyManaFloor=true,blockedPlayers=true,blockedGuilds=true,blockIgnored=true,blacklistTargets=true,blacklistInInstances=true,helperDismissMinutes=true,helperThankDelay=true,readyCheckTopUp=true,pauseNotes=true,nearbyX=true,nearbyY=true,showReminder=true,keys=true,size=true,opacity=true,x=true,y=true,glow=true,pulse=true,
   showBuffName=true,showTargetName=true,showTimer=true,showGroupBadge=true,labelFont=true,labelColor=true,
   sound=true,reminderSound=true,alertSoundVersion=true,campAlertSound=true,supplySound=true,soundChannel=true,soundInterval=true,
   pvpProtection=true,pauseResting=true,helperDismiss=true,helperBounce=true,helperThanks=true,helperThankEmote=true,helperThanksResting=true,nearbyRequests=true,nearbyButtonSide=true,requestMessage=true,requestBuffs=true,
@@ -11,7 +11,7 @@ local classKeys={"groupContextSettings","situationSettings","seconds","rebuffVer
   "salvationVersion","salvationMigration","friendlyTarget","targetSeconds","targetClassBlessings","targetBlessingFallback","targetBlessingClasses","targetBlessingPriorities",
   "blessingGroupOverrides","blessingRaidDefaults","blessingPartyMode","blessingPartyUniform","blessingPartyExcluded","groupBlessingPriorities","blessingAssignments","blessingClasses","buffGroups","buffClasses","buffGroupNeed","buffRoles","blessingRoleChoices","roleGuess","targetBuffs","targetBuffSeconds","raidGroups",
   "consumablesEnabled","consumableFamilies","consumableChoices","consumableSeconds","suppliesEnabled","suppliesChat","suppliesSound","suppliesReadyCheck","supplySettings",
-  "weaponReminder","weaponMainHand","weaponOffHand","weaponApply","weaponReplace","weaponChoices","weaponCoatings","weaponSeconds","weaponsPauseResting","consumablesPauseResting",
+  "weaponReminder","weaponMainHand","weaponOffHand","weaponApply","weaponReplace","weaponChoices","weaponCoatings","weaponSeconds","weaponsPauseResting","consumablesPauseResting","consumablesInstanceOnly","buffPets",
   "helperTracking","helperTreasure","helperTracker","helperCoverage","helperPet","helperHealthstone","helperSoulstone","helperOath","oathAssigned","helperDemon","soulstoneParty","soulstoneRaid","soulstoneAssigned"}
 local function clone(value,seen,depth)
   local t=type(value)
@@ -33,6 +33,25 @@ local function cleanName(name)
   name=name:match("^%s*(.-)%s*$")
   if name=="" or name:find("[%c|]") or strlenutf8(name)>50 then return nil end
   return name
+end
+-- A profile shown in its class colour with the class in brackets, when every character on it shares one class.
+function B:ProfileLabel(name)
+  if type(name)~="string" then return name end
+  local setups=self.profileDB and type(self.profileDB.global.characterSetups)=="table" and self.profileDB.global.characterSetups[name]
+  local class
+  if type(setups)=="table" then
+    for _,v in pairs(setups) do
+      if type(v)=="table" and classes[v.class] then
+        if class and class~=v.class then return name end
+        class=v.class
+      end
+    end
+  end
+  if not class then return name end
+  local color=RAID_CLASS_COLORS and RAID_CLASS_COLORS[class]
+  local hex=color and (color.colorStr or (type(color.GenerateHexColor)=="function" and color:GenerateHexColor()))
+  local className=LOCALIZED_CLASS_NAMES_MALE and LOCALIZED_CLASS_NAMES_MALE[class] or class:sub(1,1)..class:sub(2):lower()
+  return (type(hex)=="string" and ("|c"..hex..name.."|r") or name).." ("..className..")"
 end
 function B:ProfileNames()
   local out={}; if not self.profileDB then return out end
@@ -158,9 +177,13 @@ function B:RenameSettingsProfile(name)
   end
   db:SetProfile(name); db:DeleteProfile(old); self:FinishProfileChange(); return true
 end
+-- Any profile except the active one can be deleted. Characters still pointing at it (including
+-- deleted characters) are released, so each starts its own fresh profile at its next login.
 function B:DeleteSettingsProfile(name)
-  if A.Combat() or not cleanName(name) or not self.profileDB.sv.profiles[name] or name==self.profileDB:GetCurrentProfile() or self:ProfileUsers(name)>0 then return false end
-  self.profileDB:DeleteProfile(name)
+  if A.Combat() or not cleanName(name) or not self.profileDB.sv.profiles[name] or name==self.profileDB:GetCurrentProfile() then return false end
+  local keys=self.profileDB.sv.profileKeys
+  for char,profile in pairs(keys) do if profile==name then keys[char]=nil end end
+  self.profileDB:DeleteProfile(name,true)
   local setups=self.profileDB.global.characterSetups; if type(setups)=="table" then setups[name]=nil end
   return true
 end
@@ -169,4 +192,90 @@ function B:ResetCharacterSettings()
   if A.Combat() then return false end
   self:SaveClassSetup(); BuffTapDB={}; self.blessingPlayers=nil
   self:InitDB(); self:FinishProfileChange(); return true
+end
+
+-- Export and import: a plain text string with the shared settings and this class's setup.
+-- Import parses the text itself (never loadstring) and accepts only strings, numbers, booleans and tables.
+local function encode(value,out,depth)
+  local t=type(value)
+  if t=="string" then out[#out+1]='"'..value:gsub('[%c"\\]',function(c) return string.format("\\%03d",c:byte()) end)..'"'
+  elseif t=="number" then out[#out+1]=string.format("%.10g",value)
+  elseif t=="boolean" then out[#out+1]=value and "T" or "F"
+  elseif t=="table" and depth<12 then
+    out[#out+1]="{"
+    local keys={}; for k in pairs(value) do if type(k)=="string" or type(k)=="number" then keys[#keys+1]=k end end
+    table.sort(keys,function(a,b) if type(a)~=type(b) then return type(a)=="number" end; return a<b end)
+    for _,k in ipairs(keys) do encode(k,out,depth+1); out[#out+1]="="; encode(value[k],out,depth+1); out[#out+1]=";" end
+    out[#out+1]="}"
+  else out[#out+1]="F" end
+end
+local function decode(text)
+  local pos=1
+  local value
+  local function fail() error("bad",0) end
+  function value(depth)
+    if depth>12 then fail() end
+    local c=text:sub(pos,pos)
+    if c=='"' then
+      local close=pos+1; local parts={}
+      while true do
+        local ch=text:sub(close,close)
+        if ch=="" then fail() elseif ch=='"' then break
+        elseif ch=="\\" then local code=tonumber(text:sub(close+1,close+3)); if not code or code>255 then fail() end; parts[#parts+1]=string.char(code); close=close+4
+        else parts[#parts+1]=ch; close=close+1 end
+      end
+      pos=close+1; return table.concat(parts)
+    elseif c=="T" then pos=pos+1; return true
+    elseif c=="F" then pos=pos+1; return false
+    elseif c=="{" then
+      pos=pos+1; local t={}; local count=0
+      while text:sub(pos,pos)~="}" do
+        local k=value(depth+1); if type(k)~="string" and type(k)~="number" then fail() end
+        if text:sub(pos,pos)~="=" then fail() end; pos=pos+1
+        t[k]=value(depth+1)
+        if text:sub(pos,pos)~=";" then fail() end; pos=pos+1
+        count=count+1; if count>2000 then fail() end
+      end
+      pos=pos+1; return t
+    else
+      local num=text:match("^%-?[%d%.]+[eE]?[%-+]?%d*",pos); local n=num and tonumber(num)
+      if not n or n~=n or n==math.huge or n==-math.huge then fail() end
+      pos=pos+#num; return n
+    end
+  end
+  local ok,result=pcall(value,0)
+  if not ok or pos<=#text then return nil end
+  return result
+end
+function B:ExportSettings()
+  local data={shared={},class={}}
+  for key in pairs(shared) do data.shared[key]=clone(self.db[key]) end
+  for _,key in ipairs(classKeys) do data.class[key]=clone(self.db[key]) end
+  local out={}; encode(data,out,0)
+  return "BuffTap1:"..tostring(token() or "NONE")..":"..table.concat(out)
+end
+-- Settings tied to one class's spells. Everything else in the class setup applies to any class.
+local classSpellKeys={buffs=true,priorities=true,buffSeconds=true,salvationVersion=true,salvationMigration=true,targetClassBlessings=true,
+  targetBlessingFallback=true,targetBlessingClasses=true,targetBlessingPriorities=true,blessingGroupOverrides=true,blessingRaidDefaults=true,
+  blessingPartyMode=true,blessingPartyUniform=true,blessingPartyExcluded=true,groupBlessingPriorities=true,blessingAssignments=true,
+  blessingClasses=true,buffGroups=true,buffClasses=true,buffGroupNeed=true,buffRoles=true,blessingRoleChoices=true,targetBuffs=true,
+  targetBuffSeconds=true,groupContextSettings=true,situationSettings=true,weaponChoices=true,weaponCoatings=true,helperPet=true,
+  helperHealthstone=true,helperSoulstone=true,helperOath=true,oathAssigned=true,helperDemon=true,soulstoneParty=true,soulstoneRaid=true,soulstoneAssigned=true}
+function B:ImportSettings(text)
+  if A.Combat() or not self.db then return false,self:Text("Not available in combat.") end
+  text=type(text)=="string" and text:gsub("[\r\n]",""):match("^%s*(.-)%s*$") or ""
+  local class,body=text:match("^BuffTap1:(%u+):(.+)$")
+  local data=body and decode(body)
+  if type(data)~="table" or type(data.shared)~="table" then return false,self:Text("This is not a BuffTap settings string.") end
+  for key in pairs(shared) do if data.shared[key]~=nil then self.db[key]=clone(data.shared[key]) end end
+  local sameClass=class==token()
+  if type(data.class)=="table" then
+    for _,key in ipairs(classKeys) do
+      if data.class[key]~=nil and (sameClass or not classSpellKeys[key]) then self.db[key]=clone(data.class[key]) end
+    end
+  end
+  self:FinishProfileChange()
+  if sameClass then return true,self:Text("Imported settings.") end
+  local name=LOCALIZED_CLASS_NAMES_MALE and LOCALIZED_CLASS_NAMES_MALE[class] or class
+  return true,self:Text("Imported settings from a %s. Buff choices, blessings and class tools were skipped because they belong to that class's spells.",name)
 end

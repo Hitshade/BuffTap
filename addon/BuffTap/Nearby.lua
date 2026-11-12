@@ -27,8 +27,13 @@ function B:RequestEnabled(def)
   return self:RequestUseful(def,A.Class("player"))
 end
 function B:NearbyDisplayName(entry)
-  if self.db.nearbyFullNames~=false and entry.surname then return entry.name.." "..entry.surname end
-  return entry.name
+  local name=entry.name
+  if self.db.nearbyFullNames~=false and entry.surname then name=entry.name.." "..entry.surname end
+  if self.db.nearbyShowLevel==true and entry.unit then
+    local level=A.Call(UnitLevel,entry.unit)
+    if A.Number(level) then name="("..(level>0 and tostring(level) or "??")..") "..name end
+  end
+  return name
 end
 function B:TargetBlessingChoice(entry)
   if A.Class("player")~="PALADIN" then return nil end
@@ -336,10 +341,37 @@ function B:NearbyGroupActions(unit)
   return actions
 end
 -- The display can retain players without turning them into eligible buff targets.
+-- Status marker for a stranger: blacklisted, or PvP flagged while you are not (buffing them
+-- would flag you). An unreadable flag only matters while PvP protection is on.
+function B:NearbyMarker(unit)
+  if self.BlockReason and self:BlockReason(unit) then return "blocked" end
+  if A.Call(UnitIsPVP,"player")==true then return nil end
+  local pvp,ffa=A.Call(UnitIsPVP,unit),A.Call(UnitIsPVPFreeForAll,unit)
+  if pvp==true or ffa==true then return "pvp" end
+  if self.db.pvpProtection==true and (pvp==nil or ffa==nil) then return "pvp-unknown" end
+end
+-- Friend (character or Battle.net) or member of your guild. Information only: it changes nothing about buffing.
+function B:NearbySocial(unit,guid)
+  if self.db.nearbyMarkSocial==false then return nil end
+  if A.Text(guid) then
+    if C_FriendList and A.Call(C_FriendList.IsFriend,guid)==true then return "friend" end
+    if C_BattleNet and type(A.Call(C_BattleNet.GetAccountInfoByGUID,guid))=="table" then return "friend" end
+  end
+  if type(UnitIsInMyGuild)=="function" then
+    if A.Call(UnitIsInMyGuild,unit)==true then return "guild" end
+  else
+    local mine,theirs=A.Call(GetGuildInfo,"player"),A.Call(GetGuildInfo,unit)
+    if A.Text(mine) and mine~="" and mine==theirs then return "guild" end
+  end
+end
+-- Name-field tags, right-aligned next to the buff column: {texture, r, g, b, alpha}.
+local MARKERS={pvp={"UIPvPFlag",.9,.36,.32,1},["pvp-unknown"]={"UIPvPFlag",.6,.6,.6,.55},blocked={"NavBlacklist",.95,.25,.22,1},
+  friend={"UIFriend",.42,.72,1,1},guild={"UIGuild",.35,.9,.42,1}}
+B.NearbyTagStyles=MARKERS
 function B:NearbyPlayers()
   local buffs=self:NearbyCandidates()
   local out,seen,byGUID={},{},{}
-  self.nearbyCounts={need=0,total=0}
+  self.nearbyCounts={need=0,total=0,flagged=0,blocked=0}
   for _,entry in ipairs(buffs) do byGUID[entry.guid]=entry end
   if not self.db.enabled or not self.db.nearbyEnabled or not platesOn() or A.Combat()
     or self:ReminderPauseReason() then return out end
@@ -355,6 +387,10 @@ function B:NearbyPlayers()
         local groupActions=grouped and self:NearbyGroupActions(unit) or {}
         local entry=byGUID[guid] or {unit=unit,guid=guid,name=name,surname=B:NearbySurname(unit),class=class,actions=groupActions,order=self.nearbyOrder[guid] or 0}
         entry.surname=entry.surname or B:NearbySurname(unit)
+        entry.marker=not grouped and self:NearbyMarker(unit) or nil
+        entry.social=self:NearbySocial(unit,guid)
+        if entry.marker=="blocked" then self.nearbyCounts.blocked=self.nearbyCounts.blocked+1
+        elseif entry.marker and self.db.pvpProtection==true then self.nearbyCounts.flagged=self.nearbyCounts.flagged+1 end
         local needs=#entry.actions>0
         if needs then self.nearbyCounts.need=self.nearbyCounts.need+1 end
         if needs or (self.db.nearbyShowAll and not grouped) then out[#out+1]=entry end
@@ -695,9 +731,10 @@ function B:CreateNearbyWindow()
   f.allPlayers:SetFrameLevel(f:GetFrameLevel()+3)
   f.allPlayers:SetSize(14,16); f.allPlayers:SetPoint("TOPLEFT",154,-3)
   f.allPlayers.parts={}
-  for _,part in ipairs({{2,-2,4,4},{1,-7,6,5},{8,-3,3,3},{7,-8,5,4}}) do
-    local t=wash(f.allPlayers,"ARTWORK",.65,.65,.62,1); t:SetSize(part[3],part[4]); t:SetPoint("TOPLEFT",part[1],part[2]); f.allPlayers.parts[#f.allPlayers.parts+1]=t
-  end
+  -- Two round-headed figures, tinted grey (buff candidates only) or gold (all players).
+  local people=f.allPlayers:CreateTexture(nil,"ARTWORK"); people:SetSize(15,15); people:SetPoint("CENTER",0,0)
+  people:SetTexture("Interface\\AddOns\\BuffTap\\Media\\UIPeople"); people:SetVertexColor(.65,.65,.62,1)
+  f.allPlayers.parts[1]=people
   f.allPlayers:SetScript("OnClick",function() self:SetNearbyView(not self.db.nearbyShowAll) end)
   hint(f.allPlayers,function() return self.db.nearbyShowAll and "Show only players needing buffs" or "Show all nearby players" end,"Grey: buff candidates only. Gold: all observed strangers. Invite buttons are available in either view.")
   f.status=label(c,"",6,-31); f.status:SetWidth(198); f.status:SetJustifyH("LEFT"); f.status:SetWordWrap(true)
@@ -743,7 +780,7 @@ function B:CreateNearbyWindow()
   end)
   f.rows={}
   for i=1,MAX_UNITS do
-    local row=CreateFrame("Button",nil,c,"SecureActionButtonTemplate")
+    local row=CreateFrame("Button","BuffTapNearbyRow"..i,c,"SecureActionButtonTemplate")
     f.rows[i]=row; row:SetSize(WIDTH,20); row:SetPoint("TOPLEFT",0,-25-(i-1)*ROW_HEIGHT)
     row:RegisterForClicks("AnyDown","AnyUp"); row:SetAttribute("useOnKeyDown",true)
     row.wash=wash(row,"BACKGROUND",.055,.075,.095,.34); row.wash:SetAllPoints()
@@ -752,19 +789,18 @@ function B:CreateNearbyWindow()
     row.classEdge=wash(row,"BORDER",.55,.47,.30,.70); row.classEdge:SetSize(16,16); row.classEdge:SetPoint("LEFT",4,0)
     row.classIcon=row:CreateTexture(nil,"ARTWORK"); row.classIcon:SetSize(14,14); row.classIcon:SetPoint("LEFT",5,0)
     row.name=label(row,"",26,-4); row.name:SetWidth(132); row.name:SetJustifyH("LEFT"); row.name:SetWordWrap(false)
-    row.idle=label(row,"-",190,-4); row.idle:SetTextColor(.55,.62,.59)
+    -- "Nothing needed" dash, centred in the first buff slot like the icons.
+    row.idle=row:CreateTexture(nil,"ARTWORK"); row.idle:SetTexture("Interface\\AddOns\\BuffTap\\Media\\UIDash"); row.idle:SetSize(10,10); row.idle:SetVertexColor(.55,.62,.59); row.idle:Hide()
     row.invite=CreateFrame("Button",nil,row)
     row.invite:SetSize(20,20); row.invite:SetPoint("RIGHT",row,"LEFT",-4,0)
     row.invite.bg=wash(row.invite,"BACKGROUND",.055,.075,.095,.65); row.invite.bg:SetAllPoints()
     row.invite.hover=wash(row.invite,"HIGHLIGHT",.75,.60,.25,.25); row.invite.hover:SetAllPoints()
     row.invite.text=label(row.invite,"+",0,0); row.invite.text:ClearAllPoints(); row.invite.text:SetAllPoints(row.invite); row.invite.text:SetJustifyH("CENTER"); row.invite.text:SetJustifyV("MIDDLE"); row.invite.text:SetWordWrap(false); row.invite.text:SetTextColor(1,.82,0)
-    row.invite.plusH=wash(row.invite,"OVERLAY",1,.82,0,1); row.invite.plusH:SetSize(8,2); row.invite.plusH:SetPoint("CENTER",row.invite,"CENTER",0,0)
-    row.invite.plusV=wash(row.invite,"OVERLAY",1,.82,0,1); row.invite.plusV:SetSize(2,8); row.invite.plusV:SetPoint("CENTER",row.invite,"CENTER",0,0)
-    -- Request to join: a bold blue arrow on the same tile as the gold invite plus.
-    row.invite.join={}
-    for i,part in ipairs({{-3,0,8,3},{2,0,2,10},{4,0,2,6},{6,0,2,2}}) do
-      local t=wash(row.invite,"OVERLAY",.35,.75,1,1); t:SetSize(part[3],part[4]); t:SetPoint("CENTER",row.invite,"CENTER",part[1],part[2]); row.invite.join[i]=t
-    end
+    -- Smooth icons (white art, tinted): a gold plus to invite and a blue arrow to ask to join.
+    row.invite.plus=row.invite:CreateTexture(nil,"OVERLAY"); row.invite.plus:SetTexture("Interface\\AddOns\\BuffTap\\Media\\UIInvitePlus")
+    row.invite.plus:SetSize(16,16); row.invite.plus:SetPoint("CENTER",row.invite,"CENTER",0,0); row.invite.plus:SetVertexColor(1,.82,0)
+    row.invite.arrow=row.invite:CreateTexture(nil,"OVERLAY"); row.invite.arrow:SetTexture("Interface\\AddOns\\BuffTap\\Media\\UIJoinArrow")
+    row.invite.arrow:SetSize(16,16); row.invite.arrow:SetPoint("CENTER",row.invite,"CENTER",0,0); row.invite.arrow:SetVertexColor(.35,.75,1)
     row.invite:RegisterForClicks("LeftButtonUp")
     row.invite:SetScript("OnClick",function() self:InviteNearby(row.entry) end)
     -- Buff request: shows the buff's own icon so it reads differently from the invite "+".
@@ -807,6 +843,10 @@ function B:CreateNearbyWindow()
       self:CancelTimer("nearby-display")
       self:StartTimer("nearby-display",.1,function() if not A.Combat() then B:UpdateNearbyWindow() end end)
     end)
+    -- Tags at the right end of the name field, next to the buffs: PvP flag or blacklist mark,
+    -- then friend or guild. The buff column stays free for the buff itself.
+    row.tags={}
+    for j=1,2 do local tag=row:CreateTexture(nil,"ARTWORK"); tag:SetSize(12,12); tag:Hide(); row.tags[j]=tag end
     row.icons={}; row.iconEdges={}
     for j=1,4 do
       local icon=row:CreateTexture(nil,"ARTWORK"); icon:SetSize(14,14); icon:SetTexCoord(.07,.93,.07,.93); row.icons[j]=icon
@@ -825,15 +865,23 @@ function B:CreateNearbyWindow()
     end)
     row:SetScript("PostClick",function(_,mouse,down)
       if not A.Combat() and mouse=="LeftButton" and down~=false then self:InvalidateAura(); self:RequestRefresh("nearby cast",.15) end
+      if not A.Combat() and mouse=="RightButton" and down==false and row.entry and self.ShowNearbyMenu then self:ShowNearbyMenu(row) end
     end)
     row:SetScript("OnEnter",function(button)
       if not button.entry then return end
       self.nearbyHovered=button.entry.guid
       GameTooltip:SetOwner(button,"ANCHOR_RIGHT"); GameTooltip:SetText(button.entry.name)
       if button.action then for _,action in ipairs(button.entry.actions) do GameTooltip:AddLine(action.name,1,1,1) end
-      else GameTooltip:AddLine("No buff queued. Buffs may be covered, excluded, or unavailable.",.7,.7,.7,true) end
+      elseif not button.entry.marker then GameTooltip:AddLine("No buff queued. Buffs may be covered, excluded, or unavailable.",.7,.7,.7,true) end
+      if button.entry.social=="friend" then GameTooltip:AddLine(self:Text("On your friends list."),.42,.72,1,true)
+      elseif button.entry.social=="guild" then GameTooltip:AddLine(self:Text("In your guild."),.35,.9,.42,true) end
+      if button.entry.marker=="pvp" and self.db.pvpProtection~=true then GameTooltip:AddLine(self:Text("PvP flagged. Buffing them will flag you too."),1,.45,.4,true)
+      elseif button.entry.marker=="pvp" then GameTooltip:AddLine(self:Text("PvP flagged. Buffing them would flag you, so PvP protection skips them."),1,.45,.4,true)
+      elseif button.entry.marker=="pvp-unknown" then GameTooltip:AddLine(self:Text("PvP status unknown, so PvP protection skips them."),.75,.75,.75,true)
+      elseif button.entry.marker=="blocked" then GameTooltip:AddLine(self:Text("Blacklisted. BuffTap offers no buffs or invites."),1,.4,.35,true) end
       if button.action and not button.action.ready then GameTooltip:AddLine("Waiting for cooldown.",.8,.8,.7)
       elseif button.action then GameTooltip:AddLine("Click: next appropriate buff",1,.82,0) end
+      GameTooltip:AddLine("Right-click: whisper, invite, ignore or blacklist",.7,.7,.7,true)
       GameTooltip:AddLine("Mouse wheel: scroll players",.7,.7,.7,true)
       GameTooltip:Show()
     end)
@@ -855,6 +903,7 @@ function B:UpdateNearbyWindow()
   if not self.db.nearbyEnabled and not self.nearbyUserOpened then
     if self.nearbyFrame then self.nearbyFrame:Hide() end; return
   end
+  ROW_HEIGHT=self:NearbyRowHeight()
   local width,rows,scale=self:NearbyLayout(); WIDTH,ROWS,HEIGHT=width,rows,29+rows*ROW_HEIGHT
   self:CreateNearbyWindow()
   local f=self.nearbyFrame; if not f or self.nearbySetupError then return end
@@ -862,13 +911,19 @@ function B:UpdateNearbyWindow()
   -- A glanceable list belongs under Blizzard's panels (professions, bags); players can keep it on top.
   local strata=self.db.nearbyOnTop==true and "DIALOG" or "LOW"
   if f.strata~=strata then f:SetFrameStrata(strata); f.strata=strata end
-  local layoutKey=table.concat({WIDTH,ROWS,scale,self.db.nearbyOpacity,right and "R" or "L"},":")
+  local fontPath,fontSize,fontFlags=self:NearbyFont()
+  local layoutKey=table.concat({WIDTH,ROWS,scale,self.db.nearbyOpacity,right and "R" or "L",fontPath,fontSize,fontFlags},":")
   if f.layoutKey~=layoutKey then
     f.layoutKey=layoutKey; f:SetSize(WIDTH+24,HEIGHT); f:SetScale(scale); f.content:SetSize(WIDTH,HEIGHT)
     -- Invite and request buttons sit in a 24px gutter on the chosen side of the list.
     f.content:ClearAllPoints(); f.content:SetPoint("TOPLEFT",right and 0 or 24,0)
     for _,row in ipairs(f.rows) do row.invite:ClearAllPoints(); if right then row.invite:SetPoint("LEFT",row,"RIGHT",4,0) else row.invite:SetPoint("RIGHT",row,"LEFT",-4,0) end end
     f.header:SetWidth(WIDTH); f.header:SetColorTexture(.055,.07,.09,self.db.nearbyOpacity)
+    -- The title and counter share the list's font and outline; their size stops at 13 px to fit the header.
+    for _,text in ipairs({f.title,f.count}) do
+      local size=math.min(fontSize,13)
+      if not text:SetFont(fontPath,size,fontFlags) then text:SetFont(STANDARD_TEXT_FONT or "Fonts\\FRIZQT__.TTF",size,fontFlags) end
+    end
     f.line:SetWidth(WIDTH); f.dragHandle:SetWidth(WIDTH-43)
     f.lock:ClearAllPoints(); f.lock:SetPoint("TOPLEFT",WIDTH-34,-3)
     f.close:ClearAllPoints(); f.close:SetPoint("TOPLEFT",WIDTH-17,-3)
@@ -876,7 +931,12 @@ function B:UpdateNearbyWindow()
     f.count:SetWidth(WIDTH-135); f.countHelp:SetWidth(WIDTH-131)
     f.status:SetWidth(WIDTH-12); f.statusButton:SetWidth(WIDTH-12)
     f.scroll:ClearAllPoints(); f.scroll:SetPoint("TOPLEFT",WIDTH-5,-25); f.scroll:SetHeight(ROWS*ROW_HEIGHT-2)
-    for _,row in ipairs(f.rows) do row:SetWidth(WIDTH); row.wash:SetColorTexture(.055,.075,.095,self.db.nearbyOpacity*.68); row.idle:ClearAllPoints(); row.idle:SetPoint("RIGHT",-8,0); row.style=nil end
+    for i,row in ipairs(f.rows) do
+      row:SetSize(WIDTH,ROW_HEIGHT-1); row:ClearAllPoints(); row:SetPoint("TOPLEFT",0,-25-(i-1)*ROW_HEIGHT)
+      row.wash:SetColorTexture(.055,.075,.095,self.db.nearbyOpacity*.68); row.idle:ClearAllPoints(); row.idle:SetPoint("CENTER",row,"RIGHT",-16,0); row.style=nil
+      if not row.name:SetFont(fontPath,fontSize,fontFlags) then row.name:SetFont(STANDARD_TEXT_FONT or "Fonts\\FRIZQT__.TTF",fontSize,fontFlags) end
+      row.name:ClearAllPoints(); row.name:SetPoint("LEFT",26,0)
+    end
   end
   -- The header hairline follows the accent colour chosen under Customization > Interface.
   if self.InterfaceAccent then local r,g,b=self:InterfaceAccent(); f.line:SetColorTexture(r,g,b,.80) end
@@ -887,11 +947,18 @@ function B:UpdateNearbyWindow()
   x=A.Number(x) and x or 240; y=A.Number(y) and y or 0
   if f.positionX~=x or f.positionY~=y or f.positionScale~=scale then self:PlaceNearbyFrame(f,x,y); f.positionX=x; f.positionY=y; f.positionScale=scale end
   local counts=self.nearbyCounts or {need=0,total=0}
-  f.count:SetText(counts.need.."/"..counts.total)
+  -- In the buff-only view, note players left out for PvP or the blacklist.
+  local note=""
+  if not self.db.nearbyShowAll then
+    local media="Interface\\AddOns\\BuffTap\\Media\\"
+    if (counts.flagged or 0)>0 then note=note.." |T"..media.."UIPvPFlag:12:12:0:0:64:64:0:64:0:64:230:92:82|t"..counts.flagged end
+    if (counts.blocked or 0)>0 then note=note.." |T"..media.."NavBlacklist:12:12:0:0:64:64:0:64:0:64:242:64:56|t"..counts.blocked end
+  end
+  f.count:SetText(counts.need.."/"..counts.total..note)
   if f.allPlayers.showAll~=self.db.nearbyShowAll then
     f.allPlayers.showAll=self.db.nearbyShowAll
     for _,t in ipairs(f.allPlayers.parts) do
-      if self.db.nearbyShowAll then t:SetColorTexture(1,.82,0,1) else t:SetColorTexture(.65,.65,.62,1) end
+      if self.db.nearbyShowAll then t:SetVertexColor(1,.82,0,1) else t:SetVertexColor(.65,.65,.62,1) end
     end
   end
   for guid,at in pairs(self.nearbyInvited or {}) do
@@ -907,7 +974,7 @@ function B:UpdateNearbyWindow()
     row.entry=entry; row.action=item and item.fresh and nextAction(entry) or nil
     self:SetNearbyRowPayload(row,row.action)
     if entry then
-      local parts={entry.guid,self:NearbyDisplayName(entry),entry.class}
+      local parts={entry.guid,self:NearbyDisplayName(entry),entry.class,tostring(entry.marker),tostring(entry.social)}
       for _,action in ipairs(entry.actions) do parts[#parts+1]=tostring(action.id)..":"..tostring(action.icon) end
       local style=table.concat(parts,"|")
       if row.style~=style then
@@ -917,7 +984,19 @@ function B:UpdateNearbyWindow()
         if coords then row.classIcon:SetTexCoord(unpack(coords)); row.classIcon:Show() else row.classIcon:Hide() end
         local color=RAID_CLASS_COLORS and RAID_CLASS_COLORS[entry.class]
         if color then row.name:SetTextColor(color.r,color.g,color.b) else row.name:SetTextColor(1,1,1) end
-        local count=math.min(4,#entry.actions); row.name:SetWidth(WIDTH-26-12-count*18)
+        local count=math.min(4,#entry.actions); local slots=math.max(1,count)
+        local tagged={}
+        if MARKERS[entry.marker or ""] then tagged[#tagged+1]=MARKERS[entry.marker] end
+        if MARKERS[entry.social or ""] then tagged[#tagged+1]=MARKERS[entry.social] end
+        for j,tag in ipairs(row.tags) do
+          local style=tagged[#tagged+1-j]
+          tag:ClearAllPoints()
+          if style then
+            tag:SetPoint("RIGHT",row,"RIGHT",-8-slots*18-2-(j-1)*14,0)
+            tag:SetTexture("Interface\\AddOns\\BuffTap\\Media\\"..style[1]); tag:SetVertexColor(style[2],style[3],style[4]); tag:SetAlpha(style[5]); tag:Show()
+          else tag:Hide() end
+        end
+        row.name:SetWidth(WIDTH-26-12-slots*18-#tagged*14)
         for j,icon in ipairs(row.icons) do
           local action=entry.actions[j]; local edge=row.iconEdges[j]
           icon:ClearAllPoints(); edge:ClearAllPoints()
@@ -927,7 +1006,7 @@ function B:UpdateNearbyWindow()
         end
       end
       row:SetAlpha(row.action and (row.action.ready and 1 or .72) or (self.db.nearbyShowAll and .60 or .40))
-      row.idle:SetShown(self.db.nearbyShowAll and not row.action)
+      row.idle:SetShown(self.db.nearbyShowAll and not row.action and #entry.actions==0)
       local invited=self.nearbyInvited and self.nearbyInvited[entry.guid]
       local inviteName,inviteMode=self:NearbyInviteName(entry)
       local request=inviteMode=="REQUEST_INVITE"
@@ -935,19 +1014,18 @@ function B:UpdateNearbyWindow()
       row.invite.text:SetTextColor(1,1,1)
       local plus=not invited and inviteMode~="SUGGEST_INVITE" and not request
       local join=request and not invited
-      row.invite.plusH:SetShown(plus); row.invite.plusV:SetShown(plus); row.invite.text:SetShown(not plus and not join)
-      for _,t in ipairs(row.invite.join) do t:SetShown(join) end
-      row.invite:SetShown(item.fresh and inviteName~=nil)
-      local requests=item.fresh and self:RequestableBuffs(entry)
+      row.invite.plus:SetShown(plus); row.invite.arrow:SetShown(join); row.invite.text:SetShown(not plus and not join)
+      row.invite:SetShown(item.fresh and inviteName~=nil and entry.marker~="blocked")
+      local requests=item.fresh and entry.marker~="blocked" and self:RequestableBuffs(entry)
       row.request:ClearAllPoints()
       if right then
         if row.invite:IsShown() then row.request:SetPoint("LEFT",row.invite,"RIGHT",2,0) else row.request:SetPoint("LEFT",row,"RIGHT",4,0) end
       elseif row.invite:IsShown() then row.request:SetPoint("RIGHT",row.invite,"LEFT",-2,0) else row.request:SetPoint("RIGHT",row,"LEFT",-4,0) end
       if requests then row.request.icon:SetTexture(requests[1].icon); row.request:SetAlpha(self:RequestCooling(entry) and .45 or 1) end
-      row.request:SetShown(requests~=nil)
+      row.request:SetShown(type(requests)=="table")
       row.marker:SetShown(row.action and row.action.ready and self.action and self.action.nearby and self.action.targetGUID==entry.guid or false)
       if not row:IsShown() then row:Show() end
-    else row.style=nil; row.invite:Hide(); row.request:Hide(); row.idle:Hide(); if row:IsShown() then row:Hide() end end
+    else row.style=nil; row.invite:Hide(); row.request:Hide(); row.idle:Hide(); for _,tag in ipairs(row.tags) do tag:Hide() end; if row:IsShown() then row:Hide() end end
   end
   local status
   if not self.db.enabled then status="BuffTap is disabled."
@@ -1091,6 +1169,6 @@ local status=B.Status
 function B:Status(verbose)
   status(self,verbose)
   if verbose and DEFAULT_CHAT_FRAME then
-    for _,line in ipairs(self:NearbyDiagnosticsLines()) do DEFAULT_CHAT_FRAME:AddMessage("BuffTap "..line) end
+    for _,line in ipairs(self:NearbyDiagnosticsLines()) do if self.outputCapture then self.outputCapture[#self.outputCapture+1]=line else DEFAULT_CHAT_FRAME:AddMessage("BuffTap "..line) end end
   end
 end

@@ -9,6 +9,13 @@ function B:NormalizeVisualOptions()
     d.nearbyNameVersion=1
   end
   if type(d.nearbyFullNames)~="boolean" then d.nearbyFullNames=true end
+  if type(d.nearbyFont)~="string" or d.nearbyFont=="" then d.nearbyFont="default" end
+  local fontKeys={default=true,arialn=true,morpheus=true,skurri=true,names=true,numbers=true}
+  if not fontKeys[d.nearbyFont] and not d.nearbyFont:match("^lsm:.") then d.nearbyFont="default" end
+  if d.nearbyFont=="names" or d.nearbyFont=="numbers" then d.nearbyFont=self.NormalizeTextFontKey and self:NormalizeTextFontKey(d.nearbyFont) or "default" end
+  if type(d.nearbyShowLevel)~="boolean" then d.nearbyShowLevel=false end
+  d.nearbyFontSize=A.Number(d.nearbyFontSize) and (d.nearbyFontSize==0 and 0 or math.max(8,math.min(20,math.floor(d.nearbyFontSize)))) or 0
+  if not ({none=true,outline=true,thick=true})[d.nearbyFontOutline] then d.nearbyFontOutline="none" end
   for key,spec in pairs({optionsScale={1,.65,1.25},nearbyScale={1,.7,1.5},nearbyRows={5,2,40},nearbyWidth={240,180,360},nearbyOpacity={.5,0,1}}) do
     local value=d[key]; if not A.Number(value) then value=spec[1] end
     d[key]=math.max(spec[2],math.min(spec[3],value))
@@ -37,9 +44,60 @@ function B:InterfaceAccent()
   end
   return r,g,b
 end
+-- Nearby list text: the game's standard font at 11 px with no outline unless the player picks otherwise.
+local NEARBY_OUTLINES={none="",outline="OUTLINE",thick="THICKOUTLINE"}
+-- The game's four built-in faces, plus any font a SharedMedia pack registers.
+local BUILTIN_FONTS={{key="arialn",name="Arial Narrow",path="Fonts\\ARIALN.TTF"},{key="morpheus",name="Morpheus",path="Fonts\\MORPHEUS.TTF"},{key="skurri",name="Skurri",path="Fonts\\SKURRI.TTF"}}
+local function sharedMedia()
+  local ok,lib=pcall(function() return LibStub and LibStub("LibSharedMedia-3.0",true) end)
+  if ok and type(lib)=="table" and type(lib.List)=="function" and type(lib.Fetch)=="function" then return lib end
+end
+function B:NearbyFonts()
+  local choices={{key="default",name=self.GameFontLabel and self:GameFontLabel() or "Game font"}}
+  for _,f in ipairs(BUILTIN_FONTS) do choices[#choices+1]={key=f.key,name=f.name} end
+  if type(UNIT_NAME_FONT)=="string" and self.NormalizeTextFontKey and self:NormalizeTextFontKey("names")=="names" then choices[#choices+1]={key="names",name="Unit-name font"} end
+  if type(DAMAGE_TEXT_FONT)=="string" and self.NormalizeTextFontKey and self:NormalizeTextFontKey("numbers")=="numbers" then choices[#choices+1]={key="numbers",name="Combat-number font"} end
+  local lsm=sharedMedia()
+  if lsm then
+    local ok,list=pcall(lsm.List,lsm,"font")
+    local seen={["Friz Quadrata TT"]=true,["Arial Narrow"]=true,["Morpheus"]=true,["Skurri"]=true}
+    if ok and type(list)=="table" then
+      for _,name in ipairs(list) do if type(name)=="string" and not seen[name] then seen[name]=true; choices[#choices+1]={key="lsm:"..name,name=name} end end
+    end
+  end
+  local d=self.db or {}
+  if type(d.nearbyFont)=="string" and d.nearbyFont:match("^lsm:") then
+    local found=false; for _,c in ipairs(choices) do if c.key==d.nearbyFont then found=true end end
+    if not found then choices[#choices+1]={key=d.nearbyFont,name=self:Text("%s (not installed)",d.nearbyFont:sub(5))} end
+  end
+  return choices
+end
+function B:NearbyFont()
+  local d=self.db or {}
+  local path=STANDARD_TEXT_FONT or "Fonts\\FRIZQT__.TTF"
+  local key=d.nearbyFont
+  if key=="names" and type(UNIT_NAME_FONT)=="string" then path=UNIT_NAME_FONT
+  elseif key=="numbers" and type(DAMAGE_TEXT_FONT)=="string" then path=DAMAGE_TEXT_FONT
+  elseif type(key)=="string" and key:match("^lsm:") then
+    local lsm=sharedMedia()
+    if lsm then local ok,p=pcall(lsm.Fetch,lsm,"font",key:sub(5),true); if ok and type(p)=="string" and p~="" then path=p end end
+  else for _,f in ipairs(BUILTIN_FONTS) do if f.key==key then path=f.path end end end
+  local size=A.Number(d.nearbyFontSize) and d.nearbyFontSize>0 and d.nearbyFontSize or 11
+  return path,size,NEARBY_OUTLINES[d.nearbyFontOutline] or ""
+end
+-- Rows grow with larger text so names are never clipped; 21 px fits the default 11 px font.
+function B:NearbyRowHeight()
+  local _,size=self:NearbyFont()
+  return math.max(21,size+10)
+end
+function B:NearbyTextSizes()
+  local choices={{key=0,name=self:Text("Default (11 px)")}}
+  for i=8,20 do choices[#choices+1]={key=i,name=tostring(i).." px"} end
+  return choices
+end
 function B:NearbyLayout()
   local d=self.db; local scale=d.nearbyScale or 1
   local height=A.Call(UIParent and UIParent.GetHeight,UIParent)
-  local maximum=A.Number(height) and math.max(2,math.floor((height/scale-72)/21)) or 40
+  local maximum=A.Number(height) and math.max(2,math.floor((height/scale-72)/self:NearbyRowHeight())) or 40
   return d.nearbyWidth or 240,math.min(d.nearbyRows or 5,maximum),scale
 end

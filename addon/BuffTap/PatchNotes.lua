@@ -2,6 +2,24 @@
 local _,B=...
 -- Keep the ten most recent releases within a 24 KiB content ceiling.
 B.PatchNotes={
+ {version="1.20.0",title="Smarter buffing, everywhere",items={
+  "Party and raid buffing is now on by default, and this update turns it on once for every character. Turn it off on the Groups page if you prefer.",
+  "Fixed the reminder popping up right after login or a loading screen before your buffs had loaded.",
+  "Smarter default timing: short buffs remind when they wear off, hour-long buffs 5 minutes early, and food and flasks no longer remind too soon.",
+  "A new Blacklist page: never offer buffs or invites to chosen players, whole guilds, or anyone on your ignore list. Right-click a name in the Nearby window to whisper, invite, ignore or blacklist.",
+  "Optional Nearby key under Customization: buff nearby players with a second key, so your main key covers only you and your group.",
+  "Mana reserve: stop offering buffs to players outside your group while your mana is below a level you choose, from 0 to 50%.",
+  "The Nearby window marks friends with a heart and guild members with a shield, and shows PvP flags and blacklisted players next to the name, so the buff icon always stays visible.",
+  "Buffs top up at ready checks, and long buffs top up a little earlier in dungeons and raids.",
+  "Consumable reminders can be limited to dungeons and raids, and a right-click dismiss can last 5, 15 or 30 minutes.",
+  "Optional: buff pets, and a short delay before solo thanks. Unending Breath and Water Breathing remind only while underwater, and Druids can add an Aquatic Form reminder.",
+  "Export and import settings on the Profiles page, even between classes. Diagnostics can capture debug output for you to copy into a bug report.",
+  "New icon effects: Shine, Ripple, Bounce and Orbit, plus an optional urgency colour and a flash-once mode.",
+  "A tidier settings window: page switches and shortcuts in the same place on every page, a Move BuffTap frames button, roomier Helpers, a taller Diagnostics box and smoother patch notes scrolling. Timing sliders now show the timing each buff really gets.",
+  "Any profile except the one you are using can be deleted, with a warning when other characters use it.",
+  "New smooth icons for the invite and request to join buttons.",
+  "Nearby window looks moved to Customization > Nearby window, with a new font, text size and outline choice from the game's fonts or any SharedMedia font. The Nearby page now shows how the window works.",
+  "New Show level option on the Nearby page puts each player's level before their name, like (28) Bob Loblaw."}},
  {version="1.19.3",title="Nearby window fixes",items={
   "Interface windows such as professions and bags now open on top of the Nearby window. Turn on Keep above other windows on the Nearby page for the old behaviour.",
   "Fixed the Nearby window jumping away from where you drop it when its scale is not 100%."}},
@@ -40,11 +58,7 @@ B.PatchNotes={
   "Nearby continues updating normally while players enter and leave view."}},
  {version="1.16.9",title="Directed solo thanks",items={
   "Solo thanks avoids sending a general emote when the recipient cannot be verified.",
-  "Debug information makes missed thank-you emotes easier to investigate."},thanks="Thank you for the reports and continued testing."},
- {version="1.16.8",title="Safer detection and clearer status",items={
-  "Improved solo-thanks identification and protection against misdirected emotes.",
-  "Improved cooldown recovery and clarified why a buff may be unavailable.",
-  "Expanded supported battleground self buffs while respecting restricted buff information."}}
+  "Debug information makes missed thank-you emotes easier to investigate."},thanks="Thank you for the reports and continued testing."}
 }
 function B:PatchNotesUnread()
   return self.profileDB and self.db.optionsPatchDot~=false and self.profileDB.global.patchNotesSeen~=self.version

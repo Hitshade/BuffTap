@@ -304,7 +304,7 @@ function B:ShowEditMovers()
     self.editNearby=self.editNearby or editMover("nearby","BuffTap Nearby — drag to move")
     local f=self.editNearby; local width,rows,scale=240,5,1
     if self.NearbyLayout then width,rows,scale=self:NearbyLayout() end
-    f:SetScale(A.Number(scale) and scale or 1); f:SetSize(width+24,29+rows*21)
+    f:SetScale(A.Number(scale) and scale or 1); f:SetSize(width+24,29+rows*(self.NearbyRowHeight and self:NearbyRowHeight() or 21))
     local nx,ny=A.Number(d.nearbyX) and d.nearbyX or 240,A.Number(d.nearbyY) and d.nearbyY or 0
     if self.PlaceNearbyFrame then self:PlaceNearbyFrame(f,nx,ny) else f:ClearAllPoints(); f:SetPoint("CENTER",UIParent,"CENTER",nx,ny) end; f:Show()
   elseif self.editNearby then self.editNearby:Hide() end

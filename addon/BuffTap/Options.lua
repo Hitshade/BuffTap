@@ -6,8 +6,8 @@ local ADDON,B=...
 local A=B.API
 local T=B.OptionsTheme
 local function L(key,...) return B:Text(key,...) end
-local TAB={Buffs=1,Groups=2,Target=3,Nearby=4,Consumables=5,Camping=6,Weapons=7,Appearance=8,Helpers=9,Profiles=10,Diagnostics=11,PatchNotes=12}
-local TAB_NAMES={L("Buffs"),L("Groups"),L("Target"),L("Nearby"),L("Consumables"),L("Camping"),L("Weapons"),L("Customization"),L("Helpers"),L("Profiles"),L("Diagnostics"),L("Patch notes")}
+local TAB={Buffs=1,Groups=2,Target=3,Nearby=4,Consumables=5,Camping=6,Weapons=7,Appearance=8,Helpers=9,Profiles=10,Diagnostics=11,PatchNotes=12,Blacklist=13}
+local TAB_NAMES={L("My buffs"),L("Groups"),L("Target"),L("Nearby"),L("Consumables"),L("Camping"),L("Weapons"),L("Customization"),L("Helpers"),L("Profiles"),L("Diagnostics"),L("Patch notes"),L("Blacklist")}
 local OPTIONS_WIDTH,OPTIONS_HEIGHT=932,900
 -- Page area inside the window: right of the 196 px sidebar, below the 120 px header, above the footer.
 B.OptionsPageLeft,B.OptionsPageTop,B.OptionsPageRight,B.OptionsPageBottom=208,-132,-12,40
@@ -71,6 +71,9 @@ local function selector(parent,text,x,y,width,choices,onSelect,searchable)
   local scrollable=searchable==true or searchable=="scroll"
   searchable=searchable==true
   local control,menu,render
+  -- Scrolling lists follow their box's width; searchable lists keep room for the search field.
+  local menuWidth=searchable and 340 or scrollable and math.max(width,160) or width
+  local visibleRows=searchable and 7 or 5
   control=flatButton(parent,text,x,y,width,function()
     if A.Combat() then return end
     if menu:IsShown() then menu:Hide(); return end
@@ -92,7 +95,7 @@ local function selector(parent,text,x,y,width,choices,onSelect,searchable)
     for _,entry in ipairs(all) do if query=="" or string.find(string.lower(entry.name),query,1,true) then entries[#entries+1]=entry end end
     local count=#entries
     local top=searchable and 34 or 4
-    menu:SetSize(scrollable and 340 or width,top+(scrollable and math.max(28,math.min(7,count)*28) or count*28)+4)
+    menu:SetSize(menuWidth,top+(scrollable and math.max(28,math.min(visibleRows,count)*28) or count*28)+4)
     if scrollable then
       menu.content:SetHeight(math.max(1,count*28)); menu.scroll:SetVerticalScroll(0)
       menu.empty:SetShown(count==0)
@@ -100,10 +103,12 @@ local function selector(parent,text,x,y,width,choices,onSelect,searchable)
     for _,row in ipairs(menu.rows) do row:Hide() end
     for i=1,count do
       local entry=entries[i]; local row=menu.rows[i]
-      if not row then row=flatButton(scrollable and menu.content or menu,"",4,-(scrollable and 0 or top)-(i-1)*28,(scrollable and 312 or width)-8,function(btn)
+      if not row then row=flatButton(scrollable and menu.content or menu,"",4,-(scrollable and 0 or top)-(i-1)*28,(scrollable and menuWidth-28 or width)-8,function(btn)
         if A.Combat() then return end
         onSelect(btn.choice); menu:Hide(); B:Options()
-      end); menu.rows[i]=row end
+      end); menu.rows[i]=row
+        local fs=row:GetFontString(); if fs then fs:ClearAllPoints(); fs:SetPoint("LEFT",8,0); fs:SetPoint("RIGHT",-6,0); fs:SetJustifyH("LEFT") end
+      end
       row.choice=entry.key; row:SetText((searchable and entry.source and L(entry.source)..": " or "")..L(entry.name))
       local selected=control:GetText()==row:GetText()
       local r,g,b=T.accent[1],T.accent[2],T.accent[3]
@@ -121,7 +126,7 @@ local function selector(parent,text,x,y,width,choices,onSelect,searchable)
   if scrollable then
     menu.scroll=CreateFrame("ScrollFrame",nil,menu,"UIPanelScrollFrameTemplate")
     menu.scroll:SetPoint("TOPLEFT",4,searchable and -34 or -4); menu.scroll:SetPoint("BOTTOMRIGHT",-28,4)
-    menu.content=CreateFrame("Frame",nil,menu.scroll); menu.content:SetSize(308,1); menu.scroll:SetScrollChild(menu.content)
+    menu.content=CreateFrame("Frame",nil,menu.scroll); menu.content:SetSize(menuWidth-32,1); menu.scroll:SetScrollChild(menu.content)
     menu.empty=label(menu.content,L("No matches"),8,-6,"GameFontDisableSmall"); menu.empty:Hide()
   end
   parent:HookScript("OnHide",function() menu:Hide() end)
@@ -175,6 +180,7 @@ end
 
 local function formatSeconds(value)
   value=math.floor((tonumber(value) or 0)+0.5)
+  if value<=0 then return L("When gone") end
   if value<60 then return L("%d sec",value) end
   local m=math.floor(value/60); local s=value%60
   if s==0 then return L("%d min",m) end
@@ -954,7 +960,7 @@ function B:ShowSuppliesOptions()
   self:Options(); self.options.selectTab(TAB.Consumables); self.options.selectConsumableView(true)
 end
 
-function B:CaptureBinding()
+function B:CaptureBinding(target)
   if A.Combat() then return end
   if not self.capture then
     local f=CreateFrame("Frame",nil,UIParent,"BackdropTemplate"); self.capture=f
@@ -963,6 +969,7 @@ function B:CaptureBinding()
     local logo=f:CreateTexture(nil,"ARTWORK"); logo:SetSize(88,88); logo:SetPoint("CENTER",0,78); logo:SetTexture(ICON_PATH)
     local hint=f:CreateFontString(nil,"OVERLAY","GameFontNormalLarge"); hint:SetPoint("CENTER",0,-8); hint:SetJustifyH("CENTER")
     hint:SetText(L("Set BuffTap binding").."\n\n"..L("Press a key, middle/side mouse button, or scroll wheel").."\n"..L("Left/right click requires Shift, Ctrl, or Alt").."\n|cff8aa5b8"..L("Escape cancels").."|r")
+    f.hint=hint; f.hintRest=(hint:GetText() or ""):match("^[^\n]*(.*)$") or ""
     local function bind(key)
       if A.Combat() then f:Hide(); return end
       if IsShiftKeyDown() then key="SHIFT-"..key end
@@ -970,7 +977,11 @@ function B:CaptureBinding()
       if IsAltKeyDown() then key="ALT-"..key end
       local keys=B:NormalizeBindings({key})
       if #keys==0 then return end
-      B.db.keys=keys; f:Hide(); B.appearance=nil; B:RequestRefresh("binding",0); B:Status(false)
+      -- One key cannot drive both buttons: the newest choice wins and is removed from the other list.
+      local other=f.target=="nearby" and B.db.keys or B.db.nearbyKeys or {}
+      for i=#other,1,-1 do if other[i]==keys[1] then table.remove(other,i) end end
+      if f.target=="nearby" then B.db.nearbyKeys=keys; if B.nearbyFrame then B:UpdateNearbyWindow() end else B.db.keys=keys end
+      f:Hide(); B.appearance=nil; B:RequestRefresh("binding",0); B:Status(false)
       if B.options and B.options:IsShown() then B:Options() end
       if B.onboarding and B.onboarding:IsShown() and B.OnboardingFeaturesPage then B:OnboardingFeaturesPage() end
     end
@@ -989,6 +1000,7 @@ function B:CaptureBinding()
     f:SetScript("OnMouseWheel",function(_,delta) bind(delta>0 and "MOUSEWHEELUP" or "MOUSEWHEELDOWN") end)
     f:RegisterEvent("PLAYER_REGEN_DISABLED"); f:SetScript("OnEvent",function() f:Hide() end)
   end
+  self.capture.target=target
   self.capture:Show()
 end
 
@@ -1068,7 +1080,7 @@ function B:BuildHelperPage(parent)
     {"helperCoverage",L("Show missing party buffs"),L("Shows buffs your five-player party may be missing and who might provide them. Information only: no casting or chat messages.")},
     {"helperDiscovery",L("Find unrecognized consumables"),L("Lists bag consumables missing from BuffTap's supported list for review. It does not add or use them. View the report in Diagnostics.")},
   }
-  card(gr,364,-74,340,212)
+  card(gr,364,-74,340,252)
   T.SectionTitle(label(gr,L("Conveniences"),380,-88,T.fonts.Section))
   for i,spec in ipairs(settings) do
     local key=spec[1]
@@ -1081,6 +1093,9 @@ function B:BuildHelperPage(parent)
     end)
     addHelp(f.checks[key],spec[2],spec[3])
   end
+  label(gr,L("Dismiss lasts"),380,-292,"GameFontHighlightSmall",130)
+  f.dismissMinutes=selector(gr,"",520,-286,170,function() return B:DismissChoices() end,function(v) B.db.helperDismissMinutes=v; B:Options() end)
+  addHelp(f.dismissMinutes,L("Dismiss a reminder for now"),L("How long a right-click dismiss lasts. Restore reminders brings everything back sooner."))
   parent.pauseResting=check(gr,"Pause reminders while resting",378,-233,function(c)
     if A.Combat() then return end
     setAndRefresh("pauseResting",c:GetChecked()==true); B:InvalidateSupplies(false); B:Refresh(false); B:Options()
@@ -1091,7 +1106,7 @@ function B:BuildHelperPage(parent)
     setAndRefresh("pvpProtection",c:GetChecked()==true); B:Refresh(false); B:Options()
   end)
   addHelp(parent.pvpProtection,"Prevent accidental PvP flagging","Skip flagged or unreadable recipients while unflagged or leaving PvP. Includes group spells. Battlegrounds and arenas are exempt.")
-  card(th,12,-74,340,212)
+  card(th,12,-74,340,252)
   T.SectionTitle(label(th,L("Solo thanks"),28,-88,T.fonts.Section))
   label(th,L("Say thanks when another player buffs you while you play solo."),28,-108,T.fonts.Sub,308)
   f.checks.helperThanks=check(th,L("Thank players who buff me solo"),28,-150,function(c)
@@ -1105,14 +1120,19 @@ function B:BuildHelperPage(parent)
     B.db.helperThanksResting=c:GetChecked()==true; B.helperThankSeen=nil; B:ObserveSoloThanks(true); B:Options()
   end)
   addHelp(f.thanksResting,L("Keep thanking while resting"),L("Thanks continue in cities and inns even when Pause reminders while resting is on."))
-  label(th,L("Solo response emote"),30,-212,"GameFontNormal",300)
-  f.thankEmote=selector(th,"",28,-232,310,function() return B:SoloThankEmotes() end,function(choice)
+  label(th,L("Solo response emote"),30,-246,"GameFontNormal",200)
+  label(th,L("Delay"),240,-246,"GameFontNormal",98)
+  f.thankDelay=selector(th,"",238,-266,100,function() return B:ThankDelayChoices() end,function(v) B.db.helperThankDelay=v; B:Options() end)
+  addHelp(f.thankDelay,L("Delay"),L("Wait a moment before thanking, so it feels less automatic."))
+  f.thankEmote=selector(th,"",28,-266,202,function() return B:SoloThankEmotes() end,function(choice)
     B.db.helperThankEmote=choice
     -- Configuration only: never sends an emote or resets cooldowns.
   end,"scroll")
   addHelp(f.thankEmote,L("Solo response emote"),L("Directed reactions only. No sitting, sleeping or looping animations. Changing this never sends an emote."))
   -- Class readiness keeps its authored coordinates; the frame is moved up as one block below Tracking.
-  f.readiness=CreateFrame("Frame",nil,f); f.readiness:SetSize(712,1); f.readiness:SetPoint("TOPLEFT",0,-176)
+  f.readiness=CreateFrame("Frame",nil,f); f.readiness:SetSize(712,1); f.readiness:SetPoint("TOPLEFT",0,-216)
+  -- The top two cards are 40 px taller than before; the sections below move down with them.
+  q:ClearAllPoints(); q:SetPoint("TOPLEFT",0,-40); tr:ClearAllPoints(); tr:SetPoint("TOPLEFT",0,-40)
   -- Buff requests (Nearby): whisper a nearby player for a class buff you are missing. Off by default.
   f.requests=q
   card(q,12,-298,692,148)
@@ -1272,8 +1292,9 @@ function B:BuildHelperPage(parent)
   addHelp(f.treasure,L("Keep Find Treasure active"),L("Restore Dwarf treasure tracking through your normal binding. Independent of your gathering tracker."))
   f.emptyTracker=label(tr,L("No learned gathering tracker is available on this character."),254,-565,"GameFontDisableSmall",440)
   -- Page actions sit in the header, beside the description, so the body never needs to scroll.
-  f.restoreButton=button(f,L("Restore reminders"),402,-34,146,function() B:RestoreHelpers(); B:Options() end)
-  f.reportButton=button(f,L("View discovery report"),556,-34,148,function() B:ShowDiscoveryReport() end)
+  f.restoreButton=button(f,L("Restore reminders"),402,-38,146,function() B:RestoreHelpers(); B:Options() end)
+  f.reportButton=button(f,L("View discovery report"),556,-38,148,function() B:ShowDiscoveryReport() end)
+  f.restoreButton:SetHeight(24); f.reportButton:SetHeight(24)
 end
 
 function B:UpdateHelperOptions()
@@ -1284,6 +1305,8 @@ function B:UpdateHelperOptions()
   if not f.requestMessage:HasFocus() then f.requestMessage:SetText(self.db.requestMessage~="" and self.db.requestMessage or self:Text("Hi! Could I get %s, please? Thank you!")) end
   for key,c in pairs(f.requestChecks) do c:SetChecked(self:RequestEnabled(self:FindBuff(key) or {key=key})); c:SetEnabled(self.db.nearbyRequests==true) end
   f.thanksResting:SetChecked(self.db.helperThanksResting==true)
+  f.thankDelay:SetText(self:ChoiceName(self:ThankDelayChoices(),self.db.helperThankDelay or 0))
+  f.dismissMinutes:SetText(self:ChoiceName(self:DismissChoices(),self.db.helperDismissMinutes or 0)); f.dismissMinutes:SetEnabled(self.db.helperDismiss==true)
   local classCoords=CLASS_ICON_TCOORDS and CLASS_ICON_TCOORDS[class]
     or (warlock and {.75,1,.25,.5} or paladin and {0,.25,.5,.75} or class=="HUNTER" and {0,.25,.25,.5})
   if classCoords then f.readinessIcon:SetTexCoord(unpack(classCoords)) end
@@ -1587,9 +1610,9 @@ function B:Options()
     f.enable=check(f,L("Enable BuffTap"),0,0,function(c) setAndRefresh("enabled",c:GetChecked()==true) end)
     local enableWidth=f.enable.Text and f.enable.Text:GetStringWidth(); if type(enableWidth)~="number" then enableWidth=100 end
     f.enable:ClearAllPoints(); f.enable:SetPoint("TOPRIGHT",-(18+14+enableWidth),-52)
-    f.statusText=label(f,"",0,0,"GameFontHighlight",420); f.statusText:SetWordWrap(false); f.statusText:SetJustifyH("RIGHT")
-    f.statusText:ClearAllPoints(); f.statusText:SetPoint("TOPRIGHT",-18,-82)
-    f.saveHint=label(f,L("Checkboxes, lists and sliders save immediately. Numeric fields: Enter to save; Escape to cancel."),B.OptionsPageLeft+4,-879,"GameFontDisableSmall",700)
+    -- The live status sits in the footer bar, where it has the full window width.
+    f.statusText=label(f,"",0,0,"GameFontHighlightSmall",860); f.statusText:SetWordWrap(false); f.statusText:SetJustifyH("CENTER")
+    f.statusText:ClearAllPoints(); f.statusText:SetPoint("TOP",f,"TOPLEFT",466,-879)
 
     f.tabs={}; f.pages={}
     local names=TAB_NAMES
@@ -1609,14 +1632,17 @@ function B:Options()
       if index==TAB.Camping or B.campOptionsWasOpen then B.campOptionsWasOpen=index==TAB.Camping; B:UpdateCamping() end
       if index==TAB.Appearance and B.UpdateOptionsPreviews then B:UpdateOptionsPreviews() end
       if index==TAB.Profiles and f.profiles then B:SaveClassSetup(); B:UpdateProfileOptions() end
+      if index==TAB.Blacklist then B:UpdateBlacklistPage() end
     end
     f.selectTab=setTab
     f.navBackground=f.sidebarFill
-    local navIcons={"Buffs","Groups","Target","Nearby","Consumables","Camping","Weapons","Customization","Helpers","Profiles","Diagnostics","PatchNotes"}
+    local navIcons={"Buffs","Groups","Target","Nearby","Consumables","Camping","Weapons","Customization","Helpers","Profiles","Diagnostics","PatchNotes","Blacklist"}
     f.navIcons=navIcons
+    -- Blacklist keeps tab number 13 but sits under Nearby in the sidebar.
+    local slots={1,2,3,4,6,7,8,9,10,11,12,13,5}
     for i,name in ipairs(names) do
       local idx=i
-      local t=flatButton(f,name,10,-136-(i-1)*38,177,function() setTab(idx) end)
+      local t=flatButton(f,name,10,-136-(slots[i]-1)*38,177,function() setTab(idx) end)
       t:SetSize(177,34); t.navStyle="sidebar"; f.tabs[i]=t
       t.icon=t:CreateTexture(nil,"ARTWORK"); t.icon:SetSize(18,18); t.icon:SetPoint("LEFT",14,0); t.icon:SetTexture(T.media.."Nav"..navIcons[i])
       T.Navigation(t,false)
@@ -1631,7 +1657,7 @@ function B:Options()
     f.navHelp:ClearAllPoints(); f.navHelp:SetPoint("BOTTOMLEFT",16,44); f.navHelp:SetHeight(28)
 
     f.setupBadge=label(f,"",0,0,"GameFontDisableSmall",420); f.setupBadge:SetJustifyH("RIGHT")
-    f.setupBadge:ClearAllPoints(); f.setupBadge:SetPoint("TOPRIGHT",-18,-101)
+    f.setupBadge:ClearAllPoints(); f.setupBadge:SetPoint("TOPRIGHT",-18,-84)
     -- BUFFS PAGE
     local buffs=panel(f); f.pages[TAB.Buffs]=buffs
     local buffsPage=buffs; buffs=CreateFrame("Frame",nil,buffsPage); f.buffContent=buffs; buffs:SetPoint("TOPLEFT",0,-60); buffs:SetPoint("BOTTOMRIGHT",0,0)
@@ -1713,7 +1739,7 @@ function B:Options()
     local timingLabel=buffs:CreateFontString(nil,"OVERLAY","GameFontNormal")
     timingLabel:SetPoint("BOTTOMLEFT",28,88); timingLabel:SetText(L("Default rebuff threshold"))
     local timingHint=buffs:CreateFontString(nil,"OVERLAY","GameFontDisableSmall")
-    timingHint:SetPoint("LEFT",timingLabel,"RIGHT",12,0); timingHint:SetText(L("Used until a buff is customized."))
+    timingHint:SetPoint("LEFT",timingLabel,"RIGHT",12,0); timingHint:SetText(L("Used until a buff is customized. Hour-long buffs refresh 5 minutes early; buffs under 2 minutes remind when they wear off.")); timingHint:SetWidth(470); timingHint:SetJustifyH("LEFT")
     f.rebuffSlider=rebuffSlider(buffs); f.rebuffSlider:SetPoint("BOTTOMLEFT",28,54)
     local resetBuffs=button(buffs,L("Reset buffs"),0,0,100,function()
       if not A.Combat() then B:EditorSettings("buffs").buffs={}; B:EditorSettings("buffs").priorities={}; B:EditorSettings("buffs").buffSeconds={}; B:Refresh(); B:Options() end
@@ -1735,10 +1761,18 @@ function B:Options()
       f.groupIntro=label(groups,"",18,-38,"GameFontDisableSmall",680)
       f.groupEnable=check(groups,L("Enable party / raid"),18,-58,function(s) setAndRefresh("group",s:GetChecked()==true); B:Options() end)
       f.smartGroup=check(groups,L("Use group spells automatically"),290,-58,function(s) setAndRefresh("smartGroup",s:GetChecked()==true); B:Options() end)
-      local shared=CreateFrame("Frame",nil,groups); shared:SetPoint("TOPLEFT",0,-112); shared:SetSize(704,80); shared:Show()
+      f.buffPets=check(groups,L("Buff pets"),540,-58,function(s) if not A.Combat() then B.db.buffPets=s:GetChecked()==true; B:InvalidateRoster(); B:RequestRefresh("buff pets",0) end end)
+      addHelp(f.buffPets,"Buff pets","Offer single-target buffs such as Mark of the Wild to your pet and your group's pets. Blessings and group spells stay with players.")
+      f.readyTopUp=check(groups,L("Top up at ready checks"),0,0,function(s) if not A.Combat() then B.db.readyCheckTopUp=s:GetChecked()==true end end)
+      -- Shared group settings card, three rows: All buffs; Group threshold with group spells; pets and ready checks.
+      f.smartGroup:ClearAllPoints(); f.smartGroup:SetPoint("TOPLEFT",groups,"TOPLEFT",480,-115)
+      f.buffPets:ClearAllPoints(); f.buffPets:SetPoint("TOPLEFT",groups,"TOPLEFT",18,-152)
+      f.readyTopUp:ClearAllPoints(); f.readyTopUp:SetPoint("TOPLEFT",groups,"TOPLEFT",480,-152)
+      addHelp(f.readyTopUp,"Top up at ready checks","When a ready check starts, buffs with less than half their time left count as missing, so you can refresh them before the pull.")
+      local shared=CreateFrame("Frame",nil,groups); shared:SetPoint("TOPLEFT",0,-72); shared:SetSize(704,80); shared:Show()
       f.sharedGroups=shared
-      card(groups,12,-86,698,106)
-      T.SectionTitle(label(groups,L("Shared group settings"),26,-98,T.fonts.Section))
+      card(groups,12,-46,698,146)
+      T.SectionTitle(label(groups,L("Shared group settings"),26,-58,T.fonts.Section))
       line(groups,-204)
       f.perBuffHeading=label(groups,L("Per-buff customization"),18,-218,"GameFontNormalLarge")
       f.roleGuess=check(groups,L("Guess tanks from stance"),300,-213,function(c) if not A.Combat() then B.db.roleGuess=c:GetChecked()==true; B.roleCache=nil; B:InvalidateAura(); B:RequestRefresh("role guess",0) end end)
@@ -1819,7 +1853,7 @@ function B:Options()
     label(nearby,"Shift-left-click the minimap icon to toggle the window. Drag its header when unlocked. The window hides during combat.",18,-562,"GameFontDisableSmall",660)
     card(target,12,-72,698,90)
     T.SectionTitle(label(target,"Default target refresh",26,-86,T.fonts.Section))
-    label(target,"Refresh passing players earlier without changing your party or raid thresholds.",26,-104,"GameFontDisableSmall",660)
+    label(target,"Refresh passing players earlier. Buffs under 2 minutes still wait until they wear off.",26,-104,"GameFontDisableSmall",660)
     f.targetDefaultSlider=compactSlider(target,30,1800,30,300,formatSeconds,function(_,value)
       B.db.targetSeconds=value; B:InvalidateAura("target"); B:RequestRefresh("target refresh default",0.08)
     end)
@@ -1874,6 +1908,7 @@ function B:Options()
     self:BuildSupplyOptions(consumePanel)
     local buffView=flatButton(consumePanel,"Buff items",18,-8,104,function() f.selectConsumableView(false) end)
     local supplyView=flatButton(consumePanel,L("Supplies"),132,-8,104,function() f.selectConsumableView(true) end)
+    f.consumableViewButtons={buffView,supplyView}
     f.selectConsumableView=function(supplies)
       f.consumableBody:SetShown(not supplies); f.supplyBody:SetShown(supplies)
       T.Navigation(buffView,not supplies); T.Navigation(supplyView,supplies)
@@ -1888,6 +1923,9 @@ function B:Options()
     end)
     f.consumeBuild=label(consume,"Data: -",410,-77,"GameFontDisableSmall",260)
     f.consumableRestPause=check(consume,L("Pause while resting"),18,-58,function(c) if not A.Combat() then B.db.consumablesPauseResting=c:GetChecked()==true; B:RequestRefresh("consumable resting pause",0) end end)
+    f.consumableInstanceOnly=check(consume,L("Only in dungeons and raids"),0,0,function(c) if not A.Combat() then B.db.consumablesInstanceOnly=c:GetChecked()==true; B:RequestRefresh("consumable instance only",0) end end)
+    f.consumableInstanceOnly:ClearAllPoints(); f.consumableInstanceOnly:SetPoint("TOPLEFT",f.consumableRestPause,"TOPLEFT",200,0)
+    addHelp(f.consumableInstanceOnly,"Only in dungeons and raids","Skip food, flask, elixir and utility reminders outside dungeons and raids. Buff reminders continue everywhere.")
     addHelp(f.consumableRestPause,"Pause while resting","Skip food, flask, elixir and utility reminders in cities and inns, so you do not use them while resting. Buff reminders continue as usual.")
     line(consume,-108)
     f.consumableRows={}
@@ -1920,7 +1958,7 @@ function B:Options()
     end
     local consumeFooterY=-116-(#(B.ConsumableFamilies or {}))*80-4
 
-    f.consumeRetry=button(consume,L("Retry reminders"),18,consumeFooterY-48,154,function() B:RetryConsumableReminders(); B:Options() end)
+    f.consumeRetry=button(consume,L("Retry reminders"),528,consumeFooterY-48,154,function() B:RetryConsumableReminders(); B:Options() end)
     addHelp(f.consumeRetry,L("Retry reminders"),L("Restarts item loading and paused consumable reminders. Changed item effects remain blocked."))
     f.consumePauseStatus=label(consume,"",186,consumeFooterY-53,"GameFontHighlightSmall",496)
 
@@ -1953,7 +1991,7 @@ function B:Options()
     f.campingSize=compactSlider(camping,24,96,4,160,function(v) return tostring(v).." px" end,function(_,v) campChange("campSize",v) end); f.campingSize:SetPoint("TOPLEFT",110,-274)
     label(camping,"Opacity",364,-275,"GameFontHighlightSmall")
     f.campingOpacity=compactSlider(camping,25,100,5,160,function(v) return tostring(v).."%" end,function(_,v) campChange("campOpacity",v/100) end); f.campingOpacity:SetPoint("TOPLEFT",456,-274)
-    f.campingEffect=selector(camping,"",18,-310,240,function() return {{key="none",name="Effect: None"},{key="soft",name="Effect: Soft glow"},{key="pulse",name="Effect: Pulse"},{key="pixel",name="Effect: Pixel border"},{key="autocast",name="Effect: Sparkles"},{key="proc",name="Effect: Spell glow"}} end,function(v) campChange("campEffectStyle",v) end)
+    f.campingEffect=selector(camping,"",18,-310,240,function() return {{key="none",name="Effect: None"},{key="soft",name="Effect: Soft glow"},{key="pulse",name="Effect: Pulse"},{key="pixel",name="Effect: Pixel border"},{key="autocast",name="Effect: Sparkles"},{key="proc",name="Effect: Spell glow"},{key="shine",name="Effect: Shine"},{key="ripple",name="Effect: Ripple"},{key="bounce",name="Effect: Bounce"},{key="orbit",name="Effect: Orbit"}} end,function(v) campChange("campEffectStyle",v) end)
     f.campingColor=selector(camping,"",274,-310,196,function() return {{key="gold",name="Gold"},{key="cyan",name="Cyan"},{key="green",name="Green"},{key="red",name="Red"},{key="white",name="White"}} end,function(v) campChange("campEffectColor",v) end)
     f.campingSpeed=selector(camping,"",486,-310,196,function() return {{key="slow",name="Slow"},{key="normal",name="Normal"},{key="fast",name="Fast"}} end,function(v) campChange("campEffectSpeed",v) end)
     addHelp(f.campingColor,"Effect color","Changes only the camp reminder effect, not the regular buff icon.")
@@ -2006,12 +2044,16 @@ function B:Options()
       B:InitDB(); B.appearance=nil; B:RequestRefresh("appearance",0); B:Options()
     end)
     f.soundCheck=check(app,L("Enable reminder sound"),18,-510,function(s) setAndRefresh("sound",s:GetChecked()==true) end)
-    f.effectButton=selector(app,"",18,-200,240,function() return {{key="none",name="Effect: None"},{key="soft",name="Effect: Soft glow"},{key="pulse",name="Effect: Pulse"},{key="pixel",name="Effect: Pixel border"},{key="autocast",name="Effect: Sparkles"},{key="proc",name="Effect: Spell glow"}} end,function(v) setAndRefresh("effectStyle",v) end)
+    f.effectButton=selector(app,"",18,-200,240,function() return {{key="none",name="Effect: None"},{key="soft",name="Effect: Soft glow"},{key="pulse",name="Effect: Pulse"},{key="pixel",name="Effect: Pixel border"},{key="autocast",name="Effect: Sparkles"},{key="proc",name="Effect: Spell glow"},{key="shine",name="Effect: Shine"},{key="ripple",name="Effect: Ripple"},{key="bounce",name="Effect: Bounce"},{key="orbit",name="Effect: Orbit"}} end,function(v) setAndRefresh("effectStyle",v) end)
     f.effectColorButton=selector(app,"",274,-200,196,function() return {{key="gold",name="Gold"},{key="cyan",name="Cyan"},{key="green",name="Green"},{key="red",name="Red"},{key="white",name="White"}} end,function(v) setAndRefresh("effectColor",v) end)
     f.effectSpeedButton=selector(app,"",486,-200,196,function() return {{key="slow",name="Slow"},{key="normal",name="Normal"},{key="fast",name="Fast"}} end,function(v) setAndRefresh("effectSpeed",v) end)
     addHelp(f.effectButton,"Icon effect","Choose a border or glow. Effects stop when the reminder is hidden. Unsupported effects use a soft glow.")
     addHelp(f.effectColorButton,"Effect color","Changes the icon effect color.")
     addHelp(f.effectSpeedButton,"Effect speed","Changes the animation speed.")
+    f.effectUrgency=check(app,L("Urgency colour"),18,-600,function(c) setAndRefresh("effectUrgency",c:GetChecked()==true) end)
+    addHelp(f.effectUrgency,"Urgency colour","The effect turns amber in the last half of the refresh window and red once the buff is gone.")
+    f.effectOnce=check(app,L("Flash once, then settle"),18,-630,function(c) setAndRefresh("effectOnce",c:GetChecked()==true) end)
+    addHelp(f.effectOnce,"Flash once, then settle","Plays the effect for a few seconds when a reminder appears, then keeps a calm glow. Good if constant motion is distracting.")
     f.buffNameCheck=check(app,L("Show buff name"),18,-236,function(s) setAndRefresh("showBuffName",s:GetChecked()==true) end)
     f.targetNameCheck=check(app,L("Show buff recipient"),364,-236,function(s) setAndRefresh("showTargetName",s:GetChecked()==true) end)
     addHelp(f.targetNameCheck,"Buff recipient","Shows the name of whoever BuffTap is about to buff, including you when the current action is a self buff.")
@@ -2080,11 +2122,83 @@ function B:Options()
     local profiles=panel(f); f.pages[TAB.Profiles]=profiles
     self:BuildProfileOptions(profiles,{label=label,button=button,check=check,selector=selector})
 
+    -- BLACKLIST PAGE: players and guilds BuffTap never offers buffs or invites to.
+    local black=panel(f); f.pages[TAB.Blacklist]=black
+    label(black,L("Blacklist"),18,-16,"GameFontNormalLarge")
+    label(black,"BuffTap never offers buffs or invites to these players or guilds. Your own group is not affected.",18,-42,"GameFontDisableSmall",680)
+    card(black,12,-74,692,118)
+    T.SectionTitle(label(black,L("Add to blacklist"),28,-88,T.fonts.Section))
+    f.blackInput=editbox(black,30,-114,240,false); f.blackInput:SetMaxLetters(64)
+    local function addTyped(kind) if B:SetBlocked(kind,f.blackInput:GetText(),true) then f.blackInput:SetText(""); f.blackInput:ClearFocus() end end
+    f.blackInput:SetScript("OnEnterPressed",function() addTyped("player") end)
+    f.blackInput:SetScript("OnEscapePressed",function(s) s:ClearFocus() end)
+    local addPlayer=button(black,L("Add player"),284,-112,130,function() addTyped("player") end)
+    addHelp(addPlayer,"Add player","Type a character's first name. Capitals do not matter.")
+    local addGuild=button(black,L("Add guild"),422,-112,130,function() addTyped("guild") end)
+    addHelp(addGuild,"Add guild","Type the guild name exactly as the game shows it, including spaces, accents and special characters. Capitals do not matter. Block target's guild copies the name for you.")
+    f.blackTarget=button(black,L("Block target"),284,-148,130,function()
+      local name=A.Call(UnitName,"target")
+      if A.Call(UnitIsPlayer,"target")==true and A.Text(name) then B:SetBlocked("player",name,true) end
+    end)
+    f.blackTargetGuild=button(black,L("Block target's guild"),422,-148,268,function()
+      local guild=A.Call(GetGuildInfo,"target")
+      if A.Text(guild) and guild~="" then B:SetBlocked("guild",guild,true) end
+    end)
+    card(black,12,-206,692,104)
+    T.SectionTitle(label(black,L("Rules"),28,-220,T.fonts.Section))
+    f.blackIgnored=check(black,L("Also skip players on my ignore list"),28,-244,function(c)
+      if A.Combat() then return end
+      B.db.blockIgnored=c:GetChecked()==true; B:ApplyBlacklist()
+    end)
+    addHelp(f.blackIgnored,"Also skip players on my ignore list","Players on your game ignore list are treated as blacklisted. They are not added to the lists below.")
+    f.blackTargets=check(black,L("Apply to players I target myself"),28,-274,function(c)
+      if A.Combat() then return end
+      B.db.blacklistTargets=c:GetChecked()==true; B:ApplyBlacklist()
+    end)
+    addHelp(f.blackTargets,"Apply to players I target myself","On: friendly target buffing skips blacklisted players too. Off: the blacklist only affects the Nearby window.")
+    f.blackInstances=check(black,L("Ignore the blacklist in dungeons and raids"),374,-244,function(c)
+      if A.Combat() then return end
+      B.db.blacklistInInstances=c:GetChecked()~=true; B:ApplyBlacklist()
+    end)
+    addHelp(f.blackInstances,"Ignore the blacklist in dungeons and raids","Useful when a blacklisted player ends up in your dungeon or raid. Your own group is never affected either way.")
+    label(black,"Your own party and raid are never affected.",400,-280,"GameFontDisableSmall",290)
+    f.blackLists={}
+    for i,kind in ipairs({"player","guild"}) do
+      local x=i==1 and 12 or 364
+      card(black,x,-324,340,330)
+      local list={kind=kind,rows={}}
+      list.title=label(black,"",x+16,-338,T.fonts.Section); T.SectionTitle(list.title)
+      list.scroll=CreateFrame("ScrollFrame",nil,black,"UIPanelScrollFrameTemplate")
+      list.scroll:SetPoint("TOPLEFT",x+12,-362); list.scroll:SetSize(296,280); list.scroll:Show()
+      list.child=CreateFrame("Frame",nil,list.scroll); list.child:SetSize(296,280); list.scroll:SetScrollChild(list.child)
+      list.empty=label(black,kind=="player" and L("No players blacklisted.") or L("No guilds blacklisted."),x+18,-368,"GameFontDisable",300)
+      f.blackLists[i]=list
+    end
+    function f.blackRow(list,index)
+      local row=list.rows[index]
+      if row then return row end
+      row=CreateFrame("Frame",nil,list.child); row:SetSize(296,30); row:SetPoint("TOPLEFT",0,-(index-1)*32)
+      row.text=label(row,"",8,-8,"GameFontHighlight",190)
+      row.remove=button(row,L("Remove"),200,-3,90,function()
+        if row.name and not A.Combat() then B:SetBlocked(list.kind,row.name,false) end
+      end)
+      list.rows[index]=row; return row
+    end
+
     local diag=panel(f); f.pages[TAB.Diagnostics]=diag
     label(diag,L("Diagnostics & performance"),18,-16,"GameFontNormalLarge")
     f.diagVersion=label(diag,"",550,-20,"GameFontHighlightSmall",144)
     f.diagVersion:SetJustifyH("RIGHT")
-    button(diag,L("Check now"),18,-546,116,function() if not A.Combat() then B:Refresh(true); B:Options() end end)
+    -- Run a debug command and show its output in the copyable box instead of chat.
+    label(diag,L("Capture"),268,-82,"GameFontHighlightSmall",70)
+    for i,spec in ipairs({{"debug","Debug"},{"status","Status"},{"nearby","Nearby"},{"supplies","Supplies"}}) do
+      button(diag,L(spec[2]),330+(i-1)*94,-76,86,function() if not A.Combat() then B:ShowDiagnosticsReport(spec[1]) end end)
+    end
+    T.Variant(button(diag,L("Copy for a report"),18,-684,180,function() if not A.Combat() then B:ShowDiagnosticsReport("diagnostics") end end),"primary")
+    f.diagHideNames=check(diag,L("Hide player names"),218,-686,function(c) B.reportHideNames=c:GetChecked()==true end)
+    addHelp(f.diagHideNames,"Hide player names","Replaces the names BuffTap can see with Player1, Player2 and so on in captured text.")
+    f.diagPauseNotes=check(diag,L("Explain pauses in chat"),440,-686,function(c) B.db.pauseNotes=c:GetChecked()==true end)
+    addHelp(f.diagPauseNotes,"Explain pauses in chat","When reminders stop because the game is not sharing buff information, say so once per zone.")
     label(diag,"Core scanning is event-driven. Profiling is optional and lasts only for this game session.",18,-42,"GameFontDisableSmall",680)
     f.profileCheck=check(diag,L("Measure refresh cost"),18,-76,function(c)
       B.profileEnabled=c:GetChecked()==true; B.profileStats=nil
@@ -2092,24 +2206,24 @@ function B:Options()
       B:Options()
     end)
     addHelp(f.profileCheck,"Refresh profiler","Disabled by default. When enabled, BuffTap measures only its own refresh duration with debugprofilestop().")
-    card(diag,12,-108,698,330)
+    card(diag,12,-108,698,484)
     f.diagScroll=CreateFrame("ScrollFrame",nil,diag,"UIPanelScrollFrameTemplate")
-    f.diagScroll:SetPoint("TOPLEFT",18,-116); f.diagScroll:SetSize(654,314); f.diagScroll:Show()
-    f.diagContent=CreateFrame("Frame",nil,f.diagScroll); f.diagContent:SetSize(638,314)
+    f.diagScroll:SetPoint("TOPLEFT",18,-116); f.diagScroll:SetSize(654,468); f.diagScroll:Show()
+    f.diagContent=CreateFrame("Frame",nil,f.diagScroll); f.diagContent:SetSize(638,468)
     f.diagScroll:SetScrollChild(f.diagContent)
     f.diagText=label(f.diagContent,"",0,0,"GameFontHighlightSmall",638); f.diagText:SetSpacing(3); f.diagText:Show()
-    button(diag,L("Refresh diagnostics"),18,-450,142,function()
+    button(diag,L("Refresh diagnostics"),18,-604,142,function()
       if not A.Combat() then f.discoveryScroll:Hide(); f.diagScroll:Show(); f.diagText:Show(); f.diagScroll:SetVerticalScroll(0); B:Refresh(true); B:Options() end
     end)
-    button(diag,L("Print to chat"),170,-450,108,function() B:Status(true); B:Options() end)
-    button(diag,L("Reset metrics"),288,-450,110,function()
+    button(diag,L("Print to chat"),170,-604,108,function() B:Status(true); B:Options() end)
+    button(diag,L("Reset metrics"),288,-604,110,function()
       B.profileStats=nil; if B.profileEnabled then B:ResetStats() else B.stats=nil end; B:Options()
     end)
 
     local scroll=CreateFrame("ScrollFrame",nil,diag,"UIPanelScrollFrameTemplate")
-    scroll:SetPoint("TOPLEFT",18,-116); scroll:SetSize(654,314); scroll:Hide(); f.discoveryScroll=scroll
+    scroll:SetPoint("TOPLEFT",18,-116); scroll:SetSize(654,468); scroll:Hide(); f.discoveryScroll=scroll
     local report=CreateFrame("EditBox",nil,scroll); report:SetMultiLine(true); report:SetAutoFocus(false)
-    report:SetFontObject("GameFontHighlightSmall"); report:SetWidth(638); report:SetHeight(314)
+    report:SetFontObject("GameFontHighlightSmall"); report:SetWidth(638); report:SetHeight(468)
     report:SetScript("OnEscapePressed",function(control) control:ClearFocus() end)
     scroll:SetScrollChild(report); f.discoveryReport=report
     f.reportMeasure=label(diag,"",0,0,"GameFontHighlightSmall",638); f.reportMeasure:Hide()
@@ -2117,15 +2231,15 @@ function B:Options()
       local text=report:GetText() or ""; f.reportMeasure:SetText(text)
       local height=f.reportMeasure:GetStringHeight()
       if type(height)~="number" then local _,lines=text:gsub("\n",""); height=(lines+1)*14 end
-      report:SetHeight(math.max(314,height+12))
+      report:SetHeight(math.max(468,height+12))
     end
     report:SetScript("OnTextChanged",f.resizeDiscoveryReport)
-    button(diag,L("Unknown items"),410,-450,124,function() B:ShowDiscoveryReport() end)
-    button(diag,L("Rescan bags"),546,-450,130,function()
+    button(diag,L("Unknown items"),410,-604,124,function() B:ShowDiscoveryReport() end)
+    button(diag,L("Rescan bags"),546,-604,130,function()
       if A.Combat() then return end
       B:DiscoverConsumables(); B:ShowDiscoveryReport()
     end)
-    label(diag,"Unknown items is a copyable report for improving item support, not a list of items BuffTap will use.",18,-490,"GameFontDisableSmall",672)
+    label(diag,"Unknown items is a copyable report for improving item support, not a list of items BuffTap will use.",18,-644,"GameFontDisableSmall",672)
     self:BuildHelperPage(f)
 
     local function acceptEdit(e,key)
@@ -2188,6 +2302,7 @@ function B:Options()
     f.groupIntro:SetText(L(raid and "Choose raid groups, recipient classes and group-spell thresholds." or "Preferences for your five-player party. Raid settings are separate."))
     f.groupEnable.Text:SetText(L(raid and "Enable raid buffing" or "Enable party buffing"))
     f.groupEnable:SetChecked(self:GroupEditorSettings().group); f.smartGroup:SetChecked(self:GroupEditorSettings().smartGroup)
+    if f.buffPets then f.buffPets:SetChecked(self.db.buffPets==true); f.readyTopUp:SetChecked(self.db.readyCheckTopUp~=false) end
     for i=1,8 do
       local state=self:GroupColumnState(i,B:EditingGroupContext())
       local c=f.groupChecks[i]
@@ -2332,7 +2447,7 @@ function B:Options()
       end)
       addHelp(row.enable,"Allow on friendly targets","Offer this spell to friendly targets when it is also enabled on Buffs. This filter is separate from personal buffing.")
       addHelp(row.custom,"Override target refresh timing","Use a different refresh threshold for this spell. Leave unchecked to use the default target refresh above.")
-      row.threshold=compactSlider(row,30,1800,30,210,formatSeconds,function(slider,value)
+      row.threshold=compactSlider(row,0,1800,30,210,formatSeconds,function(slider,value)
         local def=slider:GetParent().def
         if def and B.db.targetBuffSeconds[def.key]~=nil then
           B.db.targetBuffSeconds[def.key]=value; B:InvalidateAura("target"); B:RequestRefresh("target rebuff threshold",0.08)
@@ -2347,13 +2462,15 @@ function B:Options()
     local custom=self.db.targetBuffSeconds[b.key]~=nil
     row.custom:SetChecked(custom)
     local seconds=self:TargetRebuffSeconds(b)
+    -- Short buffs on targets wait until they wear off unless given their own timing (see B:Missing).
+    if not custom then local duration=self:BuffDuration(b); if b.noTimer or (duration and duration<120) then seconds=0 end end
     row.threshold.silent=true; row.threshold:SetValue(seconds); row.threshold.valueText:SetText(formatSeconds(seconds)); row.threshold.silent=false
     if custom then row.threshold:Enable(); row.threshold:SetAlpha(1) else row.threshold:Disable(); row.threshold:SetAlpha(0.45) end
   end
   f.targetChild:SetHeight(math.max(1,#targetBuffs*52))
 
   if f.consumablesEnable then
-    f.consumablesEnable:SetChecked(self:EditorSettings("consumables").consumablesEnabled==true); f.consumableRestPause:SetChecked(self.db.consumablesPauseResting==true)
+    f.consumablesEnable:SetChecked(self:EditorSettings("consumables").consumablesEnabled==true); f.consumableRestPause:SetChecked(self.db.consumablesPauseResting==true); f.consumableInstanceOnly:SetChecked(self.db.consumablesInstanceOnly==true)
     f.consumeBuild:Hide()
     if self.RebuildConsumableCache then self:RebuildConsumableCache(false) end
     for index,family in ipairs(self.ConsumableFamilies or {}) do
@@ -2393,6 +2510,7 @@ function B:Options()
   for _,v in ipairs(self:TextOutlineChoices()) do if v.key==self.db.labelOutline then f.labelOutlineButton:SetText(L(v.name)) end end
   f.labelGap.silent=true; f.labelGap:SetValue(self.db.labelGap); f.labelGap.silent=false
   f.bindingText:SetText(L("Current: %s",#self.db.keys>0 and table.concat(self.db.keys,", ") or L("none")))
+  if f.nearbyBindingText then f.nearbyBindingText:SetText(#(self.db.nearbyKeys or {})>0 and L("Nearby key: %s",table.concat(self.db.nearbyKeys,", ")) or L("Nearby key: none, Nearby uses your main binding")) end
   for _,pair in ipairs({{f.sizeEdit,self.db.size},{f.opacityEdit,math.floor(self.db.opacity*100+0.5)},{f.xEdit,math.floor(self.db.x+0.5)},{f.yEdit,math.floor(self.db.y+0.5)}}) do
     if not pair[1].unsaved and pair[1]:HasFocus()~=true then pair[1]:SetText(tostring(pair[2])) end
   end
@@ -2409,9 +2527,10 @@ function B:Options()
   if self.action then f.statusText:SetTextColor(.56,.88,.72) else f.statusText:SetTextColor(unpack(T.muted)) end
   if self.appearancePreview and self.appearancePreview:IsShown() then self:PreviewAppearance() end
   self:UpdateCampingOptions()
-  f.showReminderCheck:SetChecked(self.db.showReminder); f.soundCheck:SetChecked(self.db.sound); f.effectButton:SetText(L(({none="Effect: None",soft="Effect: Soft glow",pulse="Effect: Pulse",pixel="Effect: Pixel border",autocast="Effect: Sparkles",proc="Effect: Spell glow"})[self:IconEffectStyle()] or "Effect: Soft glow")); f.effectColorButton:SetText(L(({gold="Gold",cyan="Cyan",green="Green",red="Red",white="White"})[self.db.effectColor] or "Gold")); f.effectSpeedButton:SetText(L(({slow="Slow",normal="Normal",fast="Fast"})[self.db.effectSpeed] or "Normal"))
+  f.showReminderCheck:SetChecked(self.db.showReminder); f.soundCheck:SetChecked(self.db.sound); f.effectButton:SetText(L(({none="Effect: None",soft="Effect: Soft glow",pulse="Effect: Pulse",pixel="Effect: Pixel border",autocast="Effect: Sparkles",proc="Effect: Spell glow",shine="Effect: Shine",ripple="Effect: Ripple",bounce="Effect: Bounce",orbit="Effect: Orbit"})[self:IconEffectStyle()] or "Effect: Soft glow")); f.effectColorButton:SetText(L(({gold="Gold",cyan="Cyan",green="Green",red="Red",white="White"})[self.db.effectColor] or "Gold")); f.effectSpeedButton:SetText(L(({slow="Slow",normal="Normal",fast="Fast"})[self.db.effectSpeed] or "Normal"))
   f.buffNameCheck:SetChecked(self.db.showBuffName); f.targetNameCheck:SetChecked(self.db.showTargetName)
   f.timerCheck:SetChecked(self.db.showTimer); f.groupBadgeCheck:SetChecked(self.db.showGroupBadge)
+  if f.effectUrgency then f.effectUrgency:SetChecked(self.db.effectUrgency==true); f.effectOnce:SetChecked(self.db.effectOnce==true) end
   f.profileCheck:SetChecked(self.profileEnabled==true)
   f.rebuffSlider.silent=true; f.rebuffSlider:SetValue(self:EditorSettings("buffs").seconds); f.rebuffSlider.valueText:SetText(formatSeconds(self:EditorSettings("buffs").seconds)); f.rebuffSlider.silent=false
 
@@ -2522,7 +2641,7 @@ function B:Options()
       row.name=label(row,"",90,-9,"GameFontHighlight",186)
       row.groupIcon=row:CreateTexture(nil,"ARTWORK"); row.groupIcon:SetSize(16,16); row.groupIcon:SetPoint("TOPLEFT",90,-30)
       row.detail=label(row,"",112,-29,"GameFontDisableSmall",164)
-      row.rebuff=compactSlider(row,15,180,5,196,formatSeconds,function(slider,value)
+      row.rebuff=compactSlider(row,0,600,5,196,formatSeconds,function(slider,value)
         local parent=slider:GetParent(); local def=parent.def
         if def then
           B:EditorSettings("buffs").buffSeconds[def.key]=value
@@ -2567,7 +2686,7 @@ function B:Options()
       row.detail:ClearAllPoints(); row.detail:SetPoint("TOPLEFT",112,-29); row.detail:SetText((groupName or "Group version").."  -  "..L("group spell"))
     else
       row.groupIcon:Hide(); row.detail:ClearAllPoints(); row.detail:SetPoint("TOPLEFT",90,-29)
-      row.detail:SetText(b.kind=="self" and L("Self buff") or L("Single-target buff"))
+      row.detail:SetText(b.underwater and L("Reminds when underwater") or b.noTimer and L("Reminds when it wears off") or b.kind=="self" and L("Self buff") or L("Single-target buff"))
     end
     if not learnedSpell(b) then
       row.groupIcon:Hide(); row.detail:ClearAllPoints(); row.detail:SetPoint("TOPLEFT",90,-29); row.detail:SetText(unlearnedText())
@@ -2577,22 +2696,27 @@ function B:Options()
     end
     row.up:SetEnabled(visible>1); row.down:SetEnabled(visible<#list)
     row.order.text:SetText(tostring(visible))
-    local threshold=self:RebuffSeconds(b,self:EditorSettings("buffs"))
+    -- Without its own timing, show what the buff really gets: its length decides (see DefaultRebuffSeconds).
+    local settings=self:EditorSettings("buffs"); local own=type(settings.buffSeconds[b.key])=="number"
+    local threshold=own and self:RebuffSeconds(b,settings) or self:DefaultRebuffSeconds(b,settings.seconds)
     row.rebuff.silent=true; row.rebuff:SetValue(threshold); row.rebuff.valueText:SetText(formatSeconds(threshold)); row.rebuff.silent=false
+    -- Stances such as Aquatic Form have no duration, so there is nothing to time.
+    row.rebuff:SetShown(not (b.stance or b.noTimer))
     -- Default only appears when this buff has its own timing.
-    row.default:SetShown(type(self:EditorSettings("buffs").buffSeconds[b.key])=="number")
+    row.default:SetShown(not (b.stance or b.noTimer) and type(self:EditorSettings("buffs").buffSeconds[b.key])=="number")
     row.applyDim(row.check:GetChecked()==true)
   end
   f.emptyBuffs:SetShown(visible==0)
   f.buffChild:SetHeight(math.max(1,visible*60))
   if f.diagVersion then f.diagVersion:SetText("BuffTap v"..tostring(self.version or "unknown")) end
   if f.pvpProtection then f.pvpProtection:SetChecked(self.db.pvpProtection==true) end
+  if f.diagHideNames then f.diagHideNames:SetChecked(self.reportHideNames~=false); f.diagPauseNotes:SetChecked(self.db.pauseNotes~=false) end
   if f.diagText then
     local text=table.concat(self:DiagnosticsLines(),"\n")
     f.diagText:SetText(text)
     local height=f.diagText:GetStringHeight()
     if type(height)~="number" then local _,lines=text:gsub("\n",""); height=(lines+1)*14 end
-    f.diagContent:SetHeight(math.max(314,height+12))
+    f.diagContent:SetHeight(math.max(468,height+12))
   end
   self:UpdateRefinedOptions(); f:Show(); f:Raise(); self:UpdateOptionsPreviews()
 end
@@ -2609,7 +2733,7 @@ function B:UpdateCampingOptions(state)
   f.campingEnable:SetChecked(self.db.campReminder); f.campingSound:SetChecked(self.db.campSound); f.campingAnywhere:SetChecked(self.db.campAnywhere); f.campingTrack:SetChecked(self.db.campTrackBenefits); f.sleepingTrack:SetChecked(self.db.campTrackBag)
   f.campingWarning:SetText(L(self.db.campWarning==60 and "Warn: 1 minute" or self.db.campWarning==600 and "Warn: 10 minutes" or "Warn: 5 minutes"))
   for _,entry in ipairs({{f.campingSize,self.db.campSize},{f.campingOpacity,math.floor(self.db.campOpacity*100+.5)}}) do entry[1].silent=true; entry[1]:SetValue(entry[2]); entry[1].silent=false end
-  f.campingEffect:SetText(L(({none="Effect: None",soft="Effect: Soft glow",pulse="Effect: Pulse",pixel="Effect: Pixel border",autocast="Effect: Sparkles",proc="Effect: Spell glow"})[self.db.campEffectStyle] or "Effect: Soft glow"))
+  f.campingEffect:SetText(L(({none="Effect: None",soft="Effect: Soft glow",pulse="Effect: Pulse",pixel="Effect: Pixel border",autocast="Effect: Sparkles",proc="Effect: Spell glow",shine="Effect: Shine",ripple="Effect: Ripple",bounce="Effect: Bounce",orbit="Effect: Orbit"})[self.db.campEffectStyle] or "Effect: Soft glow"))
   f.campingColor:SetText(L(({gold="Gold",cyan="Cyan",green="Green",red="Red",white="White"})[self.db.campEffectColor] or "Gold"))
   f.campingSpeed:SetText(L(({slow="Slow",normal="Normal",fast="Fast"})[self.db.campEffectSpeed] or "Normal"))
   f.campingCountdown:SetChecked(self.db.campShowCountdown); f.campingStacks:SetChecked(self.db.campShowStacks)

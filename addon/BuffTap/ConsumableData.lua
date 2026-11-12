@@ -24,7 +24,7 @@ B.CampAdditions = {
 }
 B.ConsumableFamilies = {
   {
-    key="food", name="Food", defaultOn=false, defaultSeconds=300, pendingSeconds=14,
+    key="food", name="Food", defaultOn=false, defaultSeconds=60, pendingSeconds=14,
     -- Any recognized Well Fed effect satisfies the family. This conservative
     -- rule avoids replacing another food buff just because it is not our chosen food.
     auraNames={"Well Fed"}, localizedAuraSpellIDs={19705,24799,1248421,1248422}, includeItemSpell=false,
@@ -34,7 +34,7 @@ B.ConsumableFamilies = {
     },
   },
   {
-    key="flask", name="Flask", defaultOn=false, defaultSeconds=600, pendingSeconds=2,
+    key="flask", name="Flask", defaultOn=false, defaultSeconds=300, pendingSeconds=2,
     -- All nine current Forever flask names satisfy this family, including
     -- Petrification (recognized but not offered as a maintenance choice).
     auraSpellIDs={17626,17627,17628,17629,17624,1293740,1293741,1293742,1293743},
@@ -53,7 +53,7 @@ B.ConsumableFamilies = {
     },
   },
   {
-    key="ferocity", name="Elixir of Ferocity", defaultOn=false, defaultSeconds=180, pendingSeconds=2,
+    key="ferocity", name="Elixir of Ferocity", defaultOn=false, defaultSeconds=60, pendingSeconds=2,
     auraNames={"Elixir of Ferocity"},
     items={{id=250350,useSpell=1250985,auraIDs={1250985},name="Elixir of Ferocity",note="18 Strength & Agility / 30 min"}},
   },

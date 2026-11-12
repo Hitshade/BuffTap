@@ -131,6 +131,7 @@ function B:FriendlyStatus()
   if A.Combat() then return self:Text("Reminders pause during combat.") end
   if self.pauseUntil and GetTime()<self.pauseUntil then return self:Text("Reminders paused: %d min remaining",math.ceil((self.pauseUntil-GetTime())/60)) end
   if self.editModeActive then return self:Text("Editing reminder position.") end
+  if self.loadingUntil and GetTime()<self.loadingUntil then return self:Text("Waiting a moment after loading.") end
   if self.action then
     local a=self.action
     if a.manual then return self:Text("Manual application: %s",a.name or "?") end
@@ -142,11 +143,19 @@ function B:FriendlyStatus()
   if self.reason=="not enough mana" then return self:Text("Not enough mana to buff.") end
   if self.reason=="waiting for cooldown" then return self:Text("Waiting for a spell cooldown.") end
   if self.reason=="spell unavailable: form, reagents or requirements" then return self:Text("Buff unavailable: check form, reagents or requirements.") end
+  if self.manaFloorBlocked then return self:Text("Saving mana: buffing other players resumes above %d%% mana.",self.db.nearbyManaFloor or 0) end
   if self.pvpBlocked then return self:Text("PvP protection: flagged recipient or unknown PvP status. Check Diagnostics.") end
   if self.ownershipUnavailable then return self:Text("Blessing ownership is unknown; replacement is blocked for safety.") end
   if self.buffDataUnavailable then return self:Text("Buff information is unavailable or incomplete. Check Diagnostics.") end
   if self.targetDataPending then return self:Text("Waiting for readable target information.") end
   if self.deferredBlocked then return self:Text("Recipient temporarily skipped after a failed cast; retrying automatically.") end
-  if self.reason=="nothing actionable" then return self:Text("No action is currently eligible. Buffs may be covered or excluded; check Diagnostics for details.") end
+  if self.reason=="nothing actionable" then
+    -- Uses what the last check already found; no extra scanning.
+    if self.rangeBlocked then return self:Text("A buff is due, but that player is out of range.") end
+    local counts=self.db.nearbyEnabled and self.nearbyFrame and self.nearbyFrame:IsShown() and self.nearbyCounts
+    if counts and counts.total==0 then return self:Text("All your buffs are up. No players nearby.") end
+    if counts and counts.need==0 then return self:Text("All your buffs are up. Nearby players have what you can give.") end
+    return self:Text("All your buffs are up.")
+  end
   return self:Text("Status: %s",self.reason or "initializing")
 end

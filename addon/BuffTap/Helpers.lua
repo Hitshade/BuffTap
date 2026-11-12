@@ -65,16 +65,27 @@ function B:HelperSuppressed(action)
   local dismissed=self.helperDismissed
   if not dismissed or next(dismissed)==nil then return false end
   local key=self:HelperKey(action)
-  return key and dismissed[key]~=nil
+  if not key or dismissed[key]==nil then return false end
+  local untilTime=self.helperDismissUntil and self.helperDismissUntil[key]
+  if untilTime and GetTime()>=untilTime then dismissed[key]=nil; self.helperDismissUntil[key]=nil; return false end
+  return true
 end
 function B:DismissHelper(action,reason)
   if A.Combat() or not action then return end
   self.helperDismissed=self.helperDismissed or {}
-  self.helperDismissed[self:HelperKey(action)]=reason or "dismissed"
+  local key=self:HelperKey(action)
+  self.helperDismissed[key]=reason or "dismissed"
+  -- A manual dismiss can last a set time instead of until the next zone change.
+  local minutes=not reason and tonumber(self.db.helperDismissMinutes) or 0
+  self.helperDismissUntil=self.helperDismissUntil or {}
+  if minutes>0 then
+    self.helperDismissUntil[key]=GetTime()+minutes*60
+    self:StartTimer("dismiss-"..tostring(key),minutes*60+.1,function() B:RequestRefresh("dismiss ended",0) end)
+  else self.helperDismissUntil[key]=nil end
   self:RequestRefresh("reminder dismissed",0)
 end
 function B:RestoreHelpers()
-  self.helperDismissed={}; self.helperAttempt=nil; self.castRetry={}; self.castRetryAttempt=nil
+  self.helperDismissed={}; self.helperDismissUntil={}; self.helperAttempt=nil; self.castRetry={}; self.castRetryAttempt=nil
   self:RequestRefresh("restore reminders",0)
 end
 function B:BeginHelperAttempt(action)
@@ -319,8 +330,7 @@ local function thankName(unit)
   local ok,name,second=pcall(UnitName,unit)
   if ok and A.Text(name) and name~="" and name~=(_G.UNKNOWNOBJECT or "Unknown") and A.Public(second) then
     if A.Text(second) and second~="" then
-      local version=A.Call(GetBuildInfo)
-      name=name..(A.Text(version) and version:match("^1%.60%.") and " " or "-")..second
+      name=name..(B:IsForever() and " " or "-")..second
     end
     return name
   end
@@ -439,6 +449,12 @@ function B:DispatchSoloThanks()
     if now-candidate.at>10 or (self.helperThankCooldowns[candidate.key] or self.helperThankCooldowns[candidate.nameKey]) then table.remove(queue,1)
     else
       local wait=1-(now-(self.helperLastThank or -1000))
+      -- Optional human-like pause: a random wait chosen once per thank, inside the 10 second window.
+      local delay=tonumber(self.db.helperThankDelay) or 0
+      if delay>0 then
+        candidate.delay=candidate.delay or (delay==5 and math.random(30,60)/10 or math.random(10,30)/10)
+        wait=math.max(wait,candidate.at+candidate.delay-now)
+      end
       if wait>0 then self:StartTimer("thanks-send",wait,function() B:DispatchSoloThanks() end); return end
       table.remove(queue,1)
       local held=A.Text(candidate.unit) and A.Call(UnitExists,candidate.unit)==true

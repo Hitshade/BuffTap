@@ -5,7 +5,11 @@
 local ADDON,B = ...
 local A = B.API
 local function L(key,...) return B:Text(key,...) end
-local function say(s) if DEFAULT_CHAT_FRAME then DEFAULT_CHAT_FRAME:AddMessage("|cff59d6b2BuffTap|r " .. L(s)) end end
+-- The report window captures command output instead of printing it to chat.
+local function say(s)
+  if B.outputCapture then B.outputCapture[#B.outputCapture+1]=L(s); return end
+  if DEFAULT_CHAT_FRAME then DEFAULT_CHAT_FRAME:AddMessage("|cff59d6b2BuffTap|r " .. L(s)) end
+end
 -- One reset path for the settings window and /bt reset confirm: settings plus every derived cache.
 function B:ResetEverything()
   if A.Combat() then return false end
@@ -806,6 +810,10 @@ local function handleEvent(_,event,arg,castGUID,spellID)
   if event=="UNIT_FLAGS" or event=="PVP_TIMER_UPDATE" then
     if B.db.pvpProtection and (arg=="player" or B:IsWatchedUnit(arg) or (A.Text(arg) and (arg:match("^party%d+$") or arg:match("^raid%d+$")))) then B:InvalidateRoster(); B:RequestRefresh("PvP flags changed",0) end
     if arg=="pet" and B.ReadinessEnabled and B:ReadinessEnabled("pet") then B:RequestRefresh("pet flags changed",.05) end
+    -- A nearby player flagging or unflagging changes their PvP marker in the Nearby window.
+    if B.db.pvpProtection and A.Text(arg) and arg:match("^nameplate%d+$") and B.nearbyUnits and B.nearbyUnits[arg] then
+      B.nearbySnapshot=nil; if B.nearbyFrame and B.UpdateNearbyWindow then B:StartTimer("nearby-pvp",.2,function() if not A.Combat() then B:UpdateNearbyWindow() end end) end
+    end
     return
   end
     if event=="PLAYER_REGEN_DISABLED" and B.SuspendItemDataRetries then B:SuspendItemDataRetries() end
@@ -867,6 +875,7 @@ local itemRequested=event=="ITEM_DATA_LOAD_RESULT" and A.Number(arg) and ((B.ite
     if B.UpdateGroupRosterOptions then B:UpdateGroupRosterOptions() end
   elseif event=="PLAYER_ENTERING_WORLD" or event=="ZONE_CHANGED_NEW_AREA" then
     B:InvalidateRoster(); B:InvalidateAura(); if B.InvalidateConsumables then B:InvalidateConsumables() end
+
   elseif event=="PLAYER_REGEN_ENABLED" then
     -- Auras may have changed while ordinary Lua scanning was suspended in combat.
     B:InvalidateAura()
@@ -896,6 +905,10 @@ local itemRequested=event=="ITEM_DATA_LOAD_RESULT" and A.Number(arg) and ((B.ite
   if bookEvents[event] then B.dataRetries=0; B.bookDirty=true; B.rankChoiceCache={}; B.coverCache={} end
   if event=="UPDATE_BINDINGS" then B.appearance=nil end
   if event=="PLAYER_LOGIN" or event=="PLAYER_ENTERING_WORLD" then
+    -- After login or a loading screen the client can briefly report no auras before the real
+    -- list arrives. Stay quiet for a few seconds, then check once with settled data.
+    B.loadingUntil=GetTime()+4
+    B:StartTimer("loading-settle",4.05,function() B.loadingUntil=nil; B:InvalidateAura(); B:RequestRefresh("loading settled",0) end)
     if B.RegisterOptionsCategory then B:RegisterOptionsCategory() end
     -- SharedMedia may load after BuffTap; register our sounds once it exists.
     if B.RegisterSharedSounds then B:RegisterSharedSounds() end

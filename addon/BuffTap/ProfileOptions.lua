@@ -14,7 +14,7 @@ function B:BuildProfileOptions(p,h)
   T.SectionTitle(label(p,"Active profile",26,-90,T.fonts.Section))
   local function names(exclude,unused)
     local out={}; for _,name in ipairs(B:ProfileNames()) do
-      if (not exclude or name~=B.profileDB:GetCurrentProfile()) and (not unused or B:ProfileUsers(name)==0) then out[#out+1]={key=name,name=name} end
+      if (not exclude or name~=B.profileDB:GetCurrentProfile()) and (not unused or B:ProfileUsers(name)==0) then out[#out+1]={key=name,name=B:ProfileLabel(name)} end
     end; return out
   end
   p.active=selector(p,"",26,-108,420,function() return names() end,function(name)
@@ -77,13 +77,21 @@ function B:BuildProfileOptions(p,h)
     p.pending=function() outcome(B:ResetSettingsProfile()) end; p.confirm:Show()
   end)
   T.Variant(p.reset,"danger")
-  p.deletePick=selector(p,L("Choose unused profile"),190,-512,256,function() return names(true,true) end,function(name) p.deleteName=name; p.confirm:Hide() end,"scroll")
-  p.delete=button(p,L("Delete unused"),458,-512,232,function()
-    local name=p.deleteName
-    p.confirmText:SetText(L("Delete unused profile: %s?",name or ""))
+  p.deletePick=selector(p,L("Choose profile to delete"),190,-512,256,function() return names(true) end,function(name) p.deleteName=name; p.confirm:Hide() end,"scroll")
+  p.delete=button(p,L("Delete profile"),458,-512,232,function()
+    local name=p.deleteName; local users=B:ProfileUsers(name)
+    -- The active profile is never offered. Profiles other characters use get a stronger warning.
+    if users>0 then p.confirmText:SetText(L("Delete %s? %d other character(s) use it and will start a fresh profile at their next login. This cannot be undone.",name or "",users))
+    else p.confirmText:SetText(L("Delete %s? This cannot be undone.",name or "")) end
     p.pending=function() outcome(B:DeleteSettingsProfile(name)); p.deleteName=nil end; p.confirm:Show()
   end)
   T.Variant(p.delete,"danger")
+  -- Share settings: export and import as text, between characters, accounts or friends.
+  p.shareCard=T.Card(p,12,-566,692,80)
+  p.shareTitle=label(p,"Share settings",28,-580,T.fonts.Section); T.SectionTitle(p.shareTitle)
+  p.exportButton=button(p,L("Export settings"),28,-600,160,function() B:ShowSettingsTransfer("export") end)
+  p.importButton=button(p,L("Import settings"),198,-600,160,function() B:ShowSettingsTransfer("import") end)
+  p.shareHint=label(p,"Copy your settings as text to another account or a friend.",374,-606,"GameFontDisableSmall",318)
   p.confirm=CreateFrame("Frame",nil,p,"BackdropTemplate"); p.confirm:SetSize(692,80); p.confirm:SetPoint("TOPLEFT",12,-564)
   p.confirm:SetFrameLevel(p:GetFrameLevel()+15); p.confirm:EnableMouse(true)
   p.confirm:SetBackdrop({bgFile="Interface\\Buttons\\WHITE8X8",edgeFile="Interface\\Buttons\\WHITE8X8",edgeSize=1})
@@ -96,11 +104,11 @@ function B:BuildProfileOptions(p,h)
 end
 function B:UpdateProfileOptions()
   local p=self.options.profiles; if not p then return end
-  local current=self.profileDB:GetCurrentProfile(); p.active:SetText(current)
+  local current=self.profileDB:GetCurrentProfile(); p.active:SetText(self:ProfileLabel(current))
   p.createHint:SetText(L(p.copyCurrent:GetChecked() and "Copies shared preferences into a new profile and switches to it. The original is kept." or "Starts with default shared preferences and switches to the new profile. The original is kept."))
   p.users:SetText(L("Changes save immediately. %d character(s) use this profile. Copying leaves the source unchanged.",self:ProfileUsers(current)))
   if p.sourceName==current or not self.profileDB.sv.profiles[p.sourceName] then p.sourceName=nil; p.includeClass:SetChecked(false); p.classSource=nil end
-  p.source:SetText(p.sourceName or L("Choose profile")); p.copy:SetEnabled(p.sourceName~=nil)
+  p.source:SetText(p.sourceName and self:ProfileLabel(p.sourceName) or L("Choose profile")); p.copy:SetEnabled(p.sourceName~=nil)
   p.source:SetEnabled(#self:ProfileNames()>1)
   local choices=p.sourceName and self:ClassCopySources(p.sourceName) or {}
   p.includeClass:SetShown(#choices>0)
@@ -108,10 +116,9 @@ function B:UpdateProfileOptions()
   local valid=false; for _,name in ipairs(choices) do if name==p.classSource then valid=true end end
   if not valid then p.classSource=choices[1] end
   p.character:SetText(p.classSource or L("Choose same-class character")); p.character:SetShown(#choices>0 and p.includeClass:GetChecked()==true)
-  if not self.profileDB.sv.profiles[p.deleteName] or self:ProfileUsers(p.deleteName)>0 then p.deleteName=nil end
-  p.deletePick:SetText(p.deleteName or L("Choose unused profile")); p.delete:SetEnabled(p.deleteName~=nil)
-  local unused=false; for _,name in ipairs(self:ProfileNames()) do if self:ProfileUsers(name)==0 then unused=true end end
-  p.deletePick:SetEnabled(unused)
+  if not self.profileDB.sv.profiles[p.deleteName] or p.deleteName==current then p.deleteName=nil end
+  p.deletePick:SetText(p.deleteName and self:ProfileLabel(p.deleteName) or L("Choose profile to delete")); p.delete:SetEnabled(p.deleteName~=nil)
+  p.deletePick:SetEnabled(#self:ProfileNames()>1)
   -- Collapse the copy card when the optional same-class rows are hidden, and move Manage profiles up with it.
   local rows=(p.includeClass:IsShown() and 1 or 0)+(p.character:IsShown() and 1 or 0)
   local hintY=-366-rows*35
@@ -119,5 +126,6 @@ function B:UpdateProfileOptions()
   at(p.classHint,28,hintY); p.copyCard:SetHeight(-hintY-296+30)
   local top=hintY-30-12
   at(p.manageCard,12,top); at(p.manageTitle,28,top-14); at(p.reset,28,top-34); at(p.deletePick,190,top-34); at(p.delete,458,top-34)
+  at(p.shareCard,12,top-86); at(p.shareTitle,28,top-100); at(p.exportButton,28,top-120); at(p.importButton,198,top-120); at(p.shareHint,374,top-126)
   at(p.confirm,12,top-86); at(p.message,28,top-178)
 end

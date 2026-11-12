@@ -514,9 +514,15 @@ function T.Check(control)
   if text then
     local object=mappedFont(text:GetFontObject()); if object then text:SetFontObject(object) end
     text:SetTextColor(unpack(T.text)); text:SetWordWrap(false)
-    text:ClearAllPoints(); text:SetPoint("LEFT",control,"RIGHT",v.toggle and 14 or 6,0)
     local width=text:GetStringWidth()
-    if type(width)=="number" then control:SetHitRectInsets(0,-math.min(280,width+(v.toggle and 18 or 10)),0,0) end
+    if control.headerSwitch then
+      -- Page header switch: label on the left, switch at the right edge of the page.
+      text:ClearAllPoints(); text:SetPoint("RIGHT",control,"LEFT",-10,0); text:SetJustifyH("RIGHT")
+      if type(width)=="number" then control:SetHitRectInsets(-math.min(280,width+12),-8,0,0) end
+    else
+      text:ClearAllPoints(); text:SetPoint("LEFT",control,"RIGHT",v.toggle and 14 or 6,0)
+      if type(width)=="number" then control:SetHitRectInsets(0,-math.min(280,width+(v.toggle and 18 or 10)),0,0) end
+    end
   end
   if v.toggle then
     v.track=newPill(control,"BACKGROUND",0); v.track:Set(control,0,0,32,18)
