@@ -897,6 +897,8 @@ local itemRequested=event=="ITEM_DATA_LOAD_RESULT" and A.Number(arg) and ((B.ite
   if event=="UPDATE_BINDINGS" then B.appearance=nil end
   if event=="PLAYER_LOGIN" or event=="PLAYER_ENTERING_WORLD" then
     if B.RegisterOptionsCategory then B:RegisterOptionsCategory() end
+    -- SharedMedia may load after BuffTap; register our sounds once it exists.
+    if B.RegisterSharedSounds then B:RegisterSharedSounds() end
     B:Refresh(false)
     if B.SyncEditMode then B:SyncEditMode() end
     if B.ScheduleWelcome then B:ScheduleWelcome() end

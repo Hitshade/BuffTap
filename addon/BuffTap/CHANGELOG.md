@@ -1,3 +1,13 @@
+# BuffTap 1.19.1
+
+
+- BuffTap's own alert sounds: Marimba rise (the new reminder default), Glass chime, Warm bell and Harp arpeggio. Original recordings, about 9 KB each.
+- Existing reminders using the old default switch to Marimba rise once; Ding stays available as "Ding (game)". The supply alert keeps Ding so the two alerts stay distinct.
+- The sounds are registered with SharedMedia whenever another addon provides it, so other addons can use them too.
+- Fix: dropdown menus on some settings pages were see-through and could sit under nearby controls.
+
+---
+
 # BuffTap 1.19.0
 
 Release summary. Internal builds 1.19.0-beta1 to beta3 are listed below.

@@ -5,7 +5,11 @@ local T=B.OptionsTheme
 local function place(control,parent,x,y,width,height)
   control:SetParent(parent); control:ClearAllPoints(); control:SetPoint("TOPLEFT",x,y)
   -- A selector's menu must move with it: left on its old (hidden) page it can never show.
-  if type(control.menu)=="table" and control.menu.SetParent then control.menu:SetParent(parent) end
+  if type(control.menu)=="table" and control.menu.SetParent then
+    -- SetParent drops the menu back to the page's strata; keep it above every control on the page.
+    local menu=control.menu; menu:SetParent(parent); menu:SetFrameStrata("TOOLTIP"); menu:SetToplevel(true)
+    if parent.GetFrameLevel then menu:SetFrameLevel(parent:GetFrameLevel()+60) end
+  end
   if control:GetObjectType()=="CheckButton" then
     control:SetSize(24,24)
   else

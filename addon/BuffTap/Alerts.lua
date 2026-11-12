@@ -4,8 +4,16 @@ local _,B=...
 local A=B.API
 -- SoundKit IDs cross-checked against Forever 1.60.1.70009 SoundKit.csv.
 -- Additional choices require the client's named constant; no guessed assets.
+local SOUNDS="Interface\\AddOns\\BuffTap\\Media\\Sounds\\"
+-- BuffTap's own alert sounds: original recordings shipped with the addon (MPL-2.0 like the rest of BuffTap).
+local bundled={
+  {key="marimba",name="Marimba rise",file=SOUNDS.."BuffTapMarimba.ogg"},
+  {key="glass",name="Glass chime",file=SOUNDS.."BuffTapGlass.ogg"},
+  {key="bell",name="Warm bell",file=SOUNDS.."BuffTapBell.ogg"},
+  {key="harp",name="Harp arpeggio",file=SOUNDS.."BuffTapHarp.ogg"},
+}
 local definitions={
-  {key="default",name="Default reminder",id=12867},
+  {key="default",name="Ding (game)",id=12867},
   {key="ready",name="Ready check",constant="READY_CHECK"},
   {key="raid",name="Raid warning",constant="RAID_WARNING"},
   {key="click",name="Interface click",constant="IG_MAINMENU_OPTION_CHECKBOX_ON"},
@@ -19,6 +27,12 @@ local function sharedMedia()
   local ok,lib=pcall(function() return LibStub("LibSharedMedia-3.0",true) end)
   if ok and type(lib)=="table" and type(lib.HashTable)=="function" then return lib end
 end
+-- Offer BuffTap's sounds to every addon that uses SharedMedia (only when another addon has loaded the library).
+function B:RegisterSharedSounds()
+  local lib=sharedMedia(); if not lib or self.sharedSoundsRegistered or type(lib.Register)~="function" then return end
+  for _,sound in ipairs(bundled) do pcall(lib.Register,lib,"sound","BuffTap: "..sound.name,sound.file) end
+  self.sharedSoundsRegistered=true
+end
 local function mediaTable()
   local lib=sharedMedia()
   if not lib then return end
@@ -30,7 +44,9 @@ local function playable(value)
   return (type(value)=="string" and value~="") or (A.Number(value) and value>0)
 end
 function B:SoundChoices()
+  self:RegisterSharedSounds()
   local choices={}
+  for _,sound in ipairs(bundled) do choices[#choices+1]={key=sound.key,name=sound.name,file=sound.file,source="BuffTap sounds"} end
   for _,definition in ipairs(definitions) do
     local id=definition.id or (type(SOUNDKIT)=="table" and SOUNDKIT[definition.constant])
     if A.Number(id) and id>0 then choices[#choices+1]={key=definition.key,name=definition.name,id=id,source="Game sounds"} end
@@ -41,7 +57,9 @@ function B:SoundChoices()
     if type(name)=="string" and name~="None" and playable(value) then names[#names+1]=name end
   end end
   table.sort(names)
-  for _,name in ipairs(names) do choices[#choices+1]={key="lsm:"..name,name=name,source="SharedMedia"} end
+  -- BuffTap's own sounds are listed once, above; skip their SharedMedia copies.
+  local own={}; for _,sound in ipairs(bundled) do own["BuffTap: "..sound.name]=true end
+  for _,name in ipairs(names) do if not own[name] then choices[#choices+1]={key="lsm:"..name,name=name,source="SharedMedia"} end end
   for _,field in ipairs({"reminderSound","supplySound"}) do
     local key=self.db and self.db[field]
     if type(key)=="string" and key:sub(1,4)=="lsm:" and (not media or not playable(media[key:sub(5)])) then
@@ -52,7 +70,14 @@ function B:SoundChoices()
   return choices
 end
 function B:NormalizeAlerts()
-  local valid={}; for _,definition in ipairs(definitions) do
+  -- 1.19.1: the BuffTap marimba becomes the reminder default; the old default (Ding) stays available.
+  if self.db.alertSoundVersion~=1 then
+    if self.db.reminderSound==nil or self.db.reminderSound=="default" then self.db.reminderSound="marimba" end
+    self.db.alertSoundVersion=1
+  end
+  self:RegisterSharedSounds()
+  local valid={}; for _,sound in ipairs(bundled) do valid[sound.key]=true end
+  for _,definition in ipairs(definitions) do
     local id=definition.id or (type(SOUNDKIT)=="table" and SOUNDKIT[definition.constant])
     if A.Number(id) and id>0 then valid[definition.key]=true end
   end
@@ -78,6 +103,7 @@ function B:PlayAlert(kind,preview)
     local media=mediaTable(); local sound=media and media[selected:sub(5)]
     if playable(sound) and type(PlaySoundFile)=="function" then player,value=PlaySoundFile,sound end
   else
+    for _,sound in ipairs(bundled) do if sound.key==selected and type(PlaySoundFile)=="function" then player,value=PlaySoundFile,sound.file end end
     for _,definition in ipairs(definitions) do if definition.key==selected then
       local id=definition.id or (type(SOUNDKIT)=="table" and SOUNDKIT[definition.constant])
       if A.Number(id) and id>0 then value=id end
