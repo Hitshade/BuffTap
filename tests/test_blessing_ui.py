@@ -15,7 +15,7 @@ test('Target picker inactive when class-aware mode disabled',solo+"BuffTap.db.ta
 test('Changing tabs closes blessing menu',setup+"BuffTap:Options(); local f=BuffTap.options; f.blessingRows[1].pick.scripts.OnClick(f.blessingRows[1].pick); f.selectTab(3); assert(not f.blessingMenu.shown)")
 test('Combat cannot open a blessing menu',setup+"BuffTap:Options(); local p=BuffTap.options.blessingRows[1].pick; combat=true; p.scripts.OnClick(p); assert(not BuffTap.options.blessingMenu or not BuffTap.options.blessingMenu.shown)")
 for loc in ['esES','deDE','frFR','ptBR']:
- test('Blessing selection labels localized '+loc,setup+"BuffTap:Options(); assert(BuffTap:Text('Follow buff settings')~='Follow buff settings'); assert(BuffTap:Text('Enable class assignments')~='Enable class assignments')",locale=loc)
+ test('Blessing selection labels localized '+loc,setup+"BuffTap:Options(); assert(BuffTap:Text('Follow buff settings')~='Follow buff settings'); assert(BuffTap:Text('Who gets this buff')~='Who gets this buff' and BuffTap:Text('Healers')~='Healers') -- 1.19 role choices ('Tanks' is the same word in some languages)",locale=loc)
 test('Two-player exception details remain inside the page',setup+"""
 classes.party2='WARRIOR'; BuffTap:InvalidateRoster()
 local original=CreateFrame
@@ -26,8 +26,8 @@ CreateFrame=function(...)
  return f
 end
 BuffTap:Options(); local f=BuffTap.options; f.expandedBlessing='WARRIOR'; BuffTap:Options()
-assert(f.blessingDetail.height==202)
-for _,row in ipairs(f.blessingRows) do assert(-row.points[3]+row.height<574) end
+assert(f.blessingDetail.height==262) -- 1.19: Tank and Healer rows
+for _,row in ipairs(f.blessingRows) do assert(-row.points[3]+row.height<672) end
 assert(not f.blessingScroll.shown)
 """)
 test('Every Paladin seal is opt-in by default',"playerClass='PALADIN'; for _,def in ipairs(BuffTap:ClassList()) do if def.kind=='seal' then assert(not def.defaultOn and not BuffTap:Enabled(def),def.key) end end")

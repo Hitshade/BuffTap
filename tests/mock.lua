@@ -49,7 +49,7 @@ C_UnitAuras={
 }
 local function noop() end
 local function visual()
- return setmetatable({SetTexture=function(s,v) s.texture=v end,SetText=function(s,v) s.text=v end,SetShown=function(s,v) s.shown=not not v end,Show=function(s) s.shown=true end,Hide=function(s) s.shown=false end,IsShown=function(s) return s.shown end}, {__index=function() return noop end})
+ return setmetatable({SetTexture=function(s,v) s.texture=v end,SetText=function(s,v) s.text=v end,SetShown=function(s,v) s.shown=not not v end,Show=function(s) s.shown=true end,Hide=function(s) s.shown=false end,IsShown=function(s) return s.shown end}, {__index=function(_,k) return visualExtra and visualExtra[k] or noop end})
 end
 local methods={}
 function methods:SetAttribute(k,v) assert(not combat or self.secure,'protected write in combat'); self.attrs[k]=v end
@@ -72,8 +72,9 @@ function methods:GetFrameLevel() return 1 end
 function methods:GetCenter() return 500,500 end
 function methods:SetSize(w,h) assert(not combat or not self.protected,'protected resize'); self.width=w; self.height=h end
 function methods:SetPoint() assert(not combat or not self.protected,'protected move') end
+fieldNames={NineSlice=true,ScrollBar=true,Left=true,Right=true,Middle=true,Track=true,Thumb=true,ScrollUpButton=true,ScrollDownButton=true,Background=true,Border=true,Icon=true,Center=true,Highlight=true,TopEdge=true,BottomEdge=true,LeftEdge=true,RightEdge=true,TopLeftCorner=true,TopRightCorner=true,BottomLeftCorner=true,BottomRightCorner=true,Bg=true,TitleBg=true,Inset=true,CloseButton=true}
 function CreateFrame(kind,name,parent,template)
- local f=setmetatable({attrs={},scripts={},registered={},shown=false,parent=parent,Text=visual(),Low=visual(),High=visual(),protected=template and template:find('Secure')~=nil}, {__index=function(_,k) return methods[k] or (k:match("^%u") and noop or nil) end})
+ local f=setmetatable({kind=kind,attrs={},scripts={},registered={},shown=false,parent=parent,Text=visual(),Low=visual(),High=visual(),protected=template and template:find('Secure')~=nil}, {__index=function(_,k) return methods[k] or (k:match("^%u") and not fieldNames[k] and noop or nil) end})
  if name then _G[name]=f end
  return f
 end
@@ -184,3 +185,48 @@ function UnitIsPVPFreeForAll() return false end
 function IsPVPTimerRunning() return false end
 
 function UnitAffectingCombat() return false end
+
+-- 1.18+ settings window: font objects and layout getters used by the theme engine.
+local fontObjects={}
+function CreateFont(name)
+ local f=setmetatable({font='Fonts\\FRIZQT__.TTF',size=12,flags=''},{__index=function(_,k) return noop end})
+ f.SetFont=function(s,p,sz,fl) s.font=p; s.size=sz; s.flags=fl or ''; return true end
+ f.GetFont=function(s) return s.font,s.size,s.flags end
+ f.CopyFontObject=noop; f.SetTextColor=noop; f.SetShadowOffset=noop; f.SetShadowColor=noop; f.SetJustifyH=noop; f.SetSpacing=noop
+ if name then _G[name]=f end; fontObjects[#fontObjects+1]=f; return f
+end
+for _,n in ipairs({'GameFontNormal','GameFontNormalSmall','GameFontNormalLarge','GameFontHighlight','GameFontHighlightSmall','GameFontHighlightLarge','GameFontDisable','GameFontDisableSmall','GameFontWhite','NumberFontNormal','ChatFontNormal'}) do if not _G[n] then CreateFont(n) end end
+STANDARD_TEXT_FONT='Fonts\\FRIZQT__.TTF'; UNIT_NAME_FONT='Fonts\\FRIZQT__.TTF'; DAMAGE_TEXT_FONT='Fonts\\FRIZQT__.TTF'
+function hooksecurefunc(a,b,c)
+ if type(a)=='table' then local old=a[b]; a[b]=function(...) local r={old(...)}; c(...); return unpack(r) end
+ else local old=_G[a]; _G[a]=function(...) local r={old(...)}; b(...); return unpack(r) end end
+end
+function methods:GetWidth() return self.width or 100 end
+function methods:GetHeight() return self.height or 20 end
+function methods:SetWidth(w) self.width=w end
+function methods:SetHeight(h) self.height=h end
+function methods:GetSize() return self.width or 100,self.height or 20 end
+function methods:GetObjectType() return self.kind or 'Frame' end
+function methods:GetRegions() return end
+function methods:GetChildren() return end
+function methods:GetScale() return 1 end
+function methods:GetEffectiveScale() return 1 end
+function methods:GetFontString() self.fontString=self.fontString or visual(); return self.fontString end
+function methods:HasFocus() return false end
+function methods:IsEnabled() return self.enabled~=false end
+function methods:SetEnabled(v) self.enabled=not not v end
+function methods:GetNumPoints() return 0 end
+
+visualExtra={
+ CreateAnimationGroup=function(...) return methods.CreateAnimationGroup(...) end,
+ GetText=function(s) return s.text end,
+ GetWidth=function(s) return s.width or 100 end, GetHeight=function(s) return s.height or 14 end,
+ SetWidth=function(s,w) s.width=w end, SetHeight=function(s,h) s.height=h end,
+ SetSize=function(s,w,h) s.width=w; s.height=h end, GetSize=function(s) return s.width or 100,s.height or 14 end,
+ GetStringWidth=function(s) return #(tostring(s.text or ''))*6 end,
+ GetFont=function(s) return 'Fonts\\FRIZQT__.TTF',12,'' end,
+ GetObjectType=function(s) return s.kind or 'Texture' end,
+ IsObjectType=function(s,t) return t==(s.kind or 'Texture') end,
+}
+UIParent.width=1920; UIParent.height=1080
+function methods:GetScript(k) return self.scripts[k] end

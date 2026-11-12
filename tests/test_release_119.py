@@ -1,0 +1,11 @@
+from test_bufftap import test, tests
+from test_nearby import setup
+# 1.19 scenarios: roles, button side, request to join, helpers layout.
+test('Tank role gives a buff regardless of class choice',"BuffTap.db.group=true; local d=BuffTap:FindBuff('thorns'); BuffTap:GroupEditorSettings().buffRoles[BuffTap:RootKey(d)]='tank'; UnitGroupRolesAssigned=function(u) return u=='party2' and 'TANK' or 'NONE' end; BuffTap.roleCache=nil; assert(BuffTap:BuffRoleMode(d)=='tank')")
+test('Role mode normalizes unknown values back to class',"local g=BuffTap:GroupEditorSettings(); g.buffRoles={thorns='bogus'}; BuffTap:InitDB(); assert(BuffTap:BuffRoleMode(BuffTap:FindBuff('thorns'))=='class')")
+test('Nearby button side setting normalizes and moves the gutter',setup+"BuffTap.db.nearbyButtonSide='middle'; BuffTap:InitDB(); assert(BuffTap.db.nearbyButtonSide=='left'); BuffTap.db.nearbyButtonSide='right'; BuffTap.nearbyFrame.layoutKey=nil; refresh(); assert(BuffTap.db.nearbyButtonSide=='right')")
+test('Request to join shows the arrow glyph when the client offers it',setup+"BuffTap.db.nearbyShowAll=true; GetDisplayedInviteType=function() return 'REQUEST_INVITE' end; C_PartyInfo={InviteUnit=function() end,RequestInviteFromUnit=function() end}; UnitInAnyGroup=function(u) return u=='nameplate1' end; refresh(); local r=BuffTap.nearbyFrame.rows[1]; if r.invite.shown then assert(r.invite.join[1].shown and not r.invite.plusH.shown) end")
+test('Helpers page builds without a scroll frame',"BuffTap:Options(); local h=BuffTap.helperWindow; assert(h and not h.helperScroll and h.requests and h.restoreButton and h.reportButton)")
+print('RELEASE 1.19 CHECKS',len(tests))
+test('Clear binding needs a second click to confirm',"BuffTap:Options(); local c=BuffTap.options.clearBindingButton; local keys=#BuffTap.db.keys; assert(keys>0); c.scripts.OnClick(c); assert(#BuffTap.db.keys==keys and c.confirmArmed); c.scripts.OnClick(c); assert(#BuffTap.db.keys==0)")
+test('An armed confirmation expires on its own',"BuffTap:Options(); local c=BuffTap.options.clearBindingButton; local keys=#BuffTap.db.keys; c.scripts.OnClick(c); advance(5); assert(not c.confirmArmed); c.scripts.OnClick(c); assert(#BuffTap.db.keys==keys)")

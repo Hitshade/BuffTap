@@ -55,3 +55,5 @@ import test_situations
 print('TOTAL',len(__import__('test_bufftap').tests))
 import test_group_contexts
 print('FINAL_TOTAL',len(__import__('test_bufftap').tests))
+import test_release_119
+print('FINAL_TOTAL',len(__import__('test_bufftap').tests))

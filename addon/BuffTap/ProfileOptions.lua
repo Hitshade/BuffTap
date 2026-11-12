@@ -8,7 +8,7 @@ function B:BuildProfileOptions(p,h)
   local T=B.OptionsTheme
   -- Four sections with matching 14 px insets: active, create, copy, manage.
   T.Card(p,12,-76,692,98); T.Card(p,12,-186,692,98)
-  T.Card(p,12,-296,692,170); T.Card(p,12,-478,692,74)
+  p.copyCard=T.Card(p,12,-296,692,170); p.manageCard=T.Card(p,12,-478,692,74)
   label(p,"Profiles",18,-16,"GameFontNormalLarge")
   label(p,"Share bindings, appearance, sounds and general preferences across your characters.",18,-44,"GameFontDisableSmall",680)
   T.SectionTitle(label(p,"Active profile",26,-90,T.fonts.Section))
@@ -71,7 +71,7 @@ function B:BuildProfileOptions(p,h)
   p.rename=button(p,L("Rename..."),458,-108,232,function()
     p.pending=nil; p.confirm:Hide(); p.renameName:SetText(B.profileDB:GetCurrentProfile()); rename:Show(); p.renameName:SetFocus(); p.renameName:HighlightText()
   end)
-  T.SectionTitle(label(p,"Manage profiles",26,-492,T.fonts.Section))
+  p.manageTitle=label(p,"Manage profiles",26,-492,T.fonts.Section); T.SectionTitle(p.manageTitle)
   p.reset=button(p,L("Reset profile"),26,-512,150,function()
     p.confirmText:SetText(L("Reset this profile's shared preferences? Buff and class settings will stay unchanged."))
     p.pending=function() outcome(B:ResetSettingsProfile()) end; p.confirm:Show()
@@ -112,4 +112,12 @@ function B:UpdateProfileOptions()
   p.deletePick:SetText(p.deleteName or L("Choose unused profile")); p.delete:SetEnabled(p.deleteName~=nil)
   local unused=false; for _,name in ipairs(self:ProfileNames()) do if self:ProfileUsers(name)==0 then unused=true end end
   p.deletePick:SetEnabled(unused)
+  -- Collapse the copy card when the optional same-class rows are hidden, and move Manage profiles up with it.
+  local rows=(p.includeClass:IsShown() and 1 or 0)+(p.character:IsShown() and 1 or 0)
+  local hintY=-366-rows*35
+  local function at(object,x,y) object:ClearAllPoints(); object:SetPoint("TOPLEFT",x,y) end
+  at(p.classHint,28,hintY); p.copyCard:SetHeight(-hintY-296+30)
+  local top=hintY-30-12
+  at(p.manageCard,12,top); at(p.manageTitle,28,top-14); at(p.reset,28,top-34); at(p.deletePick,190,top-34); at(p.delete,458,top-34)
+  at(p.confirm,12,top-86); at(p.message,28,top-178)
 end

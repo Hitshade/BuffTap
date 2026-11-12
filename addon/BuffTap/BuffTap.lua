@@ -76,6 +76,7 @@ function B:UpdateOverlay()
   self:CancelOverlayTimer()
   local action=self.action
   if not action then
+    if b.swipe then b.swipe:Hide(); b.swipeKey=nil end
     if b.nameLabel then b.nameLabel:SetText("") end
     if b.label then b.label:SetText("") end
     if b.timerLabel then b.timerLabel:SetText("") end
@@ -86,7 +87,17 @@ function B:UpdateOverlay()
   if b.label then b.label:SetText(self.db.showTargetName and action.targetName or "") end
   if b.groupLabel then
     if action.manual then b.groupLabel:SetText("!")
-    else b.groupLabel:SetText(self.db.showGroupBadge and action.groupCast and (action.groupCount and ("Ã—"..tostring(action.groupCount)) or "G") or "") end
+    else b.groupLabel:SetText(self.db.showGroupBadge and action.groupCast and (action.groupCount and ("×"..tostring(action.groupCount)) or "G") or "") end
+  end
+  if b.swipe then
+    local threshold=A.Number(action.threshold) and action.threshold or nil
+    if self.db.showSwipe and action.needState=="expiring" and type(action.remaining)=="number" and threshold and threshold>0 and action.remaining<=threshold then
+      if not action.selectedAt then action.selectedAt=GetTime() end
+      local now=action.selectedAt
+      local key=tostring(action.key)..":"..tostring(action.targetGUID)..":"..tostring(now)
+      if b.swipeKey~=key then b.swipeKey=key; pcall(b.swipe.SetCooldown,b.swipe,now-(threshold-action.remaining),threshold) end
+      b.swipe:Show()
+    else b.swipe:Hide(); b.swipeKey=nil end
   end
   if b.timerLabel then
     if self.db.showTimer and action.needState=="expiring" and type(action.remaining)=="number" then
@@ -138,6 +149,15 @@ function B:CreateButton()
 
   b:HookScript("OnHide",function(frame) if not A.Combat() and B.StopIconEffect then B:StopIconEffect(frame) end end)
   b.icon=b:CreateTexture(nil,"ARTWORK"); b.icon:SetAllPoints()
+  -- Optional clock sweep across the rebuff window. Display only; it never affects the secure action.
+  local okSwipe,swipe=pcall(CreateFrame,"Cooldown",nil,b,"CooldownFrameTemplate")
+  if okSwipe and swipe then
+    b.swipe=swipe; swipe:SetAllPoints(b.icon); swipe:EnableMouse(false)
+    if swipe.SetHideCountdownNumbers then swipe:SetHideCountdownNumbers(true) end
+    if swipe.SetDrawEdge then swipe:SetDrawEdge(false) end
+    if swipe.SetReverse then swipe:SetReverse(true) end
+    swipe:Hide()
+  end
   b.glow=b:CreateTexture(nil,"OVERLAY"); b.glow:SetAllPoints()
   b.glow:SetTexture("Interface\\Buttons\\CheckButtonHilight"); b.glow:SetBlendMode("ADD")
   b.nameLabel=b:CreateFontString(nil,"OVERLAY","GameFontHighlightSmall")
@@ -272,6 +292,14 @@ function B:CreateButton()
   end)
 end
 
+-- When the only pending buffs are on players out of range, optionally show the first one greyed out.
+-- It is display-only: no secure action and no key binding, exactly like other manual reminders.
+function B:OutOfRangeDisplay()
+  local blocked=self.rangeBlockedActions and self.rangeBlockedActions[1]
+  if not blocked or self:ReminderPauseReason() then return nil end
+  return {manual=true,valid=true,outOfRange=true,source="range",key=blocked.key,id=blocked.id,target=blocked.target,targetGUID=blocked.targetGUID,
+    icon=blocked.icon,name=blocked.name,targetName=(blocked.targetName or "").." ("..self:Text("out of range")..")",reason="target out of range"}
+end
 function B:Commit(action,reason)
   if A.Combat() then self.dirty=true; return end
   local b=self.button
@@ -334,11 +362,12 @@ function B:Commit(action,reason)
     b:SetSize(self.db.size,self.db.size)
     b:ClearAllPoints(); b:SetPoint("CENTER",UIParent,"CENTER",self.db.x,self.db.y)
     self:ApplyReminderVisibility(); b.icon:SetTexture(action.icon)
+    local dim=action.outOfRange and .65 or 1; b.icon:SetDesaturated(action.outOfRange==true); b.icon:SetVertexColor(dim,dim,dim)
     b.nameLabel:SetText(self.db.showBuffName and action.name or "")
     b.label:SetText(self.db.showTargetName and action.targetName or "")
     self.action=action; self.reason=reason; b:Show()
     self:UpdateOverlay(); self:UpdatePulse()
-    if self.db.sound and not action.nearby and (not self.ReminderSoundAllowed or self:ReminderSoundAllowed(action)) and (not previous or previous.key~=action.key) and GetTime()-(self.lastSound or -100)>=(self.db.soundInterval or 5) then
+    if self.db.sound and not action.nearby and not action.outOfRange and (not self.ReminderSoundAllowed or self:ReminderSoundAllowed(action)) and (not previous or previous.key~=action.key) and GetTime()-(self.lastSound or -100)>=(self.db.soundInterval or 5) then
       self:PlayAlert("reminder")
       self.lastSound=GetTime()
     end
@@ -384,7 +413,7 @@ function B:Commit(action,reason)
   b:SetSize(self.db.size,self.db.size)
   b:ClearAllPoints(); b:SetPoint("CENTER",UIParent,"CENTER",self.db.x,self.db.y)
   self:ApplyReminderVisibility()
-  b.icon:SetTexture(action.icon)
+  b.icon:SetTexture(action.icon); b.icon:SetDesaturated(false); b.icon:SetVertexColor(1,1,1)
   b.nameLabel:SetText(self.db.showBuffName and action.name or "")
   b.label:SetText(self.db.showTargetName and action.targetName or "")
   self.action=action
@@ -578,6 +607,7 @@ function B:Refresh(captureDiagnostics)
     self.lastError=publicError(action)
     action=nil; reason="selection error (see debug)"
   else self.lastError=nil end
+  if ok and not action and self.db.showOutOfRange and self.rangeBlocked then action=self:OutOfRangeDisplay() end
   local commitOK,commitErr=pcall(self.Commit,self,action,reason)
   if not commitOK then
     self.lastError="commit: "..publicError(commitErr)

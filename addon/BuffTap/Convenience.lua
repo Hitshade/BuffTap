@@ -10,7 +10,7 @@ function B:AddMiniBanner(parent,width)
   local artWidth=math.min(600,width-32)
   local height=artWidth*420/2043
   h:SetPoint("TOPLEFT",8,-8); h:SetSize(width-16,height)
-  h.background=h:CreateTexture(nil,"BACKGROUND"); h.background:SetAllPoints(); h.background:SetColorTexture(.035,.045,.05,1)
+  h.background=h:CreateTexture(nil,"BACKGROUND"); h.background:SetAllPoints(); h.background:SetColorTexture(0,0,0,0) -- the art is keyed, so the window colour shows through
   h.art=h:CreateTexture(nil,"ARTWORK"); h.art:SetPoint("TOPLEFT",8,0); h.art:SetSize(artWidth,height)
   h.artWidth=artWidth; h.artHeight=height
   h.art:SetTexture("Interface\\AddOns\\BuffTap\\Media\\BuffTapMiniBanner.tga")
@@ -48,7 +48,8 @@ local function sameFont(a,b)
 end
 function B:NormalizeTextFontKey(key)
   if key~="names" and key~="numbers" then return "default" end
-  local path=key=="names" and UNIT_NAME_FONT or DAMAGE_TEXT_FONT
+  -- Not an and/or chain: a missing UNIT_NAME_FONT must not fall through to the combat-number font.
+  local path; if key=="names" then path=UNIT_NAME_FONT else path=DAMAGE_TEXT_FONT end
   local game=self:BaseTextFont("GameFontHighlightSmall")
   if sameFont(path,game) then return "default" end
   if key=="numbers" and sameFont(path,UNIT_NAME_FONT) then return "names" end
@@ -77,6 +78,37 @@ function B:NormalizeConvenience()
   d.labelGap=A.Number(d.labelGap) and math.max(0,math.min(20,math.floor(d.labelGap))) or 5
   if not ({none=true,outline=true,thick=true})[d.labelOutline] then d.labelOutline=self:GameTextOutline() end
   if type(d.welcomeSeen)~="boolean" then d.welcomeSeen=false end
+  if d.iconStyle~="modern" then d.iconStyle="classic" end
+  if d.campIconStyle~="modern" then d.campIconStyle="classic" end
+  if d.labelPosition~="above" and d.labelPosition~="below" then d.labelPosition="split" end
+  for _,key in ipairs({"showSwipe","showOutOfRange","helperThanksResting","nearbyRequests"}) do if type(d[key])~="boolean" then d[key]=false end end
+  if d.nearbyButtonSide~="right" then d.nearbyButtonSide="left" end
+  if type(d.requestMessage)~="string" or #d.requestMessage>200 then d.requestMessage="" end
+  for key,value in pairs(d.requestBuffs) do if type(key)~="string" or type(value)~="boolean" then d.requestBuffs[key]=nil end end
+end
+-- Icon styles. Classic shows the game's full icon art (its bevelled frame included). Modern crops the bevel
+-- and draws a crisp dark edge, like a typical modern action bar.
+function B:IconStyleChoices() return {{key="classic",name="Classic"},{key="modern",name="Modern square"}} end
+local function hairlines(owner,anchor,inset,layer,sub)
+  local lines={}
+  for i=1,4 do local t=owner:CreateTexture(nil,layer,nil,sub); t:SetColorTexture(1,1,1,1); lines[i]=t end
+  lines[1]:SetPoint("TOPLEFT",anchor,"TOPLEFT",-inset,inset); lines[1]:SetPoint("TOPRIGHT",anchor,"TOPRIGHT",inset,inset); lines[1]:SetHeight(1)
+  lines[2]:SetPoint("BOTTOMLEFT",anchor,"BOTTOMLEFT",-inset,-inset); lines[2]:SetPoint("BOTTOMRIGHT",anchor,"BOTTOMRIGHT",inset,-inset); lines[2]:SetHeight(1)
+  lines[3]:SetPoint("TOPLEFT",anchor,"TOPLEFT",-inset,inset); lines[3]:SetPoint("BOTTOMLEFT",anchor,"BOTTOMLEFT",-inset,-inset); lines[3]:SetWidth(1)
+  lines[4]:SetPoint("TOPRIGHT",anchor,"TOPRIGHT",inset,inset); lines[4]:SetPoint("BOTTOMRIGHT",anchor,"BOTTOMRIGHT",inset,-inset); lines[4]:SetWidth(1)
+  return lines
+end
+function B:ApplyIconStyle(frame,texture,style)
+  if not frame or not texture then return end
+  local modern=style=="modern"
+  if modern then texture:SetTexCoord(.08,.92,.08,.92) else texture:SetTexCoord(0,1,0,1) end
+  if modern and not frame.modernFrame then
+    frame.modernFrame={outer=hairlines(frame,texture,1,"OVERLAY",6),inner=hairlines(frame,texture,0,"OVERLAY",7)}
+  end
+  if frame.modernFrame then
+    for _,t in ipairs(frame.modernFrame.outer) do t:SetVertexColor(0,0,0,1); t:SetShown(modern) end
+    for _,t in ipairs(frame.modernFrame.inner) do t:SetVertexColor(0,0,0,.55); t:SetShown(modern) end
+  end
 end
 function B:TextSizeChoices()
   local choices={{key=0,name=self:TextSizeLabel(0)}}
@@ -116,9 +148,19 @@ function B:ApplyReminderStyle(frame)
     self:ApplyLabelStyle(entry[1],d,entry[2],(entry[1]==frame.groupLabel or entry[1]==frame.count) and colors.gold or nil)
   end
   local gap=d.labelGap or 5
-  if frame.nameLabel then frame.nameLabel:ClearAllPoints(); frame.nameLabel:SetPoint("BOTTOM",frame,"TOP",0,gap) end
-  local recipient=frame.label or frame.recipient
-  if recipient then recipient:ClearAllPoints(); recipient:SetPoint("TOP",frame,"BOTTOM",0,-gap) end
+  local name=frame.nameLabel; local recipient=frame.label or frame.recipient
+  -- Split: buff name above, recipient below. Above / below stack both labels on one side, name first.
+  if d.labelPosition=="above" and name and recipient then
+    recipient:ClearAllPoints(); recipient:SetPoint("BOTTOM",frame,"TOP",0,gap)
+    name:ClearAllPoints(); name:SetPoint("BOTTOM",recipient,"TOP",0,2)
+  elseif d.labelPosition=="below" and name and recipient then
+    name:ClearAllPoints(); name:SetPoint("TOP",frame,"BOTTOM",0,-gap)
+    recipient:ClearAllPoints(); recipient:SetPoint("TOP",name,"BOTTOM",0,-2)
+  else
+    if name then name:ClearAllPoints(); name:SetPoint("BOTTOM",frame,"TOP",0,gap) end
+    if recipient then recipient:ClearAllPoints(); recipient:SetPoint("TOP",frame,"BOTTOM",0,-gap) end
+  end
+  self:ApplyIconStyle(frame,frame.icon,d.iconStyle)
 end
 -- Session-only pause: one expiry timer, no saved timestamps or polling.
 function B:PauseReminders(minutes)

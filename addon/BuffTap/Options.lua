@@ -150,6 +150,13 @@ local function addHelp(frame,title,body)
   frame:SetScript("OnLeave",function() if GameTooltip then GameTooltip:Hide() end end)
 end
 
+local function markTargetRole()
+  local role,name=B:CycleTargetRoleMark()
+  if role==false or role==nil then B.Print(L("Select a friendly player first.")); return end
+  B.Print(role=="none" and L("%s: role mark cleared.",name or "") or L("%s marked as %s.",name or "",L(role=="TANK" and "Tank" or "Healer")))
+  B:Options()
+end
+local roleHelp="Roles come from, in order: your mark, the group role (role check or the player's own setting), the raid Main Tank assignment, then optionally a tanking stance or form. Click to cycle your target: Tank, Healer, no mark."
 local function editbox(parent,x,y,w,numeric)
   local e=CreateFrame("EditBox",nil,parent,"InputBoxTemplate")
   e:SetSize(w or 64,22); e:SetPoint("TOPLEFT",x,y); e:SetAutoFocus(false); if numeric then e:SetNumeric(true) end
@@ -611,7 +618,23 @@ function B:BuildBlessingOptions(parent)
     end
     f.blessingPlayerRows[i]=row
   end
-  f.blessingPageText=label(detail,"",12,-179,"GameFontDisableSmall",440)
+  -- Role choices for this class: a tank or healer of the class gets this blessing instead of the class choice.
+  f.blessingRoleRows={}
+  for i,role in ipairs({"TANK","HEALER"}) do
+    local row=CreateFrame("Frame",nil,detail); row:SetSize(626,26); row:SetPoint("TOPLEFT",4,-166-(i-1)*28)
+    row.name=label(row,L(role=="TANK" and "Tanks in this class" or "Healers in this class"),8,-7,"GameFontNormalSmall",190)
+    row.pick=blessingPick(row,210,0,190,function()
+      local ctx=f.blessingContext=="Raid" and "Raid" or "Party"; local map=B.db.blessingRoleChoices[ctx]; map=map and map[role]
+      return map and f.blessingDetailClass and map[f.blessingDetailClass]
+    end,function(key) if f.blessingDetailClass then B:SetBlessingRoleChoice(role,f.blessingDetailClass,key,f.blessingContext) end end,true)
+    addHelp(row.pick,role=="TANK" and "Tanks in this class" or "Healers in this class","Gives players of this class with this role a different blessing. Player exceptions still take precedence. When a class has mixed choices, single blessings are used for that class instead of a Greater Blessing.")
+    f.blessingRoleRows[i]=row
+  end
+  f.blessingRoleMark=button(detail,L("Mark target role"),414,-166,150,markTargetRole)
+  addHelp(f.blessingRoleMark,"Mark target role",roleHelp)
+  f.blessingRoleGuess=check(detail,L("Guess tanks from stance"),414,-196,function(c) if not A.Combat() then B.db.roleGuess=c:GetChecked()==true; B.roleCache=nil; B:InvalidateAura(); B:RequestRefresh("role guess",0) end end)
+  addHelp(f.blessingRoleGuess,"Guess tanks from stance","Counts a visible Defensive Stance, Bear or Dire Bear Form, or Righteous Fury as a tank when no role is set. Off by default.")
+  f.blessingPageText=label(detail,"",12,-235,"GameFontDisableSmall",440)
   f.blessingScroll=CreateFrame("Slider",nil,detail,"OptionsSliderTemplate"); local scroll=f.blessingScroll
   scroll:SetOrientation("VERTICAL"); scroll:SetSize(16,128); scroll:SetPoint("TOPLEFT",642,-28); scroll:SetMinMaxValues(0,1); scroll:SetValueStep(1)
   if scroll.SetObeyStepOnDrag then scroll:SetObeyStepOnDrag(true) end
@@ -620,7 +643,7 @@ function B:BuildBlessingOptions(parent)
     if self.silent then return end
     f.blessingPlayerOffset=math.floor(value+0.5); B:Options()
   end)
-  button(detail,L("Done"),548,-170,98,function() f.expandedBlessing=nil; B:Options() end)
+  button(detail,L("Done"),548,-228,98,function() f.expandedBlessing=nil; B:Options() end)
   line(p,-505)
   f.blessingFooter=label(p,"",18,-604,"GameFontDisableSmall",686)
   f.followBuffSettings=button(p,"Use Buffs settings",18,-574,164,function()
@@ -725,7 +748,9 @@ local function updateBlessingPlayers(self,f,entries,title,editable)
       end
       f.blessingPageText:SetText("Players "..(offset+1).."-"..math.min(offset+5,#entries).." / "..#entries.." - "..L("Player exceptions take precedence."))
       f.blessingScroll.silent=true; f.blessingScroll:SetMinMaxValues(0,math.max(1,maxOffset)); f.blessingScroll:SetValue(offset); f.blessingScroll:SetShown(maxOffset>0); f.blessingScroll.silent=false
-      f.blessingDetail:SetHeight(202)
+      f.blessingDetail:SetHeight(262)
+      for _,r in ipairs(f.blessingRoleRows or {}) do r.pick:Update(); r.pick:SetAvailable(editable) end
+      f.blessingRoleGuess:SetChecked(self.db.roleGuess==true)
 
 end
 function B:UpdateBlessingOptions()
@@ -827,7 +852,7 @@ function B:UpdateBlessingOptions()
       end
     end
     addHelp(row.players,"Player exceptions",L(status).."\n"..L("Click to expand or collapse individual player choices.")); y=y-26
-    if f.expandedBlessing==row.class then updateBlessingPlayers(self,f,entries,L(row.class:sub(1,1)..row.class:sub(2):lower()),editable) end
+    if f.expandedBlessing==row.class then f.blessingDetailClass=row.class; updateBlessingPlayers(self,f,entries,L(row.class:sub(1,1)..row.class:sub(2):lower()),editable) end
   end
   f.updatingBlessingDetail=false
 end
@@ -1029,62 +1054,87 @@ function B:BuildHelperPage(parent)
   label(f,L("Everyday conveniences"),18,-16,"GameFontNormalLarge")
   label(f,L("Optional conveniences, separate from your buff choices. PvP protection starts on."),18,-43,"GameFontDisableSmall",680)
   f.checks={}; f.descriptions={}; f.trackers={}
+  -- Fixed layout, no scrolling. Row A: Solo thanks (left) and Conveniences (right). Row B: Buff requests.
+  -- Row C: Tracking. Class readiness fills the space below for Warlocks, Hunters and Paladins.
+  -- Longer explanations live in each control's tooltip so everything fits on one page.
+  local function section() local s=CreateFrame("Frame",nil,f); s:SetPoint("TOPLEFT",0,0); s:SetSize(712,1); return s end
+  local th,gr,tr,q=section(),section(),section(),section()
+  f.helperSections={thanks=th,grid=gr,tracking=tr,requests=q}
   local settings={
-    {"helperDismiss",L("Dismiss a reminder for now"),L("Right-click a buff or item reminder to skip it until you change zones. Restore reminders below brings it back sooner.")},
+    {"helperDismiss",L("Dismiss a reminder for now"),L("Right-click a buff or item reminder to skip it until you change zones. Restore reminders above brings it back sooner.")},
     {"helperBounce",L("Stop repeated stronger-buff errors"),L("If your BuffTap click fails because a stronger buff is active, hide that reminder until a zone change or manual restore.")},
     {"helperQuick",L("Choose consumables from the icon"),L("Hover a food, flask or elixir reminder to pick another supported item in your bags. Click the main icon to use your choice.")},
     {"helperCoverage",L("Show missing party buffs"),L("Shows buffs your five-player party may be missing and who might provide them. Information only: no casting or chat messages.")},
     {"helperDiscovery",L("Find unrecognized consumables"),L("Lists bag consumables missing from BuffTap's supported list for review. It does not add or use them. View the report in Diagnostics.")},
   }
-  local descriptions={
-    L("Skip until a zone change, or restore the reminder below."),
-    L("Hide reminders after a stronger-buff error until a zone change or manual restore."),
-    L("Choose supported food, flasks or elixirs from the reminder icon."),
-    L("Shows missing party buffs. Information only; no casting or chat."),
-    L("Lists unsupported bag consumables in Diagnostics. Never uses them."),
-  }
+  card(gr,364,-74,340,212)
+  T.SectionTitle(label(gr,L("Conveniences"),380,-88,T.fonts.Section))
   for i,spec in ipairs(settings) do
-    local x=18+((i-1)%2)*352; local y=-67-math.floor((i-1)/2)*62
-    card(f,i%2==1 and 12 or 364,y+2,340,58)
     local key=spec[1]
-    f.checks[key]=check(f,spec[2],x,y,function(c)
+    f.checks[key]=check(gr,spec[2],378,-108-(i-1)*25,function(c)
       if A.Combat() then return end
       B.db[key]=c:GetChecked()==true
-      if key=="helperThanks" then B.helperThankSeen=nil; B:ObserveSoloThanks(true) end
       if key=="helperDiscovery" then B.helperDiscoverDirty=true end
       if key=="helperDismiss" or key=="helperBounce" then B:RestoreHelpers() end
       B:RequestRefresh("helper setting",0); B:Options()
     end)
-    f.descriptions[key]=label(f,descriptions[i],x+4,y-27,"GameFontDisableSmall",326)
     addHelp(f.checks[key],spec[2],spec[3])
   end
-  card(f,364,-189,340,58)
-  parent.pauseResting=check(f,"Pause reminders while resting",370,-191,function(c)
+  parent.pauseResting=check(gr,"Pause reminders while resting",378,-233,function(c)
     if A.Combat() then return end
     setAndRefresh("pauseResting",c:GetChecked()==true); B:InvalidateSupplies(false); B:Refresh(false); B:Options()
   end)
   addHelp(parent.pauseResting,"Pause reminders while resting","Hide buff reminders and quiet automatic stock alerts in cities and inns. Settings remain accessible.")
-  parent.pvpProtection=check(f,"Prevent accidental PvP flagging",370,-219,function(c)
+  parent.pvpProtection=check(gr,"Prevent accidental PvP flagging",378,-258,function(c)
     if A.Combat() then return end
     setAndRefresh("pvpProtection",c:GetChecked()==true); B:Refresh(false); B:Options()
   end)
   addHelp(parent.pvpProtection,"Prevent accidental PvP flagging","Skip flagged or unreadable recipients while unflagged or leaving PvP. Includes group spells. Battlegrounds and arenas are exempt.")
-  card(f,12,-270,692,96)
-  T.SectionTitle(label(f,L("Solo thanks"),26,-284,T.fonts.Section))
-  f.checks.helperThanks=check(f,L("Thank players who buff me solo"),26,-305,function(c)
+  card(th,12,-74,340,212)
+  T.SectionTitle(label(th,L("Solo thanks"),28,-88,T.fonts.Section))
+  label(th,L("Say thanks when another player buffs you while you play solo."),28,-108,T.fonts.Sub,308)
+  f.checks.helperThanks=check(th,L("Thank players who buff me solo"),28,-150,function(c)
     if A.Combat() then return end
     B.db.helperThanks=c:GetChecked()==true; B.helperThankSeen=nil; B:ObserveSoloThanks(true)
     B:RequestRefresh("solo thanks",0); B:Options()
   end)
   addHelp(f.checks.helperThanks,L("Solo thanks"),L("Thanks identified solo buff providers. Never in groups, instances or combat. Emotes are spaced one second apart, with a one-minute cooldown per player."))
-  f.descriptions.helperThanks=label(f,L("Thanks solo buff providers, once per player per minute. Different players are thanked one second apart."),26,-333,"GameFontDisableSmall",326)
-  label(f,L("Solo response emote"),378,-282,"GameFontNormal",320)
-  f.thankEmote=selector(f,"",364,-303,324,function() return B:SoloThankEmotes() end,function(choice)
+  f.thanksResting=check(th,L("Keep thanking while resting"),28,-176,function(c)
+    if A.Combat() then return end
+    B.db.helperThanksResting=c:GetChecked()==true; B.helperThankSeen=nil; B:ObserveSoloThanks(true); B:Options()
+  end)
+  addHelp(f.thanksResting,L("Keep thanking while resting"),L("Thanks continue in cities and inns even when Pause reminders while resting is on."))
+  label(th,L("Solo response emote"),30,-212,"GameFontNormal",300)
+  f.thankEmote=selector(th,"",28,-232,310,function() return B:SoloThankEmotes() end,function(choice)
     B.db.helperThankEmote=choice
     -- Configuration only: never sends an emote or resets cooldowns.
   end,"scroll")
   addHelp(f.thankEmote,L("Solo response emote"),L("Directed reactions only. No sitting, sleeping or looping animations. Changing this never sends an emote."))
-  f.readiness=CreateFrame("Frame",nil,f); f.readiness:SetAllPoints(f)
+  -- Class readiness keeps its authored coordinates; the frame is moved up as one block below Tracking.
+  f.readiness=CreateFrame("Frame",nil,f); f.readiness:SetSize(712,1); f.readiness:SetPoint("TOPLEFT",0,-176)
+  -- Buff requests (Nearby): whisper a nearby player for a class buff you are missing. Off by default.
+  f.requests=q
+  card(q,12,-298,692,148)
+  T.SectionTitle(label(q,L("Buff requests"),28,-312,T.fonts.Section))
+  f.requestEnable=check(q,L("Offer buff requests in Nearby"),28,-332,function(c)
+    if A.Combat() then return end
+    B.db.nearbyRequests=c:GetChecked()==true; if B.nearbyFrame then B:UpdateNearbyWindow() end; B:Options()
+  end)
+  addHelp(f.requestEnable,L("Offer buff requests in Nearby"),L("When a player outside your group can cast a class buff you are missing, Nearby shows a button with that buff's icon. Clicking it whispers your request. Nothing is sent automatically.").."\n"..L("Each request is one whisper you click to send. You can ask the same player again after three minutes."))
+  label(q,L("Message"),330,-337,"GameFontHighlightSmall",64)
+  f.requestMessage=editbox(q,396,-331,294,false); f.requestMessage:SetFontObject(T.fonts.Small); f.requestMessage:SetJustifyH("LEFT"); f.requestMessage:SetMaxLetters(200)
+  f.requestMessage:SetScript("OnEnterPressed",function(s)
+    local text=(s:GetText() or ""):gsub("[|%c]","")
+    B.db.requestMessage=(text==B:Text("Hi! Could I get %s, please? Thank you!")) and "" or text; s:ClearFocus(); B:Options()
+  end)
+  f.requestMessage:SetScript("OnEscapePressed",function(s) s:ClearFocus(); B:Options() end)
+  addHelp(f.requestMessage,L("Message"),L("%s is replaced with the buff names. Clear the box and press Enter to restore the default."))
+  f.requestChecks={}
+  for i,def in ipairs(B:CoverageDefinitions()) do
+    local key=def.key
+    local c=check(q,def.name,28+((i-1)%3)*228,-362-math.floor((i-1)/3)*26,function(s) if not A.Combat() then B.db.requestBuffs[key]=s:GetChecked()==true; if B.nearbyFrame then B:UpdateNearbyWindow() end end end)
+    f.requestChecks[key]=c
+  end
   local r=f.readiness
   card(r,12,-374,692,144)
   line(r,-369)
@@ -1206,28 +1256,33 @@ function B:BuildHelperPage(parent)
   menu:SetBackdrop({bgFile="Interface\\Buttons\\WHITE8X8",edgeFile="Interface\\Tooltips\\UI-Tooltip-Border",edgeSize=12})
   menu:SetBackdropColor(.04,.04,.04,1); T.Surface(menu,"menu"); menu.rows={}; menu:Hide()
   f:SetScript("OnHide",function() menu:Hide(); f.soulMenu:Hide() end)
-  f.trackerCard=card(f,12,-516,692,82)
-  f.trackerLine=line(f,-516)
-  f.trackerHeading=label(f,L("Tracking"),18,-529,T.fonts.Section)
-  f.checks.helperTracking=check(f,L("Remind me to enable tracking"),18,-557,function(c)
+  f.trackerCard=card(tr,12,-516,692,82)
+  f.trackerLine=line(tr,-516)
+  f.trackerHeading=label(tr,L("Tracking"),18,-529,T.fonts.Section)
+  f.checks.helperTracking=check(tr,L("Remind me to enable tracking"),18,-557,function(c)
     if A.Combat() then return end
     B.db.helperTracking=c:GetChecked()==true; B:RequestRefresh("tracking reminder",0); B:Options()
   end)
   addHelp(f.checks.helperTracking,L("Remind me to enable tracking"),L("Choose Herbs, Minerals or Fish below. When that tracker is off, BuffTap offers a one-tap reminder to turn it on."))
-  f.treasure=check(f,L("Keep Find Treasure active"),490,-529,function(c)
+  f.treasure=check(tr,L("Keep Find Treasure active"),490,-529,function(c)
     if A.Combat() then return end
     B.db.helperTreasure=c:GetChecked()==true; B:RequestRefresh("treasure tracking",0); B:Options()
   end)
   addHelp(f.treasure,L("Keep Find Treasure active"),L("Restore Dwarf treasure tracking through your normal binding. Independent of your gathering tracker."))
-  f.emptyTracker=label(f,L("No learned gathering tracker is available on this character."),254,-565,"GameFontDisableSmall",440)
-  button(f,L("Restore reminders"),24,-622,154,function() B:RestoreHelpers(); B:Options() end)
-  button(f,L("View discovery report"),490,-622,204,function() B:ShowDiscoveryReport() end)
+  f.emptyTracker=label(tr,L("No learned gathering tracker is available on this character."),254,-565,"GameFontDisableSmall",440)
+  -- Page actions sit in the header, beside the description, so the body never needs to scroll.
+  f.restoreButton=button(f,L("Restore reminders"),402,-34,146,function() B:RestoreHelpers(); B:Options() end)
+  f.reportButton=button(f,L("View discovery report"),556,-34,148,function() B:ShowDiscoveryReport() end)
 end
 
 function B:UpdateHelperOptions()
   local f=self.helperWindow; if not f then return end
   local class=self:ReadinessClass(); local warlock=class=="WARLOCK"; local paladin=class=="PALADIN"
   f.readiness:SetShown(warlock or class=="HUNTER" or paladin); f.demonMenu:Hide()
+  f.requestEnable:SetChecked(self.db.nearbyRequests==true)
+  if not f.requestMessage:HasFocus() then f.requestMessage:SetText(self.db.requestMessage~="" and self.db.requestMessage or self:Text("Hi! Could I get %s, please? Thank you!")) end
+  for key,c in pairs(f.requestChecks) do c:SetChecked(self.db.requestBuffs[key]~=false); c:SetEnabled(self.db.nearbyRequests==true) end
+  f.thanksResting:SetChecked(self.db.helperThanksResting==true)
   local classCoords=CLASS_ICON_TCOORDS and CLASS_ICON_TCOORDS[class]
     or (warlock and {.75,1,.25,.5} or paladin and {0,.25,.5,.75} or class=="HUNTER" and {0,.25,.25,.5})
   if classCoords then f.readinessIcon:SetTexCoord(unpack(classCoords)) end
@@ -1283,7 +1338,7 @@ function B:UpdateHelperOptions()
   for _,entry in ipairs(trackers) do if entry.id==self.db.helperTracker then selected=true end end
   f.trackerHeading:SetText(L("Tracking")); T.SectionTitle(f.trackerHeading)
   f.treasure:SetShown(A.Known(2481)); f.treasure:SetChecked(self:HelperEnabled("helperTreasure"))
-  local trackerY=(warlock or class=="HUNTER" or paladin) and -529 or -382
+  local trackerY=-468
   f.trackerCard:ClearAllPoints(); f.trackerCard:SetPoint("TOPLEFT",12,trackerY+10)
   f.trackerLine:Hide()
   f.treasure:ClearAllPoints(); f.treasure:SetPoint("TOPLEFT",490,trackerY+2)
@@ -1294,7 +1349,7 @@ function B:UpdateHelperOptions()
   for i,entry in ipairs(trackers) do
     local t=f.trackers[i]
     if not t then
-      t=flatButton(f,"",254+(i-1)*148,trackerY-26,140,function(control)
+      t=flatButton(f.helperSections.tracking,"",254+(i-1)*148,trackerY-26,140,function(control)
         if A.Combat() then return end
         B.db.helperTracker=control.trackerID; B:RequestRefresh("tracking preference",0); B:Options()
       end)
@@ -1508,7 +1563,7 @@ function B:Options()
     f:SetBackdrop({bgFile="Interface\\Buttons\\WHITE8X8",edgeFile="Interface\\Buttons\\WHITE8X8",edgeSize=1})
     -- Window shell: rounded body with a soft shadow. Header (0-120), sidebar (196 px), pages, footer (last 32 px).
     T.Round(f,10,"surface"); f:SetBackdropColor(unpack(T.window)); f:SetBackdropBorderColor(1,1,1,.12); T.Shadow(f,30,.7)
-    f.headerGlow=f:CreateTexture(nil,"BACKGROUND",nil,-5); f.headerGlow:SetTexture(T.media.."UIGradient"); f.headerGlow:SetVertexColor(1,1,1,.035)
+    f.headerGlow=f:CreateTexture(nil,"BACKGROUND",nil,-5); f.headerGlow:SetTexture(T.media.."UIGradient"); f.headerGlow:SetVertexColor(1,1,1,0) -- off: its 10 px side insets showed as faint vertical seams; the keyed banner needs a flat header
     f.headerGlow:SetPoint("TOPLEFT",10,-1); f.headerGlow:SetPoint("TOPRIGHT",-10,-1); f.headerGlow:SetHeight(119)
     f.headerRule=f:CreateTexture(nil,"BORDER"); f.headerRule:SetColorTexture(unpack(T.rule)); f.headerRule:SetPoint("TOPLEFT",1,-120); f.headerRule:SetPoint("TOPRIGHT",-1,-120); f.headerRule:SetHeight(1)
     f.sidebarFill=f:CreateTexture(nil,"BACKGROUND",nil,-5); f.sidebarFill:SetColorTexture(unpack(T.sidebar)); f.sidebarFill:SetPoint("TOPLEFT",1,-121); f.sidebarFill:SetPoint("BOTTOMLEFT",1,33); f.sidebarFill:SetWidth(195)
@@ -1662,7 +1717,7 @@ function B:Options()
     local resetBuffs=button(buffs,L("Reset buffs"),0,0,100,function()
       if not A.Combat() then B:EditorSettings("buffs").buffs={}; B:EditorSettings("buffs").priorities={}; B:EditorSettings("buffs").buffSeconds={}; B:Refresh(); B:Options() end
     end)
-    f.resetBuffsButton=resetBuffs; T.Variant(resetBuffs,"danger"); resetBuffs:ClearAllPoints(); resetBuffs:SetPoint("BOTTOMRIGHT",-34,26)
+    f.resetBuffsButton=resetBuffs; T.Variant(resetBuffs,"danger"); T.Confirm(resetBuffs); resetBuffs:ClearAllPoints(); resetBuffs:SetPoint("BOTTOMRIGHT",-34,26)
 
     -- GROUPS PAGE
     local groupPage=panel(f); f.pages[TAB.Groups]=groupPage
@@ -1685,6 +1740,10 @@ function B:Options()
       T.SectionTitle(label(groups,L("Shared group settings"),26,-98,T.fonts.Section))
       line(groups,-204)
       f.perBuffHeading=label(groups,L("Per-buff customization"),18,-218,"GameFontNormalLarge")
+      f.roleGuess=check(groups,L("Guess tanks from stance"),300,-213,function(c) if not A.Combat() then B.db.roleGuess=c:GetChecked()==true; B.roleCache=nil; B:InvalidateAura(); B:RequestRefresh("role guess",0) end end)
+      addHelp(f.roleGuess,"Guess tanks from stance","Counts a visible Defensive Stance, Bear or Dire Bear Form, or Righteous Fury as a tank when no role is set. Off by default.")
+      f.roleMark=button(groups,L("Mark target role"),560,-212,144,markTargetRole)
+      addHelp(f.roleMark,"Mark target role",roleHelp)
       label(groups,L("Select a buff below to customize its party/raid groups, recipient classes and group-spell threshold."),18,-242,"GameFontDisableSmall",686)
       label(groups,L("These filters apply only to party/raid buffing. Personal and open-world target buffs stay separate."),18,-596,"GameFontDisableSmall",686)
       f.groupAllLabel=label(shared,L("All buffs"),18,-10,"GameFontNormal")
@@ -1757,17 +1816,17 @@ function B:Options()
     label(nearby,"The all-players view keeps observed strangers listed after buffing. Group members appear only while an eligible group buff is queued.",24,-434,"GameFontHighlightSmall",660)
     label(nearby,"Five visible rows keep the window compact. Scroll over Nearby to browse players; use your buff binding after moving the pointer away.",18,-510,"GameFontHighlightSmall",660)
     label(nearby,"Shift-left-click the minimap icon to toggle the window. Drag its header when unlocked. The window hides during combat.",18,-562,"GameFontDisableSmall",660)
-    card(target,12,-108,698,90)
-    T.SectionTitle(label(target,"Default target refresh",26,-122,T.fonts.Section))
-    label(target,"Refresh passing players earlier without changing your party or raid thresholds.",26,-140,"GameFontDisableSmall",660)
+    card(target,12,-72,698,90)
+    T.SectionTitle(label(target,"Default target refresh",26,-86,T.fonts.Section))
+    label(target,"Refresh passing players earlier without changing your party or raid thresholds.",26,-104,"GameFontDisableSmall",660)
     f.targetDefaultSlider=compactSlider(target,30,1800,30,300,formatSeconds,function(_,value)
       B.db.targetSeconds=value; B:InvalidateAura("target"); B:RequestRefresh("target refresh default",0.08)
     end)
     f.targetDefaultSlider:SetScript("OnMouseUp",function() if not A.Combat() then B:Options() end end)
-    f.targetDefaultSlider:SetPoint("TOPLEFT",26,-162)
+    f.targetDefaultSlider:SetPoint("TOPLEFT",26,-126)
     addHelp(f.targetDefaultSlider,"Target refresh timing","Target mode may refresh much earlier than normal party/raid timing. BuffTap still caps the effective threshold at half of the aura's full duration, so a one-hour buff can be refreshed at 30 minutes but not earlier.")
     f.targetBlessingPanel=CreateFrame("Frame",nil,target)
-    f.targetBlessingPanel:SetPoint("TOPLEFT",12,-204); f.targetBlessingPanel:SetSize(698,188)
+    f.targetBlessingPanel:SetPoint("TOPLEFT",12,-168); f.targetBlessingPanel:SetSize(698,188)
     f.targetClassAware=check(f.targetBlessingPanel,"Class-aware target blessings",6,0,function(c) setAndRefresh("targetClassBlessings",c:GetChecked()==true); B:Options() end)
     addHelp(f.targetClassAware,"Class-aware target blessings","Automatic follows enabled priorities and class suitability. Class choices apply to friendly targets; group assignments take precedence for group members. Disable to use unrestricted target priorities.")
     f.targetBlessingFallback=check(f.targetBlessingPanel,"Allow fallback to the next blessing",6,-128,function(c) setAndRefresh("targetBlessingFallback",c:GetChecked()==true); B:Options() end)
@@ -1782,7 +1841,7 @@ function B:Options()
       pick.setOrder=function(order) B.db.targetBlessingPriorities[token]=order end
     end
     f.targetBlessingInstruction=label(f.targetBlessingPanel,"",6,-160,"GameFontDisableSmall",686)
-    f.targetHeaders=CreateFrame("Frame",nil,target); f.targetHeaders:SetPoint("TOPLEFT",0,-204); f.targetHeaders:SetSize(698,78)
+    f.targetHeaders=CreateFrame("Frame",nil,target); f.targetHeaders:SetPoint("TOPLEFT",0,-168); f.targetHeaders:SetSize(698,78)
     local header=f.targetHeaders
     line(header,0)
     header.title=label(header,"Spell availability & refresh timing",26,-22,T.fonts.Section); T.SectionTitle(header.title)
@@ -1794,15 +1853,16 @@ function B:Options()
     label(header,L("Override timing"),276,-56,"GameFontDisableSmall",100)
     label(header,L("Refresh when remaining"),402,-56,"GameFontDisableSmall",180)
     local targetScroll=CreateFrame("ScrollFrame",nil,target,"UIPanelScrollFrameTemplate")
-    targetScroll:SetPoint("TOPLEFT",14,-282); targetScroll:SetPoint("BOTTOMRIGHT",-34,54)
+    targetScroll:SetPoint("TOPLEFT",14,-246); targetScroll:SetPoint("BOTTOMRIGHT",-34,54)
     local targetChild=CreateFrame("Frame",nil,targetScroll); targetChild:SetSize(660,1); targetScroll:SetScrollChild(targetChild)
     f.targetChild=targetChild; f.targetRows={}; f.targetScroll=targetScroll
-    local resetTarget=button(target,L("Reset target settings"),0,0,132,function()
+    local resetTarget; resetTarget=button(target,L("Reset target settings"),0,0,132,function()
       if not A.Combat() then
         B.db.friendlyTarget=false; B.db.targetSeconds=300; B.db.targetBuffs={}; B.db.targetBuffSeconds={}; B.db.targetClassBlessings=true; B.db.targetBlessingFallback=true; B.db.targetBlessingClasses={}; B.db.targetBlessingPriorities={}
         B:InitDB(); B:InvalidateAura("target"); B:RequestRefresh("reset target settings",0); B:Options()
       end
     end)
+    T.Confirm(resetTarget)
     T.Variant(resetTarget,"danger"); resetTarget:ClearAllPoints(); resetTarget:SetPoint("BOTTOMRIGHT",-20,14)
 
     -- CONSUMABLES PAGE
@@ -1911,10 +1971,10 @@ function B:Options()
     f.campingTextGap=compactSlider(camping,0,20,1,170,function(v) return tostring(v).." px" end,function(_,v) campChange("campTextGap",v) end); f.campingTextGap:SetPoint("TOPLEFT",110,-452)
     button(camping,"Preview / move",18,-492,176,function() B:PreviewCampReminder() end)
     button(camping,"Center",210,-492,98,function() B.db.campX=0; B.db.campY=0; B:PreviewCampReminder() end)
-    button(camping,"Reset camp look",324,-492,170,function()
+    T.Confirm(button(camping,"Reset camp look",324,-492,170,function()
       if A.Combat() then return end
       B.db.campSize=40; B.db.campOpacity=1; B.db.campX=100; B.db.campY=-180; B.db.campEffectStyle="soft"; B.db.campEffectColor="gold"; B.db.campEffectSpeed="normal"; B.db.campTextFont="default"; B.db.campTextSize=0; B.db.campTextColor="white"; B.db.campTextOutline="outline"; B.db.campTextGap=4; B.db.campShowCountdown=true; B.db.campShowStacks=true; B:PreviewCampReminder(); B:UpdateCampingOptions()
-    end)
+    end))
     label(camping,"Preview lasts 12 seconds. Drag the camp icon to position it.",18,-532,"GameFontDisableSmall",660)
     f.campingPause=label(camping,"",18,-562,"GameFontHighlightSmall",470)
     f.campingResume=button(camping,"Resume reminder",510,-492,172,function() B.campSnoozeSession=nil; B.campSnoozeUntil=nil; B:UpdateCamping(); B:UpdateCampingOptions() end)
@@ -1927,7 +1987,7 @@ function B:Options()
     label(app,L("Binding"),18,-16,"GameFontNormalLarge")
     f.bindingText=label(app,"Current: -",18,-46,"GameFontHighlight",280)
     button(app,L("Set binding"),310,-42,116,function() B:CaptureBinding() end)
-    button(app,L("Clear"),436,-42,82,function() if not A.Combat() then B.db.keys={}; B.appearance=nil; B:RequestRefresh("clear binding",0); B:Options() end end)
+    f.clearBindingButton=T.Confirm(button(app,L("Clear"),436,-42,82,function() if not A.Combat() then B.db.keys={}; B.appearance=nil; B:RequestRefresh("clear binding",0); B:Options() end end))
     label(app,"The override binding is active only while BuffTap has a valid buff action ready.",18,-73,"GameFontDisableSmall",650)
     line(app,-105)
     label(app,L("Reminder appearance"),18,-126,"GameFontNormalLarge")
@@ -1963,6 +2023,7 @@ function B:Options()
     f.resetLookButton=button(app,L("Reset look"),236,-366,100,function()
       if not A.Combat() then B.db.showReminder=true; B.db.size=64; B.db.opacity=1; B.db.x=0; B.db.y=-180; B.db.glow=true; B.db.pulse=false; B.db.effectStyle=nil; B.db.effectColor="gold"; B.db.effectSpeed="normal"; B.db.showBuffName=false; B.db.showTargetName=true; B.db.showTimer=false; B.db.showGroupBadge=true; B.db.labelFont="default"; B.db.labelColor="default"; B.db.labelSize=0; B.db.labelOutline=B:GameTextOutline(); B.db.labelGap=5; B.appearance=nil; B:RequestRefresh("reset look",0); B:Options() end
     end)
+    T.Confirm(f.resetLookButton)
     local function textChange(key,value)
       setAndRefresh(key,value)
       if B.appearancePreview and B.appearancePreview:IsShown() then B:PreviewAppearance() end
@@ -2106,8 +2167,8 @@ function B:Options()
   f.targetHeaders.title:SetText(L(simplePal and "Independent target buffs" or "Spell availability & refresh timing")); T.SectionTitle(f.targetHeaders.title)
   f.targetHeaders.help:SetText(L("Choose allowed spells and optional refresh overrides for friendly targets."))
   f.targetHeaders:SetShown(not simplePal); f.targetScroll:SetShown(not simplePal)
-  f.targetHeaders:ClearAllPoints(); f.targetHeaders:SetPoint("TOPLEFT",0,paladin and -300 or -204)
-  f.targetScroll:ClearAllPoints(); f.targetScroll:SetPoint("TOPLEFT",14,paladin and -378 or -282); f.targetScroll:SetPoint("BOTTOMRIGHT",-34,54)
+  f.targetHeaders:ClearAllPoints(); f.targetHeaders:SetPoint("TOPLEFT",0,paladin and -264 or -168)
+  f.targetScroll:ClearAllPoints(); f.targetScroll:SetPoint("TOPLEFT",14,paladin and -342 or -246); f.targetScroll:SetPoint("BOTTOMRIGHT",-34,54)
   f.pauseResting:SetChecked(self.db.pauseResting)
   self:PolishOptionsSurfaces()
   f.enable:SetChecked(self.db.enabled)
@@ -2146,8 +2207,7 @@ function B:Options()
     for rowIndex,b in ipairs(assignmentBuffs) do
       local row=f.assignRows[rowIndex]
       if not row then
-        row=CreateFrame("Frame",nil,f.assignChild,"BackdropTemplate"); row:SetSize(474,296)
-        row:SetBackdrop({bgFile="Interface\\Buttons\\WHITE8X8"}); row:SetBackdropColor(unpack(T.row)); T.Round(row,8,"surface"); T.LockBorder(row,1,1,1,.06)
+        row=CreateFrame("Frame",nil,f.assignChild); row:SetSize(458,288); row.visualInsetX=8 -- the surrounding card is the only surface
         row.icon=row:CreateTexture(nil,"ARTWORK"); row.icon:SetSize(32,32); row.icon:SetPoint("TOPLEFT",8,-4)
         row.name=label(row,"",48,-5,"GameFontNormalLarge",402)
         row.detail=label(row,"",48,-29,"GameFontDisableSmall",402)
@@ -2171,7 +2231,19 @@ function B:Options()
         end)
         row.need:SetPoint("TOPLEFT",104,-263)
         row.needLabel=label(row,"Group spell at",8,-263,"GameFontHighlightSmall",140)
-        label(row,"Recipient classes",8,-116,"GameFontNormal")
+        -- Who gets this buff: by class (the checkboxes below), or every tank / every healer whatever the class.
+        label(row,"Who gets this buff",8,-116,"GameFontNormal")
+        row.roleButtons={}
+        for i,spec in ipairs({{"class","By class"},{"tank","Tanks"},{"healer","Healers"}}) do
+          local mode=spec[1]
+          local b=flatButton(row,spec[2],176+(i-1)*94,-110,90,function()
+            local def=row.def; if not def or A.Combat() then return end
+            B:GroupEditorSettings().buffRoles[B:RootKey(def)]=(mode~="class") and mode or nil
+            B.roleCache=nil; B:InvalidateAura(); B:RequestRefresh("buff role",0); B:Options()
+          end)
+          b:SetHeight(24); b.navStyle="segment"; b.roleMode=mode; row.roleButtons[i]=b
+          addHelp(b,spec[2],mode=="class" and "The class checkboxes below decide who gets this buff." or mode=="tank" and "Every tank in your group gets this buff, whatever their class. Class choices below are not used. Mark target role sets a role yourself." or "Every healer in your group gets this buff, whatever their class. Class choices below are not used. Mark target role sets a role yourself.")
+        end
         row.filterHint=label(row,"",8,-221,"GameFontDisableSmall",450)
         row.classes={}
         for i,class in ipairs(B.RecipientClasses) do
@@ -2199,7 +2271,7 @@ function B:Options()
         end)
         f.assignRows[rowIndex]=row
       end
-      row.def=b; row:ClearAllPoints(); row:SetPoint("TOPLEFT",0,0); row:SetShown(f.selectedAssignment==b.key); row.name:SetText(spellLabel(b)); row.icon:SetTexture(buffIcon(b))
+      row.def=b; row:ClearAllPoints(); row:SetPoint("TOPLEFT",8,-6); row:SetShown(f.selectedAssignment==b.key); row.name:SetText(spellLabel(b)); row.icon:SetTexture(buffIcon(b))
       local select=f.assignButtons[rowIndex]
       if not select then
         select=flatButton(f.assignList,"",0,-(rowIndex-1)*42,174,function(btn) f.selectedAssignment=btn.def.key; B:Options() end)
@@ -2216,6 +2288,14 @@ function B:Options()
       row.filterHint:SetText(L(raid and "Recipients must match group AND class. Personal buffs and open-world targets ignore these filters." or "Choose which classes in your party receive this buff. Personal buffs and open-world targets ignore these filters."))
       for i=1,8 do row.checks[i]:SetShown(raid or i==1); row.checks[i].Text:SetText(raid and tostring(i) or L("Include party")); row.checks[i]:SetChecked(self:GroupSelected(b,i,B:EditingGroupContext())) end
       for class,c in pairs(row.classes) do c:SetChecked(self:GroupClassAllowed(b,class,B:EditingGroupContext())) end
+      local roleMode=self:BuffRoleMode(b,B:EditingGroupContext())
+      for _,rb in ipairs(row.roleButtons) do T.Navigation(rb,rb.roleMode==roleMode) end
+      for _,c in pairs(row.classes) do c:SetEnabled(roleMode=="class"); c:SetAlpha(roleMode=="class" and 1 or .35) end
+      row.allClasses:SetShown(roleMode=="class"); row.resetClasses:SetShown(roleMode=="class")
+      if roleMode~="class" then
+        row.filterHint:SetText(L(roleMode=="tank" and "Every tank in your group gets this buff, whatever their class. Class choices below are not used." or "Every healer in your group gets this buff, whatever their class. Class choices below are not used."))
+      end
+      if f.roleGuess then f.roleGuess:SetChecked(self.db.roleGuess==true) end
       if groupDef then
         row.needLabel:Show(); row.need:Show(); row.need.valueText:Show(); row.need.silent=true; row.need:SetValue(self:GroupNeed(groupDef,B:EditingGroupContext())); row.need.valueText:SetText(tostring(self:GroupNeed(groupDef,B:EditingGroupContext())).."+"); row.need.silent=false
         if self:GroupEditorSettings().group and self:GroupEditorSettings().smartGroup then row.need:Enable(); row.need:SetAlpha(1) else row.need:Disable(); row.need:SetAlpha(0.45) end

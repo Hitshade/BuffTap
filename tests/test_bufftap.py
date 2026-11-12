@@ -7,15 +7,23 @@ except ImportError as exc:
 ROOT=Path(__file__).resolve().parents[1]
 ADDON=ROOT/'addon/BuffTap'
 tests=[]
+import os
+KEEP_GOING=os.environ.get('BT_KEEP_GOING')=='1'
+failures=[]
+full={}
 def test(name,code,locale=None):
- lua=LuaRuntime(unpack_returned_tuples=True)
- lua.execute((ROOT/'tests/mock.lua').read_text())
- if locale: lua.execute("GetLocale=function() return "+json.dumps(locale)+" end")
- ns=lua.table()
- for f in [line.strip() for line in (ADDON/'BuffTap.toc').read_text().splitlines() if line.strip().endswith('.lua')]:
-  lua.execute((ADDON/f).read_text(encoding='utf-8-sig'),'BuffTap',ns)
- lua.execute('BuffTap:InitDB(); BuffTap:Refresh()')
- lua.execute(code)
+ try:
+  lua=LuaRuntime(unpack_returned_tuples=True)
+  lua.execute((ROOT/'tests/mock.lua').read_text())
+  if locale: lua.execute("GetLocale=function() return "+json.dumps(locale)+" end")
+  ns=lua.table()
+  for f in [line.strip() for line in (ADDON/'BuffTap.toc').read_text().splitlines() if line.strip().endswith('.lua')]:
+   lua.execute((ADDON/f).read_text(encoding='utf-8-sig'),'BuffTap',ns)
+  lua.execute('BuffTap:InitDB(); BuffTap:Refresh()')
+  lua.execute(code)
+ except Exception as exc:
+  if not KEEP_GOING: raise
+  failures.append((name,str(exc).splitlines()[0][:300])); full[name]=str(exc); print('FAIL',name,'::',failures[-1][1]); return
  tests.append(name); print('PASS',name)
 
 test('Highest known rank, exact secure spell and binding', "assert(BuffTap.action.id==5232); assert(BuffTap.button.attrs.spell==5232); assert(bindings.MOUSEWHEELDOWN)")
@@ -37,7 +45,7 @@ test('Higher priority single stays ahead of lower group family', "spell(21849,'G
 test('Mark recipient accepts rank trained ten levels higher', "spell(6756,'Mark of the Wild',20); BuffTap.db.group=true; BuffTap.db.buffs.thorns=false; aura('player',6756,'Mark of the Wild'); refresh(); assert(BuffTap.action.id==6756 and BuffTap.action.target=='party1')")
 test('Malformed saved keys, priorities and group maps recover', "BuffTapDB.keys={true,{},'CTRL-B','CTRL-B'}; BuffTapDB.priorities={motw=0/0,thorns='bad'}; BuffTapDB.buffGroups={motw='bad',thorns={[2]=false}}; BuffTap:InitDB(); refresh(); assert(#BuffTap.db.keys==1 and BuffTap.db.keys[1]=='CTRL-B'); assert(BuffTap.db.priorities.motw==nil); assert(BuffTap.db.buffGroups.thorns[1]==true)")
 test('Old overlay and threshold settings migrate', "BuffTapDB={seconds=8,showRemaining=true,showGroupIndicator=false}; BuffTap:InitDB(); assert(BuffTap.db.seconds==45 and BuffTap.db.showTimer and not BuffTap.db.showGroupBadge)")
-test('All options pages build and move control opens', "BuffTap:Options(); assert(#BuffTap.options.pages==11); BuffTap:MoveAnchor(); assert(BuffTap.anchor.shown); BuffTap:CaptureBinding(); assert(BuffTap.capture.shown)")
+test('All options pages build and move control opens', "BuffTap:Options(); assert(#BuffTap.options.pages==12); BuffTap:MoveAnchor(); assert(BuffTap.anchor.shown); BuffTap:CaptureBinding(); assert(BuffTap.capture.shown)")
 test('Consumables default off and never query inventory at idle', "refresh(); assert(not BuffTap.db.consumablesEnabled and countCalls==0)")
 test('Whitelist item creates exact secure item action', "stock(13510,17626); consumables('flask'); refresh(); assert(BuffTap.action.itemID==13510); assert(BuffTap.button.attrs.type1=='item' and BuffTap.button.attrs.item=='item:13510')")
 test('Physical mouse down does not block mouse up item use', "stock(13510,17626); consumables('flask'); refresh(); BuffTap.button.scripts.PreClick(nil,'LeftButton',true); BuffTap.button.scripts.PostClick(nil,'LeftButton',true); BuffTap.button.scripts.PreClick(nil,'LeftButton',false); assert(BuffTap.action and BuffTap.button.attrs.item=='item:13510'); bags[13510]=4; BuffTap.button.scripts.PostClick(nil,'LeftButton',false); assert(BuffTap.consumablePending.flask>now)")

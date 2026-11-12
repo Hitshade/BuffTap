@@ -2,6 +2,12 @@
 local _,B=...
 -- Keep the ten most recent releases within a 24 KiB content ceiling.
 B.PatchNotes={
+ {version="1.19.0",title="Roles, requests and a modern icon",items={
+  "Give party and raid buffs to tanks or healers only, and give a class's tank a different blessing.",
+  "Nearby can ask a passing player for a buff you are missing, and request to join a player's group.",
+  "A modern square icon style, label placement, a rebuff countdown sweep and greyed out-of-range buffs.",
+  "Helpers fits on one page, with Solo thanks at the top. Solo thanks can continue while resting.",
+  "Nearby's invite and request buttons can sit on the left or right. The camp tray has a new look."}},
  {version="1.18.0",title="A redesigned settings window",items={
   "A redesigned settings window with clearer controls, live reminder previews and your choice of accent colour.",
   "Optionally pause consumable and weapon reminders while resting. Buff reminders continue.",
@@ -36,11 +42,7 @@ B.PatchNotes={
  {version="1.16.5",title="Buff ranks and thank-you reliability",items={
   "Corrected Mark of the Wild rank choices for lower-level recipients.",
   "Improved solo-thanks handling of delayed buff information and quick successive providers.",
-  "Clarified the unlearned Gift of the Wild label."},thanks="Thank you for the reports and continued testing."},
- {version="1.16.4",title="Nearby recovers more smoothly",items={
-  "Nearby reacts to changes in PvP flags and combat state without requiring movement.",
-  "Confirmed range or line-of-sight failures temporarily skip the affected buff so other players can be offered next.",
-  "Improved Soul Link detection."}},
+  "Clarified the unlearned Gift of the Wild label."},thanks="Thank you for the reports and continued testing."}
 }
 function B:PatchNotesUnread()
   return self.profileDB and self.db.optionsPatchDot~=false and self.profileDB.global.patchNotesSeen~=self.version

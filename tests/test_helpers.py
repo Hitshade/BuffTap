@@ -191,7 +191,9 @@ BuffTap:HelperOptions()
 assert(BuffTap.options:IsShown() and BuffTap.options.activeTab==9)
 assert(BuffTap.helperWindow:GetParent()==BuffTap.options)
 assert(BuffTapHelperOptions==nil and BuffTap.options.pages[9]==BuffTap.helperWindow)
-for key in pairs(BuffTap.helperWindow.checks) do if key~="helperTracking" then assert(#BuffTap.helperWindow.descriptions[key].text>40) end end
+-- 1.19: Helpers fits one page, so each explanation lives in the control's tooltip.
+local body; GameTooltip.AddLine=function(_,t) body=(body or "")..tostring(t) end
+for key,c in pairs(BuffTap.helperWindow.checks) do if key~="helperTracking" then body=nil; c.scripts.OnEnter(c); assert(body and #body>40,key) end end
 BuffTap.options.selectTab(1); assert(not BuffTap.helperWindow:IsShown())
 ''')
 test('Helper setting preserves selected tab and existing buff choices', '''

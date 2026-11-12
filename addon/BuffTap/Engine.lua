@@ -4,7 +4,7 @@
 
 local _, B = ...
 _G.BuffTap = B
-B.version = "1.18.0"
+B.version = "1.19.0"
 B.API = {}
 local A = B.API
 
@@ -96,7 +96,10 @@ function B:InitDB()
     weaponApply=false, weaponReplace=false, weaponChoices={}, weaponCoatings={}, weaponSeconds=60,
     nearbyEnabled=false, nearbyBuffing=true, nearbyShowAll=false, nearbyInvites=true, nearbyLocked=false, nearbyX=240, nearbyY=0, pvpProtection=true, helperDismiss=false, helperBounce=false, helperTracking=false, helperTreasure=false, helperCoverage=false,
     helperDiscovery=false, helperThanks=false, helperThankEmote="THANK", helperQuick=false, helperTracker=0, helperPet=false, helperHealthstone=false, helperSoulstone=false, helperOath=false, oathAssigned={}, soulstoneParty="healer", soulstoneRaid="remind", soulstoneAssigned="", helperDemon=0,
-    raidGroups={true,true,true,true,true,true,true,true}}
+    raidGroups={true,true,true,true,true,true,true,true},
+    buffRoles={}, blessingRoleChoices={}, roleMarks={}, roleGuess=false, helperThanksResting=false,
+    nearbyRequests=false, requestMessage="", requestBuffs={}, nearbyButtonSide="left",
+    iconStyle="classic", campIconStyle="classic", labelPosition="split", showSwipe=false, showOutOfRange=false}
   for k,v in pairs(defaults) do
     if type(self.db[k]) ~= type(v) then self.db[k] = v end
   end
@@ -190,6 +193,7 @@ function B:InitDB()
     if type(map)~="table" then self.db.buffClasses[key]=nil
     else for class,value in pairs(map) do if type(value)~="boolean" then map[class]=nil end end end
   end
+  self:NormalizeRoles()
   self.auraCache=self.auraCache or {}
   if self.InitSupplies then self:InitSupplies() end
   if self.NormalizeCamping then self:NormalizeCamping() end
@@ -1345,6 +1349,12 @@ function B:BlessingChoice(entry)
   -- Uniform really means everyone: saved class and player choices are inactive.
   if plan.mode=="same" then return plan.blessing end
   local override=A.Text(guid) and self:GetBlessingPlayer(guid,context)
+  -- A role choice (tank or healer of this class) sits between player exceptions and class choices.
+  -- Different choices within one class make Greater Blessings unsafe for that class, so singles are used.
+  if not override then
+    local roleKey=self:BlessingRoleChoice(entry,context)
+    if roleKey and roleKey~="priority" then return roleKey end
+  end
   local inherited,order=self:GroupBlessingSettings(entry.class,entry.group,true,context)
   local key=override and override.choice or inherited
   if key=="priority" then
@@ -1430,6 +1440,99 @@ function B:GroupClassAllowed(b,class,context)
   return false
 end
 
+-- ---------- Roles (tank / healer) ----------
+-- Order: a mark the player set in BuffTap, the group role (role check or the member's own setting),
+-- the raid Main Tank assignment, then (optional, off by default) a visible tanking stance or form.
+-- Talent specs are never inspected.
+-- "class": the recipient-class filter decides. "tank" / "healer": every player with that role, whatever the class.
+B.RoleModes={class=true,tank=true,healer=true}
+local TANK_AURAS={[71]=true,[5487]=true,[9634]=true,[25780]=true} -- Defensive Stance, Bear Form, Dire Bear Form, Righteous Fury
+function B:NormalizeRoles()
+  local d=self.db
+  for key,mode in pairs(d.buffRoles) do if type(key)~="string" or not self.RoleModes[mode] or mode=="class" then d.buffRoles[key]=nil end end
+  local marks={}; local count=0
+  for guid,role in pairs(d.roleMarks) do
+    if count<80 and A.Text(guid) and guid:match("^Player%-") and (role=="TANK" or role=="HEALER") then marks[guid]=role; count=count+1 end
+  end
+  d.roleMarks=marks
+  local choices={}
+  for _,context in ipairs({"Party","Raid"}) do
+    local source=type(d.blessingRoleChoices[context])=="table" and d.blessingRoleChoices[context] or {}
+    choices[context]={}
+    for _,role in ipairs({"TANK","HEALER"}) do
+      choices[context][role]={}
+      local map=type(source[role])=="table" and source[role] or {}
+      for class,key in pairs(map) do if type(class)=="string" and A.Text(key) and self:FindBuff(key) then choices[context][role][class]=key end end
+    end
+  end
+  d.blessingRoleChoices=choices
+  if type(d.roleGuess)~="boolean" then d.roleGuess=false end
+end
+function B:UnitRole(unit)
+  if not A.Text(unit) or A.Call(UnitExists,unit)~=true then return nil end
+  local now=GetTime(); self.roleCache=self.roleCache or {}
+  if self.roleCacheTime~=now then self.roleCache={}; self.roleCacheTime=now end
+  local cached=self.roleCache[unit]
+  if cached~=nil then return cached or nil end
+  local role
+  local guid=A.Call(UnitGUID,unit)
+  local mark=A.Text(guid) and self.db.roleMarks[guid]
+  if mark then role=mark end
+  if not role and type(UnitGroupRolesAssigned)=="function" then
+    local assigned=A.Call(UnitGroupRolesAssigned,unit)
+    if assigned=="TANK" or assigned=="HEALER" then role=assigned end
+  end
+  if not role and type(GetPartyAssignment)=="function" and A.Call(IsInRaid)==true and A.Call(GetPartyAssignment,"MAINTANK",unit) then role="TANK" end
+  if not role and self.db.roleGuess and type(UnitBuff)=="function" then
+    for i=1,40 do
+      local ok,name,_,_,_,_,_,_,_,id=pcall(UnitBuff,unit,i)
+      if not ok or not name then break end
+      if A.Number(id) and TANK_AURAS[id] then role="TANK"; break end
+    end
+  end
+  self.roleCache[unit]=role or false
+  return role
+end
+function B:RoleMark(guid) return A.Text(guid) and self.db.roleMarks[guid] or nil end
+-- Cycles the current target's mark: Tank, Healer, none.
+function B:CycleTargetRoleMark()
+  if A.Combat() then return nil end
+  local guid=A.Call(UnitGUID,"target")
+  if not A.Text(guid) or not guid:match("^Player%-") or A.Call(UnitCanAssist,"player","target")~=true then return false end
+  local current=self.db.roleMarks[guid]
+  local nextRole=current==nil and "TANK" or current=="TANK" and "HEALER" or nil
+  self.db.roleMarks[guid]=nextRole; self.roleCache=nil
+  self:InvalidateAura(); self:RequestRefresh("role mark",0)
+  return nextRole or "none",A.Call(UnitName,"target")
+end
+function B:BuffRoleMode(b,context)
+  local map=self:GroupPreference("buffRoles",context)
+  local mode=type(map)=="table" and map[self:RootKey(b)]
+  return self.RoleModes[mode] and mode or "class"
+end
+-- Party/raid recipient check for one buff: by class (default), or by role regardless of class.
+function B:GroupRecipientAllowed(b,entry,context)
+  if not entry then return false end
+  local mode=self:BuffRoleMode(b,context)
+  if mode=="class" then return self:GroupClassAllowed(b,entry.class,context) end
+  local role=self:UnitRole(entry.unit)
+  return (mode=="tank" and role=="TANK") or (mode=="healer" and role=="HEALER")
+end
+function B:BlessingRoleChoice(entry,context)
+  if not entry or not entry.class then return nil end
+  local role=self:UnitRole(entry.unit); if not role then return nil end
+  local map=self.db.blessingRoleChoices[context or "Party"]; map=map and map[role]
+  return map and map[entry.class] or nil
+end
+function B:SetBlessingRoleChoice(role,class,key,context)
+  if A.Combat() or (role~="TANK" and role~="HEALER") or not A.Text(class) then return end
+  context=context=="Raid" and "Raid" or "Party"
+  local d=self.db; d.blessingRoleChoices[context]=d.blessingRoleChoices[context] or {}
+  d.blessingRoleChoices[context][role]=d.blessingRoleChoices[context][role] or {}
+  d.blessingRoleChoices[context][role][class]=(A.Text(key) and key~="none") and key or nil
+  self:InvalidateAura(); self:RequestRefresh("role blessing",0)
+end
+
 function B:RecipientAllowed(b,entry)
   -- Explicit targets and personal maintenance are independent of group assignments.
   if b.kind=="blessing" and self:BlessingAssignmentsActive() and (not entry.quickTarget or entry.blessingAssigned) then
@@ -1440,7 +1543,7 @@ function B:RecipientAllowed(b,entry)
     if choice==nil then choice=self:TargetBlessingChoice(entry) end
     return choice==nil or choice==(b.singleKey or b.key)
   end
-  return entry.quickTarget or entry.unit=="player" or self:GroupClassAllowed(b,entry.class)
+  return entry.quickTarget or entry.unit=="player" or self:GroupRecipientAllowed(b,entry)
 end
 
 local function needSort(a,b)
@@ -1625,7 +1728,7 @@ function B:Select()
         local buckets={}
         for _,need in ipairs(missing) do
           local entry=need.entry
-          if (blessingPlan and b.kind=="blessing" and self:BlessingChoice(entry)==b.key) or (not (blessingPlan and b.kind=="blessing") and self:GroupSelected(b,entry.group) and self:GroupClassAllowed(b,entry.class)) then
+          if (blessingPlan and b.kind=="blessing" and self:BlessingChoice(entry)==b.key) or (not (blessingPlan and b.kind=="blessing") and self:GroupSelected(b,entry.group) and self:GroupRecipientAllowed(b,entry)) then
             local ga=self:Resolve(groupDef,entry.unit)
             if ga then
               local eligible,why=self:TargetEligible(ga,true)
@@ -1649,12 +1752,12 @@ function B:Select()
           if blessingPlan and b.kind=="blessing" and not self:BlessingGreaterSafe(b.key,key,roster) then safe=false end
           if b.kind=="blessing" then
             for _,entry in ipairs(roster) do
-              if entry.class==key and (exclusive["blessing:"..entry.unit] or (not blessingPlan and (not self:GroupSelected(b,entry.group) or not self:GroupClassAllowed(b,entry.class)))) then safe=false end
+              if entry.class==key and (exclusive["blessing:"..entry.unit] or (not blessingPlan and (not self:GroupSelected(b,entry.group) or not self:GroupRecipientAllowed(b,entry)))) then safe=false end
             end
           end
           if b.kind~="blessing" and not b.classWide then
             for _,entry in ipairs(roster) do
-              if entry.group==key and not self:GroupClassAllowed(b,entry.class) then safe=false end
+              if entry.group==key and not self:GroupRecipientAllowed(b,entry) then safe=false end
             end
           end
           if safe and #bucket>=self:BlessingGroupNeed(groupDef) then

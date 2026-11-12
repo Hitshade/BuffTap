@@ -4,6 +4,8 @@ local A=B.API
 local T=B.OptionsTheme
 local function place(control,parent,x,y,width,height)
   control:SetParent(parent); control:ClearAllPoints(); control:SetPoint("TOPLEFT",x,y)
+  -- A selector's menu must move with it: left on its old (hidden) page it can never show.
+  if type(control.menu)=="table" and control.menu.SetParent then control.menu:SetParent(parent) end
   if control:GetObjectType()=="CheckButton" then
     control:SetSize(24,24)
   else
@@ -32,7 +34,10 @@ function B:VisualSetting(key,value)
   self:UpdateOptionsPreviews()
 end
 function B:CreateOptionsPreview(parent,kind,ui)
-  local holder=CreateFrame("Frame",nil,parent,"BackdropTemplate"); holder:SetSize(260,270); holder:SetPoint("TOPLEFT",444,-12); T.Surface(holder,"card")
+  -- Right column order: Icon, Preview, Effect. The preview is compact and ends level with Effect's top.
+  local holder=CreateFrame("Frame",nil,parent,"BackdropTemplate"); holder:SetSize(260,kind=="camp" and 284 or 200); holder:SetPoint("TOPLEFT",444,kind=="camp" and -104 or -188); T.Surface(holder,"card")
+  -- The buff and camp editors share one page; without this the taller buff Icon card would inset the camp preview.
+  holder.visualInsetX=444
   ui.label(holder,"PREVIEW",14,-12,"GameFontDisableSmall",100)
   ui.label(holder,"Sample display",142,-12,"GameFontDisableSmall",108)
   local icon=CreateFrame("Frame",nil,holder); icon:SetPoint("CENTER",holder,"CENTER",0,0); icon:SetSize(64,64)
@@ -46,7 +51,7 @@ function B:CreateOptionsPreview(parent,kind,ui)
   icon.count=ui.label(icon,"3",0,0,"GameFontNormalSmall",24); icon.count:ClearAllPoints(); icon.count:SetPoint("TOPRIGHT",-2,-2)
   icon.time=ui.label(icon,"",0,0,"GameFontHighlightSmall",240); icon.time:SetJustifyH("CENTER")
   for _,fs in ipairs({icon.nameLabel,icon.recipient,icon.timer,icon.count,icon.time}) do T.Track(fs,"preview") end
-  holder.hint=ui.label(holder,kind=="camp" and "Camp timer and rest stacks" or "Hidden icon: binding stays active",14,-243,"GameFontDisableSmall",232)
+  holder.hint=ui.label(holder,kind=="camp" and "Camp timer and rest stacks" or "Hidden icon: binding stays active",14,-(holder:GetHeight()-27),"GameFontDisableSmall",232)
   holder.icon=icon; holder.kind=kind
   holder:HookScript("OnHide",function() B:StopIconEffect(icon) end)
   return holder
@@ -60,7 +65,7 @@ function B:UpdateOptionsPreviews()
     local icon=preview.icon; local active=f:IsShown() and f.activeTab==8 and f.appearanceView==kind
     if not active then self:StopIconEffect(icon) else
       local d=self.db; local camp=kind=="camp"
-      icon:SetSize(camp and d.campSize or d.size,camp and d.campSize or d.size); icon:SetAlpha(camp and d.campOpacity or d.opacity)
+      local shown=math.min(96,camp and d.campSize or d.size); icon:SetSize(shown,shown); icon:SetAlpha(camp and d.campOpacity or d.opacity)
       local sample
       if not camp then for _,def in ipairs(self.Buffs) do if def.class==A.Class("player") and def.kind~="group" then sample=def; break end end end
       icon.icon:SetTexture(camp and 135805 or sample and sample.icon or "Interface\\AddOns\\BuffTap\\Media\\BuffTapIcon")
@@ -71,6 +76,7 @@ function B:UpdateOptionsPreviews()
       if camp then
         icon.time:Show(); self:StyleCampLabel(icon)
         icon.time:SetText(self:CampLabelText({active=true,remaining=1800,bagStacks=2,bagRemaining=7199,bagActive=true},true))
+        self:ApplyIconStyle(icon,icon.icon,d.campIconStyle)
       else icon.time:Hide(); self:ApplyReminderStyle(icon) end
       local effect=camp and {effectStyle=d.campEffectStyle,effectColor=d.campEffectColor,effectSpeed=d.campEffectSpeed} or d
       self:ApplyIconEffect(icon,true,effect)
@@ -84,7 +90,7 @@ function B:BuildReminderEditor(parent,kind,ui)
   local f=self.options; local camp=kind=="camp"; local d=self.db
   section(ui,parent,"Layout",12,-12,416,100)
   section(ui,parent,"Text",12,-130,416,248)
-  section(ui,parent,"Effect",444,-296,260,154)
+  section(ui,parent,"Effect",444,-404,260,154)
   local function change(key,value) self:VisualSetting(key,value) end
   local function slider(key,title,x,y,min,max,step,width,multiplier)
     -- "Icon size (px)" becomes the label "Icon size" with "px" shown inside the value field.
@@ -108,23 +114,35 @@ function B:BuildReminderEditor(parent,kind,ui)
   local effect=camp and f.campingEffect or f.effectButton
   local effectColor=camp and f.campingColor or f.effectColorButton
   local speed=camp and f.campingSpeed or f.effectSpeedButton
-  place(effect,parent,458,-334,232,26); place(effectColor,parent,458,-372,232,26); place(speed,parent,458,-410,232,26)
+  place(effect,parent,458,-442,232,26); place(effectColor,parent,458,-480,232,26); place(speed,parent,458,-518,232,26)
   section(ui,parent,"Visible labels",12,-396,416,camp and 70 or 96)
   if camp then
     place(f.campingCountdown,parent,26,-428); place(f.campingStacks,parent,208,-428)
   else
     place(f.buffNameCheck,parent,26,-428); place(f.targetNameCheck,parent,208,-428)
     place(f.timerCheck,parent,26,-458); place(f.groupBadgeCheck,parent,208,-458)
-    place(f.showReminderCheck,parent,510,-474,184,24); f.showReminderCheck.Text:SetText(self:Text("Show icon"))
+    place(f.showReminderCheck,parent,510,-26,184,24); f.showReminderCheck.Text:SetText(self:Text("Show icon"))
   end
   ui.button(parent,camp and "Move camping reminder" or "Move buff reminder",26,-506,186,function() if camp then B:PreviewCampReminder() else B:MoveAnchor() end end)
   ui.button(parent,"Center",226,-506,82,function() if camp then B.db.campX=0; B.db.campY=0; B:PreviewCampReminder() else B.db.x=0; B.db.y=-180; B.appearance=nil; B:RequestRefresh("center reminder",0) end end)
   if not camp then place(f.resetLookButton,parent,320,-506,106,26) end
-  if camp then ui.button(parent,"Reset camp look",320,-506,106,function()
+  if camp then T.Confirm(ui.button(parent,"Reset camp look",320,-506,106,function()
     for k,v in pairs({campSize=40,campOpacity=1,campEffectStyle="soft",campEffectColor="gold",campEffectSpeed="normal",campTextFont="default",campTextSize=0,campTextColor="white",campTextOutline="outline",campTextGap=4,campShowCountdown=true,campShowStacks=true}) do B.db[k]=v end
     B:NormalizeCamping(); B:UpdateCamping(); B:Options()
-  end) end
-  ui.label(parent,camp and "The preview does not move or activate your live reminder." or "Hiding the icon keeps your binding and optional sounds active.",26,-550,"GameFontDisableSmall",660)
+  end)) end
+  ui.label(parent,camp and "The preview does not move or activate your live reminder." or "Hiding the icon keeps your binding and optional sounds active.",26,-550,"GameFontDisableSmall",404)
+  -- Icon: style for both reminders; label placement, countdown sweep and out-of-range display for the buff reminder.
+  section(ui,parent,"Icon",444,-12,260,camp and 76 or 160)
+  ui.label(parent,"Style",458,-54,"GameFontHighlightSmall",76)
+  local styleKey=camp and "campIconStyle" or "iconStyle"
+  local style=ui.selector(parent,"",540,-48,150,function() return B:IconStyleChoices() end,function(v) change(styleKey,v) end)
+  if camp then f.campIconStyleButton=style else
+    f.iconStyleButton=style
+    ui.label(parent,"Labels",458,-88,"GameFontHighlightSmall",76)
+    f.labelPositionButton=ui.selector(parent,"",540,-82,150,function() return {{key="split",name="Split"},{key="above",name="Above icon"},{key="below",name="Below icon"}} end,function(v) change("labelPosition",v) end)
+    f.swipeCheck=ui.check(parent,"Rebuff countdown sweep",458,-116,function(c) change("showSwipe",c:GetChecked()==true) end)
+    f.rangeCheck=ui.check(parent,"Grey out-of-range buffs",458,-144,function(c) change("showOutOfRange",c:GetChecked()==true) end)
+  end
   self.optionsPreviews[kind]=self:CreateOptionsPreview(parent,kind,ui)
 end
 function B:BuildRefinedOptions(ui,tabs)
@@ -144,7 +162,7 @@ function B:BuildRefinedOptions(ui,tabs)
   local binding=f.appearancePanes.binding
   section(ui,binding,"Binding",12,-12,692,116); place(f.bindingText,binding,26,-52,340)
   T.Variant(ui.button(binding,"Set binding",398,-46,134,function() B:CaptureBinding() end),"primary")
-  ui.button(binding,"Clear",546,-46,142,function() B.db.keys={}; B.appearance=nil; B:RequestRefresh("clear binding",0); B:Options() end)
+  T.Confirm(ui.button(binding,"Clear",546,-46,142,function() B.db.keys={}; B.appearance=nil; B:RequestRefresh("clear binding",0); B:Options() end))
   ui.label(binding,"The binding is active only when a valid action is ready.",26,-94,"GameFontDisableSmall",650)
   section(ui,binding,"Sounds",12,-148,692,208)
   for i,entry in ipairs({{f.reminderSoundButton,"Reminder sound","reminder"},{f.supplySoundButton,"Supply sound","supply"}}) do
@@ -165,6 +183,10 @@ function B:BuildRefinedOptions(ui,tabs)
   f.accentHex:SetScript("OnEnterPressed",function(s) local value=(s:GetText() or ""):gsub("#",""); if value:match("^%x%x%x%x%x%x$") then B:VisualSetting("optionsAccentColor",value); B:VisualSetting("optionsAccentMode","custom") end; s:ClearFocus(); B:Options() end)
   f.accentHex:SetScript("OnEscapePressed",function(s) s:ClearFocus(); B:Options() end)
   f.accentPick=ui.button(interface,"Pick colour",354,-100,158,function() B:OpenAccentPicker() end)
+  -- Swatch: the accent colour currently in use.
+  f.accentSwatch=CreateFrame("Frame",nil,interface,"BackdropTemplate"); f.accentSwatch:SetSize(40,26); f.accentSwatch:SetPoint("TOPLEFT",526,-100)
+  f.accentSwatch:SetBackdrop({bgFile="Interface\\Buttons\\WHITE8X8"}); T.Round(f.accentSwatch,5,"surface"); T.LockBorder(f.accentSwatch,1,1,1,.25)
+  f.accentSwatchText=ui.label(interface,"",576,-106,"GameFontDisableSmall",110)
   ui.label(interface,"Window scale",26,-154,"GameFontHighlightSmall",180)
   f.optionsScaleSlider=ui.slider(interface,65,125,5,462,tostring,function(_,v) B:VisualSetting("optionsScale",v/100) end); f.optionsScaleSlider:SetPoint("TOPLEFT",226,-150); f.optionsScaleSlider:SetUnit("%"); f.optionsScaleSlider.visualKey="optionsScale"; f.optionsScaleSlider.visualMultiplier=100; f.refinedSliders[#f.refinedSliders+1]=f.optionsScaleSlider
   f.reduceMotion=ui.check(interface,"Reduce animation",26,-198,function(c) B:VisualSetting("optionsReduceMotion",c:GetChecked()==true) end)
@@ -194,7 +216,7 @@ function B:RefineCampingPage(ui,tabs)
   place(f.campingSound,p,26,-264); place(f.campingWarning,p,374,-300,310,26)
   ui.label(p,"Warn before expiry",26,-308,"GameFontHighlightSmall",220)
   ui.label(p,"Outdoors, missing or expiring benefits can show a separate reminder. Right-click that icon to snooze it.",26,-344,"GameFontDisableSmall",650)
-  section(ui,p,"Setup & appearance",12,-400,692,192)
+  section(ui,p,"Setup & appearance",12,-400,692,170)
   T.Variant(ui.button(p,"Open setup tray",26,-448,202,function() B:ToggleCampTray() end),"primary")
   ui.button(p,"Customize reminder",246,-448,202,function() f.selectTab(tabs.Appearance); B:SetAppearanceView("camp") end)
   place(f.campingResume,p,466,-448,218,26); place(f.campingPause,p,26,-494,650)
@@ -207,20 +229,31 @@ function B:RefineNearbyPage(ui,tabs)
   place(f.nearbyBuffing,p,26,-112); place(f.nearbyAll,p,374,-112); place(f.nearbyInvites,p,26,-154)
   T.Variant(ui.button(p,"Open nearby window",486,-150,198,function() B:ShowNearbySetup() end),"primary")
   ui.label(p,"Friendly player nameplates are required (normally Shift+V). Tracks up to 40 observed players.",26,-190,"GameFontDisableSmall",650)
-  section(ui,p,"Window appearance",12,-236,692,248)
+  section(ui,p,"Window appearance",12,-236,692,306)
   for i,spec in ipairs({{"nearbyScale","Scale",70,150,5,100,"%"},{"nearbyRows","Visible rows",2,40,1},{"nearbyWidth","Width",180,360,5,nil,"px"},{"nearbyOpacity","Background",0,100,5,100,"%"}}) do
     local key=spec[1]; local y=-280-(i-1)*44
     ui.label(p,spec[2],26,y-3,"GameFontHighlightSmall",182)
     local s=ui.slider(p,spec[3],spec[4],spec[5],462,tostring,function(_,v) B:VisualSetting(key,spec[6] and v/spec[6] or v) end)
-    s:SetPoint("TOPLEFT",226,y); s.visualKey=key; s.visualMultiplier=spec[6]; if spec[7] then s:SetUnit(spec[7]) end; f.refinedSliders[#f.refinedSliders+1]=s
+    s:SetPoint("TOPLEFT",226,y); s.visualKey=key; s.visualMultiplier=spec[6]; if spec[7] then s:SetUnit(spec[7]) end; s:SetFieldWidth(80); f.refinedSliders[#f.refinedSliders+1]=s
   end
-  ui.label(p,"Rows are limited to the space on your screen. Extra players remain available by scrolling. Layout changes apply out of combat.",26,-460,"GameFontDisableSmall",650)
-  f.nearbyLock=ui.check(p,"Lock window position",26,-514,function(c) B.db.nearbyLocked=c:GetChecked()==true; if B.nearbyFrame then B:UpdateNearbyWindow() end end)
-  ui.button(p,"Restore window defaults",450,-508,234,function()
-    B.db.nearbyScale=1; B.db.nearbyRows=5; B.db.nearbyWidth=210; B.db.nearbyOpacity=.5; B.db.nearbyX=240; B.db.nearbyY=0
+  -- Button side sits in the slider column as a fifth row, split evenly across the slider width.
+  ui.label(p,"Invite and request buttons",26,-459,"GameFontHighlightSmall",190)
+  f.nearbySide={}
+  for i,spec in ipairs({{"left","Left side"},{"right","Right side"}}) do
+    local side=spec[1]
+    local b=ui.flatButton(p,spec[2],226+(i-1)*235,-454,227,function()
+      if A.Combat() then return end
+      B.db.nearbyButtonSide=side; if B.nearbyFrame then B:UpdateNearbyWindow() end; B:Options()
+    end)
+    b:SetHeight(24); b.navStyle="segment"; b.side=side; f.nearbySide[i]=b
+  end
+  ui.label(p,"Rows are limited to the space on your screen. Extra players remain available by scrolling. Layout changes apply out of combat.",26,-500,"GameFontDisableSmall",650)
+  f.nearbyLock=ui.check(p,"Lock window position",26,-574,function(c) B.db.nearbyLocked=c:GetChecked()==true; if B.nearbyFrame then B:UpdateNearbyWindow() end end)
+  T.Confirm(ui.button(p,"Restore window defaults",450,-568,234,function()
+    B.db.nearbyScale=1; B.db.nearbyRows=5; B.db.nearbyWidth=210; B.db.nearbyOpacity=.5; B.db.nearbyX=240; B.db.nearbyY=0; B.db.nearbyButtonSide="left"
     if B.nearbyFrame then B.nearbyFrame.positionX=nil; B.nearbyFrame.positionY=nil; B:UpdateNearbyWindow() end; B:Options()
-  end)
-  ui.label(p,"Buff candidates appear first. + sends a party invite; > suggests an invite to your leader. Each buff or invite needs your click.",26,-568,"GameFontDisableSmall",650)
+  end))
+  ui.label(p,"Buff candidates appear first. + sends a party invite; > suggests an invite to your leader. Each buff or invite needs your click.",26,-616,"GameFontDisableSmall",650)
 end
 function B:BuildPatchNotesPage(ui,tabs)
   local f=self.options; local p=CreateFrame("Frame",nil,f,"BackdropTemplate"); p:Hide(); p:SetPoint("TOPLEFT",B.OptionsPageLeft,B.OptionsPageTop); p:SetPoint("BOTTOMRIGHT",B.OptionsPageRight,B.OptionsPageBottom); T.Surface(p,"panel"); f.pages[tabs.PatchNotes]=p
@@ -319,6 +352,14 @@ function B:StandardizeOptionsPages(ui,tabs)
     icon:SetTexture(T.media.."Nav"..(f.navIcons and f.navIcons[index] or "Buffs")); T.Track(icon,"accentIcon"); page.headerIcon=icon
     local title=ui.label(page,titles[index],46,-13,T.fonts.Title,420); title.optionsTitle=true
     local description=ui.label(page,descriptions[index],46,-41,"GameFontDisableSmall",640)
+    -- Shortcut to the reminder's look from pages whose reminders use it (Camping has its own).
+    if index==tabs.Helpers then description:SetWidth(346) end
+    if index==1 or index==5 or index==7 then
+      -- Header line, top right. Consumables and Weapons keep their switch at the right edge, so the button sits just left of it.
+      -- (The Solo / Party / Raid row needs its right end for "Use Solo settings".)
+      if index~=1 then title:SetWidth(300); title:SetWordWrap(false) end
+      page.customizeLook=ui.button(page,"Customize look",index==1 and 586 or 354,-14,118,function() f.selectTab(tabs.Appearance); B:SetAppearanceView("buff") end)
+    end
     f.pageHeaders[index]={title=title,description=description}
   end
   for _,category in ipairs({"buffs","weapons"}) do
@@ -356,7 +397,7 @@ function B:StandardizeOptionsPages(ui,tabs)
   ui.card(f.buffContent,12,-64,692,478)
   local rebuffFooter=ui.card(f.buffContent,12,-556,692,96)
   f.resetBuffsButton:ClearAllPoints(); f.resetBuffsButton:SetPoint("BOTTOMRIGHT",rebuffFooter,"BOTTOMRIGHT",-14,14)
-  ui.card(f.pages[3],12,-210,692,462)
+  ui.card(f.pages[3],12,-174,692,498)
   f.weaponHint:Hide()
 end
 function B:UpdateRefinedOptions()
@@ -372,7 +413,15 @@ function B:UpdateRefinedOptions()
   f.accentPick:SetEnabled(ColorPickerFrame and type(ColorPickerFrame.SetupColorPickerAndShow)=="function" or false)
   f.accentMode:SetText(self:Text(({gold="BuffTap gold",class="My class",custom="Custom colour"})[self.db.optionsAccentMode]))
   if not f.accentHex:HasFocus() then f.accentHex:SetText(self.db.optionsAccentColor) end
+  do local a=T.accent; f.accentSwatch:SetBackdropColor(a[1],a[2],a[3],1); f.accentSwatchText:SetText(string.format("#%02X%02X%02X",math.floor(a[1]*255+.5),math.floor(a[2]*255+.5),math.floor(a[3]*255+.5))) end
+  local styles={classic="Classic",modern="Modern square"}; local positions={split="Split",above="Above icon",below="Below icon"}
+  if f.iconStyleButton then f.iconStyleButton:SetText(self:Text(styles[self.db.iconStyle] or "Classic")) end
+  if f.campIconStyleButton then f.campIconStyleButton:SetText(self:Text(styles[self.db.campIconStyle] or "Classic")) end
+  if f.labelPositionButton then f.labelPositionButton:SetText(self:Text(positions[self.db.labelPosition] or "Split")) end
+  if f.swipeCheck then f.swipeCheck:SetChecked(self.db.showSwipe==true) end
+  if f.rangeCheck then f.rangeCheck:SetChecked(self.db.showOutOfRange==true) end
   f.reduceMotion:SetChecked(self.db.optionsReduceMotion); f.nearbyLock:SetChecked(self.db.nearbyLocked==true)
+  for _,b in ipairs(f.nearbySide or {}) do T.Navigation(b,b.side==(self.db.nearbyButtonSide=="right" and "right" or "left")) end
   f.patchUnread:SetChecked(self.db.optionsPatchDot~=false); f.patchDot:SetShown(self:PatchNotesUnread() and true or false)
   if f.weaponHint then f.weaponHint:Hide() end
   T.Polish(f)

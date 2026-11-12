@@ -1,4 +1,4 @@
-from test_bufftap import test
+from test_bufftap import test, ADDON as ADDON_DIR
 setup="""
 IsInInstance=function() return true,'pvp' end
 C_Secrets={ShouldAurasBeSecret=function() return true end,ShouldSpellAuraBeSecret=function() return false end}
@@ -32,7 +32,9 @@ test('BG self blessing ignores raid assignment but retains enabled choice',palad
 test('BG self blessings do not replace an existing different blessing',paladin+"playerAuras[19742]={}; refresh(); assert(not BuffTap.action)")
 test('BG higher priority hidden blessing does not imply lower is safe',paladin+"C_Secrets.ShouldSpellAuraBeSecret=function(id) return id==19742 end; refresh(); assert(not BuffTap.action)")
 
-test('Version identifies the current build',"assert(BuffTap.version=='1.17.1')")
+_toc=(ADDON_DIR/'BuffTap.toc').read_text(encoding='utf-8')
+_version=next(l.split(':',1)[1].strip() for l in _toc.splitlines() if l.startswith('## Version:'))
+test('Version identifies the current build',"assert(BuffTap.version=="+repr(_version)+")")
 
 warlock=setup+"playerClass='WARLOCK'; spells={}; book={}; spell(19028,'Soul Link',40); BuffTap.bookDirty=true; "
 test('BG Soul Link recognises pet aura without offering another cast',warlock+"playerAuras[25228]={}; refresh(); assert(not BuffTap.action)")

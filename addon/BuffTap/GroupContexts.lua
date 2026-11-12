@@ -1,7 +1,7 @@
 -- This Source Code Form is subject to the Mozilla Public License, v. 2.0.
 local _,B=...
 local A=B.API
-local fields={group=true,smartGroup=true,groupNeed=true,blessingNeed=true,blessingAssignments=true,raidGroups=true,buffGroups=true,buffClasses=true,buffGroupNeed=true}
+local fields={group=true,smartGroup=true,groupNeed=true,blessingNeed=true,blessingAssignments=true,raidGroups=true,buffGroups=true,buffClasses=true,buffGroupNeed=true,buffRoles=true}
 local classes={WARRIOR=true,PALADIN=true,HUNTER=true,ROGUE=true,PRIEST=true,SHAMAN=true,MAGE=true,WARLOCK=true,DRUID=true}
 local proxySources=setmetatable({}, {__mode="k"})
 local function clone(value)
@@ -15,6 +15,11 @@ local function clean(owner,values)
     local value=values[key]; local base=owner.db[key]
     if key=="groupNeed" or key=="blessingNeed" then out[key]=A.Number(value) and math.max(2,math.min(5,math.floor(value+.5))) or base
     elseif key=="group" or key=="smartGroup" or key=="blessingAssignments" then out[key]=type(value)=="boolean" and value; if type(value)~="boolean" then out[key]=base end
+    elseif key=="buffRoles" then
+      out[key]={}
+      for name,mode in pairs(type(value)=="table" and value or base or {}) do
+        if type(name)=="string" and owner:FindBuff(name) and B.RoleModes[mode] and mode~="class" then out[key][name]=mode end
+      end
     elseif key=="raidGroups" then
       out[key]={}; for i=1,8 do local v=type(value)=="table" and value[i]; if type(v)~="boolean" then v=base[i] end; out[key][i]=v end
     else

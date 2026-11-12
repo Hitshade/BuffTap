@@ -197,16 +197,29 @@ function B:PrepareCampButton(row)
     if slot then row:SetAttribute("item",slot); row:SetAttribute("type1","item") end
   elseif choice.count==0 and read(C_Item and C_Item.GetItemCount,entry.item,false,false,false,false)==0 then row.campCraftClick=true end
 end
+-- The camp tray shares the settings window's theme: Inter type, rounded surfaces and themed buttons.
+local THEME_FONTS={GameFontNormalLarge="Sub",GameFontHighlightSmall="Small",GameFontDisableSmall="Muted",GameFontNormalSmall="Heading"}
 local function text(parent,value,x,y,font,width)
+  local T=B.OptionsTheme; local key=THEME_FONTS[font or "GameFontHighlightSmall"]
   local fs=parent:CreateFontString(nil,"OVERLAY",font or "GameFontHighlightSmall")
+  if T and T.fonts and key and T.fonts[key] then fs:SetFontObject(T.fonts[key]) end
   fs:SetPoint("TOPLEFT",x,y); fs:SetText(L(value))
   if width then fs:SetWidth(width); fs:SetJustifyH("LEFT"); fs:SetWordWrap(true) end
   return fs
 end
 local function action(parent,label,x,y,width,fn)
-  local btn=CreateFrame("Button",nil,parent,"UIPanelButtonTemplate")
-  btn:SetPoint("TOPLEFT",x,y); btn:SetSize(width,24); btn:SetText(L(label)); btn:SetNormalFontObject("GameFontNormalSmall"); btn:SetScript("OnClick",fn)
+  local T=B.OptionsTheme
+  local btn=CreateFrame("Button",nil,parent,"BackdropTemplate")
+  btn:SetBackdrop({bgFile="Interface\\Buttons\\WHITE8X8",edgeFile="Interface\\Buttons\\WHITE8X8",edgeSize=1})
+  btn:SetBackdropColor(unpack(T.control)); btn:SetBackdropBorderColor(unpack(T.border))
+  T.Button(btn)
+  btn:SetPoint("TOPLEFT",x,y); btn:SetSize(width,26); btn:SetText(L(label)); btn:SetScript("OnClick",fn)
   return btn
+end
+local function surface(frame,radius)
+  local T=B.OptionsTheme
+  frame:SetBackdrop({bgFile="Interface\\Buttons\\WHITE8X8"}); frame:SetBackdropColor(unpack(T.window))
+  T.Round(frame,radius or 10,"surface"); T.LockBorder(frame,1,1,1,.08)
 end
 local function backdrop(frame)
   frame:SetBackdrop({bgFile="Interface\\Buttons\\WHITE8X8",edgeFile="Interface\\Tooltips\\UI-Tooltip-Border",edgeSize=12,insets={left=3,right=3,top=3,bottom=3}})
@@ -258,8 +271,18 @@ function B:StyleCampLabel(icon)
   icon.time:ClearAllPoints(); icon.time:SetPoint("TOP",icon,"BOTTOM",0,-d.campTextGap)
   icon.time:SetWidth(math.max(160,(d.campTextSize>0 and d.campTextSize or 12)*20)); icon.time:SetJustifyH("CENTER"); icon.time:SetJustifyV("TOP"); icon.time:SetWordWrap(false)
 end
+function B:StyleCampIcon(icon)
+  if not icon or not icon.art then return end
+  local style=self.db.campIconStyle=="modern" and "modern" or "classic"
+  if icon.campIconStyleApplied==style then return end
+  icon.campIconStyleApplied=style; icon.art:ClearAllPoints()
+  if style=="modern" then icon:SetBackdrop(nil); icon.art:SetPoint("TOPLEFT",1,-1); icon.art:SetPoint("BOTTOMRIGHT",-1,1)
+  else backdrop(icon); icon.art:SetPoint("TOPLEFT",4,-4); icon.art:SetPoint("BOTTOMRIGHT",-4,4) end
+  self:ApplyIconStyle(icon,icon.art,style)
+end
 function B:UpdateCampLabel(icon,state,preview)
   if not icon then return end
+  self:StyleCampIcon(icon)
   local text=self:CampLabelText(state,preview)
   self:StyleCampLabel(icon); icon.time:SetText(text); icon.time:SetShown(text~="")
 end
@@ -305,7 +328,7 @@ function B:CreateCampReminder()
     if button=="RightButton" then
       if not B.campSnoozeMenu then
         local menu=CreateFrame("Frame","BuffTapCampSnooze",UIParent,"BackdropTemplate"); B.campSnoozeMenu=menu
-        menu:SetSize(176,108); menu:SetFrameStrata("DIALOG"); menu:SetClampedToScreen(true); backdrop(menu)
+        menu:SetSize(176,108); menu:SetFrameStrata("DIALOG"); menu:SetClampedToScreen(true); surface(menu,8)
         action(menu,"Snooze 10 minutes",10,-10,156,function() B:SnoozeCamping(600) end)
         action(menu,"Snooze 30 minutes",10,-40,156,function() B:SnoozeCamping(1800) end)
         action(menu,"Hide until reload",10,-70,156,function() B:SnoozeCamping(0) end)
@@ -335,11 +358,12 @@ function B:CreateCampTray()
   self.campTray=frame; frame:SetSize(420,360); frame:SetPoint("CENTER",UIParent,"CENTER",0,0); frame:SetFrameStrata("FULLSCREEN_DIALOG"); frame:SetToplevel(true); frame:SetClampedToScreen(true); frame:EnableMouse(true); frame:SetMovable(true)
   frame:SetAttribute("_onstate-campsafety",[[if newstate=="blocked" then self:Hide() end]])
   if not RegisterStateDriver or not pcall(RegisterStateDriver,frame,"campsafety","[combat] blocked; ready") then frame:Hide(); self.campTrayError="Camp secure driver unavailable"; return end
-  backdrop(frame)
+  surface(frame,10); B.OptionsTheme.Shadow(frame,24,.55)
   local header=CreateFrame("Frame",nil,frame); header:SetPoint("TOPLEFT",8,-4); header:SetPoint("TOPRIGHT",-92,-4); header:SetHeight(32); header:EnableMouse(true); header:RegisterForDrag("LeftButton")
   header:SetScript("OnDragStart",function() if not A.Combat() then frame:StartMoving() end end); header:SetScript("OnDragStop",function() if not A.Combat() then frame:StopMovingOrSizing() end end)
   text(frame,"Camp setup",16,-14,"GameFontNormalLarge")
-  action(frame,"Close",336,-9,68,function() if not A.Combat() then frame:Hide() end end)
+  B.OptionsTheme.Variant(action(frame,"Close",336,-9,68,function() if not A.Combat() then frame:Hide() end end),"danger")
+  B.OptionsTheme.Rule(frame,16,-74,388)
   frame.status=text(frame,"",16,-43,"GameFontHighlightSmall",388)
   local statusTip=CreateFrame("Frame",nil,frame); statusTip:SetPoint("TOPLEFT",12,-38); statusTip:SetSize(394,28); statusTip:EnableMouse(true)
   statusTip:SetScript("OnEnter",function(s)
@@ -354,7 +378,9 @@ function B:CreateCampTray()
     GameTooltip:AddLine(L("Only confirmed benefits are listed."),1,1,1,true); GameTooltip:Show()
   end)
   statusTip:SetScript("OnLeave",function() GameTooltip:Hide() end)
-  frame.progress=CreateFrame("StatusBar",nil,frame); frame.progress:SetSize(388,4); frame.progress:SetPoint("TOPLEFT",16,-65); frame.progress:SetStatusBarTexture("Interface\\Buttons\\WHITE8X8"); frame.progress:SetStatusBarColor(.25,.8,.65)
+  frame.progress=CreateFrame("StatusBar",nil,frame); frame.progress:SetSize(388,4); frame.progress:SetPoint("TOPLEFT",16,-65); frame.progress:SetStatusBarTexture("Interface\\Buttons\\WHITE8X8")
+  do local a=B.OptionsTheme.accent; frame.progress:SetStatusBarColor(a[1],a[2],a[3]) end
+  frame.progress.track=frame.progress:CreateTexture(nil,"BACKGROUND"); frame.progress.track:SetAllPoints(); frame.progress.track:SetColorTexture(1,1,1,.08)
   action(frame,"Settings",248,-9,80,function() if not A.Combat() then frame:Hide(); B:ShowCampingOptions() end end)
   frame.resume=action(frame,"Resume reminder",272,-200,132,function() B.campSnoozeSession=nil; B.campSnoozeUntil=nil; B:UpdateCamping() end)
   text(frame,"Your camp items and recipes",16,-83,"GameFontDisableSmall",388)
@@ -386,8 +412,7 @@ function B:RenderCampTray(state)
       row:SetAttribute("_onstate-campsafety",[[if newstate=="blocked" then self:SetAttribute("type1",nil); self:SetAttribute("item",nil); self:Hide() end]])
       local safe=RegisterStateDriver and pcall(RegisterStateDriver,row,"campsafety","[combat] blocked; ready")
       row.campSecureReady=safe==true
-      backdrop(row); row:SetHighlightTexture("Interface\\Buttons\\WHITE8X8")
-      local highlight=row:GetHighlightTexture(); if highlight then highlight:SetVertexColor(1,.82,.2,.12) end
+      row:SetBackdrop({bgFile="Interface\\Buttons\\WHITE8X8"}); row:SetBackdropColor(unpack(B.OptionsTheme.row))
       row.icon=row:CreateTexture(nil,"ARTWORK"); row.icon:SetSize(30,30); row.icon:SetPoint("TOPLEFT",8,-10)
       row.title=text(row,"",46,-8,"GameFontNormalSmall",136); row.detail=text(row,"",46,-30,"GameFontHighlightSmall",136)
       row:SetScript("PreClick",function(s,button,down) if button=="LeftButton" and not down and s.campSecureReady then B:PrepareCampButton(s) end end)
@@ -403,6 +428,10 @@ function B:RenderCampTray(state)
         GameTooltip:Show()
       end)
       row:SetScript("OnLeave",function() GameTooltip:Hide() end)
+      -- Secure rows: themed outline without hover scripts (a native highlight texture shows hover).
+      B.OptionsTheme.Round(row,8,"surface"); B.OptionsTheme.LockBorder(row,1,1,1,.06)
+      row:SetHighlightTexture("Interface\\Buttons\\WHITE8X8"); local hl=row:GetHighlightTexture()
+      if hl then local a=B.OptionsTheme.accent; hl:SetVertexColor(a[1],a[2],a[3],.10); hl:ClearAllPoints(); hl:SetPoint("TOPLEFT",2,-2); hl:SetPoint("BOTTOMRIGHT",-2,2) end
     end
     row.choice=choice; row:ClearAllPoints(); row:SetPoint("TOPLEFT",16+((i-1)%2)*198,-108-math.floor((i-1)/2)*60)
     local entry=choice.data

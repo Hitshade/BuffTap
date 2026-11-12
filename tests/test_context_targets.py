@@ -36,5 +36,5 @@ for locale in ['esES','deDE','frFR','ptBR']:
  test('Context options build in '+locale,solo+"BuffTap:Options(); assert(BuffTap.options.targetBlessingPanel.shown)",locale=locale)
 test('Paused hover in combat never changes protected action',"combat=true; mounted=true; BuffTap.button.scripts.OnEnter(); assert(BuffTap.action)")
 test('Options pause toggle immediately quiets and resumes stock',flask+"bags[13510]=0; bagEvent(); IsResting=function() return true end; BuffTap:Options(); local c=BuffTap.options.pauseResting; c:SetChecked(true); c.scripts.OnClick(c); assert(not BuffTap.action and not BuffTap.supplyBadge.shown); c:SetChecked(false); c.scripts.OnClick(c); assert(BuffTap.supplyBadge.shown)")
-test('Resting toggle belongs to Helpers rather than Appearance',"BuffTap:Options(); assert(BuffTap.options.pauseResting.parent==BuffTap.helperWindow)")
+test('Resting toggle belongs to Helpers rather than Appearance',"BuffTap:Options(); local p=BuffTap.options.pauseResting.parent; assert(p==BuffTap.helperWindow or p.parent==BuffTap.helperWindow) -- 1.19: inside the Conveniences card section")
 print('ALL',len(tests),'SCENARIOS PASSED')

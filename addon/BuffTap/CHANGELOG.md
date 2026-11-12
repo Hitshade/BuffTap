@@ -1,3 +1,67 @@
+# BuffTap 1.19.0
+
+Release summary. Internal builds 1.19.0-beta1 to beta3 are listed below.
+
+- Roles: each party/raid buff can go By class, to Tanks or to Healers. Roles come from your mark, the group role, the raid Main Tank, or optionally a tanking stance or form.
+- Paladin blessings: separate Tank and Healer choices per class.
+- Nearby: request a missing class buff from a passing player (one whisper per click, three-minute cooldown); request to join a player's group when the client offers it; invite and request buttons on the left or right.
+- Reminder icon: Classic or Modern square style, label placement, rebuff countdown sweep, greyed out-of-range reminder.
+- Helpers fits on one page with Solo thanks at the top; thanks can continue while resting.
+- Camp setup tray uses the settings theme; Customize look shortcuts; accent colour swatch; Nearby hairline follows the accent colour.
+- Destructive buttons need a second click to confirm.
+- Fixes: camp effect dropdowns, target refresh field showing "00", settings window shadow gap, group-count badge character, header seams, font fallback.
+
+---
+
+# BuffTap 1.19.0-beta3
+
+Internal build. Not published. No test suites run.
+
+- Helpers page no longer scrolls. Solo thanks and Conveniences share the top row, Buff requests and Tracking follow, and Class readiness fills the space below for Warlocks, Hunters and Paladins. Restore reminders and View discovery report moved to the page header. Longer explanations moved into tooltips.
+- Header banner: the artwork's dark backdrop is now transparent, so it blends into the window instead of looking pasted in.
+- Groups: the selected buff's settings no longer draw a second panel inside the card (fixes the offset double border).
+- Nearby: new Invite and request buttons setting (Left side or Right side), under Nearby > Window appearance.
+- Nearby: Request to join now shows a bold blue arrow on the same tile as the invite plus (replaces the hard-to-see teal glyph).
+- Customization: the reminder editor's right column is now Icon, a more compact Preview, then Effect, so both columns end level.
+- Fixes: camp reminder Effect, colour and speed dropdowns now open in Customization (their menus stayed on the hidden Camping page); an unavailable unit-name font is no longer mistaken for the combat-number font.
+- Destructive buttons need a second click within four seconds ("Click again to confirm"): Clear binding, Reset look, Reset camp look, Reset buffs, Reset target settings, Restore window defaults.
+- Nearby: the header hairline follows your accent colour.
+- Customization: the camp preview card lines up with the Icon and Effect cards; the settings header no longer shows faint seams at its sides.
+- Visual pass:
+  - Customize look buttons sit on the header line, left of the switch on Consumables and Weapons, so they no longer collide with the switch or with "Use Solo settings".
+  - Target: sections start directly under the header, matching other pages.
+  - Nearby: appearance slider tracks line up; the card fits its two-line note.
+  - Camping: Setup & appearance card fits its content.
+  - Profiles: the copy card shrinks when same-class copy options are hidden, removing the empty gap.
+  - Helpers: buff request choices use three even columns (long names no longer collide); the message field uses the standard text size.
+
+---
+
+# BuffTap 1.19.0-beta2
+
+Internal build. Not published. No test suites run.
+
+- Roles simplified: each buff has "Who gets this buff": By class, Tanks or Healers. Tanks/Healers give the buff to every player with that role whatever the class; the class checkboxes are dimmed and unused. "Everyone except tanks" removed.
+- Modern icon: crisp dark edge only (accent hairline removed).
+- Helpers page rebuilt as a scrolling stack of evenly spaced sections (Solo thanks, buff requests, conveniences, class readiness, tracking, actions). Fixes overlapping sections.
+- Request to join: availability now follows the client's invite logic (GetDisplayedInviteType), with a fallback for grouped players.
+
+---
+
+# BuffTap 1.19.0-beta1
+
+Internal build. Not published. No test suites run.
+
+- Roles: party/raid buffs can target Everyone, Tanks only, Healers only or Everyone except tanks. Roles come from a BuffTap mark, the group role, the raid Main Tank, then optionally a tanking stance or form (off by default).
+- Paladin blessings: per-class Tank and Healer choices between player exceptions and class choices; mixed choices use single blessings for that class.
+- Nearby: Request to join for grouped players when the client offers it; optional buff requests (whisper on click, three-minute cooldown per player) configured in Helpers.
+- Reminder icon: Classic or Modern square style (buff and camp reminders), label placement, rebuff countdown sweep, greyed out-of-range reminder (display only).
+- Helpers: Solo thanks moved to the top with a larger card; Keep thanking while resting.
+- Camp setup tray uses the settings theme. Customize look shortcuts on Buffs, Consumables and Weapons. Accent colour swatch.
+- Fixes: target refresh value field showed "00" for four-digit values; light gap under the settings window shadow; group-count badge showed a garbled character; gold button text is now bold without a shadow.
+
+---
+
 # BuffTap 1.18.0
 
 Release summary. Internal builds 1.18.0-beta1 to beta9 are listed below.

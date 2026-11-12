@@ -349,7 +349,15 @@ function B:NearbyInviteName(entry)
   local unit=entry.unit
   if not self.nearbyUnits or self.nearbyUnits[unit]~=entry.guid or A.Call(UnitGUID,unit)~=entry.guid
     or A.Call(UnitExists,unit)~=true or A.Call(UnitCanAssist,"player",unit)~=true
-    or self:NearbyGroupMember(unit) or A.Call(UnitInAnyGroup,unit)==true then return nil end
+    or self:NearbyGroupMember(unit) then return nil end
+  -- Request to join: the client's own invite logic decides (the same check as its right-click menu).
+  -- UnitInAnyGroup is not reliable for players outside your group, so it is not used for this case.
+  local displayed=A.Call(GetDisplayedInviteType,entry.guid)
+  if displayed=="REQUEST_INVITE" or ((displayed==nil or displayed=="INVITE") and A.Call(IsInGroup)~=true and A.Call(UnitInAnyGroup,unit)==true) then
+    if A.Call(IsInGroup)==true or not self:RequestInviteAPI() then return nil end
+    return self:NearbyCastName({target=unit,targetGUID=entry.guid}),"REQUEST_INVITE"
+  end
+  if A.Call(UnitInAnyGroup,unit)==true then return nil end
   local raid=A.Call(IsInRaid)==true
   local count=A.Call(raid and GetNumGroupMembers or GetNumSubgroupMembers)
   if not A.Number(count) or count>=(raid and 40 or 4) then return nil end
@@ -365,14 +373,87 @@ function B:NearbyInviteName(entry)
   local name=self:NearbyCastName({target=unit,targetGUID=entry.guid})
   return name,mode
 end
+-- ---------- Buff requests ----------
+-- Offers a whisper to a nearby player outside your group whose class can provide a class buff you are
+-- missing. Never automatic: each whisper is one click, with a per-player cooldown.
+local REQUEST_COOLDOWN=180
+local blessingOrder={bok=1,bom=2,bow=3}
+function B:RequestBuffChoices()
+  local list={}
+  for _,def in ipairs(self:CoverageDefinitions()) do list[#list+1]=def end
+  return list
+end
+function B:RequestableBuffs(entry)
+  if not self.db.nearbyRequests or not self.db.enabled or not self.db.nearbyEnabled or A.Combat() or not entry or not A.Text(entry.class) then return nil end
+  if self:NearbyGroupMember(entry.unit) or A.Call(UnitIsUnit,entry.unit,"player")==true then return nil end
+  local myClass=A.Class("player"); if not myClass or entry.class==myClass then return nil end
+  local scan=self:GetAuras("player",false); if not scan then return nil end
+  local list,blessing,hasBlessing={},nil,nil
+  for _,def in ipairs(self:CoverageDefinitions()) do
+    if def.class==entry.class and self.db.requestBuffs[def.key]~=false then
+      local eligible=true
+      if def.target then eligible=false; for _,class in ipairs(def.target) do if class==myClass then eligible=true end end end
+      if eligible then
+        if def.kind=="blessing" then
+          if hasBlessing==nil then
+            hasBlessing=false
+            for _,other in ipairs(self.Buffs) do
+              if other.kind=="blessing" and not other.singleKey and not self:Missing(other,{id=other.ranks[#other.ranks],name=other.name},scan,0) then hasBlessing=true; break end
+            end
+          end
+          -- One blessing per request: a paladin gives each player one of theirs.
+          if not hasBlessing and (not blessing or (blessingOrder[def.key] or 9)<(blessingOrder[blessing.key] or 9)) then blessing=def end
+        elseif self:Missing(def,{id=def.ranks[#def.ranks],name=def.name},scan,0) then list[#list+1]=def end
+      end
+    end
+  end
+  if blessing then list[#list+1]=blessing end
+  return #list>0 and list or nil
+end
+function B:BuffRequestText(list)
+  local names={}
+  for _,def in ipairs(list) do names[#names+1]=A.Call(C_Spell and C_Spell.GetSpellName,def.ranks[#def.ranks]) or def.name end
+  local joined=table.concat(names,", ")
+  local template=A.Text(self.db.requestMessage) and self.db.requestMessage~="" and self.db.requestMessage or self:Text("Hi! Could I get %s, please? Thank you!")
+  template=template:gsub("[|%c]","")
+  local message
+  if template:find("%%s") then message=template:gsub("%%s",function() return joined end,1) else message=template.." ("..joined..")" end
+  return message:sub(1,250)
+end
+function B:RequestBuffFrom(entry)
+  if A.Combat() or not entry then return false end
+  local list=self:RequestableBuffs(entry); if not list then return false end
+  self.nearbyRequested=self.nearbyRequested or {}
+  local at=self.nearbyRequested[entry.guid]; if at and GetTime()-at<REQUEST_COOLDOWN then return false end
+  if C_ChatInfo and type(C_ChatInfo.InChatMessagingLockdown)=="function" and A.Call(C_ChatInfo.InChatMessagingLockdown)==true then return false end
+  local name=self:NearbyCastName({target=entry.unit,targetGUID=entry.guid})
+  if not A.Text(name) or type(SendChatMessage)~="function" then return false end
+  local ok=pcall(SendChatMessage,self:BuffRequestText(list),"WHISPER",nil,name)
+  if not ok then return false end
+  self.nearbyRequested[entry.guid]=GetTime()
+  self:UpdateNearbyWindow()
+  return true
+end
+function B:RequestCooling(entry)
+  local at=entry and self.nearbyRequested and self.nearbyRequested[entry.guid]
+  return at and GetTime()-at<REQUEST_COOLDOWN or false
+end
+
+function B:RequestInviteAPI()
+  local fn=C_PartyInfo and C_PartyInfo.RequestInviteFromUnit
+  if type(fn)~="function" then fn=RequestInviteFromUnit end
+  return type(fn)=="function" and fn or nil
+end
 function B:InviteNearby(entry)
   local name,mode=self:NearbyInviteName(entry)
   if not name then return false end
   self.nearbyInvited=self.nearbyInvited or {}
   local at=self.nearbyInvited[entry.guid]
   if at and GetTime()-at<10 then return false end
-  -- Only a deliberate button click calls this API; never scans or timers.
-  local ok,result=pcall(C_PartyInfo.InviteUnit,name)
+  -- Only a deliberate button click calls these APIs; never scans or timers.
+  local ok,result
+  if mode=="REQUEST_INVITE" then ok,result=pcall(self:RequestInviteAPI(),name)
+  else ok,result=pcall(C_PartyInfo.InviteUnit,name) end
   if not ok or result==false then self.Print("The group invitation could not be requested."); return false end
   self.nearbyInvited[entry.guid]=GetTime(); self.nearbyLastInvite=mode..": "..name
   self:UpdateNearbyWindow()
@@ -630,13 +711,45 @@ function B:CreateNearbyWindow()
     row.invite.text=label(row.invite,"+",0,0); row.invite.text:ClearAllPoints(); row.invite.text:SetAllPoints(row.invite); row.invite.text:SetJustifyH("CENTER"); row.invite.text:SetJustifyV("MIDDLE"); row.invite.text:SetWordWrap(false); row.invite.text:SetTextColor(1,.82,0)
     row.invite.plusH=wash(row.invite,"OVERLAY",1,.82,0,1); row.invite.plusH:SetSize(8,2); row.invite.plusH:SetPoint("CENTER",row.invite,"CENTER",0,0)
     row.invite.plusV=wash(row.invite,"OVERLAY",1,.82,0,1); row.invite.plusV:SetSize(2,8); row.invite.plusV:SetPoint("CENTER",row.invite,"CENTER",0,0)
+    -- Request to join: a bold blue arrow on the same tile as the gold invite plus.
+    row.invite.join={}
+    for i,part in ipairs({{-3,0,8,3},{2,0,2,10},{4,0,2,6},{6,0,2,2}}) do
+      local t=wash(row.invite,"OVERLAY",.35,.75,1,1); t:SetSize(part[3],part[4]); t:SetPoint("CENTER",row.invite,"CENTER",part[1],part[2]); row.invite.join[i]=t
+    end
     row.invite:RegisterForClicks("LeftButtonUp")
     row.invite:SetScript("OnClick",function() self:InviteNearby(row.entry) end)
+    -- Buff request: shows the buff's own icon so it reads differently from the invite "+".
+    row.request=CreateFrame("Button",nil,row); row.request:SetSize(20,20); row.request:Hide()
+    row.request.bg=wash(row.request,"BACKGROUND",.40,.82,.90,.55); row.request.bg:SetAllPoints()
+    row.request.icon=row.request:CreateTexture(nil,"ARTWORK"); row.request.icon:SetPoint("TOPLEFT",1,-1); row.request.icon:SetPoint("BOTTOMRIGHT",-1,1); row.request.icon:SetTexCoord(.08,.92,.08,.92)
+    row.request.hover=wash(row.request,"HIGHLIGHT",1,1,1,.18); row.request.hover:SetAllPoints()
+    row.request:RegisterForClicks("LeftButtonUp")
+    row.request:SetScript("OnClick",function() self:RequestBuffFrom(row.entry) end)
+    row.request:SetScript("OnEnter",function()
+      if not row.entry then return end
+      self.nearbyHovered=row.entry.guid
+      local list=self:RequestableBuffs(row.entry)
+      GameTooltip:SetOwner(row.request,"ANCHOR_RIGHT")
+      GameTooltip:SetText(B:Text("Ask %s for a buff",row.entry.name),1,1,1)
+      if list then GameTooltip:AddLine(self:BuffRequestText(list),.80,.82,.86,true) end
+      GameTooltip:AddLine(self:RequestCooling(row.entry) and B:Text("Request sent. You can ask this player again in a few minutes.") or B:Text("Click to whisper this request. Nothing is sent automatically."),.55,.58,.64,true)
+      GameTooltip:Show()
+    end)
+    row.request:SetScript("OnLeave",function()
+      self.nearbyHovered=nil; GameTooltip:Hide()
+      self:CancelTimer("nearby-display")
+      self:StartTimer("nearby-display",.1,function() if not A.Combat() then B:UpdateNearbyWindow() end end)
+    end)
     row.invite:SetScript("OnEnter",function()
       if not row.entry then return end
       self.nearbyHovered=row.entry.guid
       local _,mode=self:NearbyInviteName(row.entry)
-      GameTooltip:SetOwner(row.invite,"ANCHOR_RIGHT"); GameTooltip:SetText((mode=="SUGGEST_INVITE" and "Suggest party invite: " or "Send party invite to ")..row.entry.name)
+      GameTooltip:SetOwner(row.invite,"ANCHOR_RIGHT")
+      if mode=="REQUEST_INVITE" then
+        GameTooltip:SetText(B:Text("Request to join %s's group",row.entry.name))
+        GameTooltip:AddLine(B:Text("Click to ask to join this player's group. The group leader decides."),.80,.82,.86,true); GameTooltip:Show(); return
+      end
+      GameTooltip:SetText((mode=="SUGGEST_INVITE" and "Suggest party invite: " or "Send party invite to ")..row.entry.name)
       local at=self.nearbyInvited and self.nearbyInvited[row.entry.guid]
       GameTooltip:AddLine(at and GetTime()-at<10 and "Party invite or suggestion sent. Waiting briefly before allowing another." or "Click to "..(mode=="SUGGEST_INVITE" and "suggest this player to your group leader." or "send this player a party invite."),.8,.8,.8,true); GameTooltip:Show()
     end)
@@ -683,7 +796,7 @@ function B:CreateNearbyWindow()
   end
   -- Child buttons consume wheel input too, instead of casting or zooming behind the list.
   for _,surface in ipairs({c,f.dragHandle,f.statusButton,f.countHelp,f.allPlayers,f.lock,f.close,f.scroll}) do wheelSurface(surface) end
-  for _,row in ipairs(f.rows) do wheelSurface(row); wheelSurface(row.invite) end
+  for _,row in ipairs(f.rows) do wheelSurface(row); wheelSurface(row.invite); wheelSurface(row.request) end
   local ok,result=pcall(RegisterStateDriver,f,"visibility","[combat] hide")
   if not ok or result==false then self.nearbySetupError="Secure combat visibility failed"; f:Hide(); return end
   f:Hide()
@@ -696,9 +809,13 @@ function B:UpdateNearbyWindow()
   local width,rows,scale=self:NearbyLayout(); WIDTH,ROWS,HEIGHT=width,rows,29+rows*ROW_HEIGHT
   self:CreateNearbyWindow()
   local f=self.nearbyFrame; if not f or self.nearbySetupError then return end
-  local layoutKey=table.concat({WIDTH,ROWS,scale,self.db.nearbyOpacity},":")
+  local right=self.db.nearbyButtonSide=="right"
+  local layoutKey=table.concat({WIDTH,ROWS,scale,self.db.nearbyOpacity,right and "R" or "L"},":")
   if f.layoutKey~=layoutKey then
     f.layoutKey=layoutKey; f:SetSize(WIDTH+24,HEIGHT); f:SetScale(scale); f.content:SetSize(WIDTH,HEIGHT)
+    -- Invite and request buttons sit in a 24px gutter on the chosen side of the list.
+    f.content:ClearAllPoints(); f.content:SetPoint("TOPLEFT",right and 0 or 24,0)
+    for _,row in ipairs(f.rows) do row.invite:ClearAllPoints(); if right then row.invite:SetPoint("LEFT",row,"RIGHT",4,0) else row.invite:SetPoint("RIGHT",row,"LEFT",-4,0) end end
     f.header:SetWidth(WIDTH); f.header:SetColorTexture(.055,.07,.09,self.db.nearbyOpacity)
     f.line:SetWidth(WIDTH); f.dragHandle:SetWidth(WIDTH-43)
     f.lock:ClearAllPoints(); f.lock:SetPoint("TOPLEFT",WIDTH-34,-3)
@@ -709,6 +826,8 @@ function B:UpdateNearbyWindow()
     f.scroll:ClearAllPoints(); f.scroll:SetPoint("TOPLEFT",WIDTH-5,-25); f.scroll:SetHeight(ROWS*ROW_HEIGHT-2)
     for _,row in ipairs(f.rows) do row:SetWidth(WIDTH); row.wash:SetColorTexture(.055,.075,.095,self.db.nearbyOpacity*.68); row.idle:ClearAllPoints(); row.idle:SetPoint("RIGHT",-8,0); row.style=nil end
   end
+  -- The header hairline follows the accent colour chosen under Customization > Interface.
+  if self.InterfaceAccent then local r,g,b=self:InterfaceAccent(); f.line:SetColorTexture(r,g,b,.80) end
   local list=self:NearbyPlayers()
   if not self.db.enabled or not self.db.nearbyEnabled or not platesOn() or self:ReminderPauseReason() then self.nearbyDisplay=nil end
   local display=self:NearbyDisplayList(list)
@@ -759,13 +878,24 @@ function B:UpdateNearbyWindow()
       row.idle:SetShown(self.db.nearbyShowAll and not row.action)
       local invited=self.nearbyInvited and self.nearbyInvited[entry.guid]
       local inviteName,inviteMode=self:NearbyInviteName(entry)
+      local request=inviteMode=="REQUEST_INVITE"
       row.invite.text:SetText(invited and "..." or inviteMode=="SUGGEST_INVITE" and ">" or "+")
-      local plus=not invited and inviteMode~="SUGGEST_INVITE"
-      row.invite.plusH:SetShown(plus); row.invite.plusV:SetShown(plus); row.invite.text:SetShown(not plus)
+      row.invite.text:SetTextColor(1,1,1)
+      local plus=not invited and inviteMode~="SUGGEST_INVITE" and not request
+      local join=request and not invited
+      row.invite.plusH:SetShown(plus); row.invite.plusV:SetShown(plus); row.invite.text:SetShown(not plus and not join)
+      for _,t in ipairs(row.invite.join) do t:SetShown(join) end
       row.invite:SetShown(item.fresh and inviteName~=nil)
+      local requests=item.fresh and self:RequestableBuffs(entry)
+      row.request:ClearAllPoints()
+      if right then
+        if row.invite:IsShown() then row.request:SetPoint("LEFT",row.invite,"RIGHT",2,0) else row.request:SetPoint("LEFT",row,"RIGHT",4,0) end
+      elseif row.invite:IsShown() then row.request:SetPoint("RIGHT",row.invite,"LEFT",-2,0) else row.request:SetPoint("RIGHT",row,"LEFT",-4,0) end
+      if requests then row.request.icon:SetTexture(requests[1].icon); row.request:SetAlpha(self:RequestCooling(entry) and .45 or 1) end
+      row.request:SetShown(requests~=nil)
       row.marker:SetShown(row.action and row.action.ready and self.action and self.action.nearby and self.action.targetGUID==entry.guid or false)
       if not row:IsShown() then row:Show() end
-    else row.style=nil; row.invite:Hide(); row.idle:Hide(); if row:IsShown() then row:Hide() end end
+    else row.style=nil; row.invite:Hide(); row.request:Hide(); row.idle:Hide(); if row:IsShown() then row:Hide() end end
   end
   local status
   if not self.db.enabled then status="BuffTap is disabled."

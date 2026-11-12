@@ -62,8 +62,9 @@ CreateFrame=function(...)
  return frame
 end
 BuffTap:Options(); local f=BuffTap.options; f.expandedBlessing='WARRIOR'; BuffTap:Options()
-assert(f.height==836 and f.blessingDetail.height==202)
-for _,row in ipairs(f.blessingRows) do assert(-row.points[3]+row.height<574) end
+-- 1.19: the expanded class panel adds Tank and Healer blessing rows (202 -> 262); page area is 728.
+assert(f.height==900 and f.blessingDetail.height==262)
+for _,row in ipairs(f.blessingRows) do assert(-row.points[3]+row.height<672) end
 assert(#f.blessingPlayerRows==5)
 ''')
 test('Large class roster pages all players inside fixed expansion',setup+'''
@@ -89,15 +90,16 @@ CreateFrame=function(...)
  return frame
 end
 BuffTap:Options(); local f=BuffTap.options
-local previousBottom=174
+local previousBottom=132
 for _,tab in ipairs(f.tabs) do
  local x,y=tab.points[2],tab.points[3]
- assert(x==24 and tab.width==142 and x+tab.width< f.pages[1].points[2])
- assert(-y>=previousBottom+4 and -y+tab.height<=804)
+ -- 1.18 sidebar: full-width nav items under the banner header, left of the page area.
+ assert(x==10 and tab.width==177 and x+tab.width< f.pages[1].points[2])
+ assert(-y>=previousBottom+4 and -y+tab.height<=f.height-40)
  previousBottom=-y+tab.height
 end
-assert(f.width==932 and #f.tabs==11)
-assert(f.height-174-32==630) -- Preserve the existing page area.
+assert(f.width==932 and #f.tabs==12)
+assert(f.height-132-40==728) -- 1.18 page area below the banner header and above the footer.
 """)
 test('Header Close hides options and all tabs still select their own page',setup+"""
 BuffTap:Options(); local f=BuffTap.options

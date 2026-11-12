@@ -23,13 +23,15 @@ local function accent() return T.accent[1],T.accent[2],T.accent[3] end
 -- Typography: Inter (SIL Open Font License, Media/Fonts/OFL-Inter.txt), with Arial Narrow as a fallback.
 local FONT_DIR=MEDIA.."Fonts\\Inter-"
 T.fonts={}
-local function font(key,weight,size,color,justify)
+local function font(key,weight,size,color,justify,flat)
   local name="BuffTapOptionsFont"..key
   local object=CreateFont(name)
   object:SetFont(FONT_DIR..weight..".ttf",size,"")
   if not object:GetFont() then object:SetFont("Fonts\\ARIALN.TTF",size+1,"") end
   object:SetTextColor(color[1],color[2],color[3],color[4] or 1)
-  object:SetShadowColor(0,0,0,.5); object:SetShadowOffset(1,-1); object:SetJustifyH(justify or "LEFT")
+  -- Dark text on gold reads as blurred with a drop shadow, so "flat" fonts have none.
+  if flat then object:SetShadowColor(0,0,0,0); object:SetShadowOffset(0,0) else object:SetShadowColor(0,0,0,.5); object:SetShadowOffset(1,-1) end
+  object:SetJustifyH(justify or "LEFT")
   T.fonts[key]=name; return object
 end
 local WHITE_TEXT={1,1,1,1}; local IDLE={.68,.71,.76,1}; local DARK={.06,.065,.08,1}
@@ -40,7 +42,7 @@ font("Note","Regular",12,T.text)
 font("Section","SemiBold",11,T.gold); font("Value","Medium",12,T.text,"CENTER")
 font("Button","Medium",12,T.text,"CENTER"); font("ButtonHover","Medium",12,WHITE_TEXT,"CENTER"); font("ButtonDisabled","Medium",12,T.muted,"CENTER")
 font("ButtonLeft","Medium",12,T.text,"LEFT"); font("ButtonLeftHover","Medium",12,WHITE_TEXT,"LEFT"); font("ButtonLeftDisabled","Medium",12,T.muted,"LEFT")
-font("ButtonDark","SemiBold",12,DARK,"CENTER")
+font("ButtonDark","Bold",12,DARK,"CENTER",true)
 font("ButtonFit","Medium",11,T.text,"CENTER"); font("ButtonFitHover","Medium",11,WHITE_TEXT,"CENTER"); font("ButtonFitDisabled","Medium",11,T.muted,"CENTER")
 font("Nav","Medium",13,IDLE); font("NavActive","SemiBold",13,WHITE_TEXT)
 font("Tab","Medium",12,IDLE,"CENTER"); font("TabActive","SemiBold",12,WHITE_TEXT,"CENTER")
@@ -129,8 +131,9 @@ function T.Shadow(frame,spread,alpha)
   local dy=-4
   tl:SetSize(spread,spread); tl:SetPoint("BOTTOMRIGHT",frame,"TOPLEFT",0,dy)
   tr:SetSize(spread,spread); tr:SetPoint("BOTTOMLEFT",frame,"TOPRIGHT",0,dy)
-  bl:SetSize(spread,spread); bl:SetPoint("TOPRIGHT",frame,"BOTTOMLEFT",0,dy)
-  br:SetSize(spread,spread); br:SetPoint("TOPLEFT",frame,"BOTTOMRIGHT",0,dy)
+  -- The bottom row starts at the frame's edge (stretched by the drop offset) so no light gap shows under the window.
+  bl:SetSize(spread,spread-dy); bl:SetPoint("TOPRIGHT",frame,"BOTTOMLEFT",0,0)
+  br:SetSize(spread,spread-dy); br:SetPoint("TOPLEFT",frame,"BOTTOMRIGHT",0,0)
   local top=piece(.25,.75,0,.25); top:SetPoint("BOTTOMLEFT",tl,"BOTTOMRIGHT"); top:SetPoint("TOPRIGHT",tr,"TOPLEFT")
   local bottom=piece(.25,.75,.75,1); bottom:SetPoint("TOPLEFT",bl,"TOPRIGHT"); bottom:SetPoint("BOTTOMRIGHT",br,"BOTTOMLEFT")
   local left=piece(0,.25,.25,.75); left:SetPoint("TOPRIGHT",tl,"BOTTOMRIGHT"); left:SetPoint("BOTTOMLEFT",bl,"TOPLEFT")
@@ -392,6 +395,27 @@ function T.InsetCards(root)
   end
 end
 
+-- Two-step confirmation for destructive buttons: the first click arms ("Click again to confirm"),
+-- a second click within four seconds runs the action. Moving away or waiting disarms it.
+function T.Confirm(control)
+  if not control or control.visualConfirm or type(control.GetScript)~="function" then return control end
+  local action=control:GetScript("OnClick"); if not action then return control end
+  control.visualConfirm=true
+  local function disarm()
+    if not control.confirmArmed then return end
+    control.confirmArmed=nil; control:SetText(control.confirmLabel or ""); control.confirmTimer=nil
+  end
+  control:SetScript("OnClick",function(self,...)
+    if self.confirmArmed then
+      if self.confirmTimer and self.confirmTimer.Cancel then self.confirmTimer:Cancel() end
+      disarm(); return action(self,...)
+    end
+    self.confirmArmed=true; self.confirmLabel=self:GetText(); self:SetText(B:Text("Click again to confirm"))
+    if C_Timer and C_Timer.NewTimer then self.confirmTimer=C_Timer.NewTimer(4,disarm) end
+  end)
+  control:HookScript("OnHide",disarm)
+  return control
+end
 function T.Rule(parent,x,y,width)
   local rule=parent:CreateTexture(nil,"BORDER"); rule:SetColorTexture(unpack(T.rule)); rule:SetPoint("TOPLEFT",x,y); rule:SetSize(width,1)
   rule.optionsDecoration=true; T.Track(rule,"rule"); return rule
@@ -627,6 +651,7 @@ end
 
 function T.Refresh()
   local r,g,b=B:InterfaceAccent(); T.accent={r,g,b,1}; T.gold=T.accent
+  if B.nearbyFrame and B.nearbyFrame.line then B.nearbyFrame.line:SetColorTexture(r,g,b,.80) end
   for control,kind in pairs(tracked) do
     if kind=="label" then
       if control.optionsSection then control:SetTextColor(r,g,b)
@@ -666,12 +691,18 @@ function T.StyleSlider(s,low,high,step,onChange)
       unitText:SetText(B:Text(unit)); unitText:Show()
       local w=unitText:GetStringWidth(); reserve=(type(w)=="number" and w or 18)+6
     else unitText:Hide() end
-    local width=unit and math.max(58,40+reserve) or 48
+    -- Size the field for the largest value it can hold (1800 sec must not clip to "00").
+    local probe=s.visualProbe or edit:CreateFontString(nil,"BACKGROUND"); s.visualProbe=probe
+    probe:SetFontObject(T.fonts.Value); probe:SetText(tostring(math.floor(high))); probe:Hide()
+    local digits=probe:GetStringWidth(); digits=(type(digits)=="number" and digits>0) and digits or #tostring(math.floor(high))*8
+    local width=math.max(unit and 58 or 48,math.ceil(digits+reserve+(unit and 22 or 18)),s.visualFieldWidth or 0)
     edit:SetWidth(width)
     if unit then edit:SetJustifyH("RIGHT"); edit:SetTextInsets(6,reserve+8,0,0) else edit:SetJustifyH("CENTER"); edit:SetTextInsets(0,0,0,0) end
     track:ClearAllPoints(); track:SetPoint("LEFT",width+12,0); track:SetPoint("RIGHT",-2,0)
   end
   s.SetUnit=function(self,unit) self.visualUnit=unit; layout() end
+  -- A shared field width lines up the tracks of stacked sliders.
+  s.SetFieldWidth=function(self,width) self.visualFieldWidth=width; layout() end
   track:SetMinMaxValues(low,high); track:SetValueStep(step); if track.SetObeyStepOnDrag then track:SetObeyStepOnDrag(true) end
   local rail=newPill(track,"BACKGROUND",0); local fill=newPill(track,"ARTWORK",0)
   local thumb=track:CreateTexture(nil,"OVERLAY"); thumb:SetTexture(MEDIA.."UIThumb"); thumb:SetSize(THUMB,THUMB); track:SetThumbTexture(thumb); s.visualThumb=thumb
