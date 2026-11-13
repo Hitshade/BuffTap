@@ -114,7 +114,12 @@ function B:EffectUrgency(frame,d)
   if a.needState=="expiring" and type(a.remaining)=="number" and type(a.threshold)=="number" and a.threshold>0 then
     local left=a.remaining-math.max(0,GetTime()-(a.selectedAt or GetTime()))
     if left<=a.threshold*.5 then return "amber" end
-    self:StartTimer("effect-urgency",math.max(.5,left-a.threshold*.5),function() B:UpdatePulse() end)
+    -- Arm once per reminder; refreshes in between don't need a new timer.
+    local due=GetTime()+math.max(.5,left-a.threshold*.5)
+    if a.urgencyAt==nil or math.abs(a.urgencyAt-due)>1 then
+      a.urgencyAt=due
+      self:StartTimer("effect-urgency",due-GetTime(),function() B:UpdatePulse() end)
+    end
   end
   return nil
 end

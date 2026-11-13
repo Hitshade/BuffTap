@@ -381,7 +381,7 @@ function B:FindCasterUnit(guid)
   local plates=A.Call(C_NamePlate and C_NamePlate.GetNamePlates)
   if type(plates)=="table" then
     for i=1,math.min(40,#plates) do
-      local unit=A.Call(function() return plates[i]:GetUnit() end)
+      local unit=plates[i].namePlateUnitToken or A.Call(function() return plates[i]:GetUnit() end)
       local found=match(unit); if found then return found end
     end
   end

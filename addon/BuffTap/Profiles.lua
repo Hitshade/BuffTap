@@ -178,7 +178,7 @@ function B:RenameSettingsProfile(name)
   db:SetProfile(name); db:DeleteProfile(old); self:FinishProfileChange(); return true
 end
 -- Any profile except the active one can be deleted. Characters still pointing at it (including
--- deleted characters) are released, so each starts its own fresh profile at its next login.
+-- deleted characters) are released and go back to their own character profile at their next login.
 function B:DeleteSettingsProfile(name)
   if A.Combat() or not cleanName(name) or not self.profileDB.sv.profiles[name] or name==self.profileDB:GetCurrentProfile() then return false end
   local keys=self.profileDB.sv.profileKeys
@@ -271,7 +271,16 @@ function B:ImportSettings(text)
   local sameClass=class==token()
   if type(data.class)=="table" then
     for _,key in ipairs(classKeys) do
-      if data.class[key]~=nil and (sameClass or not classSpellKeys[key]) then self.db[key]=clone(data.class[key]) end
+      if data.class[key]~=nil and (sameClass or not classSpellKeys[key]) then
+        if key=="supplySettings" and not sameClass and type(data.class[key])=="table" then
+          -- Supplies mix class items (poisons, stones) with shared ones: from another class,
+          -- only food, drink and coatings come over; this class's own entries stay.
+          if type(self.db.supplySettings)~="table" then self.db.supplySettings={} end
+          for k,v in pairs(data.class[key]) do
+            if type(k)=="string" and (k:match("^consumable:") or k:match("^coating:")) then self.db.supplySettings[k]=clone(v) end
+          end
+        else self.db[key]=clone(data.class[key]) end
+      end
     end
   end
   self:FinishProfileChange()

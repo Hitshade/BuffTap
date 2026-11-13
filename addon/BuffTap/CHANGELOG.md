@@ -1,3 +1,36 @@
+# BuffTap 1.20.1
+
+### Nearby guide and fonts
+- The Nearby guide (Nearby page and first-time introduction) is redrawn to look like the real Nearby window: header with count, people icon, lock and close, gold-edged class and buff icons, levels before names, and the gold row your binding buffs next. Numbered markers point at each part, with a numbered key in two groups: Buttons (invite, ask to join, ask for a buff, all players view) and On each row (needs your buff, nothing needed), plus name tags in a two-by-two grid. It says "press your BuffTap binding" instead of naming a key.
+- The first-time introduction is wider to fit the new guide. The Nearby page note about nameplates and window options moved into the guide.
+- Font menus (Nearby window font, buff and camp reminder fonts) show each font name in its own font, and the box shows your current choice in its font, also while hovering.
+
+### Fixes from a full code review
+- Combat safety: Nearby rows clear their cast the moment combat starts, so the separate Nearby key can never cast a stale buff in combat.
+- Nearby right-click menu and blacklist use the full name (first name and surname), so blacklisting one "Bob" no longer blocks every Bob. Entries typed with a first name only still match by first name.
+- "Hide player names" in Diagnostics reports also hides surnames, and only replaces whole words.
+- The Nearby list is found again after combat on clients where nameplates expose their unit only as a field.
+- Nearby works out group members once per update instead of once per player, which is much lighter in raids.
+- Underwater buffs: after a /reload while underwater, BuffTap reads the running breath timer instead of waiting for it to restart.
+- Pets: Arcane Intellect and Divine Spirit are only offered to pets that use mana (Thorns still is). Pet buff changes are noticed straight away when pet buffing is on.
+- Party and Raid per-buff timing kept values only from 15 s to 3 minutes; it now keeps When gone up to 10 minutes like Solo. /bt rebuff uses the same range.
+- /bt group, /bt smartgroup, /bt groupneed and /bt groups now change the active Party or Raid setup instead of settings that setup ignores.
+- Consumables: an item cooldown reported as 1/0 instead of true/false is accepted, and items whose spell data loads late are requested again instead of staying unusable until /reload.
+- Cross-class import keeps your class's own supplies (poisons, stones) and only brings over food, drink and coatings.
+- Deleting a profile other characters use: the warning now says they go back to their own character settings at their next login, which is what happens.
+- Settings window: the window scale applies when you let go of the slider instead of rescaling under the mouse; colour and scale changes, and bag or item-data bursts, no longer rebuild the window on every tick; an open dropdown is no longer closed by a bag change.
+- The camp reminder updates again when the settings window closes, and it no longer schedules work during combat.
+- A second "Click again to confirm" within four seconds of leaving a page now works.
+- Changing the main key to one used by the Nearby key rebinds Nearby straight away.
+- The urgency colour no longer restarts its timer on every refresh.
+- Searchable lists (sounds) highlight the current choice.
+- Em dashes removed from interface text in all languages.
+
+### Tests
+- 1815 Lua tests passed (full release suite, 0 failures).
+
+---
+
 # BuffTap 1.20.0
 
 - Fix: the reminder could pop up (and play its sound) right after login or a loading screen, before the game had reported your buffs. BuffTap now waits 4 seconds after loading, then checks once.

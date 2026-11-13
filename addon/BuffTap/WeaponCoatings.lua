@@ -499,7 +499,7 @@ function B:WeaponReminderSummary()
       local need,reason
       if state then need,reason=self:WeaponNeed(state,choice) end
       local status=matched~=true and "incompatible weapon" or not state.known and "unavailable" or need and reason or state.hasEnchant and "coated" or "missing"
-      parts[#parts+1]=hand.label.." oil/stone: "..choice.name.." — "..status
+      parts[#parts+1]=hand.label.." oil/stone: "..choice.name.." ("..status..")"
     end
   end
   return #parts>0 and table.concat(parts," | ") or "No oil or stone selected."

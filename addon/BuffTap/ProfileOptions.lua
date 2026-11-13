@@ -81,7 +81,7 @@ function B:BuildProfileOptions(p,h)
   p.delete=button(p,L("Delete profile"),458,-512,232,function()
     local name=p.deleteName; local users=B:ProfileUsers(name)
     -- The active profile is never offered. Profiles other characters use get a stronger warning.
-    if users>0 then p.confirmText:SetText(L("Delete %s? %d other character(s) use it and will start a fresh profile at their next login. This cannot be undone.",name or "",users))
+    if users>0 then p.confirmText:SetText(L("Delete %s? %d other character(s) use it and will go back to their own character settings at their next login. This cannot be undone.",name or "",users))
     else p.confirmText:SetText(L("Delete %s? This cannot be undone.",name or "")) end
     p.pending=function() outcome(B:DeleteSettingsProfile(name)); p.deleteName=nil end; p.confirm:Show()
   end)

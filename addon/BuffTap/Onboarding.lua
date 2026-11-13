@@ -243,7 +243,7 @@ function B:OnboardingFeaturesPage()
   end))
   local y=-156
   local class=A.Class("player")
-  local binding=#self.db.keys>0 and table.concat(self.db.keys,", ") or self:Text("none — click the reminder")
+  local binding=#self.db.keys>0 and table.concat(self.db.keys,", ") or self:Text("none: click the reminder")
   local lines={
     self:Text("How to buff: when a reminder appears, press your binding (%s) or click the icon.",binding),
     "Nearby: buff players passing by, invite them, or whisper for a buff you are missing. Right-click a name to blacklist a player or guild. A separate Nearby key and a Mana reserve are optional.",

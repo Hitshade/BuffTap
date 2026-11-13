@@ -652,6 +652,8 @@ function B:IsWatchedUnit(unit)
   if self.db and self.db.nearbyEnabled and self.nearbyUnits and self.nearbyUnits[unit] then return true end
   if unit=="player" then return true end
   if self.db and (self:GroupPreference("group") or (self.ReadinessEnabled and self:ReadinessEnabled("soulstone"))) and (unit:match("^party%d+$") or unit:match("^raid%d+$")) then return true end
+  -- Pets, when pet buffing is on, so a dispelled or newly summoned pet is noticed straight away.
+  if self.db and self.db.buffPets==true and (unit=="pet" or unit:match("^partypet%d$") or unit:match("^raidpet%d+$")) then return true end
   if unit=="target" and self.db and self.db.friendlyTarget then
     return A.Call(UnitExists,"target")==true and A.Call(UnitCanAssist,"player","target")==true
   end
@@ -996,7 +998,7 @@ SlashCmdList.BUFFTAP=function(text)
     if buffKey then
       value=tonumber(value); local def=B:FindBuff(buffKey)
       if not def or def.singleKey then say("Usage: /bt rebuff 45 OR /bt rebuff motw 60"); return end
-      B.db.buffSeconds[buffKey]=math.max(15,math.min(180,value)); B:InitDB()
+      B.db.buffSeconds[buffKey]=math.max(0,math.min(600,value)); B:InitDB()
     elseif tonumber(arg) then B.db.seconds=tonumber(arg); B:InitDB()
     else say("Usage: /bt rebuff 45 OR /bt rebuff motw 60"); return end
   elseif cmd=="size" or cmd=="opacity" or cmd=="seconds" then
@@ -1039,6 +1041,8 @@ SlashCmdList.BUFFTAP=function(text)
   elseif cmd=="sound" or cmd=="glow" or cmd=="pulse" or cmd=="group" or cmd=="smartgroup" or cmd=="target" or cmd=="consumables" then
     if arg~="on" and arg~="off" then say("Use on or off."); return end
     local key=cmd=="smartgroup" and "smartGroup" or (cmd=="target" and "friendlyTarget" or (cmd=="consumables" and "consumablesEnabled" or cmd)); B.db[key]=arg=="on"
+    -- Group settings live per Party/Raid setup once those exist; write the active one too.
+    if (key=="group" or key=="smartGroup") and B.GroupSettings then local gs=B:GroupSettings(nil,true); if type(gs)=="table" then gs[key]=arg=="on" end end
     if cmd=="glow" or cmd=="pulse" then B.db.effectStyle=nil end
     if cmd=="consumables" and B.InvalidateConsumables then B:InvalidateConsumables() end
   else

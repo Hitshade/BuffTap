@@ -44,7 +44,18 @@ function B:VisualSetting(key,value)
   self.db[key]=value; self:NormalizeVisualOptions()
   if key:match("^camp") then self:NormalizeCamping(); self:UpdateCamping() end
   self.appearance=nil; self:RequestRefresh("appearance preference",.05)
-  if key:match("^options") then T.Refresh(); self:UpdateRefinedOptions() end
+  -- Interface colour and scale: coalesce, so dragging the colour wheel or the scale slider
+  -- does not rebuild the whole window on every tick.
+  -- The window scale waits until the mouse is released: rescaling under the cursor mid-drag
+  -- would move the slider and make its value jump.
+  if key:match("^options") then
+    local function apply()
+      if A.Combat() then return end
+      if key=="optionsScale" and type(IsMouseButtonDown)=="function" and IsMouseButtonDown("LeftButton") then B:StartTimer("options-visual",.15,apply); return end
+      T.Refresh(); B:UpdateRefinedOptions()
+    end
+    self:StartTimer("options-visual",.08,apply)
+  end
   if key:match("^nearby") and self.nearbyFrame then self:UpdateNearbyWindow() end
   self:UpdateOptionsPreviews()
 end
@@ -516,10 +527,10 @@ function B:UpdateRefinedOptions()
   for _,page in ipairs(f.pages or {}) do T.InsetCards(page) end
   T.Refresh()
   -- Font boxes show the chosen font in that font (after the theme refresh, which resets fonts).
-  if f.nearbyFontButton then self:PreviewChoiceFont(f.nearbyFontButton:GetFontString(),self:FontPathForKey(self.db.nearbyFont)) end
-  local function reminderFont(key) key=self:NormalizeTextFontKey(key); if key=="names" then return UNIT_NAME_FONT elseif key=="numbers" then return DAMAGE_TEXT_FONT end; return STANDARD_TEXT_FONT end
-  if f.fontButton then self:PreviewChoiceFont(f.fontButton:GetFontString(),reminderFont(self.db.labelFont)) end
-  if f.campingTextFont then self:PreviewChoiceFont(f.campingTextFont:GetFontString(),reminderFont(self.db.campTextFont)) end
+  if f.nearbyFontButton then self:PreviewChoiceFont(f.nearbyFontButton,self:FontPathForKey(self.db.nearbyFont)) end
+  local function reminderFont(key) key=self:NormalizeTextFontKey(key); if key=="names" then return UNIT_NAME_FONT elseif key=="numbers" then return DAMAGE_TEXT_FONT end; return self:BaseTextFont("GameFontHighlightSmall") or STANDARD_TEXT_FONT end
+  if f.fontButton then self:PreviewChoiceFont(f.fontButton,reminderFont(self.db.labelFont)) end
+  if f.campingTextFont then self:PreviewChoiceFont(f.campingTextFont,reminderFont(self.db.campTextFont)) end
 end
 function B:OpenAccentPicker()
   if not ColorPickerFrame or not ColorPickerFrame.SetupColorPickerAndShow then return end

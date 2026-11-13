@@ -71,6 +71,8 @@ local function safeCooldown(itemID)
   if type(fn)~="function" then return nil,nil,nil,"item cooldown API unavailable" end
   local ok,startTime,duration,enabled=pcall(fn,itemID)
   if not ok then return nil,nil,nil,"item cooldown API failed" end
+  -- Some clients report the enabled flag as 1/0 instead of true/false.
+  if enabled==1 then enabled=true elseif enabled==0 then enabled=false end
   if not A.Number(startTime) or not A.Number(duration) or not A.Public(enabled) or type(enabled)~="boolean" then
     return nil,nil,nil,"item cooldown unreadable"
   end
@@ -208,7 +210,8 @@ function B:ConsumableItemInfo(itemID,static)
   info.spellName,info.spellID=spellName,spellID
   self.itemMeta[itemID]=info
 
-  if not info.loaded then self:RequestItemData(itemID) end
+  -- Item spell data can arrive after the item itself; ask again so the cache entry is refreshed.
+  if not info.loaded or not info.spellID then self:RequestItemData(itemID) end
   return info
 end
 

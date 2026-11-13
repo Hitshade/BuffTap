@@ -2,6 +2,14 @@
 local _,B=...
 -- Keep the ten most recent releases within a 24 KiB content ceiling.
 B.PatchNotes={
+ {version="1.20.1",title="A clearer Nearby guide and fixes",items={
+  "The Nearby guide is redrawn to look like the real window, with numbered markers for every button, the people icon, the buff and dash, and the name tags.",
+  "Font menus show each font name in its own font.",
+  "The Nearby key can no longer cast after combat starts, and blacklisting from the Nearby menu now blocks only that player, not everyone with the same first name.",
+  "Pets only get Arcane Intellect or Divine Spirit if they use mana, and a buffed or summoned pet is noticed sooner.",
+  "Party and raid timing per buff now keeps values from When gone up to 10 minutes, like solo.",
+  "Smoother settings: the window scale applies when you let go of the slider, and colour and bag changes no longer rebuild the window on every tick.",
+  "Plenty of smaller fixes from a full code review."},thanks="Thank you for playing and for the feedback."},
  {version="1.20.0",title="Smarter buffing, everywhere",items={
   "Party and raid buffing is now on by default, and this update turns it on once for every character. Turn it off on the Groups page if you prefer.",
   "Fixed the reminder popping up right after login or a loading screen before your buffs had loaded.",
@@ -55,10 +63,7 @@ B.PatchNotes={
   "Customize reminder effects and text, with a refreshed options sidebar."}},
  {version="1.16.10",title="Smoother Nearby sessions",items={
   "Reduced the temporary memory created while checking nearby players.",
-  "Nearby continues updating normally while players enter and leave view."}},
- {version="1.16.9",title="Directed solo thanks",items={
-  "Solo thanks avoids sending a general emote when the recipient cannot be verified.",
-  "Debug information makes missed thank-you emotes easier to investigate."},thanks="Thank you for the reports and continued testing."}
+  "Nearby continues updating normally while players enter and leave view."}}
 }
 function B:PatchNotesUnread()
   return self.profileDB and self.db.optionsPatchDot~=false and self.profileDB.global.patchNotesSeen~=self.version

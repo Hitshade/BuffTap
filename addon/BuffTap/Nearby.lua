@@ -137,20 +137,30 @@ local function nextAction(entry,readyOnly)
   for _,action in ipairs(entry.actions) do if action.ready then return action end end
   if not readyOnly then return entry.actions[1] end
 end
+-- Group members' GUIDs, built once per frame: Nearby asks this several times per player per update.
+local groupGuids,groupGuidsAt,groupGuidsUnsure={},-1,false
+local function groupGuidSet()
+  local now=GetTime()
+  if groupGuidsAt==now then return groupGuids,groupGuidsUnsure end
+  wipe(groupGuids); groupGuidsUnsure=false; groupGuidsAt=now
+  local raid=A.Call(IsInRaid)==true
+  local count=A.Call(raid and GetNumGroupMembers or GetNumSubgroupMembers)
+  if not A.Number(count) then groupGuidsUnsure=true; return groupGuids,true end
+  for i=1,math.min(count,raid and 40 or 4) do
+    local member=A.Call(UnitGUID,(raid and "raid" or "party")..i)
+    if A.Text(member) then groupGuids[member]=true else groupGuidsUnsure=true end
+  end
+  return groupGuids,groupGuidsUnsure
+end
 function B:NearbyGroupMember(unit)
   if A.Call(UnitIsUnit,unit,"player")==true then return true end
   if A.Call(UnitInParty,unit)==true or A.Number(A.Call(UnitInRaid,unit)) then return true end
-  local raid=A.Call(IsInRaid)==true
-  local count=A.Call(raid and GetNumGroupMembers or GetNumSubgroupMembers)
-  if not A.Number(count) then return true end
-  for i=1,math.min(count,raid and 40 or 4) do
-    local token=(raid and "raid" or "party")..i
-    local same=A.Call(UnitIsUnit,unit,token)
-    local guid,member=A.Call(UnitGUID,unit),A.Call(UnitGUID,token)
-    if same==true or (A.Text(guid) and guid==member) then return true end
-    if same~=false and (not A.Text(guid) or not A.Text(member)) then return true end
-  end
-  return false
+  local set,unsure=groupGuidSet()
+  local guid=A.Call(UnitGUID,unit)
+  if not A.Text(guid) then return true end
+  if set[guid] then return true end
+  -- An unreadable roster entry could be this player: treat as group (safe side), as before.
+  return unsure
 end
 function B:NearbyRecipientSafe(unit)
   if A.Call(UnitAffectingCombat,unit)~=false then
@@ -577,7 +587,7 @@ function B:SeedNearby(skipUnit)
   local plates=A.Call(C_NamePlate and C_NamePlate.GetNamePlates)
   if type(plates)=="table" then
     for _,plate in ipairs(plates) do
-      local unit=A.Call(function() return plate:GetUnit() end)
+      local unit=plate.namePlateUnitToken or A.Call(function() return plate:GetUnit() end)
       if unit~=skipUnit then self:TrackNearby(unit) end
     end
   end
@@ -783,6 +793,10 @@ function B:CreateNearbyWindow()
     local row=CreateFrame("Button","BuffTapNearbyRow"..i,c,"SecureActionButtonTemplate")
     f.rows[i]=row; row:SetSize(WIDTH,20); row:SetPoint("TOPLEFT",0,-25-(i-1)*ROW_HEIGHT)
     row:RegisterForClicks("AnyDown","AnyUp"); row:SetAttribute("useOnKeyDown",true)
+    -- Combat safety: clear the row's cast the moment combat starts, so the Nearby key (an
+    -- override binding that can click a hidden button) can never cast a stale buff in combat.
+    row:SetAttribute("_onstate-nearbysafety",[[if newstate=="blocked" then self:SetAttribute("type1",nil); self:SetAttribute("macrotext",nil); self:SetAttribute("spell",nil); self:SetAttribute("unit",nil) end]])
+    if type(RegisterStateDriver)=="function" then pcall(RegisterStateDriver,row,"nearbysafety","[combat] blocked; ready") end
     row.wash=wash(row,"BACKGROUND",.055,.075,.095,.34); row.wash:SetAllPoints()
     row.hover=wash(row,"HIGHLIGHT",.75,.60,.25,.17); row.hover:SetAllPoints()
     row.marker=wash(row,"BACKGROUND",.75,.60,.25,.075); row.marker:SetAllPoints()

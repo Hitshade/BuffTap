@@ -110,8 +110,8 @@ local function selector(parent,text,x,y,width,choices,onSelect,searchable)
         local fs=row:GetFontString(); if fs then fs:ClearAllPoints(); fs:SetPoint("LEFT",8,0); fs:SetPoint("RIGHT",-6,0); fs:SetJustifyH("LEFT") end
       end
       row.choice=entry.key; row:SetText((searchable and entry.source and L(entry.source)..": " or "")..L(entry.name))
-      B:PreviewChoiceFont(row:GetFontString(),entry.font)
-      local selected=control:GetText()==row:GetText()
+      B:PreviewChoiceFont(row,entry.font)
+      local selected=control:GetText()==row:GetText() or (searchable and control:GetText()==L(entry.name))
       local r,g,b=T.accent[1],T.accent[2],T.accent[3]
       if selected then row:SetBackdropColor(r*.16+.04,g*.16+.046,b*.16+.056,1); row:SetBackdropBorderColor(r,g,b,.55)
       else row:SetBackdropColor(0,0,0,0); row:SetBackdropBorderColor(0,0,0,0) end
@@ -729,11 +729,16 @@ function B:ClearAppearanceEdits()
   end
 end
 
+-- Bag and item-data events come in bursts: coalesce them, and don't rebuild under an open dropdown.
 function B:RefreshInventoryWindows()
   if A.Combat() then return end
-  local f=self.options
-  if f and f:IsShown() and (f.activeTab==TAB.Consumables or f.activeTab==TAB.Weapons or f.activeTab==TAB.Diagnostics) then self:Options() end
-  if self.itemPicker and self.itemPicker:IsShown() then self:UpdateConsumablePicker() end
+  self:StartTimer("inventory-windows",.3,function()
+    if A.Combat() then return end
+    local f=B.options
+    if f and f:IsShown() and (f.activeTab==TAB.Consumables or f.activeTab==TAB.Weapons or f.activeTab==TAB.Diagnostics)
+      and not (f.activeSelector and f.activeSelector:IsShown()) then B:Options() end
+    if B.itemPicker and B.itemPicker:IsShown() then B:UpdateConsumablePicker() end
+  end)
 end
 
 function B:UpdateGroupRosterOptions()
@@ -981,7 +986,10 @@ function B:CaptureBinding(target)
       -- One key cannot drive both buttons: the newest choice wins and is removed from the other list.
       local other=f.target=="nearby" and B.db.keys or B.db.nearbyKeys or {}
       for i=#other,1,-1 do if other[i]==keys[1] then table.remove(other,i) end end
-      if f.target=="nearby" then B.db.nearbyKeys=keys; if B.nearbyFrame then B:UpdateNearbyWindow() end else B.db.keys=keys end
+      if f.target=="nearby" then B.db.nearbyKeys=keys else B.db.keys=keys end
+      -- Either list may have changed: rebind the Nearby key now so one key never drives both buttons.
+      if B.nearbyFrame then B:UpdateNearbyWindow() end
+      if B.ApplyNearbyBinding then B:ApplyNearbyBinding() end
       f:Hide(); B.appearance=nil; B:RequestRefresh("binding",0); B:Status(false)
       if B.options and B.options:IsShown() then B:Options() end
       if B.onboarding and B.onboarding:IsShown() and B.OnboardingFeaturesPage then B:OnboardingFeaturesPage() end
@@ -2019,7 +2027,6 @@ function B:Options()
     f.campingPause=label(camping,"",18,-562,"GameFontHighlightSmall",470)
     f.campingResume=button(camping,"Resume reminder",510,-492,172,function() B.campSnoozeSession=nil; B.campSnoozeUntil=nil; B:UpdateCamping(); B:UpdateCampingOptions() end)
     label(camping,"Right-click the camp icon to snooze. Camp items and the sleeping bag are used from the setup tray; food stays under Consumables.",18,-588,"GameFontDisableSmall",660)
-    f:HookScript("OnHide",function() if not A.Combat() then B:UpdateCamping() end end)
 
     -- APPEARANCE PAGE
     local app=panel(f); f.pages[TAB.Appearance]=app
@@ -2250,7 +2257,9 @@ function B:Options()
     end
     acceptEdit(f.sizeEdit,"size"); acceptEdit(f.opacityEdit,"opacity"); acceptEdit(f.xEdit,"x"); acceptEdit(f.yEdit,"y")
 
+    -- SetScript replaces earlier hooks, so the camping update that used to be hooked lives here.
     f:SetScript("OnHide",function()
+      if not A.Combat() then B:UpdateCamping() end
       if f.activeSelector then f.activeSelector:Hide() end
       if B.itemPicker then B.itemPicker:Hide() end
       if f.blessingMenu then f.blessingMenu:Hide() end

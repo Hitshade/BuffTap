@@ -13,13 +13,21 @@ function B:ChoiceName(list,key) for _,c in ipairs(list) do if c.key==key then re
 
 -- Blacklist ---------------------------------------------------------------
 local function lower(text) return type(text)=="string" and text:match("^%s*(.-)%s*$"):lower() or "" end
+-- Full name (on Forever: first name and surname), so one "Bob" is never mistaken for another.
+function B:UnitFullName(unit)
+  local name=type(GetUnitName)=="function" and A.Call(GetUnitName,unit,true) or nil
+  if not A.Text(name) or name=="" then name=A.Call(UnitName,unit) end
+  if A.Text(name) and name~="" then return name end
+end
 function B:BlockReason(unit)
   local d=self.db
   if not d or not A.Text(unit) then return nil end
   if d.blacklistInInstances==false and self:InGroupInstance() then return nil end
   local name=A.Call(UnitName,unit)
   if A.Text(name) and name~="" then
-    if type(d.blockedPlayers)=="table" and d.blockedPlayers[name:lower()] then return "blacklisted player" end
+    -- A full-name entry matches that player only; a first-name-only entry (typed by hand) matches anyone with that first name.
+    local full=self:UnitFullName(unit)
+    if type(d.blockedPlayers)=="table" and ((full and d.blockedPlayers[full:lower()]) or d.blockedPlayers[name:lower()]) then return "blacklisted player" end
     if d.blockIgnored~=false then
       local ignored
       if C_FriendList and type(C_FriendList.IsIgnored)=="function" then ignored=A.Call(C_FriendList.IsIgnored,name)
@@ -76,7 +84,7 @@ end
 
 -- Events: ready check, breath timer, zone changes for pause notes.
 local events=CreateFrame("Frame")
-for _,event in ipairs({"READY_CHECK","READY_CHECK_FINISHED","MIRROR_TIMER_START","MIRROR_TIMER_STOP","ZONE_CHANGED_NEW_AREA"}) do pcall(events.RegisterEvent,events,event) end
+for _,event in ipairs({"READY_CHECK","READY_CHECK_FINISHED","MIRROR_TIMER_START","MIRROR_TIMER_STOP","ZONE_CHANGED_NEW_AREA","PLAYER_ENTERING_WORLD"}) do pcall(events.RegisterEvent,events,event) end
 events:SetScript("OnEvent",function(_,event,timer)
   if not B.db then return end
   if event=="READY_CHECK" then
@@ -87,7 +95,16 @@ events:SetScript("OnEvent",function(_,event,timer)
     if B.readyCheckUntil then B.readyCheckUntil=GetTime()+5; B:StartTimer("ready-check-topup",5.1,function() B.readyCheckUntil=nil; B:RequestRefresh("ready check ended",0) end) end
   elseif event=="MIRROR_TIMER_START" or event=="MIRROR_TIMER_STOP" then
     if timer=="BREATH" then B.underwater=event=="MIRROR_TIMER_START"; B:RequestRefresh("breath timer",0) end
-  elseif event=="ZONE_CHANGED_NEW_AREA" then B.pauseNoteShown=nil end
+  elseif event=="ZONE_CHANGED_NEW_AREA" then B.pauseNoteShown=nil
+  elseif event=="PLAYER_ENTERING_WORLD" then
+    -- After a /reload while underwater no START event comes: read the running timers instead.
+    local under=false
+    for i=1,(MIRRORTIMER_NUMTIMERS or 3) do
+      local name=A.Call(GetMirrorTimerInfo,i)
+      if name=="BREATH" then under=true end
+    end
+    B.underwater=under
+  end
 end)
 
 -- Pause notes: say once per zone why reminders went quiet when it is not obvious.
@@ -135,7 +152,12 @@ local function setText(f,text) f.box:SetText(text or ""); f.box:HighlightText();
 -- Report window: runs the debug commands and collects their output for copying.
 local function names()
   local found={}
-  local function add(unit) local n=A.Call(UnitName,unit); if A.Text(n) and #n>1 then found[n]=true end end
+  -- First names and surnames (Forever), so "Hide player names" also hides surnames.
+  local function add(unit)
+    local ok,n,surname=pcall(UnitName,unit)
+    if ok and A.Text(n) and #n>1 then found[n]=true end
+    if ok and A.Text(surname) and #surname>1 then found[surname]=true end
+  end
   add("player"); add("target"); add("pet")
   for i=1,4 do add("party"..i) end
   for i=1,40 do add("raid"..i); add("nameplate"..i) end
@@ -163,7 +185,8 @@ function B:ReportText(kind,hideNames)
   local text="BuffTap "..tostring(self.version).." | "..L(kind=="status" and "Status" or kind=="debug" and "Debug" or kind=="supplies" and "Supplies" or kind=="nearby" and "Nearby" or "Diagnostics").."\n"..table.concat(lines or {},"\n")
   text=text:gsub("|c%x%x%x%x%x%x%x%x",""):gsub("|r","")
   if hideNames then
-    for i,n in ipairs(names()) do text=text:gsub(n:gsub("[%^%$%(%)%%%.%[%]%*%+%-%?]","%%%0"),"Player"..i) end
+    -- Whole words only, so a short name like "Bo" does not rewrite "Boss".
+    for i,n in ipairs(names()) do text=text:gsub("%f[%w]"..n:gsub("[%^%$%(%)%%%.%[%]%*%+%-%?]","%%%0").."%f[%W]","Player"..i) end
   end
   return text
 end
@@ -267,7 +290,7 @@ local function ignore(name)
 end
 function B:ShowNearbyMenu(row)
   local entry=row and row.entry; if A.Combat() or not entry or not A.Text(entry.name) then return end
-  local name=entry.name
+  local name=(entry.unit and A.Call(UnitGUID,entry.unit)==entry.guid and self:UnitFullName(entry.unit)) or entry.name
   local guild=entry.unit and A.Call(GetGuildInfo,entry.unit)
   if not A.Text(guild) or guild=="" then guild=nil end
   local m=self.nearbyMenu
@@ -286,8 +309,8 @@ function B:ShowNearbyMenu(row)
     {L("Add to ignore list"),function() ignore(name); B:ApplyBlacklist() end},
   }
   -- Already listed: offer the way back instead.
-  local listed=B.db.blockedPlayers and B.db.blockedPlayers[name:lower()]
-  items[#items+1]=listed and {L("Remove from blacklist"),function() B:SetBlocked("player",name,false) end} or {L("Blacklist player"),function() B:SetBlocked("player",name,true) end}
+  local listedKey=B.db.blockedPlayers and ((B.db.blockedPlayers[name:lower()] and name) or (B.db.blockedPlayers[entry.name:lower()] and entry.name))
+  items[#items+1]=listedKey and {L("Remove from blacklist"),function() B:SetBlocked("player",listedKey,false) end} or {L("Blacklist player"),function() B:SetBlocked("player",name,true) end}
   if guild then
     local guildListed=B.db.blockedGuilds and B.db.blockedGuilds[guild:lower()]
     items[#items+1]=guildListed and {L("Remove guild from blacklist: %s",guild),function() B:SetBlocked("guild",guild,false) end} or {L("Blacklist guild: %s",guild),function() B:SetBlocked("guild",guild,true) end}

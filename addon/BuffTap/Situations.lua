@@ -31,7 +31,7 @@ function B:CleanSituationCategory(category,source)
               if key=="buffs" and (type(v)=="boolean" or v=="default") then clean[name]=v
               elseif (key=="priorities" or key=="buffSeconds") and v==false then clean[name]=false
               elseif key=="priorities" then clean[name]=bounded(v,1,999)
-              elseif key=="buffSeconds" then clean[name]=bounded(v,15,180) end
+              elseif key=="buffSeconds" then clean[name]=bounded(v,0,600) end
             end
           elseif key=="weaponChoices" or key=="weaponCoatings" then
             if (name=="main" or name=="off") and v==false then clean[name]=false

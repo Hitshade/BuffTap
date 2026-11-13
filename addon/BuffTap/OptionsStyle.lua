@@ -404,6 +404,7 @@ function T.Confirm(control)
   control.visualConfirm=true
   local function disarm()
     if not control.confirmArmed then return end
+    if control.confirmTimer and control.confirmTimer.Cancel then control.confirmTimer:Cancel() end
     control.confirmArmed=nil; control:SetText(control.confirmLabel or ""); control.confirmTimer=nil
   end
   control:SetScript("OnClick",function(self,...)

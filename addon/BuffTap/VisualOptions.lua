@@ -52,17 +52,46 @@ local function sharedMedia()
   local ok,lib=pcall(function() return LibStub and LibStub("LibSharedMedia-3.0",true) end)
   if ok and type(lib)=="table" and type(lib.List)=="function" and type(lib.Fetch)=="function" then return lib end
 end
--- Draw a menu row or a box's text in a font choice's own font; with no font, back to the theme's font.
-function B:PreviewChoiceFont(fs,path)
-  if not fs then return end
-  if not fs.choiceBaseFont and fs.GetFontObject then fs.choiceBaseFont=fs:GetFontObject() end
-  if type(path)=="string" and path~="" then
-    local _,size=fs:GetFont(); size=A.Number(size) and size or 13
-    local ok,set=pcall(fs.SetFont,fs,path,size,"")
-    if ok and set~=false then fs.choiceFont=path; return end
+-- Draw a menu row's or a box's text in a font choice's own font; with no font, back to the
+-- theme's font. Buttons re-apply their font objects on hover, so the font goes into copies of
+-- the button's own normal/highlight/disabled font objects rather than onto the text directly.
+local previewFonts,previewCount={},0
+local function previewObject(base,path)
+  if (type(base)~="table" and type(base)~="userdata") or type(CreateFont)~="function" then return nil end
+  local id=tostring(base)..path
+  local obj=previewFonts[id]
+  if not obj then
+    previewCount=previewCount+1
+    obj=CreateFont("BuffTapFontPreview"..previewCount)
+    if obj.CopyFontObject then obj:CopyFontObject(base) end
+    local _,size,flags=base:GetFont()
+    if not pcall(obj.SetFont,obj,path,A.Number(size) and size or 13,flags or "") then return nil end
+    previewFonts[id]=obj
   end
-  if fs.choiceFont and fs.choiceBaseFont then fs:SetFontObject(fs.choiceBaseFont) end
-  fs.choiceFont=nil
+  return obj
+end
+function B:PreviewChoiceFont(button,path)
+  if not button or type(button.GetNormalFontObject)~="function" then return end
+  if not button.choiceBase then
+    button.choiceBase={normal=button:GetNormalFontObject(),highlight=button.GetHighlightFontObject and button:GetHighlightFontObject(),disabled=button.GetDisabledFontObject and button:GetDisabledFontObject()}
+  end
+  local base=button.choiceBase
+  if button.choiceFont==path then return end
+  if type(path)=="string" and path~="" then
+    local normal=previewObject(base.normal,path)
+    if normal then
+      button:SetNormalFontObject(normal)
+      if base.highlight and button.SetHighlightFontObject then button:SetHighlightFontObject(previewObject(base.highlight,path) or normal) end
+      if base.disabled and button.SetDisabledFontObject then button:SetDisabledFontObject(previewObject(base.disabled,path) or normal) end
+      button.choiceFont=path; return
+    end
+  end
+  if button.choiceFont then
+    if base.normal then button:SetNormalFontObject(base.normal) end
+    if base.highlight and button.SetHighlightFontObject then button:SetHighlightFontObject(base.highlight) end
+    if base.disabled and button.SetDisabledFontObject then button:SetDisabledFontObject(base.disabled) end
+  end
+  button.choiceFont=nil
 end
 -- The font file behind a font choice, so menus can show each name in its own font.
 function B:FontPathForKey(key)

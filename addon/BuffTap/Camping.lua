@@ -536,6 +536,8 @@ events:SetScript("OnEvent",function(_,event,unit)
   if not B.db or (event=="UNIT_AURA" and unit~="player") then return end
   if event=="ITEM_DATA_LOAD_RESULT" and (not B.campRequestedItems or not B.campRequestedItems[unit]) then return end
   if event=="BAG_UPDATE_DELAYED" or event=="TRADE_SKILL_LIST_UPDATE" or event=="TRADE_SKILL_SHOW" or event=="TRADE_SKILL_CLOSE" or event=="SKILL_LINES_CHANGED" then B.campEntries=nil end
+  -- In combat the camp icon is hidden anyway; leaving combat triggers a fresh update.
+  if A.Combat() and event~="PLAYER_REGEN_DISABLED" then return end
   if not B.db.campReminder and not B.campTrayOpen and not B:CampingOptionsShown() and not (B.campPreviewUntil and B.campPreviewUntil>GetTime()) and event~="PLAYER_REGEN_DISABLED" then return end
   if event=="PLAYER_REGEN_DISABLED" then B:UpdateCamping(); return end
   B:StartTimer("camp",.1,function() B:UpdateCamping() end)

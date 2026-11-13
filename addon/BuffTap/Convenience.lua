@@ -64,7 +64,7 @@ function B:ReminderFonts(selected)
   if selected=="numbers" and type(DAMAGE_TEXT_FONT)~="string" then choices[#choices+1]={key="numbers",name="Combat-number font (unavailable)"} end
   -- Each name is drawn in its own font in the menu.
   for _,c in ipairs(choices) do
-    if c.key=="default" then c.font=STANDARD_TEXT_FONT elseif c.key=="names" and type(UNIT_NAME_FONT)=="string" then c.font=UNIT_NAME_FONT elseif c.key=="numbers" and type(DAMAGE_TEXT_FONT)=="string" then c.font=DAMAGE_TEXT_FONT end
+    if c.key=="default" then c.font=self:BaseTextFont("GameFontHighlightSmall") or STANDARD_TEXT_FONT elseif c.key=="names" and type(UNIT_NAME_FONT)=="string" then c.font=UNIT_NAME_FONT elseif c.key=="numbers" and type(DAMAGE_TEXT_FONT)=="string" then c.font=DAMAGE_TEXT_FONT end
   end
   return choices
 end
@@ -244,7 +244,7 @@ function B:ShowWelcome(force)
     f.banner=self:AddMiniBanner(f,560)
     f.heading=f:CreateFontString(nil,"OVERLAY","GameFontNormalLarge"); f.heading:SetPoint("TOPLEFT",24,-128); f.heading:SetText(self:Text("Ready when you are."))
     f.steps={}
-    for i,text in ipairs({"Choose your buffs — pick what to maintain in Settings.","Use your binding — scroll or click when a reminder appears.","Keep adventuring — BuffTap prepares your next action."}) do
+    for i,text in ipairs({"Choose your buffs: pick what to maintain in Settings.","Use your binding: scroll or click when a reminder appears.","Keep adventuring: BuffTap prepares your next action."}) do
       local row=CreateFrame("Frame",nil,f); row:SetPoint("TOPLEFT",24,-164-(i-1)*44); row:SetSize(512,40)
       row.number=row:CreateFontString(nil,"OVERLAY","GameFontNormalLarge"); row.number:SetPoint("TOPLEFT",0,0); row.number:SetText(tostring(i)..".")
       row.text=row:CreateFontString(nil,"OVERLAY","GameFontHighlight"); row.text:SetPoint("TOPLEFT",32,0); row.text:SetWidth(476); row.text:SetJustifyH("LEFT"); row.text:SetWordWrap(true); row.text:SetText(self:Text(text)); f.steps[i]=row
@@ -263,7 +263,7 @@ function B:ShowWelcome(force)
   if self.appearancePreview then self.appearancePreview:Hide() end
   local width,height=UIParent:GetSize()
   if A.Number(width) and A.Number(height) then self.welcome:SetScale(math.min(1,(width-32)/560,(height-32)/450)) end
-  self.welcome.body:SetText(#self.db.keys>0 and table.concat(self.db.keys,", ") or self:Text("none — click the reminder"))
+  self.welcome.body:SetText(#self.db.keys>0 and table.concat(self.db.keys,", ") or self:Text("none: click the reminder"))
   self.welcome:ClearAllPoints(); self.welcome:SetPoint("CENTER",UIParent,"CENTER",0,0); self.welcome:Show(); self.welcome:Raise(); self.db.welcomeSeen=true
 end
 function B:ScheduleWelcome()
@@ -305,7 +305,7 @@ end
 function B:ShowEditMovers()
   local d=self.db
   if d.nearbyEnabled then
-    self.editNearby=self.editNearby or editMover("nearby","BuffTap Nearby — drag to move")
+    self.editNearby=self.editNearby or editMover("nearby","BuffTap Nearby: drag to move")
     local f=self.editNearby; local width,rows,scale=240,5,1
     if self.NearbyLayout then width,rows,scale=self:NearbyLayout() end
     f:SetScale(A.Number(scale) and scale or 1); f:SetSize(width+24,29+rows*(self.NearbyRowHeight and self:NearbyRowHeight() or 21))
@@ -313,7 +313,7 @@ function B:ShowEditMovers()
     if self.PlaceNearbyFrame then self:PlaceNearbyFrame(f,nx,ny) else f:ClearAllPoints(); f:SetPoint("CENTER",UIParent,"CENTER",nx,ny) end; f:Show()
   elseif self.editNearby then self.editNearby:Hide() end
   if d.campReminder==true then
-    self.editCamp=self.editCamp or editMover("camp","Camp reminder — drag to move",135805)
+    self.editCamp=self.editCamp or editMover("camp","Camp reminder: drag to move",135805)
     local f=self.editCamp; local size=A.Number(d.campSize) and d.campSize or 40
     f:SetSize(size,size); f:ClearAllPoints(); f:SetPoint("CENTER",UIParent,"CENTER",A.Number(d.campX) and d.campX or 100,A.Number(d.campY) and d.campY or 0); f:Show()
   elseif self.editCamp then self.editCamp:Hide() end
@@ -344,7 +344,7 @@ function B:SetEditModeActive(active)
       local f=window(nil,"",100,100); self.editAnchor=f; f.title:SetText("")
       f:SetMovable(true); f:RegisterForDrag("LeftButton")
       f.icon=f:CreateTexture(nil,"ARTWORK"); f.icon:SetPoint("TOPLEFT",4,-4); f.icon:SetPoint("BOTTOMRIGHT",-4,4); f.icon:SetTexture(ICON)
-      f.caption=f:CreateFontString(nil,"OVERLAY","GameFontNormal"); f.caption:SetPoint("TOP",f,"BOTTOM",0,-6); f.caption:SetText(B:Text("BuffTap — drag to move"))
+      f.caption=f:CreateFontString(nil,"OVERLAY","GameFontNormal"); f.caption:SetPoint("TOP",f,"BOTTOM",0,-6); f.caption:SetText(B:Text("BuffTap: drag to move"))
       f:SetScript("OnDragStart",function(s) if not A.Combat() then s.dragging=true; s:StartMoving() end end)
       local function savePosition(s)
         s:StopMovingOrSizing(); s.dragging=false

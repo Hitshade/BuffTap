@@ -19,7 +19,7 @@ function B:UpdateBroker()
   if self.options and self.options:IsShown() and self.options.statusText then self.options.statusText:SetText(self:FriendlyStatus()) end
   local obj=self.brokerObject
   if not obj then return end
-  local text=self.db.brokerEnabled and self:FriendlyStatus() or self:Text("Broker disabled — reload UI")
+  local text=self.db.brokerEnabled and self:FriendlyStatus() or self:Text("Broker disabled: reload UI")
   if obj.text~=text then obj.text=text end
 end
 function B:SyncBroker()

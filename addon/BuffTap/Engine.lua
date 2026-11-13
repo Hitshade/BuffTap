@@ -4,7 +4,7 @@
 
 local _, B = ...
 _G.BuffTap = B
-B.version = "1.20.0"
+B.version = "1.20.1"
 B.API = {}
 local A = B.API
 
@@ -545,7 +545,7 @@ function B:GroupNeed(b,context)
 end
 
 function B:SetGroupNeed(b,value,context)
-  local settings=context and self:GroupSettings(context,true) or self.db
+  local settings=self:GroupSettings(context or self:ActiveGroupContext(),true) or self.db
   local key=self:RootKey(b)
   if not key then return end
   local pair=b and b.groupKey and self:FindBuff(b.groupKey) or b
@@ -555,7 +555,7 @@ function B:SetGroupNeed(b,value,context)
 end
 
 function B:NormalizeGroupNeeds(context)
-  local settings=context and self:GroupSettings(context,true) or self.db
+  local settings=self:GroupSettings(context or self:ActiveGroupContext(),true) or self.db
   for key,value in pairs(settings.buffGroupNeed or {}) do
     local b=self:FindBuff(key)
     local pair=b and b.groupKey and self:FindBuff(b.groupKey) or b
@@ -579,7 +579,7 @@ function B:GroupSelected(b, group,context)
 end
 
 function B:EnsureBuffGroups(b,context)
-  local settings=context and self:GroupSettings(context,true) or self.db
+  local settings=self:GroupSettings(context or self:ActiveGroupContext(),true) or self.db
   local key=self:RootKey(b)
   if not key then return nil end
   if type(settings.buffGroups[key])~="table" then
@@ -602,7 +602,7 @@ function B:BuffGroupsDifferFromDefault(b,context)
 end
 
 function B:NormalizeBuffGroups(b,context)
-  local settings=context and self:GroupSettings(context,true) or self.db
+  local settings=self:GroupSettings(context or self:ActiveGroupContext(),true) or self.db
   local key=self:RootKey(b)
   if not key or not settings.buffGroups then return false end
   if type(settings.buffGroups[key])=="table" and not self:BuffGroupsDifferFromDefault(b,context) then
@@ -629,7 +629,7 @@ function B:NormalizeAllBuffGroups(context)
 end
 
 function B:ReconcileRaidGroupColumn(group,context)
-  local settings=context and self:GroupSettings(context,true) or self.db
+  local settings=self:GroupSettings(context or self:ActiveGroupContext(),true) or self.db
   group=tonumber(group)
   if not group or group<1 or group>8 then return end
   local buffs=self:GroupAssignableBuffs()
@@ -659,7 +659,7 @@ function B:GroupColumnState(group,context)
 end
 
 function B:SetRaidGroupColumn(group,value,context)
-  local settings=context and self:GroupSettings(context,true) or self.db
+  local settings=self:GroupSettings(context or self:ActiveGroupContext(),true) or self.db
   group=tonumber(group)
   if not group or group<1 or group>8 then return end
   value=value==true
@@ -1651,7 +1651,16 @@ end
 
 function B:RecipientAllowed(b,entry)
   -- Pets only receive single-target buffs; group spells and blessings follow players.
-  if entry.pet then return b.kind=="single" and self.db.buffPets==true end
+  if entry.pet then
+    if b.kind~="single" or self.db.buffPets~=true then return false end
+    -- Buffs meant for mana users (Arcane Intellect, Divine Spirit) only help pets that use mana.
+    local def=self:FindBuff(b.singleKey or b.key) or b
+    if type(def.target)=="table" and A.Call(UnitPowerType,entry.unit)~=0 then
+      local forMana=true; for _,class in ipairs(def.target) do if class=="WARRIOR" or class=="ROGUE" then forMana=false end end
+      if forMana then return false end
+    end
+    return true
+  end
   -- Explicit targets and personal maintenance are independent of group assignments.
   if b.kind=="blessing" and self:BlessingAssignmentsActive() and (not entry.quickTarget or entry.blessingAssigned) then
     return self:BlessingChoice(entry)==(b.singleKey or b.key)
