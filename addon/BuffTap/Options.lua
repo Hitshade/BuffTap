@@ -110,6 +110,7 @@ local function selector(parent,text,x,y,width,choices,onSelect,searchable)
         local fs=row:GetFontString(); if fs then fs:ClearAllPoints(); fs:SetPoint("LEFT",8,0); fs:SetPoint("RIGHT",-6,0); fs:SetJustifyH("LEFT") end
       end
       row.choice=entry.key; row:SetText((searchable and entry.source and L(entry.source)..": " or "")..L(entry.name))
+      B:PreviewChoiceFont(row:GetFontString(),entry.font)
       local selected=control:GetText()==row:GetText()
       local r,g,b=T.accent[1],T.accent[2],T.accent[3]
       if selected then row:SetBackdropColor(r*.16+.04,g*.16+.046,b*.16+.056,1); row:SetBackdropBorderColor(r,g,b,.55)

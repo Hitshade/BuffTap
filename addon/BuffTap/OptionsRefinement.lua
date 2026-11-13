@@ -515,6 +515,11 @@ function B:UpdateRefinedOptions()
   T.Polish(f)
   for _,page in ipairs(f.pages or {}) do T.InsetCards(page) end
   T.Refresh()
+  -- Font boxes show the chosen font in that font (after the theme refresh, which resets fonts).
+  if f.nearbyFontButton then self:PreviewChoiceFont(f.nearbyFontButton:GetFontString(),self:FontPathForKey(self.db.nearbyFont)) end
+  local function reminderFont(key) key=self:NormalizeTextFontKey(key); if key=="names" then return UNIT_NAME_FONT elseif key=="numbers" then return DAMAGE_TEXT_FONT end; return STANDARD_TEXT_FONT end
+  if f.fontButton then self:PreviewChoiceFont(f.fontButton:GetFontString(),reminderFont(self.db.labelFont)) end
+  if f.campingTextFont then self:PreviewChoiceFont(f.campingTextFont:GetFontString(),reminderFont(self.db.campTextFont)) end
 end
 function B:OpenAccentPicker()
   if not ColorPickerFrame or not ColorPickerFrame.SetupColorPickerAndShow then return end

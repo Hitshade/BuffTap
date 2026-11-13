@@ -62,6 +62,10 @@ function B:ReminderFonts(selected)
   selected=selected or (self.db and self.db.labelFont)
   if selected=="names" and type(UNIT_NAME_FONT)~="string" then choices[#choices+1]={key="names",name="Unit-name font (unavailable)"} end
   if selected=="numbers" and type(DAMAGE_TEXT_FONT)~="string" then choices[#choices+1]={key="numbers",name="Combat-number font (unavailable)"} end
+  -- Each name is drawn in its own font in the menu.
+  for _,c in ipairs(choices) do
+    if c.key=="default" then c.font=STANDARD_TEXT_FONT elseif c.key=="names" and type(UNIT_NAME_FONT)=="string" then c.font=UNIT_NAME_FONT elseif c.key=="numbers" and type(DAMAGE_TEXT_FONT)=="string" then c.font=DAMAGE_TEXT_FONT end
+  end
   return choices
 end
 function B:ReminderColors(uniform)

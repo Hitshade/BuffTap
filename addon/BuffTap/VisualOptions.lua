@@ -52,6 +52,31 @@ local function sharedMedia()
   local ok,lib=pcall(function() return LibStub and LibStub("LibSharedMedia-3.0",true) end)
   if ok and type(lib)=="table" and type(lib.List)=="function" and type(lib.Fetch)=="function" then return lib end
 end
+-- Draw a menu row or a box's text in a font choice's own font; with no font, back to the theme's font.
+function B:PreviewChoiceFont(fs,path)
+  if not fs then return end
+  if not fs.choiceBaseFont and fs.GetFontObject then fs.choiceBaseFont=fs:GetFontObject() end
+  if type(path)=="string" and path~="" then
+    local _,size=fs:GetFont(); size=A.Number(size) and size or 13
+    local ok,set=pcall(fs.SetFont,fs,path,size,"")
+    if ok and set~=false then fs.choiceFont=path; return end
+  end
+  if fs.choiceFont and fs.choiceBaseFont then fs:SetFontObject(fs.choiceBaseFont) end
+  fs.choiceFont=nil
+end
+-- The font file behind a font choice, so menus can show each name in its own font.
+function B:FontPathForKey(key)
+  local path=STANDARD_TEXT_FONT or "Fonts\\FRIZQT__.TTF"
+  if key=="names" and type(UNIT_NAME_FONT)=="string" then return UNIT_NAME_FONT end
+  if key=="numbers" and type(DAMAGE_TEXT_FONT)=="string" then return DAMAGE_TEXT_FONT end
+  if type(key)=="string" and key:match("^lsm:") then
+    local lsm=sharedMedia()
+    if lsm then local ok,p=pcall(lsm.Fetch,lsm,"font",key:sub(5),true); if ok and type(p)=="string" and p~="" then return p end end
+    return path
+  end
+  for _,f in ipairs(BUILTIN_FONTS) do if f.key==key then return f.path end end
+  return path
+end
 function B:NearbyFonts()
   local choices={{key="default",name=self.GameFontLabel and self:GameFontLabel() or "Game font"}}
   for _,f in ipairs(BUILTIN_FONTS) do choices[#choices+1]={key=f.key,name=f.name} end
@@ -68,8 +93,9 @@ function B:NearbyFonts()
   local d=self.db or {}
   if type(d.nearbyFont)=="string" and d.nearbyFont:match("^lsm:") then
     local found=false; for _,c in ipairs(choices) do if c.key==d.nearbyFont then found=true end end
-    if not found then choices[#choices+1]={key=d.nearbyFont,name=self:Text("%s (not installed)",d.nearbyFont:sub(5))} end
+    if not found then choices[#choices+1]={key=d.nearbyFont,name=self:Text("%s (not installed)",d.nearbyFont:sub(5)),missing=true} end
   end
+  for _,c in ipairs(choices) do if not c.missing then c.font=self:FontPathForKey(c.key) end end
   return choices
 end
 function B:NearbyFont()
