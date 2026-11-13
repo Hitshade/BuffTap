@@ -274,10 +274,9 @@ function B:RefineNearbyPage(ui,tabs)
   f.nearbyManaFloor:HookScript("OnLeave",function() if GameTooltip then GameTooltip:Hide() end end)
   T.Variant(ui.button(p,"Open nearby window",486,-212,198,function() B:ShowNearbySetup() end),"primary")
   -- How it works: the same drawn guide as the first-time introduction.
-  section(ui,p,"How Nearby works",12,-272,692,366)
-  local guide=CreateFrame("Frame",nil,p); guide:SetPoint("TOPLEFT",26,-312); guide:SetSize(664,310)
+  section(ui,p,"How Nearby works",12,-272,692,452)
+  local guide=CreateFrame("Frame",nil,p); guide:SetPoint("TOPLEFT",26,-312); guide:SetSize(664,400)
   self:DrawNearbyGuide(guide,664)
-  ui.label(p,"Friendly player nameplates are required (normally Shift+V). Window size, text and position are under Customization > Nearby window. A separate Nearby key is under Customization > Binding & sound.",26,-654,"GameFontDisableSmall",650)
   self:BuildNearbyAppearance(ui,f.appearancePanes.nearby)
 end
 -- Customization > Nearby window: size, rows, text, button side and position.

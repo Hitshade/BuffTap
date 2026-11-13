@@ -303,7 +303,7 @@ end
 
 -- Nearby introduction: a drawn mock of the window with callouts, then three quick choices.
 -- Shown the first time Nearby is turned on (from anywhere) and from the Nearby page's "How it works".
-local INTRO_W,INTRO_H=600,660
+local INTRO_W,INTRO_H=720,770
 local CLASS_ICONS="Interface\\GLUES\\CHARACTERCREATE\\UI-CHARACTERCREATE-CLASSES"
 local MEDIA="Interface\\AddOns\\BuffTap\\Media\\"
 local function swatch(parent,layer,r,g,b,a) local t=parent:CreateTexture(nil,layer); t:SetColorTexture(r,g,b,a); return t end
@@ -314,62 +314,125 @@ local function inlineTag(key)
   local t=TAGS[key]
   return "|T"..MEDIA..t[1]..":12:12:0:0:64:64:0:64:0:64:"..math.floor(t[2]*255)..":"..math.floor(t[3]*255)..":"..math.floor(t[4]*255).."|t"
 end
-local function mockRow(parent,y,class,name,gutter,buffIcon,tag)
-  local row=CreateFrame("Frame",nil,parent); row:SetSize(232,20); row:SetPoint("TOPLEFT",34,y)
-  swatch(row,"BACKGROUND",.055,.075,.095,.6):SetAllPoints()
-  local icon=row:CreateTexture(nil,"ARTWORK"); icon:SetSize(14,14); icon:SetPoint("LEFT",5,0); icon:SetTexture(CLASS_ICONS)
-  local c=CLASS_ICON_TCOORDS and CLASS_ICON_TCOORDS[class]; if c then icon:SetTexCoord(c[1],c[2],c[3],c[4]) end
-  local text=row:CreateFontString(nil,"OVERLAY",T.fonts.Small); text:SetPoint("LEFT",24,0); text:SetText(name)
-  local color=RAID_CLASS_COLORS and RAID_CLASS_COLORS[class]; if color then text:SetTextColor(color.r,color.g,color.b) end
-  -- Like the real window: a buff icon when that player needs your buff, otherwise a dash,
-  -- with any name tag just left of it.
-  if buffIcon then local b=row:CreateTexture(nil,"ARTWORK"); b:SetSize(16,16); b:SetPoint("RIGHT",-4,0); b:SetTexture(buffIcon); b:SetTexCoord(.08,.92,.08,.92)
-  else local dash=row:CreateTexture(nil,"ARTWORK"); dash:SetSize(10,10); dash:SetPoint("CENTER",row,"RIGHT",-12,0); dash:SetTexture(MEDIA.."UIDash"); dash:SetVertexColor(.55,.62,.59) end
-  if tag then local t=TAGS[tag]; local mark=row:CreateTexture(nil,"ARTWORK"); mark:SetSize(12,12); mark:SetPoint("RIGHT",-24,0); mark:SetTexture(MEDIA..t[1]); mark:SetVertexColor(t[2],t[3],t[4]) end
-  local tile=CreateFrame("Frame",nil,parent); tile:SetSize(20,20); tile:SetPoint("RIGHT",row,"LEFT",-4,0)
-  drawGlyph(tile,gutter)
-  return row,tile
-end
 -- The gutter tiles exactly as the real window draws them: gold +, blue arrow, buff icon tile.
 function drawGlyph(tile,gutter)
-  swatch(tile,"BACKGROUND",.055,.075,.095,.85):SetAllPoints()
+  swatch(tile,"BACKGROUND",.11,.13,.14,.95):SetAllPoints()
   if gutter=="invite" or gutter=="join" then
     local t=tile:CreateTexture(nil,"OVERLAY"); t:SetSize(16,16); t:SetPoint("CENTER")
     t:SetTexture(MEDIA..(gutter=="invite" and "UIInvitePlus" or "UIJoinArrow"))
     if gutter=="invite" then t:SetVertexColor(1,.82,0) else t:SetVertexColor(.35,.75,1) end
-  elseif TAGS[gutter] then
-    local tag=TAGS[gutter]; local t=tile:CreateTexture(nil,"OVERLAY"); t:SetSize(14,14); t:SetPoint("CENTER"); t:SetTexture(MEDIA..tag[1]); t:SetVertexColor(tag[2],tag[3],tag[4])
   elseif gutter=="request" then
     swatch(tile,"BORDER",.40,.82,.90,.55):SetAllPoints()
     local t=tile:CreateTexture(nil,"ARTWORK"); t:SetPoint("TOPLEFT",1,-1); t:SetPoint("BOTTOMRIGHT",-1,1); t:SetTexture(135932); t:SetTexCoord(.08,.92,.08,.92)
   end
 end
-local function callout(parent,width,anchor,y,glyph,title,body)
-  local line=swatch(parent,"ARTWORK",1,1,1,.18); line:SetHeight(1)
-  line:SetPoint("LEFT",anchor,"RIGHT",4,0); line:SetPoint("RIGHT",parent,"TOPLEFT",294,y-8)
-  local g=CreateFrame("Frame",nil,parent); g:SetSize(20,20); g:SetPoint("TOPLEFT",300,y+3); drawGlyph(g,glyph)
-  local t=parent:CreateFontString(nil,"OVERLAY",T.fonts.Body); t:SetPoint("TOPLEFT",326,y); t:SetWidth(width-326); t:SetJustifyH("LEFT"); t:SetText(B:Text(title))
-  local b=parent:CreateFontString(nil,"OVERLAY",T.fonts.Muted); b:SetPoint("TOPLEFT",t,"BOTTOMLEFT",0,-2); b:SetWidth(width-326); b:SetJustifyH("LEFT"); b:SetWordWrap(true); b:SetText(body)
+-- Gold-edged icon, like the class and buff icons in the real window.
+local function edgedIcon(parent,size,texture,coords)
+  local edge=swatch(parent,"BORDER",.55,.47,.30,.85); edge:SetSize(size+2,size+2)
+  local icon=parent:CreateTexture(nil,"ARTWORK"); icon:SetSize(size,size); icon:SetPoint("CENTER",edge,"CENTER")
+  icon:SetTexture(texture); if coords then icon:SetTexCoord(unpack(coords)) else icon:SetTexCoord(.08,.92,.08,.92) end
+  return edge
 end
--- The drawn Nearby guide: a mock window with callouts and a closing note. Used by the
--- introduction and the Nearby page. Pretend players (names from the developer).
+-- Numbered marker: a gold disc with a dark number.
+local function badge(parent,n)
+  local holder=CreateFrame("Frame",nil,parent); holder:SetSize(16,16)
+  local disc=holder:CreateTexture(nil,"ARTWORK"); disc:SetAllPoints(); disc:SetTexture(MEDIA.."UICornerFill"); disc:SetVertexColor(1,.75,.16)
+  local text=holder:CreateFontString(nil,"OVERLAY",T.fonts.Small); text:SetPoint("CENTER",0,0); text:SetText(tostring(n)); text:SetTextColor(.08,.06,.03); text:SetShadowOffset(0,0)
+  return holder
+end
+local function leader(parent,x1,x2,y,vertical)
+  local line=swatch(parent,"ARTWORK",1,.75,.16,.9)
+  if vertical then line:SetSize(1,math.abs(x2-x1)); line:SetPoint("TOPLEFT",y,-math.min(x1,x2))
+  else line:SetSize(math.abs(x2-x1),1); line:SetPoint("TOPLEFT",math.min(x1,x2),-y) end
+  return line
+end
+-- The drawn Nearby guide: a picture of the window with numbered markers, and a numbered key
+-- on the right in two groups. Used by the introduction and the Nearby page.
+-- Pretend players (names from the developer).
+local WIN_X,WIN_W,ROW_H,TOP=56,240,26,28
 function B:DrawNearbyGuide(g,width)
-  local mock=CreateFrame("Frame",nil,g,"BackdropTemplate"); mock:SetSize(276,166); mock:SetPoint("TOPLEFT",0,0); T.Surface(mock,"card")
-  local headBar=swatch(mock,"BORDER",.20,.14,.10,.85); headBar:SetPoint("TOPLEFT",34,-6); headBar:SetPoint("TOPRIGHT",-8,-6); headBar:SetHeight(20)
-  local head=mock:CreateFontString(nil,"OVERLAY",T.fonts.Small); head:SetPoint("LEFT",headBar,"LEFT",6,0); head:SetText("BuffTap"); head:SetTextColor(1,.82,0)
-  local count=mock:CreateFontString(nil,"OVERLAY",T.fonts.Small); count:SetPoint("RIGHT",headBar,"RIGHT",-6,0); count:SetText("1/5")
-  local _,t1=mockRow(mock,-30,"WARRIOR","Dontstop Bleedin","invite",136078,"friend")
-  local _,t2=mockRow(mock,-56,"PALADIN","Everybuff Youtake","join",nil,"guild")
-  local _,t3=mockRow(mock,-82,"MAGE","Poursome Manaonme","request",nil)
-  local r4=mockRow(mock,-108,"HUNTER","Gland Downunder","invite",nil,"pvp")
-  mockRow(mock,-134,"ROGUE","Smooth Criminelf","invite",nil)
-  callout(g,width,t1,-8,"invite","Invite to your party",self:Text("Shown when you can invite: you are solo or lead a party with room."))
-  callout(g,width,t2,-68,"join","Ask to join their group",self:Text("Shown when the game offers it, for players already in a group."))
-  callout(g,width,t3,-128,"request","Ask for a buff",self:Text("Whispers a polite request for a class buff you are missing. Three-minute cooldown per player."))
-  callout(g,width,r4,-188,"pvp","Name tags",
-    self:Text("%s PvP flagged: PvP protection skips them.",inlineTag("pvp")).."\n"..
-    self:Text("%s Friend   %s Guild member   %s Blacklisted",inlineTag("friend"),inlineTag("guild"),inlineTag("blocked")))
-  text(g,T.fonts.Muted,0,-266,width,"A buff icon at the end of a row (like Mark of the Wild above) means that player needs your buff: click the row or press your binding to cast. A dash means nothing is needed.")
+  -- TOP leaves room above the window for the people icon's marker.
+  local win=CreateFrame("Frame",nil,g); win:SetPoint("TOPLEFT",WIN_X,-TOP); win:SetSize(WIN_W,27+5*ROW_H)
+  local shadow=win:CreateTexture(nil,"BACKGROUND",nil,-8); shadow:SetTexture(MEDIA.."UIShadow"); shadow:SetPoint("TOPLEFT",-40,10); shadow:SetPoint("BOTTOMRIGHT",14,-14); shadow:SetVertexColor(0,0,0,.8)
+  local head=swatch(win,"BORDER",.19,.235,.25,1); head:SetPoint("TOPLEFT"); head:SetSize(WIN_W,24)
+  local title=win:CreateFontString(nil,"OVERLAY",T.fonts.Body); title:SetPoint("LEFT",head,"LEFT",8,0); title:SetText("BuffTap"); title:SetTextColor(1,.82,0)
+  local count=win:CreateFontString(nil,"OVERLAY",T.fonts.Body); count:SetPoint("RIGHT",head,"RIGHT",-70,0); count:SetText("1/5")
+  local people=win:CreateTexture(nil,"OVERLAY"); people:SetSize(15,15); people:SetPoint("RIGHT",head,"RIGHT",-48,0); people:SetTexture(MEDIA.."UIPeople"); people:SetVertexColor(1,.78,.16)
+  local lockBody=swatch(win,"OVERLAY",.8,.8,.76,1); lockBody:SetSize(8,6); lockBody:SetPoint("RIGHT",head,"RIGHT",-28,-2)
+  for _,pt in ipairs({{-3,5,1,5},{3,5,1,5},{0,7.5,7,1}}) do local t=swatch(win,"OVERLAY",.8,.8,.76,1); t:SetSize(pt[3],pt[4]); t:SetPoint("CENTER",lockBody,"CENTER",pt[1],pt[2]) end
+  local close=win:CreateFontString(nil,"OVERLAY",T.fonts.Body); close:SetPoint("RIGHT",head,"RIGHT",-8,0); close:SetText("x")
+  local line=swatch(win,"OVERLAY",1,.49,.04,1); line:SetPoint("TOPLEFT",0,-24); line:SetSize(WIN_W,1)
+  local rows={
+    {"WARRIOR","(60) Dontstop Bleedin","invite",136078,"friend"},
+    {"PALADIN","(58) Everybuff Youtake","join",nil,"guild"},
+    {"MAGE","(52) Poursome Manaonme","request",nil,nil},
+    {"HUNTER","(47) Gland Downunder","invite",nil,nil},
+    {"ROGUE","(55) Smooth Criminelf","invite",nil,"pvp"},
+  }
+  local function rowY(i) return 27+(i-1)*ROW_H end
+  for i,spec in ipairs(rows) do
+    local y=rowY(i)
+    -- The first row is the one your binding buffs next, tinted like the real window.
+    local bg=i==1 and swatch(win,"BORDER",.30,.28,.22,1) or swatch(win,"BORDER",.205,.245,.25,1); bg:SetPoint("TOPLEFT",0,-y); bg:SetSize(WIN_W,ROW_H-3)
+    local tile=CreateFrame("Frame",nil,g); tile:SetSize(22,ROW_H-3); tile:SetPoint("TOPLEFT",WIN_X-26,-(TOP+y)); drawGlyph(tile,spec[3])
+    local c=CLASS_ICON_TCOORDS and CLASS_ICON_TCOORDS[spec[1]]
+    local cls=edgedIcon(win,16,CLASS_ICONS,c and {c[1],c[2],c[3],c[4]}); cls:SetPoint("TOPLEFT",4,-(y+2))
+    local name=win:CreateFontString(nil,"OVERLAY",T.fonts.Body); name:SetPoint("TOPLEFT",28,-(y+4)); name:SetText(spec[2])
+    local color=RAID_CLASS_COLORS and RAID_CLASS_COLORS[spec[1]]; if color then name:SetTextColor(color.r,color.g,color.b) end
+    if spec[4] then local buff=edgedIcon(win,18,spec[4]); buff:SetPoint("TOPRIGHT",-5,-(y+1))
+    else local dash=win:CreateTexture(nil,"ARTWORK"); dash:SetSize(10,10); dash:SetPoint("CENTER",win,"TOPRIGHT",-15,-(y+11)); dash:SetTexture(MEDIA.."UIDash"); dash:SetVertexColor(.6,.65,.64) end
+    if spec[5] then local t=TAGS[spec[5]]; local mark=win:CreateTexture(nil,"ARTWORK"); mark:SetSize(12,12); mark:SetPoint("CENTER",win,"TOPRIGHT",-35,-(y+11)); mark:SetTexture(MEDIA..t[1]); mark:SetVertexColor(t[2],t[3],t[4]) end
+  end
+  -- Markers: 1-3 left of the buttons, 4 above the people icon, 5 and 6 right of the buff icon
+  -- and a dash, 7 under the tag column.
+  for n=1,3 do
+    local y=TOP+rowY(n)+11
+    leader(g,12,WIN_X-28,y); local m=badge(g,n); m:SetPoint("CENTER",g,"TOPLEFT",8,-y)
+  end
+  local peopleX=WIN_X+WIN_W-55
+  leader(g,8,TOP+4,peopleX,true); local four=badge(g,4); four:SetPoint("CENTER",g,"TOPLEFT",peopleX,-8)
+  for _,spec in ipairs({{5,1},{6,3}}) do
+    local y=TOP+rowY(spec[2])+11
+    leader(g,WIN_X+WIN_W+2,WIN_X+WIN_W+20,y); local m=badge(g,spec[1]); m:SetPoint("CENTER",g,"TOPLEFT",WIN_X+WIN_W+26,-y)
+  end
+  local bottom=TOP+27+5*ROW_H; local tagX=WIN_X+WIN_W-35
+  leader(g,bottom-2,bottom+12,tagX,true); local seven=badge(g,7); seven:SetPoint("CENTER",g,"TOPLEFT",tagX,-(bottom+19))
+  -- Name tags under the window: a two-by-two grid of tag and meaning, then the PvP note.
+  local tagsTitle=g:CreateFontString(nil,"OVERLAY",T.fonts.Body); tagsTitle:SetPoint("TOPLEFT",g,"TOPLEFT",24,-(bottom+38)); tagsTitle:SetText(self:Text("Name tags"))
+  local tagsBadge=badge(g,7); tagsBadge:SetPoint("RIGHT",tagsTitle,"LEFT",-6,0)
+  local col=136
+  for i,spec in ipairs({{"pvp","PvP flagged"},{"blocked","Blacklisted"},{"friend","Friend"},{"guild","Guild member"}}) do
+    local t=TAGS[spec[1]]; local x=((i-1)%2)*col; local y=-6-math.floor((i-1)/2)*18
+    local icon=g:CreateTexture(nil,"ARTWORK"); icon:SetSize(12,12); icon:SetPoint("TOPLEFT",tagsTitle,"BOTTOMLEFT",x,y-1); icon:SetTexture(MEDIA..t[1]); icon:SetVertexColor(t[2],t[3],t[4])
+    local label=g:CreateFontString(nil,"OVERLAY",T.fonts.Muted); label:SetPoint("LEFT",icon,"RIGHT",6,0); label:SetText(self:Text(spec[2]))
+  end
+  local note=g:CreateFontString(nil,"OVERLAY",T.fonts.Muted); note:SetWidth(WIN_X+WIN_W-24); note:SetJustifyH("LEFT"); note:SetWordWrap(true)
+  note:SetPoint("TOPLEFT",tagsTitle,"BOTTOMLEFT",0,-46); note:SetText(self:Text("With PvP protection on, flagged players are skipped."))
+  -- The numbered key, right of the picture.
+  local rx=WIN_X+WIN_W+48; local cw=width-rx; local last
+  local function heading(label,gap)
+    local h=g:CreateFontString(nil,"OVERLAY",T.fonts.Section); h:SetWidth(cw); h:SetJustifyH("LEFT"); h:SetText(self:Text(label)); T.SectionTitle(h)
+    if last then h:SetPoint("TOPLEFT",last,"BOTTOMLEFT",-24,-(gap or 14)) else h:SetPoint("TOPLEFT",g,"TOPLEFT",rx,0) end
+    last=h; last.indented=false
+  end
+  local function item(n,label,body,gap)
+    local t=g:CreateFontString(nil,"OVERLAY",T.fonts.Body); t:SetWidth(cw-24); t:SetJustifyH("LEFT"); t:SetText(self:Text(label))
+    t:SetPoint("TOPLEFT",last,"BOTTOMLEFT",last.indented and 0 or 24,-(gap or (last.indented and 10 or 8)))
+    t.indented=true; last=t
+    local m=badge(g,n); m:SetPoint("RIGHT",t,"LEFT",-6,0)
+    local b=g:CreateFontString(nil,"OVERLAY",T.fonts.Muted); b:SetWidth(cw-24); b:SetJustifyH("LEFT"); b:SetWordWrap(true); b:SetText(body)
+    b:SetPoint("TOPLEFT",t,"BOTTOMLEFT",0,-3); b.indented=true; last=b
+  end
+  heading("Buttons")
+  item(1,"Invite to your party",self:Text("Shown when you can invite: you are solo or lead a party with room."))
+  item(2,"Ask to join their group",self:Text("Shown when the game offers it, for players already in a group."))
+  item(3,"Ask for a buff",self:Text("Whispers a polite request for a class buff you are missing. Three-minute cooldown per player."))
+  item(4,"All players view",self:Text("The people icon switches between players who need your buff and everyone nearby. Gold shows everyone, which invites and requests need."))
+  heading("On each row")
+  item(5,"Needs your buff",self:Text("Click the row or press your BuffTap binding to cast it. The gold row is the one your binding buffs next. Want a separate key for Nearby? Set one under Customization > Binding & sound."))
+  item(6,"Nothing needed",self:Text("A dash means that player already has what you can give."))
+  local plates=g:CreateFontString(nil,"OVERLAY",T.fonts.Muted); plates:SetWidth(WIN_X+WIN_W-24); plates:SetJustifyH("LEFT"); plates:SetWordWrap(true)
+  plates:SetPoint("TOPLEFT",note,"BOTTOMLEFT",0,-12); plates:SetText(self:Text("Nearby needs friendly nameplates (normally Shift+V). Window size, text and position: Customization > Nearby window."))
 end
 -- Why Nearby helps, worded for the player's class. Classes without a buff for others still get
 -- one-click invites and polite buff requests to Mages, Priests, Druids and Paladins around them.
@@ -389,9 +452,9 @@ function B:ShowNearbyIntro(enableOnApply)
     T.Surface(f,"window"); T.Shadow(f,18,.55)
     text(f,T.fonts.Title,24,-22,INTRO_W-48,"Nearby, at a glance")
     f.pitch=text(f,T.fonts.Muted,24,-48,INTRO_W-48,"")
-    local guide=CreateFrame("Frame",nil,f); guide:SetPoint("TOPLEFT",24,-84); guide:SetSize(INTRO_W-48,310)
+    local guide=CreateFrame("Frame",nil,f); guide:SetPoint("TOPLEFT",24,-84); guide:SetSize(INTRO_W-48,400)
     self:DrawNearbyGuide(guide,INTRO_W-48)
-    f.choiceTitle=text(f,T.fonts.Sub,24,-412,INTRO_W-48,"Turn on with")
+    f.choiceTitle=text(f,T.fonts.Sub,24,-512,INTRO_W-48,"Turn on with")
     f.checks={}
     local specs={
       {"nearbyInvites","Quick party invites (+ and blue arrow)"},
@@ -399,20 +462,20 @@ function B:ShowNearbyIntro(enableOnApply)
       {"nearbyShowAll","Show all nearby players (invites and requests need this)"},
     }
     for i,spec in ipairs(specs) do
-      local c=CreateFrame("CheckButton",nil,f,"UICheckButtonTemplate"); c:SetSize(24,24); c:SetPoint("TOPLEFT",22,-442-(i-1)*34)
+      local c=CreateFrame("CheckButton",nil,f,"UICheckButtonTemplate"); c:SetSize(24,24); c:SetPoint("TOPLEFT",22,-542-(i-1)*34)
       if c.Text then c.Text:SetFontObject(T.fonts.Body); c.Text:SetText(B:Text(spec[2])); c.Text:SetWidth(INTRO_W-100); c.Text:SetJustifyH("LEFT") end
       c.key=spec[1]; T.Check(c); f.checks[i]=c
     end
-    f.plateNote=text(f,T.fonts.Muted,24,-552,INTRO_W-48,"Nearby uses friendly nameplates (normally Shift+V). Change any of this later on the Nearby page.")
-    f.plates=button(f,"Turn on friendly nameplates",364,-548,212,nil,function()
+    f.plateNote=text(f,T.fonts.Muted,24,-652,INTRO_W-48,"Nearby uses friendly nameplates (normally Shift+V). Change any of this later on the Nearby page.")
+    f.plates=button(f,"Turn on friendly nameplates",484,-648,212,nil,function()
       local _,name=B:FriendlyPlatesState()
       if not A.Combat() and name~="unavailable" then
         if C_CVar and C_CVar.SetCVar then pcall(C_CVar.SetCVar,name,"1") elseif type(SetCVar)=="function" then pcall(SetCVar,name,"1") end
       end
       f.plates:Hide(); f.plateNote:SetWidth(INTRO_W-48)
     end)
-    f.apply=button(f,"Turn on Nearby",24,-606,270,"primary",function() B:ApplyNearbyIntro() end)
-    f.later=button(f,"Not now",306,-606,270,nil,function() B.db.nearbyIntroSeen=true; f:Hide() end)
+    f.apply=button(f,"Turn on Nearby",24,-706,330,"primary",function() B:ApplyNearbyIntro() end)
+    f.later=button(f,"Not now",366,-706,330,nil,function() B.db.nearbyIntroSeen=true; f:Hide() end)
     self.nearbyIntro=f
   end
   local f=self.nearbyIntro
@@ -422,7 +485,7 @@ function B:ShowNearbyIntro(enableOnApply)
   for _,c in ipairs(f.checks) do c:SetChecked(enableOnApply and true or self.db[c.key]==true); T.Check(c) end
   -- Offer to switch on friendly nameplates when they are off; Nearby cannot see players without them.
   local off=self:FriendlyPlatesState()==false
-  f.plates:SetShown(off); f.plateNote:SetWidth(off and 320 or INTRO_W-48)
+  f.plates:SetShown(off); f.plateNote:SetWidth(off and 440 or INTRO_W-48)
   local width,height=UIParent:GetSize()
   if A.Number(width) and A.Number(height) then f:SetScale(math.min(1,(width-32)/INTRO_W,(height-32)/INTRO_H)) end
   f:ClearAllPoints(); f:SetPoint("CENTER",UIParent,"CENTER",0,40); f:Show(); f:Raise()
