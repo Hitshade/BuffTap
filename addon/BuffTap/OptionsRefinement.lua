@@ -270,6 +270,12 @@ function B:RefineNearbyPage(ui,tabs)
     if A.Combat() then return end
     B.db.nearbyShowLevel=c:GetChecked()==true; if B.nearbyFrame then B:UpdateNearbyWindow() end
   end)
+  f.nearbyWhileResting=ui.check(p,"Buff while resting",540,-146,function(c)
+    if A.Combat() then return end
+    B.db.nearbyWhileResting=c:GetChecked()==true; B.nearbySnapshot=nil; B:RequestRefresh("nearby resting",0); if B.nearbyFrame then B:UpdateNearbyWindow() end
+  end)
+  f.nearbyWhileResting:HookScript("OnEnter",function(s) T.Tooltip(s,B:Text("Buff while resting"),B:Text("Keep buffing nearby players in cities and inns even when reminders pause while resting. Your own reminders still pause.")) end)
+  f.nearbyWhileResting:HookScript("OnLeave",function() if GameTooltip then GameTooltip:Hide() end end)
   place(f.nearbyInvites,p,26,-180)
   f.nearbyMarkSocial=ui.check(p,"Mark friends and guild members",374,-180,function(c)
     if A.Combat() then return end
@@ -521,7 +527,7 @@ function B:UpdateRefinedOptions()
   if f.labelPositionButton then f.labelPositionButton:SetText(self:Text(positions[self.db.labelPosition] or "Split")) end
   if f.swipeCheck then f.swipeCheck:SetChecked(self.db.showSwipe==true) end
   if f.rangeCheck then f.rangeCheck:SetChecked(self.db.showOutOfRange==true) end
-  f.reduceMotion:SetChecked(self.db.optionsReduceMotion); f.nearbyLock:SetChecked(self.db.nearbyLocked==true); if f.nearbyOnTop then f.nearbyOnTop:SetChecked(self.db.nearbyOnTop==true) end; if f.nearbyShowLevel then f.nearbyShowLevel:SetChecked(self.db.nearbyShowLevel==true) end; if f.nearbyMarkSocial then f.nearbyMarkSocial:SetChecked(self.db.nearbyMarkSocial~=false) end; if f.nearbyHideHeader then f.nearbyHideHeader:SetChecked(self.db.nearbyHideHeader==true); f.nearbyKeepLine:SetChecked(self.db.nearbyKeepLine~=false); f.nearbyKeepLine:SetEnabled(self.db.nearbyHideHeader==true) end; if f.nearbyFullNames then f.nearbyFullNames:SetChecked(self.db.nearbyFullNames~=false) end
+  f.reduceMotion:SetChecked(self.db.optionsReduceMotion); f.nearbyLock:SetChecked(self.db.nearbyLocked==true); if f.nearbyOnTop then f.nearbyOnTop:SetChecked(self.db.nearbyOnTop==true) end; if f.nearbyShowLevel then f.nearbyShowLevel:SetChecked(self.db.nearbyShowLevel==true) end; if f.nearbyMarkSocial then f.nearbyMarkSocial:SetChecked(self.db.nearbyMarkSocial~=false) end; if f.nearbyWhileResting then f.nearbyWhileResting:SetChecked(self.db.nearbyWhileResting==true) end; if f.nearbyHideHeader then f.nearbyHideHeader:SetChecked(self.db.nearbyHideHeader==true); f.nearbyKeepLine:SetChecked(self.db.nearbyKeepLine~=false); f.nearbyKeepLine:SetEnabled(self.db.nearbyHideHeader==true) end; if f.nearbyFullNames then f.nearbyFullNames:SetChecked(self.db.nearbyFullNames~=false) end
   if f.nearbyFontButton then
     for _,v in ipairs(self:NearbyFonts()) do if v.key==self.db.nearbyFont then f.nearbyFontButton:SetText(self:Text(v.name)) end end
     for _,v in ipairs(self:NearbyTextSizes()) do if v.key==self.db.nearbyFontSize then f.nearbyFontSizeButton:SetText(v.name) end end

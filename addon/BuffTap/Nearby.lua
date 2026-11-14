@@ -297,7 +297,7 @@ function B:NearbyCandidates(force)
   local out,seen={},{}
   self.nearbyProbes={}; self.nearbyCastError=nil; self.nearbySafetyReason=nil
   if not self.db or not self.db.enabled or not self.db.nearbyEnabled or not platesOn()
-    or A.Combat() or self:ReminderPauseReason() or A.Call(UnitIsDeadOrGhost,"player")~=false then return out end
+    or A.Combat() or self:NearbyPauseReason() or A.Call(UnitIsDeadOrGhost,"player")~=false then return out end
   for unit,guid in pairs(self.nearbyUnits or {}) do
     local entry=self:NearbyEntry(unit)
     if entry and A.Text(guid) and not seen[guid] then
@@ -380,9 +380,15 @@ local MARKERS={pvp={"UIPvPFlag",.9,.36,.32,1},["pvp-unknown"]={"UIPvPFlag",.6,.6
 B.NearbyTagStyles=MARKERS
 -- All players view while resting or mounted: the list stays up for invites and requests,
 -- while buffing itself stays paused (NearbyCandidates still returns nothing).
+-- "Buff while resting": Nearby ignores the resting pause (other pauses still apply).
+function B:NearbyPauseReason()
+  local reason=self:ReminderPauseReason()
+  if reason=="resting" and self.db and self.db.nearbyWhileResting==true then return nil end
+  return reason
+end
 function B:NearbyBrowsePause()
   if not self.db or not self.db.nearbyShowAll then return nil end
-  local reason=self:ReminderPauseReason()
+  local reason=self:NearbyPauseReason()
   if reason=="resting" or reason=="mounted" then return reason end
 end
 function B:NearbyPlayers()
@@ -391,7 +397,7 @@ function B:NearbyPlayers()
   self.nearbyCounts={need=0,total=0,flagged=0,blocked=0}
   for _,entry in ipairs(buffs) do byGUID[entry.guid]=entry end
   if not self.db.enabled or not self.db.nearbyEnabled or not platesOn() or A.Combat()
-    or (self:ReminderPauseReason() and not self:NearbyBrowsePause()) then return out end
+    or (self:NearbyPauseReason() and not self:NearbyBrowsePause()) then return out end
   for unit,guid in pairs(self.nearbyUnits or {}) do
     if A.Text(guid) and not seen[guid] and A.Call(UnitGUID,unit)==guid
       and A.Call(UnitExists,unit)==true and A.Call(UnitCanAssist,"player",unit)==true
@@ -602,7 +608,7 @@ end
 function B:ValidateNearby(action)
   if action and action.nearbyGroup then
     if A.Combat() or not self.db.enabled or not self.db.nearbyEnabled 
-      or self.db.nearbyBuffing==false or not platesOn() or self:ReminderPauseReason() then return false end
+      or self.db.nearbyBuffing==false or not platesOn() or self:NearbyPauseReason() then return false end
     local unit
     for token,guid in pairs(self.nearbyUnits or {}) do if guid==action.targetGUID and A.Call(UnitGUID,token)==guid then unit=token; break end end
     if not unit or not self:NearbyGroupMember(unit) then return false end
@@ -611,7 +617,7 @@ function B:ValidateNearby(action)
     return fresh and fresh.id==action.id and fresh.targetGUID==action.targetGUID and self:Validate(action)==true
   end
   if not action or A.Combat() or not self.db.enabled or not self.db.nearbyEnabled
-    or not platesOn() or self:ReminderPauseReason() then return false end
+    or not platesOn() or self:NearbyPauseReason() then return false end
   local entry=self:NearbyEntry(action.target)
   if not entry or A.Call(UnitGUID,action.target)~=action.targetGUID then return false end
   self:InvalidateAura(action.target)
@@ -986,7 +992,7 @@ function B:UpdateNearbyWindow()
   -- The header hairline follows the accent colour chosen under Customization > Interface.
   if self.InterfaceAccent then local r,g,b=self:InterfaceAccent(); f.line:SetColorTexture(r,g,b,.80) end
   local list=self:NearbyPlayers()
-  if not self.db.enabled or not self.db.nearbyEnabled or not platesOn() or (self:ReminderPauseReason() and not self:NearbyBrowsePause()) then self.nearbyDisplay=nil end
+  if not self.db.enabled or not self.db.nearbyEnabled or not platesOn() or (self:NearbyPauseReason() and not self:NearbyBrowsePause()) then self.nearbyDisplay=nil end
   local display=self:NearbyDisplayList(list)
   local x,y=self.db.nearbyX,self.db.nearbyY
   x=A.Number(x) and x or 240; y=A.Number(y) and y or 0
@@ -1080,7 +1086,7 @@ function B:UpdateNearbyWindow()
   elseif not self.db.nearbyEnabled then status="Nearby is off. Click here to enable."
   elseif plateSetting()==nil then status="Friendly nameplate setting unavailable."
   elseif not platesOn() then status="Enable friendly nameplates (Shift+V)."
-  elseif self:ReminderPauseReason() then status="Paused: "..self:ReminderPauseReason()
+  elseif self:NearbyPauseReason() then status="Paused: "..self:NearbyPauseReason()
   elseif self.db.nearbyShowAll then status="No nearby players detected."
   elseif self.db.nearbyBuffing==false then status="Nearby buffing is off."
   elseif #self:TargetAssignableBuffs()==0 then status="No supported buffs for nearby players."
@@ -1143,7 +1149,7 @@ end)
 function B:WatchNearbyRange()
   self:CancelTimer("nearby-range")
   if not self.db.nearbyEnabled or not self.db.enabled or not platesOn() or A.Combat()
-    or self:ReminderPauseReason() or not next(self.nearbyUnits or {}) then return end
+    or self:NearbyPauseReason() or not next(self.nearbyUnits or {}) then return end
   local safety={}
   local function state(unit)
     return tostring(A.Call(UnitAffectingCombat,unit))..":"..tostring(A.Call(UnitIsPVP,unit))..":"..tostring(A.Call(UnitIsPVPFreeForAll,unit))
