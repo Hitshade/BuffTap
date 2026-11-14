@@ -142,8 +142,11 @@ function B:NoteNearbyResult(action)
   local cleanse=action.source=="cleanse"
   local spell=action.spellName or A.Call(GetSpellInfo,action.id)
   local label=cleanse and action.debuffName or tostring(action.name or spell or ""):gsub("%s*%(.-%)$","")
-  self.nearbyResult={guid=action.targetGUID,id=action.id,spell=spell,label=label,cleanse=cleanse,at=GetTime(),state="pending"}
-  self:StartTimer("nearby-result",2,function() local r=B.nearbyResult; if r and r.state=="pending" then B.nearbyResult=nil end end)
+  self.nearbyResult={guid=action.targetGUID,id=action.id,spell=spell,label=label,cleanse=cleanse,action=action,at=GetTime(),state="pending"}
+  self:StartTimer("nearby-result",2,function()
+    local r=B.nearbyResult
+    if r and r.state=="pending" then B.nearbyResult=nil; if not A.Combat() then B:UpdateNearbyWindow() end end
+  end)
 end
 function B:SetNearbyResult(state,reason)
   local r=self.nearbyResult
@@ -154,6 +157,13 @@ function B:SetNearbyResult(state,reason)
     B.nearbyResult=nil; B.nearbySnapshot=nil; if not A.Combat() then B:UpdateNearbyWindow() end
   end)
   if not A.Combat() and self.nearbyFrame then self:UpdateNearbyWindow() end
+end
+-- While a cast is pending or its result shows, the list holds still so the row doesn't move.
+function B:NearbyResultActive()
+  local r=self.nearbyResult
+  if not r or self.db.nearbyCastResult==false then return false end
+  if r.state=="pending" then return GetTime()-r.at<2 end
+  return r.untilTime~=nil and GetTime()<r.untilTime
 end
 function B:NearbyResultFor(guid)
   local r=self.nearbyResult
@@ -219,7 +229,7 @@ function B:ReminderSoundAllowed(action)
   local cast=self.nearbyQuietCast
   if not cast then return true end
   if GetTime()>=cast.untilTime then self.nearbyQuietCast=nil; return true end
-  if action and action.quickTarget and action.target=="target" and A.Text(action.targetGUID)
+  if action and (action.quickTarget or action.source=="cleanse") and action.target=="target" and A.Text(action.targetGUID)
     and (action.targetGUID==cast.recipient or action.targetGUID==cast.previous) then return false end
   return true
 end
@@ -757,6 +767,7 @@ local function hint(button,title,body)
 end
 function B:NearbyDisplayList(list)
   local now,fresh,seen,out=GetTime(),{},{},{}
+  local frozen=self.nearbyHovered or self:NearbyResultActive()
   for _,entry in ipairs(list) do fresh[entry.guid]=entry end
   local pending,safetyRemoved
   for _,old in ipairs(self.nearbyDisplay or {}) do
@@ -768,23 +779,23 @@ function B:NearbyDisplayList(list)
     end
     local safe=A.Call(UnitGUID,old.entry.unit)==old.entry.guid and self.nearbyUnits[old.entry.unit]==old.entry.guid
       and A.Call(UnitCanAssist,"player",old.entry.unit)==true
-      and (self.db.nearbyShowAll or (not delayed and self:NearbyRecipientSafe(old.entry.unit)))
+      and (self.db.nearbyShowAll or ((not delayed or self:NearbyResultFor(old.entry.guid)) and self:NearbyRecipientSafe(old.entry.unit)))
       and not (self.db.nearbyShowAll and self:NearbyGroupMember(old.entry.unit) and not entry)
     if not safe then
       safetyRemoved=true
       if self.nearbyHovered==old.entry.guid then self.nearbyHovered=nil; if GameTooltip then GameTooltip:Hide() end end
-    elseif entry or self.nearbyHovered or (missing and now-missing<.65) or self:NearbyResultFor(old.entry.guid) then
+    elseif entry or frozen or (missing and now-missing<.65) then
       out[#out+1]={entry=entry or old.entry,fresh=entry~=nil,missingAt=missing}
       seen[old.entry.guid]=true
       if missing and now-missing<.65 then pending=math.min(pending or .65,.65-(now-missing)) end
     end
   end
-  if not self.nearbyHovered or safetyRemoved then
+  if not frozen or safetyRemoved then
     for _,entry in ipairs(list) do
       if not seen[entry.guid] and #out<MAX_UNITS then out[#out+1]={entry=entry,fresh=true}; seen[entry.guid]=true end
     end
   end
-  if not self.nearbyHovered and self.db.nearbyShowAll then
+  if not frozen and self.db.nearbyShowAll then
     table.sort(out,function(a,b)
       local an=a.fresh and #a.entry.actions>0 or false
       local bn=b.fresh and #b.entry.actions>0 or false
@@ -1005,6 +1016,10 @@ function B:CreateNearbyWindow()
     row:SetScript("PreClick",function(button,mouse,down)
       if A.Combat() then return end
       local action=button.action; self:SetNearbyRowPayload(button,nil)
+      local failed=self.nearbyResult
+      if action and failed and failed.state=="fail" and failed.action==action then
+        self:ClearCastRetry(action); self.nearbyNeedCache={}; self.nearbySnapshot=nil
+      end
       if self:SyncSituation() then self:NoteNearbyClick(nil); self:RequestRefresh("setup changed before nearby click",0); return end
       local ok,valid=pcall(self.ValidateNearby,self,action)
       if ok and valid and mouse=="LeftButton" then
@@ -1149,7 +1164,9 @@ function B:UpdateNearbyWindow()
   f.scroll:SetMinMaxValues(0,math.max(0,#display-ROWS)); f.scroll:SetValue(self.nearbyOffset); f.scroll:SetShown(#display>ROWS)
   for i,row in ipairs(f.rows) do
     local item=i<=ROWS and display[i+self.nearbyOffset] or nil; local entry=item and item.entry
-    row.entry=entry; row.action=item and item.fresh and nextAction(entry) or nil
+    -- A failed cast keeps its action so the row can be clicked again straight away.
+    local result=entry and self:NearbyResultFor(entry.guid)
+    row.entry=entry; row.action=item and item.fresh and nextAction(entry) or (result and result.state=="fail" and result.action) or nil
     self:SetNearbyRowPayload(row,row.action)
     if entry then
       local parts={entry.guid,self:NearbyDisplayName(entry),entry.class,tostring(entry.marker),tostring(entry.social)}

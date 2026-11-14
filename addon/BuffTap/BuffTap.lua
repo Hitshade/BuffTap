@@ -258,7 +258,11 @@ function B:CreateButton()
         B.button:SetAttribute("macrotext",action.macroText)
       end
       if not B:ValidateCleanse(action) then B:Commit(nil,"cleanse no longer needed"); B:RequestRefresh("cleanse changed",0)
-      elseif action.nearby and B.NoteNearbyResult then B.nearbyClickAt=GetTime(); B.nearbyClickError=nil; B:NoteNearbyResult(action) end
+      elseif action.nearby and B.NoteNearbyResult then
+        B.nearbyClickAt=GetTime(); B.nearbyClickError=nil; B:NoteNearbyResult(action)
+        -- Same quiet window as a row click: the macro briefly targets this player.
+        B.nearbyQuietCast={recipient=action.targetGUID,previous=A.Call(UnitGUID,"target"),untilTime=GetTime()+5}
+      end
       return
     end
     if action.nearby then

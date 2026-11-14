@@ -18,6 +18,11 @@ local function retryKey(action)
     or not A.Number(action.id) or (action.source and action.source~="spell") then return end
   return action.targetGUID..":"..tostring(action.id)
 end
+-- An explicit retry (clicking a Nearby row that just failed) lifts the short retry delay.
+function B:ClearCastRetry(action)
+  local key=retryKey(action)
+  if key and self.castRetry then self.castRetry[key]=nil end
+end
 function B:CastRetryBlocked(action)
   local key=retryKey(action)
   local entry=key and self.castRetry and self.castRetry[key]
