@@ -1,4 +1,4 @@
-# BuffTap 1.21.2 (beta 2)
+# BuffTap 1.21.2
 
 ### Mana reserve on WoW Forever
 - The Nearby mana reserve never triggered on Forever: the game hides your current mana from addons (your maximum stays readable), so the reserve check could not compare anything and let every cast through, down to zero mana.
@@ -7,6 +7,9 @@
 - Nearby cleanses respect the reserve too.
 - Full check-up: "Hide player names" now also hides players named in BuffTap's own status lines (last Nearby click, invitations, thanks) after they have walked away, and the Game line shows your class and interface number instead of "nil".
 - The Full check-up's Nearby section shows the reserve, how your mana was read (exact or an estimated range) and whether it is saving mana.
+
+### Tests
+- 1888 Lua tests passed.
 
 ---
 
