@@ -58,14 +58,32 @@ function B:CleanseNeverList()
   if type(global.cleanseNever)~="table" then global.cleanseNever={} end
   return global.cleanseNever
 end
-function B:SetCleanseNever(name,blocked)
+-- Icons for list entries (remembered when a debuff is added from a reminder) and built-in
+-- entries the player chose to allow anyway. Both account-wide, like the list.
+local function globalTable(self,key)
+  local global=self.profileDB and self.profileDB.global
+  if not global then self.cleanseSession=self.cleanseSession or {}; self.cleanseSession[key]=self.cleanseSession[key] or {}; return self.cleanseSession[key] end
+  if type(global[key])~="table" then global[key]={} end
+  return global[key]
+end
+function B:CleanseNeverIcons() return globalTable(self,"cleanseNeverIcons") end
+function B:CleanseBuiltInAllowed() return globalTable(self,"cleanseBuiltInAllowed") end
+function B:SetCleanseNever(name,blocked,icon)
   if not A.Text(name) then return end
   name=name:match("^%s*(.-)%s*$"); if name=="" then return end
-  self:CleanseNeverList()[name:lower()]=blocked and name or nil
+  local key=name:lower()
+  self:CleanseNeverList()[key]=blocked and name or nil
+  if blocked and (A.Number(icon) or A.Text(icon)) then self:CleanseNeverIcons()[key]=icon
+  elseif not blocked then self:CleanseNeverIcons()[key]=nil end
+  self:RequestRefresh("never cleanse changed",0)
+end
+function B:SetCleanseBuiltInAllowed(id,allowed)
+  if not B.CleanseBuiltInNever[id] then return end
+  self:CleanseBuiltInAllowed()[id]=allowed and true or nil
   self:RequestRefresh("never cleanse changed",0)
 end
 local function neverOffer(self,debuff)
-  if debuff.spellId and B.CleanseBuiltInNever[debuff.spellId] then return true end
+  if debuff.spellId and B.CleanseBuiltInNever[debuff.spellId] and not self:CleanseBuiltInAllowed()[debuff.spellId] then return true end
   local list=self:CleanseNeverList()
   return debuff.name and list[debuff.name:lower()]~=nil
 end
@@ -174,7 +192,7 @@ function B:BuildCleanseAction(unit,debuff,id,abolish,nearby)
   local name,icon=spellInfo(id)
   if not name then return nil end
   local action={id=id,spellName=name,icon=icon or debuff.icon,target=unit,known=true,secureType="spell",valid=true,
-    source="cleanse",cleanse=true,dispelType=debuff.type,debuffName=debuff.name,debuffID=debuff.spellId,stacks=debuff.stacks,abolish=abolish,
+    source="cleanse",cleanse=true,dispelType=debuff.type,debuffName=debuff.name,debuffIcon=debuff.icon,debuffID=debuff.spellId,stacks=debuff.stacks,abolish=abolish,
     key="cleanse:"..debuff.type..":"..tostring(debuff.spellId or debuff.name)}
   action.name=L("Cleanse: %s",debuff.name)..(debuff.stacks>=2 and " ("..debuff.stacks..")" or "")
   action.targetName=A.Call(UnitName,unit) or unit
@@ -366,16 +384,26 @@ function B:BuildCleansePage(ui,tabs,headerSwitch,section)
   ui.button(p,"Add",298,-520,90,add)
   ui.label(p,"Type the debuff's name, or right-click a cleanse reminder to add it.",400,-526,"GameFontDisableSmall",290)
   f.cleanseScroll=CreateFrame("ScrollFrame",nil,p,"UIPanelScrollFrameTemplate")
+  f.cleanseRestore=ui.button(p,"Restore built-in entries",486,-488,204,function()
+    if A.Combat() then return end
+    for id in pairs(B:CleanseBuiltInAllowed()) do B:SetCleanseBuiltInAllowed(id,false) end
+    B:UpdateCleansePage()
+  end)
+  f.cleanseRestore:SetHeight(20)
   f.cleanseScroll:SetPoint("TOPLEFT",26,-558); f.cleanseScroll:SetSize(640,150)
   f.cleanseList=CreateFrame("Frame",nil,f.cleanseScroll); f.cleanseList:SetSize(640,150); f.cleanseScroll:SetScrollChild(f.cleanseList)
   f.cleanseListRows={}
   function f.cleanseRow(index)
     local row=f.cleanseListRows[index]; if row then return row end
     row=CreateFrame("Frame",nil,f.cleanseList); row:SetSize(640,28); row:SetPoint("TOPLEFT",0,-(index-1)*30)
-    row.text=ui.label(row,"",6,-7,"GameFontHighlight",360)
-    row.note=ui.label(row,"",370,-8,"GameFontDisableSmall",260)
+    row.icon=row:CreateTexture(nil,"ARTWORK"); row.icon:SetSize(22,22); row.icon:SetPoint("LEFT",4,0); row.icon:SetTexCoord(.08,.92,.08,.92)
+    row.text=ui.label(row,"",34,-7,"GameFontHighlight",330)
+    row.note=ui.label(row,"",370,-8,"GameFontDisableSmall",160)
     row.remove=ui.button(row,"Remove",540,-2,96,function()
-      if row.name and not A.Combat() then B:SetCleanseNever(row.name,false); B:UpdateCleansePage() end
+      if A.Combat() then return end
+      if row.builtInID then B:SetCleanseBuiltInAllowed(row.builtInID,true)
+      elseif row.name then B:SetCleanseNever(row.name,false) end
+      B:UpdateCleansePage()
     end)
     f.cleanseListRows[index]=row; return row
   end
@@ -411,14 +439,21 @@ function B:UpdateCleansePage()
   f.cleanseBorder:SetChecked(d.cleanseBorder~=false)
   for _,choice in ipairs(self:SoundChoices()) do if choice.key==d.cleanseSound then f.cleanseSoundButton:SetText(self:Text(choice.name)) end end
   -- Never list: built-in entries first (locked), then the shared list, by name.
-  local entries={}
-  for id,entry in pairs(B.CleanseBuiltInNever) do entries[#entries+1]={name=entry.name,note=self:Text(entry.note),locked=true,sort="0"..entry.name:lower()} end
-  for key,name in pairs(self:CleanseNeverList()) do entries[#entries+1]={name=type(name)=="string" and name or key,note="",sort="1"..key} end
+  local entries={}; local allowed=self:CleanseBuiltInAllowed(); local icons=self:CleanseNeverIcons()
+  local fallback="Interface\\Icons\\Spell_Holy_DispelMagic"
+  local anyAllowed=false
+  for id,entry in pairs(B.CleanseBuiltInNever) do
+    if allowed[id] then anyAllowed=true
+    else entries[#entries+1]={name=entry.name,builtInID=id,note=self:Text(entry.note),icon=A.Call(C_Spell and C_Spell.GetSpellTexture,id),sort="0"..entry.name:lower()} end
+  end
+  for key,name in pairs(self:CleanseNeverList()) do entries[#entries+1]={name=type(name)=="string" and name or key,note="",icon=icons[key],sort="1"..key} end
   table.sort(entries,function(a,b) return a.sort<b.sort end)
   for i,entry in ipairs(entries) do
-    local row=f.cleanseRow(i); row.name=entry.name
-    row.text:SetText(entry.name); row.note:SetText(entry.note); row.remove:SetShown(not entry.locked); row:Show()
+    local row=f.cleanseRow(i); row.name=entry.name; row.builtInID=entry.builtInID
+    row.icon:SetTexture((A.Number(entry.icon) or A.Text(entry.icon)) and entry.icon or fallback)
+    row.text:SetText(entry.name); row.note:SetText(entry.note); row.remove:Show(); row:Show()
   end
+  f.cleanseRestore:SetShown(anyAllowed)
   for i=#entries+1,#f.cleanseListRows do f.cleanseListRows[i]:Hide() end
   f.cleanseList:SetHeight(math.max(150,#entries*30))
 end

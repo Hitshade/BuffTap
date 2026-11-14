@@ -1089,3 +1089,4 @@ B.Locales.deDE["Right-click: never offer to cleanse %s (undo on the Cleanse page
 B.Locales.deDE["Turned on"]="Eingeschaltet"
 B.Locales.deDE["Turned off"]="Ausgeschaltet"
 B.Locales.deDE["Cleansing"]="Reinigen"
+B.Locales.deDE["Restore built-in entries"]="Eingebaute Einträge wiederherstellen"

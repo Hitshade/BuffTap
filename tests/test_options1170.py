@@ -18,9 +18,10 @@ for cls in ['DRUID','PALADIN','MAGE','PRIEST','HUNTER','WARLOCK','SHAMAN','ROGUE
  test('Sidebar and weapon layout stay aligned for '+cls,probe+"playerClass='"+cls+"'; "+'''
  BuffTap:Options(); local f=BuffTap.options
  -- 1.18 window: 900 tall with the banner header; sidebar items are 177 wide on a 38 px rhythm.
- assert(f.w==932 and f.h==900 and #f.tabs==12)
+ assert(f.w==932 and f.h==900 and #f.tabs==14)
  assert(f.pages[1].position[2]==208 and f.pages[1].position[3]==-132)
- for i,t in ipairs(f.tabs) do assert(t.w==177 and t.h==34 and t.position[2]==10 and t.position[3]==-136-(i-1)*38); f.selectTab(i); assert(f.pages[i].shown) end
+ local order={1,14,2,3,4,5,6,7,13,8,9,10,11,12}; local slot={}; local n=0; for _,i in ipairs(order) do if not f.tabs[i].navHidden then n=n+1; slot[i]=n end end; assert((f.tabs[14].navHidden==true)==(not BuffTap:CanCleanseAnything()))
+ for i,t in ipairs(f.tabs) do if slot[i] then assert(t.w==177 and t.h==34 and t.position[2]==10 and t.position[3]==-136-(slot[i]-1)*38) end; f.selectTab(i); assert(f.pages[i].shown) end
  local imbue=BuffTap:WeaponReminderClass()~=nil
  assert(f.weaponClassCard.shown==imbue and f.weaponSectionHeading.shown==imbue)
  for _,edge in ipairs(f.weaponClassCard.edges) do assert(edge.shown==imbue) end

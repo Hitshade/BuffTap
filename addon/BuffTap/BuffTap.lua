@@ -290,7 +290,7 @@ function B:CreateButton()
     if ok and not A.Combat() and down~=false then B:BeginHelperAttempt(B.action) end
   end)
   b:SetScript("PostClick",function(_,button,down)
-    if not A.Combat() and button=="RightButton" and not down and B.action and B.action.source=="cleanse" then B:SetCleanseNever(B.action.debuffName,true); B:Commit(nil,"never cleanse"); return end
+    if not A.Combat() and button=="RightButton" and not down and B.action and B.action.source=="cleanse" then B:SetCleanseNever(B.action.debuffName,true,B.action.debuffIcon); B:Commit(nil,"never cleanse"); return end
     if not A.Combat() and button=="RightButton" and not down and B:HelperEnabled("helperDismiss") then B:DismissHelper(B.action); return end
     if A.Combat() or (button and button~="LeftButton") then return end
     local action=B.action

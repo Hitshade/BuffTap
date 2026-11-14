@@ -1,4 +1,4 @@
-# BuffTap 1.21.0 (beta 1)
+# BuffTap 1.21.0
 
 1.20.1 was never released on its own; its changes ship in 1.21.0 and are listed below the new features.
 
@@ -12,10 +12,16 @@
 - Never cleanse list, shared by all your characters: type a name on the Cleanse page, or right-click a cleanse reminder to add its debuff. A built-in list (starting with Naxxramas' Mutating Injection) is shown locked.
 - Cleanse reminders read "Cleanse: <debuff>" with the stack count, play their own sound (new "Cleansing wash", a rising airy shimmer with a bright two-note sparkle; any sound can be chosen on the Cleanse page) and get a border in the debuff colour (blue Magic, purple Curse, green Poison, brown Disease; can be turned off).
 - The click checks again that the debuff is still there, the spell is usable and the player is in range.
+- The Never cleanse list shows each debuff's icon and name with a Remove button. Built-in entries can be removed too if you really want to cleanse them, and "Restore built-in entries" brings them back.
 
 ### Settings window
 - Status lights in the sidebar: a green light when a page's feature is on, a hollow ring when it is off (My buffs, Cleanse, Groups, Target, Nearby, Consumables, Camping, Weapons). Hover for "Turned on" or "Turned off".
 - Blacklist moved down with the settings-only pages (Customization, Helpers, Profiles, Diagnostics, Patch notes).
+
+### Weapons and consumables
+- Weapon menus show the oil, stone or poison's own icon even when none are in your bags, instead of a question mark.
+- Consumables show the item's own icon when none are in your bags, instead of a question mark.
+- Weapons page: the status line no longer runs under the Retry reminders button.
 
 ### Nearby
 - Hide the title bar until the mouse is over the window (Customization > Nearby window > Title bar), with an option to keep the hairline. Off by default.
@@ -54,7 +60,7 @@
 - Em dashes removed from interface text in all languages.
 
 ### Tests
-- 15 new cleanse and sidebar tests and 1 Nearby ordering test pass. The full suite runs before the final release.
+- 1838 Lua tests passed (full release suite, 0 failures).
 
 ---
 

@@ -1047,18 +1047,27 @@ local function targetAssignableBuffs()
   return B:TargetAssignableBuffs()
 end
 
+-- The family's own item icon when nothing usable is carried, instead of a question mark.
+local function familyIcon(family)
+  for _,item in ipairs(family.items or {}) do
+    local info=B.ConsumableItemInfo and B:ConsumableItemInfo(item.id,item)
+    local icon=info and info.texture or item.icon
+    if icon and icon~=134400 then return icon end
+  end
+  return 134400
+end
 local function consumableChoiceLabel(family,settings)
   settings=settings or B:EditorSettings("consumables")
   local id=B.ConsumableChoiceID and B:ConsumableChoiceID(family,settings)
   if not id then
-    if family.explicitChoice then return L("Choose an item"),134400 end
+    if family.explicitChoice then return L("Choose an item"),familyIcon(family) end
     local item=B.PreferredConsumableItem and B:PreferredConsumableItem(family,settings)
     if item then
       local info=B.ConsumableItemInfo and B:ConsumableItemInfo(item.id,item)
       local name=(info and info.name) or item.name or ("Item "..tostring(item.id))
       return L("Auto: %s",name), (info and info.texture or item.icon or 134400)
     end
-    return L("Auto (none in bags)"),134400
+    return L("Auto (none in bags)"),familyIcon(family)
   end
   for _,item in ipairs(family.items or {}) do
     if item.id==id then
@@ -1066,7 +1075,7 @@ local function consumableChoiceLabel(family,settings)
       return (info and info.name or item.name), (info and info.texture or item.icon or 134400)
     end
   end
-  return L("Auto (none in bags)"),134400
+  return L("Auto (none in bags)"),familyIcon(family)
 end
 
 -- Helpers share the main window and tab lifecycle. Compact descriptions keep
@@ -1749,7 +1758,8 @@ function B:Options()
     f.weaponPoisonHint=label(weapons,"Poison ranks: highest carried usable rank. Preferences stay saved when out of stock.",18,-472,"GameFontDisableSmall",660)
     f.weaponHandsHint=label(weapons,"Oils and stones use a separate temporary-enchant slot. Only compatible melee weapons are eligible; shields, held items, ranged weapons and fishing poles are excluded.",18,-500,"GameFontDisableSmall",660)
     f.weaponModeHint=label(weapons,"",18,-530,"GameFontDisableSmall",660)
-    f.weaponStatus=label(weapons,"",18,-550,"GameFontHighlightSmall",660)
+    -- Width stops short of the Retry reminders button to its right.
+    f.weaponStatus=label(weapons,"",18,-550,"GameFontHighlightSmall",500)
     f.weaponUnavailable=label(weapons,"Class imbues are available to Rogues, Shamans and Mages.",18,-72,"GameFontDisableSmall",660)
     self:BuildContextControls(weaponsPage,"weapons",{label=label,flatButton=flatButton,button=button,addHelp=addHelp})
     local timingLabel=buffs:CreateFontString(nil,"OVERLAY","GameFontNormal")
