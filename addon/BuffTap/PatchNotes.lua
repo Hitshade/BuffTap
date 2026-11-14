@@ -2,6 +2,8 @@
 local _,B=...
 -- Keep the ten most recent releases within a 24 KiB content ceiling.
 B.PatchNotes={
+ {version="1.22.1",title="Nearby dash restored",items={
+  "Players with nothing to cast show the small grey dash in the Nearby window again. It was removed by mistake in 1.22.0."}},
  {version="1.22.0",title="Resurrection, and know when friends are near",items={
   "New: BuffTap offers your resurrection spell to dead group members and to a dead player you target, out of combat. Druids can also allow Rebirth. Find it on the Cleanse & revive page.",
   "New, off by default: a sound and a short highlight when a friend or guild member shows up in your Nearby list. Turn it on under Customization > Binding & sound, with separate switches for friends and guild.",
@@ -72,11 +74,6 @@ B.PatchNotes={
   "A modern square icon style, label placement, a rebuff countdown sweep and greyed out-of-range buffs.",
   "Helpers fits on one page, with Solo thanks at the top. Solo thanks can continue while resting.",
   "Nearby's invite and request buttons can sit on the left or right. The camp tray has a new look."}},
- {version="1.18.0",title="A redesigned settings window",items={
-  "A redesigned settings window with clearer controls, live reminder previews and your choice of accent colour.",
-  "Optionally pause consumable and weapon reminders while resting. Buff reminders continue.",
-  "Adjust Nearby's scale, width, background and visible rows.",
-  "Sliders show their units, and more settings text is translated."},thanks="Thanks to waggz81 for the resting pause idea."},
 }
 function B:PatchNotesUnread()
   return self.profileDB and self.db.optionsPatchDot~=false and self.profileDB.global.patchNotesSeen~=self.version

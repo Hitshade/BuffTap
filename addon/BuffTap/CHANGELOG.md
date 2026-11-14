@@ -1,3 +1,10 @@
+# BuffTap 1.22.1
+
+### Fix
+- Nearby: players with nothing to cast show the small grey dash on the right of their row again. 1.22.0 removed it by mistake.
+
+---
+
 # BuffTap 1.22.0
 
 ### Resurrection (new)
