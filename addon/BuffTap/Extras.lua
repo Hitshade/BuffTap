@@ -194,7 +194,10 @@ function B:CheckupLines()
   add("Debug",safe(function() return self:CaptureOutput(function() B:Status(true) end) end))
   add("Nearby",safe(function() return self:NearbyDiagnosticsLines() end))
   add("Supplies",safe(function() return self:CaptureOutput(function() B:ReportSupplies() end) end))
-  add("Settings (import string)",safe(function() return {self:ExportSettings()} end))
+  add("Settings (import string, without your blacklist)",safe(function()
+    local count=function(t) local n=0; for _ in pairs(t or {}) do n=n+1 end; return n end
+    return {"Blacklist: "..count(self.db.blockedPlayers).." players, "..count(self.db.blockedGuilds).." guilds (names left out)",self:ExportSettings(true)}
+  end))
   return out
 end
 function B:ReportText(kind,hideNames)

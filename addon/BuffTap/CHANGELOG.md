@@ -28,13 +28,13 @@
 - The Nearby light turns red when Nearby is on but friendly nameplates are off, with a tooltip pointing to Shift+V.
 
 ### Diagnostics
-- "Copy for a report" is now "Full check-up": game and character, Diagnostics, Debug, Nearby, Supplies and your settings import string in one box to copy. Also /bt checkup.
+- "Copy for a report" is now "Full check-up": game and character, Diagnostics, Debug, Nearby, Supplies and your settings import string in one box to copy. Also /bt checkup. The names on your blacklist are left out of it (only how many there are), since bug reports are often posted publicly; Export settings still includes them.
 
 ### Customization page
 - The right column (Icon, Preview, Effect) no longer runs past the bottom of the page onto the status bar. The Icon and Preview cards are a little more compact, and the preview icon tops out at 72 pixels.
 
 ### Tests
-- 1862 Lua tests passed.
+- 1878 Lua tests passed.
 
 ---
 

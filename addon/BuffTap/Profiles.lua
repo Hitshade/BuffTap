@@ -247,9 +247,11 @@ local function decode(text)
   if not ok or pos<=#text then return nil end
   return result
 end
-function B:ExportSettings()
+-- private=true (Full check-up): leave out the names on your blacklist, which a public bug report shouldn't carry.
+local PRIVATE={blockedPlayers=true,blockedGuilds=true}
+function B:ExportSettings(private)
   local data={shared={},class={}}
-  for key in pairs(shared) do data.shared[key]=clone(self.db[key]) end
+  for key in pairs(shared) do if not (private and PRIVATE[key]) then data.shared[key]=clone(self.db[key]) end end
   for _,key in ipairs(classKeys) do data.class[key]=clone(self.db[key]) end
   local out={}; encode(data,out,0)
   return "BuffTap1:"..tostring(token() or "NONE")..":"..table.concat(out)
