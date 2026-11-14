@@ -1,3 +1,13 @@
+# BuffTap 1.21.3 (beta 1)
+
+### Friend and guildmate alert (new, off by default)
+- Turn on "Play it when a friend or guildmate appears in Nearby" under Customization > Binding & sound. The first time a friend or guild member shows up in your Nearby list, BuffTap plays the new "Friendly hello" sound (a warm two-note chime, level-matched to the other BuffTap sounds; any sound can be chosen as the Friend sound) and their row glows briefly in blue for a friend or green for a guild member.
+- Separate Friends and Guild switches. It works whether or not the heart and shield name tags are shown.
+- At most once per player per hour and one alert every 20 seconds; never in combat, in instances or for people in your group; quiet for the first seconds after a loading screen, so arriving in a busy guild hub doesn't set off a string of chimes.
+- It uses the Nearby list, so it works wherever that list is active (with "Buff while resting" on, also in cities and inns). It has its own pacing, separate from the reminder sound's switch and minimum interval.
+
+---
+
 # BuffTap 1.21.2
 
 ### Mana reserve on WoW Forever

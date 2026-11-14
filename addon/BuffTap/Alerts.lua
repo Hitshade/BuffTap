@@ -12,6 +12,7 @@ local bundled={
   {key="bell",name="Warm bell",file=SOUNDS.."BuffTapBell.ogg"},
   {key="harp",name="Harp arpeggio",file=SOUNDS.."BuffTapHarp.ogg"},
   {key="cleanse",name="Cleansing wash",file=SOUNDS.."BuffTapCleanse.ogg"},
+  {key="hello",name="Friendly hello",file=SOUNDS.."BuffTapHello.ogg"},
 }
 local definitions={
   {key="default",name="Ding (game)",id=12867},
@@ -61,7 +62,7 @@ function B:SoundChoices()
   -- BuffTap's own sounds are listed once, above; skip their SharedMedia copies.
   local own={}; for _,sound in ipairs(bundled) do own["BuffTap: "..sound.name]=true end
   for _,name in ipairs(names) do if not own[name] then choices[#choices+1]={key="lsm:"..name,name=name,source="SharedMedia"} end end
-  for _,field in ipairs({"reminderSound","supplySound","campAlertSound","cleanseSound"}) do
+  for _,field in ipairs({"reminderSound","supplySound","campAlertSound","cleanseSound","socialSound"}) do
     local key=self.db and self.db[field]
     if type(key)=="string" and key:sub(1,4)=="lsm:" and (not media or not playable(media[key:sub(5)])) then
       local found=false; for _,choice in ipairs(choices) do if choice.key==key then found=true; break end end
@@ -90,11 +91,11 @@ function B:NormalizeAlerts()
     local id=definition.id or (type(SOUNDKIT)=="table" and SOUNDKIT[definition.constant])
     if A.Number(id) and id>0 then valid[definition.key]=true end
   end
-  for _,key in ipairs({"reminderSound","supplySound","campAlertSound","cleanseSound"}) do
+  for _,key in ipairs({"reminderSound","supplySound","campAlertSound","cleanseSound","socialSound"}) do
     local value=self.db[key]
     local shared=type(value)=="string" and value:sub(1,4)=="lsm:" and #value>4 and #value<=512
     -- Unknown or retired choices fall back to the BuffTap default for that alert.
-    if not valid[value] and not shared then self.db[key]=key=="campAlertSound" and "bell" or key=="cleanseSound" and "cleanse" or key=="supplySound" and "glass" or "marimba" end
+    if not valid[value] and not shared then self.db[key]=key=="campAlertSound" and "bell" or key=="cleanseSound" and "cleanse" or key=="socialSound" and "hello" or key=="supplySound" and "glass" or "marimba" end
   end
   if self.db.soundChannel~="Master" and self.db.soundChannel~="SFX" then self.db.soundChannel="Master" end
   local interval=self.db.soundInterval
@@ -103,11 +104,13 @@ function B:NormalizeAlerts()
 end
 function B:PlayAlert(kind,preview)
   if not self.db then return false end
-  if not preview and self.ReminderPauseReason and self:ReminderPauseReason() then return false end
-  if not preview and not (kind=="supply" and self.db.suppliesSound or kind~="supply" and self.db.sound) then return false end
+  -- The friend/guild alert has its own switch and pacing (Nearby), and plays in cities and inns.
+  local social=kind=="social"
+  if not preview and not social and self.ReminderPauseReason and self:ReminderPauseReason() then return false end
+  if not preview and not social and not (kind=="supply" and self.db.suppliesSound or kind~="supply" and self.db.sound) then return false end
   local now=GetTime()
-  if not preview and self.lastAlertSound and now-self.lastAlertSound<self.db.soundInterval then return false end
-  local selected=self.db[kind=="supply" and "supplySound" or kind=="camp" and "campAlertSound" or kind=="cleanse" and "cleanseSound" or "reminderSound"]
+  if not preview and not social and self.lastAlertSound and now-self.lastAlertSound<self.db.soundInterval then return false end
+  local selected=self.db[kind=="supply" and "supplySound" or kind=="camp" and "campAlertSound" or kind=="cleanse" and "cleanseSound" or social and "socialSound" or "reminderSound"]
   local player,value=PlaySound,12867
   if type(selected)=="string" and selected:sub(1,4)=="lsm:" then
     local media=mediaTable(); local sound=media and media[selected:sub(5)]
@@ -126,7 +129,7 @@ function B:PlayAlert(kind,preview)
     ok,result=pcall(PlaySound,12867,self.db.soundChannel)
   end
   if not ok or result==false then return false end
-  if not preview then self.lastAlertSound=now end
+  if not preview and not social then self.lastAlertSound=now end
   return true
 end
 function B:FriendlyStatus()

@@ -498,6 +498,10 @@ end
 -- Friend (character or Battle.net) or member of your guild. Information only: it changes nothing about buffing.
 function B:NearbySocial(unit,guid)
   if self.db.nearbyMarkSocial==false then return nil end
+  return self:NearbySocialKind(unit,guid)
+end
+-- Friend or guild member, whether or not the name tags are shown (the alert works without them).
+function B:NearbySocialKind(unit,guid)
   if A.Text(guid) then
     if C_FriendList and A.Call(C_FriendList.IsFriend,guid)==true then return "friend" end
     if C_BattleNet and type(A.Call(C_BattleNet.GetAccountInfoByGUID,guid))=="table" then return "friend" end
@@ -551,7 +555,10 @@ function B:NearbyPlayers()
         local entry=byGUID[guid] or {unit=unit,guid=guid,name=name,surname=B:NearbySurname(unit),class=class,actions=groupActions,order=self.nearbyOrder[guid] or 0}
         entry.surname=entry.surname or B:NearbySurname(unit)
         entry.marker=not grouped and self:NearbyMarker(unit) or nil
-        entry.social=self:NearbySocial(unit,guid)
+        local socialKind=(self.db.nearbyMarkSocial~=false or self.db.nearbySocialAlert==true) and self:NearbySocialKind(unit,guid) or nil
+        entry.social=self.db.nearbyMarkSocial~=false and socialKind or nil
+        entry.socialKind=socialKind
+        if socialKind and not grouped then self:NoteNearbySocial(entry) end
         if entry.marker=="blocked" then self.nearbyCounts.blocked=self.nearbyCounts.blocked+1
         elseif entry.marker and self.db.pvpProtection==true then self.nearbyCounts.flagged=self.nearbyCounts.flagged+1 end
         local needs=#entry.actions>0
@@ -569,6 +576,34 @@ function B:NearbyPlayers()
     if a.order==b.order then return a.guid<b.guid end return a.order<b.order
   end)
   return out
+end
+-- Friend or guildmate nearby (optional): a sound and a short row highlight the first time they
+-- show up. Once per player per hour, at most one alert every 20 seconds, never in combat or
+-- instances, and quiet for the first seconds after a loading screen so a guild hall doesn't chime.
+local SOCIAL_COLORS={friend={.42,.72,1},guild={.35,.9,.42}}
+function B:SettleSocialAlerts(seconds) self.socialReadyAt=GetTime()+(seconds or 8) end
+function B:NoteNearbySocial(entry)
+  local d=self.db
+  if d.nearbySocialAlert~=true or not A.Text(entry.guid) then return end
+  local kind=entry.socialKind or entry.social
+  if (kind=="friend" and d.nearbySocialFriends==false) or (kind=="guild" and d.nearbySocialGuild==false) then return end
+  local now=GetTime()
+  self.socialPresent=self.socialPresent or {}; self.socialAlerted=self.socialAlerted or {}
+  local seen=self.socialPresent[entry.guid]; self.socialPresent[entry.guid]=now
+  if seen and now-seen<60 then return end
+  if self.socialReadyAt and now<self.socialReadyAt then self.socialAlerted[entry.guid]=now; return end
+  if A.Combat() or A.Call(IsInInstance)==true then return end
+  local last=self.socialAlerted[entry.guid]
+  if last and now-last<3600 then return end
+  if self.lastSocialAlert and now-self.lastSocialAlert<20 then return end
+  self.socialAlerted[entry.guid]=now; self.lastSocialAlert=now
+  self:PlayAlert("social")
+  self.socialPulse=self.socialPulse or {}; self.socialPulse[entry.guid]=now+3
+  self:StartTimer("nearby-social",3.05,function() if not A.Combat() then B:UpdateNearbyWindow() end end)
+end
+function B:NearbySocialPulse(entry)
+  local untilTime=entry and self.socialPulse and self.socialPulse[entry.guid]
+  if untilTime and GetTime()<untilTime then return SOCIAL_COLORS[entry.socialKind or entry.social] end
 end
 function B:SetNearbyView(showAll)
   if A.Combat() then return end
@@ -971,6 +1006,7 @@ function B:CreateNearbyWindow()
     row.marker=wash(row,"BACKGROUND",.75,.60,.25,.075); row.marker:SetAllPoints()
     -- A player who needs a cleanse: faint tint and a bar on the left, in the debuff's colour.
     row.cleanseTint=wash(row,"BACKGROUND",.6,0,1,.15); row.cleanseTint:SetAllPoints(); row.cleanseTint:Hide()
+    row.socialFlash=wash(row,"BACKGROUND",.42,.72,1,.22); row.socialFlash:SetAllPoints(); row.socialFlash:Hide()
     row.cleanseBar=wash(row,"BORDER",.6,0,1,1); row.cleanseBar:SetPoint("TOPLEFT",0,0); row.cleanseBar:SetPoint("BOTTOMLEFT",0,0); row.cleanseBar:SetWidth(2); row.cleanseBar:Hide()
     row.classEdge=wash(row,"BORDER",.55,.47,.30,.70); row.classEdge:SetSize(16,16); row.classEdge:SetPoint("LEFT",4,0)
     row.classIcon=row:CreateTexture(nil,"ARTWORK"); row.classIcon:SetSize(14,14); row.classIcon:SetPoint("LEFT",5,0)
@@ -1233,6 +1269,9 @@ function B:UpdateNearbyWindow()
         row.cleanseTint:SetColorTexture(tint[1],tint[2],tint[3],.15); row.cleanseBar:SetColorTexture(tint[1],tint[2],tint[3],1)
       end
       row.cleanseTint:SetShown(tint and true or false); row.cleanseBar:SetShown(tint and true or false)
+      local pulse=self:NearbySocialPulse(entry)
+      if pulse then row.socialFlash:SetColorTexture(pulse[1],pulse[2],pulse[3],.22) end
+      row.socialFlash:SetShown(pulse and true or false)
       row:SetAlpha(row.action and (row.action.ready and 1 or .72) or (self.db.nearbyShowAll and .60 or .40))
       row.idle:SetShown(self.db.nearbyShowAll and not row.action and #entry.actions==0)
       local invited=self.nearbyInvited and self.nearbyInvited[entry.guid]
@@ -1254,7 +1293,7 @@ function B:UpdateNearbyWindow()
       row.marker:SetShown(row.action and row.action.ready and self.action and self.action.nearby and self.action.targetGUID==entry.guid or false)
       self:ShowNearbyRowResult(row,self:NearbyResultFor(entry.guid))
       if not row:IsShown() then row:Show() end
-    else row.style=nil; row.invite:Hide(); row.request:Hide(); row.idle:Hide(); row.cleanseTint:Hide(); row.cleanseBar:Hide(); if row.result then row.result:Hide() end; dimRow(row,false); for _,tag in ipairs(row.tags) do tag:Hide() end; if row:IsShown() then row:Hide() end end
+    else row.style=nil; row.invite:Hide(); row.request:Hide(); row.idle:Hide(); row.cleanseTint:Hide(); row.cleanseBar:Hide(); row.socialFlash:Hide(); if row.result then row.result:Hide() end; dimRow(row,false); for _,tag in ipairs(row.tags) do tag:Hide() end; if row:IsShown() then row:Hide() end end
   end
   local status
   if not self.db.enabled then status="BuffTap is disabled."
@@ -1324,6 +1363,7 @@ frame:SetScript("OnEvent",function(_,event,unit,message,spellID)
     if not A.Combat() then B:SeedNearby(unit) end
     -- Preserve arrival order through short nameplate hide/show cycles.
   elseif event=="PLAYER_ENTERING_WORLD" or event=="PLAYER_REGEN_ENABLED" then
+    if event=="PLAYER_ENTERING_WORLD" then B:SettleSocialAlerts() end
     B.nearbyNeedCache={}; B.nearbyUnits={}; B.nearbyOrder={}; if not A.Combat() then B:SeedNearby() end
     B:ScheduleNearbySettle()
   elseif event=="CVAR_UPDATE" then

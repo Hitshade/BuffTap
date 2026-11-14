@@ -200,16 +200,24 @@ function B:BuildRefinedOptions(ui,tabs)
   ui.button(binding,"Set Nearby key",398,-82,134,function() B:CaptureBinding("nearby") end)
   T.Confirm(ui.button(binding,"Clear",546,-82,142,function() B.db.nearbyKeys={}; if B.nearbyFrame then B:UpdateNearbyWindow() end; B:RequestRefresh("clear nearby binding",0); B:Options() end))
   ui.label(binding,"Keys work only when a buff is ready. With a Nearby key set, your main key covers only you and your group.",26,-124,"GameFontDisableSmall",650)
-  section(ui,binding,"Sounds",12,-172,692,250)
-  for i,entry in ipairs({{f.reminderSoundButton,"Reminder sound","reminder"},{f.supplySoundButton,"Supply sound","supply"},{f.campSoundButton,"Camp sound","camp"}}) do
+  section(ui,binding,"Sounds",12,-172,692,320)
+  for i,entry in ipairs({{f.reminderSoundButton,"Reminder sound","reminder"},{f.supplySoundButton,"Supply sound","supply"},{f.campSoundButton,"Camp sound","camp"},{f.socialSoundButton,"Friend sound","social"}}) do
     local y=-214-(i-1)*42; ui.label(binding,entry[2],26,y-5,"GameFontHighlightSmall",130); place(entry[1],binding,166,y,330,26)
     local kind=entry[3]; ui.button(binding,"Preview",510,y,178,function() B:PlayAlert(kind,true) end)
   end
-  ui.label(binding,"Audio channel",26,-346,"GameFontHighlightSmall",130); place(f.channelButton,binding,166,-340,196,26)
-  ui.label(binding,"Minimum interval",380,-346,"GameFontHighlightSmall",130); place(f.soundInterval,binding,510,-340,178,24)
-  place(f.soundCheck,binding,26,-386)
-  section(ui,binding,"Quick access",12,-440,692,82); place(f.minimapCheck,binding,26,-482); place(f.brokerCheck,binding,360,-482)
-  place(f.resetAllButton,binding,510,-478,178,26); reparent(f.resetConfirm,binding); f.resetConfirm:ClearAllPoints(); f.resetConfirm:SetPoint("TOPLEFT",16,-482); f.resetConfirm:Hide()
+  -- Friend sound: when a friend or guild member first shows up in Nearby (off by default).
+  f.socialAlert=ui.check(binding,"Play it when a friend or guildmate appears in Nearby",26,-384,function(c)
+    B.db.nearbySocialAlert=c:GetChecked()==true; if B.db.nearbySocialAlert then B:SettleSocialAlerts(3) end; B:Options()
+  end)
+  f.socialAlert:HookScript("OnEnter",function(s) T.Tooltip(s,B:Text("Friend and guildmate alert"),B:Text("Plays the friend sound and briefly highlights their row the first time a friend or guild member shows up in the Nearby list. At most once per player an hour, never in combat or instances, and not for people in your group.")) end)
+  f.socialAlert:HookScript("OnLeave",function() if GameTooltip then GameTooltip:Hide() end end)
+  f.socialFriends=ui.check(binding,"Friends",470,-384,function(c) B.db.nearbySocialFriends=c:GetChecked()==true end)
+  f.socialGuild=ui.check(binding,"Guild",580,-384,function(c) B.db.nearbySocialGuild=c:GetChecked()==true end)
+  ui.label(binding,"Audio channel",26,-424,"GameFontHighlightSmall",130); place(f.channelButton,binding,166,-418,196,26)
+  ui.label(binding,"Minimum interval",380,-424,"GameFontHighlightSmall",130); place(f.soundInterval,binding,510,-418,178,24)
+  place(f.soundCheck,binding,26,-456)
+  section(ui,binding,"Quick access",12,-506,692,80); place(f.minimapCheck,binding,26,-546); place(f.brokerCheck,binding,360,-546)
+  place(f.resetAllButton,binding,510,-542,178,26); reparent(f.resetConfirm,binding); f.resetConfirm:ClearAllPoints(); f.resetConfirm:SetPoint("TOPLEFT",16,-546); f.resetConfirm:Hide()
   local interface=f.appearancePanes.interface
   section(ui,interface,"Interface",12,-12,692,278)
   ui.label(interface,"Accent colour",26,-62,"GameFontHighlightSmall",180)
@@ -296,7 +304,7 @@ function B:RefineNearbyPage(ui,tabs)
     if A.Combat() then return end
     B.db.nearbyMarkSocial=c:GetChecked()==true; if B.nearbyFrame then B:UpdateNearbyWindow() end
   end)
-  f.nearbyMarkSocial:HookScript("OnEnter",function(s) T.Tooltip(s,B:Text("Mark friends and guild members"),B:Text("A heart marks friends and a shield marks guild members, next to their buffs. It does not change who gets buffed.")) end)
+  f.nearbyMarkSocial:HookScript("OnEnter",function(s) T.Tooltip(s,B:Text("Mark friends and guild members"),B:Text("A heart marks friends and a shield marks guild members, next to their buffs. It does not change who gets buffed. A sound when they show up can be turned on under Customization > Binding & sound.")) end)
   f.nearbyMarkSocial:HookScript("OnLeave",function() if GameTooltip then GameTooltip:Hide() end end)
   -- Mana reserve: 0% is off.
   ui.label(p,"Mana reserve",374,-219,"GameFontHighlightSmall",110)
@@ -590,7 +598,7 @@ function B:UpdateRefinedOptions()
   if f.labelPositionButton then f.labelPositionButton:SetText(self:Text(positions[self.db.labelPosition] or "Split")) end
   if f.swipeCheck then f.swipeCheck:SetChecked(self.db.showSwipe==true) end
   if f.rangeCheck then f.rangeCheck:SetChecked(self.db.showOutOfRange==true) end
-  f.reduceMotion:SetChecked(self.db.optionsReduceMotion); f.nearbyLock:SetChecked(self.db.nearbyLocked==true); if f.nearbyOnTop then f.nearbyOnTop:SetChecked(self.db.nearbyOnTop==true) end; if f.nearbyShowLevel then f.nearbyShowLevel:SetChecked(self.db.nearbyShowLevel==true) end; if f.nearbyMarkSocial then f.nearbyMarkSocial:SetChecked(self.db.nearbyMarkSocial~=false) end; if f.nearbyWhileResting then f.nearbyWhileResting:SetChecked(self.db.nearbyWhileResting==true) end; if f.nearbyCastResult then f.nearbyCastResult:SetChecked(self.db.nearbyCastResult~=false) end; if f.nearbyHoldShort then f.nearbyHoldShort:SetChecked(self.db.nearbyHoldShort==true); f.nearbyHoldShort:SetEnabled(not (self.db.pauseResting and self.db.nearbyWhileResting~=true)) end; if f.nearbyHideHeader then f.nearbyHideHeader:SetChecked(self.db.nearbyHideHeader==true); f.nearbyKeepLine:SetChecked(self.db.nearbyKeepLine~=false); f.nearbyKeepLine:SetEnabled(self.db.nearbyHideHeader==true) end; if f.nearbyFullNames then f.nearbyFullNames:SetChecked(self.db.nearbyFullNames~=false) end
+  f.reduceMotion:SetChecked(self.db.optionsReduceMotion); f.nearbyLock:SetChecked(self.db.nearbyLocked==true); if f.nearbyOnTop then f.nearbyOnTop:SetChecked(self.db.nearbyOnTop==true) end; if f.nearbyShowLevel then f.nearbyShowLevel:SetChecked(self.db.nearbyShowLevel==true) end; if f.nearbyMarkSocial then f.nearbyMarkSocial:SetChecked(self.db.nearbyMarkSocial~=false) end; if f.nearbyWhileResting then f.nearbyWhileResting:SetChecked(self.db.nearbyWhileResting==true) end; if f.nearbyCastResult then f.nearbyCastResult:SetChecked(self.db.nearbyCastResult~=false) end; if f.socialAlert then f.socialAlert:SetChecked(self.db.nearbySocialAlert==true); f.socialFriends:SetChecked(self.db.nearbySocialFriends~=false); f.socialGuild:SetChecked(self.db.nearbySocialGuild~=false); f.socialFriends:SetEnabled(self.db.nearbySocialAlert==true); f.socialGuild:SetEnabled(self.db.nearbySocialAlert==true) end; if f.nearbyHoldShort then f.nearbyHoldShort:SetChecked(self.db.nearbyHoldShort==true); f.nearbyHoldShort:SetEnabled(not (self.db.pauseResting and self.db.nearbyWhileResting~=true)) end; if f.nearbyHideHeader then f.nearbyHideHeader:SetChecked(self.db.nearbyHideHeader==true); f.nearbyKeepLine:SetChecked(self.db.nearbyKeepLine~=false); f.nearbyKeepLine:SetEnabled(self.db.nearbyHideHeader==true) end; if f.nearbyFullNames then f.nearbyFullNames:SetChecked(self.db.nearbyFullNames~=false) end
   if f.nearbyFontButton then
     for _,v in ipairs(self:NearbyFonts()) do if v.key==self.db.nearbyFont then f.nearbyFontButton:SetText(self:Text(v.name)) end end
     for _,v in ipairs(self:NearbyTextSizes()) do if v.key==self.db.nearbyFontSize then f.nearbyFontSizeButton:SetText(v.name) end end

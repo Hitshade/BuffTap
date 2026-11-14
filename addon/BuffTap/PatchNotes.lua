@@ -2,6 +2,9 @@
 local _,B=...
 -- Keep the ten most recent releases within a 24 KiB content ceiling.
 B.PatchNotes={
+ {version="1.21.3",title="Know when friends are near",items={
+  "New, off by default: a sound and a short highlight when a friend or guild member shows up in your Nearby list. Turn it on under Customization > Binding & sound, with separate switches for friends and guild.",
+  "It plays at most once per player an hour, never in combat or instances, and stays quiet right after a loading screen."}},
  {version="1.21.2",title="A mana reserve that works on Forever",items={
   "The Nearby mana reserve now works when the game hides your exact mana, as WoW Forever does: BuffTap judges it from which of your spells you can afford, so it stops close to your reserve. Once it is saving mana it waits until you are a little above the reserve again.",
   "Nearby cleanses respect the mana reserve too."}},
@@ -72,11 +75,6 @@ B.PatchNotes={
   "Optionally pause consumable and weapon reminders while resting. Buff reminders continue.",
   "Adjust Nearby's scale, width, background and visible rows.",
   "Sliders show their units, and more settings text is translated."},thanks="Thanks to waggz81 for the resting pause idea."},
- {version="1.17.1",title="Preferences for each group setup",items={
-  "Choose different buffs, weapon buffs and consumables for Solo, Party and Raid.",
-  "Party and Raid follow unchanged Solo preferences until you customize them.",
-  "Groups now keeps five-player Party and Raid preferences separately.",
-  "Matching-class profile copies include these preferences."},thanks="Thanks to Xprit44 for the separate party weapon-buff idea."},
 }
 function B:PatchNotesUnread()
   return self.profileDB and self.db.optionsPatchDot~=false and self.profileDB.global.patchNotesSeen~=self.version

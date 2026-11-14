@@ -2163,8 +2163,8 @@ function B:Options()
     line(app,-406)
     label(app,L("Sounds"),18,-420,"GameFontNormal")
     local function soundControl(kind,y)
-      label(app,kind=="supply" and L("Supply sound") or kind=="camp" and L("Camp sound") or L("Reminder sound"),18,y-5,"GameFontHighlightSmall",112)
-      local key=kind=="supply" and "supplySound" or kind=="camp" and "campAlertSound" or "reminderSound"
+      label(app,kind=="supply" and L("Supply sound") or kind=="camp" and L("Camp sound") or kind=="social" and L("Friend sound") or L("Reminder sound"),18,y-5,"GameFontHighlightSmall",112)
+      local key=kind=="supply" and "supplySound" or kind=="camp" and "campAlertSound" or kind=="social" and "socialSound" or "reminderSound"
       local choice=selector(app,"",138,y,180,function() return B:SoundChoices() end,function(value) B.db[key]=value end,true)
       button(app,L("Preview"),326,y,90,function() if not B:PlayAlert(kind,true) then B.Print(L("Sound preview unavailable.")) end end)
       addHelp(choice,L("Sound"),L("Open the list to choose a sound.").."\n"..L("Game sounds and installed SharedMedia sounds are available. Search or scroll the list; Preview ignores the alert toggle. Missing media uses the default sound without forgetting your choice."))
@@ -2173,6 +2173,7 @@ function B:Options()
     f.reminderSoundButton=soundControl("reminder",-440)
     f.supplySoundButton=soundControl("supply",-474)
     f.campSoundButton=soundControl("camp",-508)
+    f.socialSoundButton=soundControl("social",-542)
     label(app,L("Audio channel"),436,-445,"GameFontHighlightSmall",116)
     f.channelButton=selector(app,"",550,-440,132,function() return {{key="Master",name="Master"},{key="SFX",name="Sound effects"}} end,function(value) B.db.soundChannel=value end)
     addHelp(f.channelButton,L("Audio channel"),L("Choose a sound and preview it. Master follows master volume; Sound effects follows effects volume."))
@@ -2605,6 +2606,7 @@ function B:Options()
     if choice.key==self.db.reminderSound then f.reminderSoundButton:SetText(L(choice.name)) end
     if choice.key==self.db.supplySound then f.supplySoundButton:SetText(L(choice.name)) end
     if f.campSoundButton and choice.key==self.db.campAlertSound then f.campSoundButton:SetText(L(choice.name)) end
+    if f.socialSoundButton and choice.key==self.db.socialSound then f.socialSoundButton:SetText(L(choice.name)) end
   end
   f.channelButton:SetText(L(self.db.soundChannel=="Master" and L("Master") or L("Sound effects")))
   f.minimapCheck:SetChecked(not self.db.minimap.hide)
