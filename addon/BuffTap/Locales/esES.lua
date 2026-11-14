@@ -1143,3 +1143,4 @@ B.Locales.esES["Rebirth has a long cooldown, so it is off unless you turn it on.
 B.Locales.esES["Your class can't resurrect."]="Tu clase no puede resucitar."
 B.Locales.esES["Uses %s"]="Usa %s"
 B.Locales.esES["Sound settings"]="Ajustes de sonido"
+B.Locales.esES["Only while you are unflagged. Same switch as on Helpers."]="Solo mientras no estás marcado. Es el mismo interruptor que en Asistentes."

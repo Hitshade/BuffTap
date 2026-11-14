@@ -4,7 +4,7 @@
 
 local _, B = ...
 _G.BuffTap = B
-B.version = "1.22.1"
+B.version = "1.22.2-beta1"
 B.API = {}
 local A = B.API
 
@@ -342,6 +342,11 @@ function B:ReminderPauseReason()
   if self.editModeActive then return "editing reminder" end
   if A.Call(IsMounted)==true then return "mounted" end
   if self.db and self.db.pauseResting and A.Call(IsResting)==true then return "resting" end
+  if self:Stealthed() then return "stealthed" end
+end
+-- Stealth, Prowl, Shadowmeld and similar: any cast or item use would break it.
+function B:Stealthed()
+  return type(IsStealthed)=="function" and A.Call(IsStealthed)==true
 end
 
 function B:TargetBlessingChoice(entry)

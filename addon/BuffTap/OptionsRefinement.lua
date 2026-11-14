@@ -274,7 +274,7 @@ end
 function B:RefineNearbyPage(ui,tabs)
   local f=self.options; local p=f.pages[tabs.Nearby]; clearPage(p)
   headerSwitch(f.nearbyEnable,p)
-  section(ui,p,"Player list",12,-72,692,182)
+  section(ui,p,"Player list",12,-72,692,216)
   -- Left column: who and when you buff. Right column: how the list looks.
   place(f.nearbyBuffing,p,26,-112); place(f.nearbyAll,p,374,-112)
   f.nearbyFullNames=ui.check(p,"Show full names",374,-146,function(c)
@@ -313,9 +313,17 @@ function B:RefineNearbyPage(ui,tabs)
   f.nearbyManaFloor:SetPoint("TOPLEFT",484,-216); f.nearbyManaFloor.visualKey="nearbyManaFloor"; f.refinedSliders[#f.refinedSliders+1]=f.nearbyManaFloor
   f.nearbyManaFloor:HookScript("OnEnter",function(s) T.Tooltip(s,B:Text("Mana reserve"),B:Text("Stop offering buffs and cleanses to players outside your group when your mana is below this, until it is a little above it again. Your own buffs and your group's are not affected. If the game hides your exact mana, BuffTap judges it from which of your spells you can afford, so it stops close to this value. Set it to 0 to turn it off.")) end)
   f.nearbyManaFloor:HookScript("OnLeave",function() if GameTooltip then GameTooltip:Hide() end end)
+  -- The same setting as Helpers > Conveniences, where Nearby users don't look for it.
+  f.nearbyPvp=ui.check(p,"Prevent accidental PvP flagging",26,-248,function(c)
+    if A.Combat() then return end
+    B.db.pvpProtection=c:GetChecked()==true; B.nearbySnapshot=nil; B:Refresh(false); B:Options()
+  end)
+  f.nearbyPvp:HookScript("OnEnter",function(s) T.Tooltip(s,B:Text("Prevent accidental PvP flagging"),B:Text("Skip flagged or unreadable recipients while unflagged or leaving PvP. Includes group spells. Battlegrounds and arenas are exempt.")) end)
+  f.nearbyPvp:HookScript("OnLeave",function() if GameTooltip then GameTooltip:Hide() end end)
+  ui.label(p,"Only while you are unflagged. Same switch as on Helpers.",374,-254,"GameFontDisableSmall",316)
   -- How it works: the same drawn guide as the first-time introduction.
-  section(ui,p,"How Nearby works",12,-272,692,452)
-  local guide=CreateFrame("Frame",nil,p); guide:SetPoint("TOPLEFT",26,-312); guide:SetSize(664,400)
+  section(ui,p,"How Nearby works",12,-306,692,418)
+  local guide=CreateFrame("Frame",nil,p); guide:SetPoint("TOPLEFT",26,-346); guide:SetSize(664,366)
   self:DrawNearbyGuide(guide,664)
   self:BuildNearbyAppearance(ui,f.appearancePanes.nearby)
 end
@@ -602,7 +610,7 @@ function B:UpdateRefinedOptions()
   if f.labelPositionButton then f.labelPositionButton:SetText(self:Text(positions[self.db.labelPosition] or "Split")) end
   if f.swipeCheck then f.swipeCheck:SetChecked(self.db.showSwipe==true) end
   if f.rangeCheck then f.rangeCheck:SetChecked(self.db.showOutOfRange==true) end
-  f.reduceMotion:SetChecked(self.db.optionsReduceMotion); f.nearbyLock:SetChecked(self.db.nearbyLocked==true); if f.nearbyOnTop then f.nearbyOnTop:SetChecked(self.db.nearbyOnTop==true) end; if f.nearbyShowLevel then f.nearbyShowLevel:SetChecked(self.db.nearbyShowLevel==true) end; if f.nearbyMarkSocial then f.nearbyMarkSocial:SetChecked(self.db.nearbyMarkSocial~=false) end; if f.nearbyWhileResting then f.nearbyWhileResting:SetChecked(self.db.nearbyWhileResting==true) end; if f.nearbyCastResult then f.nearbyCastResult:SetChecked(self.db.nearbyCastResult~=false) end; if f.socialAlert then f.socialAlert:SetChecked(self.db.nearbySocialAlert==true); f.socialFriends:SetChecked(self.db.nearbySocialFriends~=false); f.socialGuild:SetChecked(self.db.nearbySocialGuild~=false); f.socialFriends:SetEnabled(self.db.nearbySocialAlert==true); f.socialGuild:SetEnabled(self.db.nearbySocialAlert==true) end; if f.nearbyHoldShort then f.nearbyHoldShort:SetChecked(self.db.nearbyHoldShort==true); f.nearbyHoldShort:SetEnabled(not (self.db.pauseResting and self.db.nearbyWhileResting~=true)) end; if f.nearbyHideHeader then f.nearbyHideHeader:SetChecked(self.db.nearbyHideHeader==true); f.nearbyKeepLine:SetChecked(self.db.nearbyKeepLine~=false); f.nearbyKeepLine:SetEnabled(self.db.nearbyHideHeader==true) end; if f.nearbyFullNames then f.nearbyFullNames:SetChecked(self.db.nearbyFullNames~=false) end
+  f.reduceMotion:SetChecked(self.db.optionsReduceMotion); f.nearbyLock:SetChecked(self.db.nearbyLocked==true); if f.nearbyPvp then f.nearbyPvp:SetChecked(self.db.pvpProtection==true) end; if f.nearbyOnTop then f.nearbyOnTop:SetChecked(self.db.nearbyOnTop==true) end; if f.nearbyShowLevel then f.nearbyShowLevel:SetChecked(self.db.nearbyShowLevel==true) end; if f.nearbyMarkSocial then f.nearbyMarkSocial:SetChecked(self.db.nearbyMarkSocial~=false) end; if f.nearbyWhileResting then f.nearbyWhileResting:SetChecked(self.db.nearbyWhileResting==true) end; if f.nearbyCastResult then f.nearbyCastResult:SetChecked(self.db.nearbyCastResult~=false) end; if f.socialAlert then f.socialAlert:SetChecked(self.db.nearbySocialAlert==true); f.socialFriends:SetChecked(self.db.nearbySocialFriends~=false); f.socialGuild:SetChecked(self.db.nearbySocialGuild~=false); f.socialFriends:SetEnabled(self.db.nearbySocialAlert==true); f.socialGuild:SetEnabled(self.db.nearbySocialAlert==true) end; if f.nearbyHoldShort then f.nearbyHoldShort:SetChecked(self.db.nearbyHoldShort==true); f.nearbyHoldShort:SetEnabled(not (self.db.pauseResting and self.db.nearbyWhileResting~=true)) end; if f.nearbyHideHeader then f.nearbyHideHeader:SetChecked(self.db.nearbyHideHeader==true); f.nearbyKeepLine:SetChecked(self.db.nearbyKeepLine~=false); f.nearbyKeepLine:SetEnabled(self.db.nearbyHideHeader==true) end; if f.nearbyFullNames then f.nearbyFullNames:SetChecked(self.db.nearbyFullNames~=false) end
   if f.nearbyFontButton then
     for _,v in ipairs(self:NearbyFonts()) do if v.key==self.db.nearbyFont then f.nearbyFontButton:SetText(self:Text(v.name)) end end
     for _,v in ipairs(self:NearbyTextSizes()) do if v.key==self.db.nearbyFontSize then f.nearbyFontSizeButton:SetText(v.name) end end

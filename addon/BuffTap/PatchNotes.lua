@@ -2,6 +2,10 @@
 local _,B=...
 -- Keep the ten most recent releases within a 24 KiB content ceiling.
 B.PatchNotes={
+ {version="1.22.2",title="PvP realms and stealth",items={
+  "Nearby now follows the same PvP rule as your group and target: flagged players are only skipped while you are unflagged. On PvP realms, Nearby works again in contested zones.",
+  "The PvP protection switch is now also on the Nearby page.",
+  "BuffTap holds back while you are in Stealth, Prowl or Shadowmeld, so a buff never breaks it."}},
  {version="1.22.1",title="Nearby dash restored",items={
   "Players with nothing to cast show the small grey dash in the Nearby window again. It was removed by mistake in 1.22.0."}},
  {version="1.22.0",title="Resurrection, and know when friends are near",items={
@@ -68,12 +72,6 @@ B.PatchNotes={
   "BuffTap's own alert sounds: Marimba rise (the new reminder default), Glass chime, Warm bell and Harp arpeggio.",
   "The sounds are shared with other addons through SharedMedia when it is installed.",
   "Fixed see-through dropdown menus on some settings pages."}},
- {version="1.19.0",title="Roles, requests and a modern icon",items={
-  "Give party and raid buffs to tanks or healers only, and give a class's tank a different blessing.",
-  "Nearby can ask a passing player for a buff you are missing, and request to join a player's group.",
-  "A modern square icon style, label placement, a rebuff countdown sweep and greyed out-of-range buffs.",
-  "Helpers fits on one page, with Solo thanks at the top. Solo thanks can continue while resting.",
-  "Nearby's invite and request buttons can sit on the left or right. The camp tray has a new look."}},
 }
 function B:PatchNotesUnread()
   return self.profileDB and self.db.optionsPatchDot~=false and self.profileDB.global.patchNotesSeen~=self.version

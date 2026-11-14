@@ -297,7 +297,12 @@ function B:NearbyRecipientSafe(unit)
     self:AddDiag("Nearby protection -> "..tostring(unit)..": "..self.nearbySafetyReason)
     return false,self.nearbySafetyReason
   end
-  if self.db.pvpProtection==true then
+  -- Same rule as group and target buffing: only while you are unflagged (or your flag is running out).
+  -- On PvP realms everyone in a contested zone is flagged, and buffing them changes nothing for you.
+  local inside,kind=false,nil
+  pcall(function() inside,kind=IsInInstance() end)
+  local strict=self.db.pvpProtection==true and inside==true and (kind=="pvp" or kind=="arena")
+  if strict or self:PvPGuardActive() then
     local pvp,ffa=A.Call(UnitIsPVP,unit),A.Call(UnitIsPVPFreeForAll,unit)
     if pvp~=false or ffa~=false then
       self.pvpBlocked=true
@@ -311,6 +316,7 @@ end
 function B:NearbyEntry(unit,checkOnly)
   if not self.db.nearbyEnabled or self.db.nearbyBuffing==false or not platesOn() or A.Combat() then return nil end
   if not A.Text(unit) or not unit:match("^nameplate%d+$") then return nil end
+  if self:Stealthed() then return nil end
   local guid=A.Call(UnitGUID,unit)
   if not self.nearbyUnits or self.nearbyUnits[unit]~=guid then return nil end
   if self:NearbyGroupMember(unit) or not self:NearbyRecipientSafe(unit) then return nil end
