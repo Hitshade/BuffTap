@@ -61,7 +61,7 @@ function B:VisualSetting(key,value)
 end
 function B:CreateOptionsPreview(parent,kind,ui)
   -- Right column order: Icon, Preview, Effect. The preview is compact and ends level with Effect's top.
-  local holder=CreateFrame("Frame",nil,parent,"BackdropTemplate"); holder:SetSize(260,kind=="camp" and 284 or 200); holder:SetPoint("TOPLEFT",444,kind=="camp" and -104 or -228); T.Surface(holder,"card")
+  local holder=CreateFrame("Frame",nil,parent,"BackdropTemplate"); holder:SetSize(260,kind=="camp" and 284 or 168); holder:SetPoint("TOPLEFT",444,kind=="camp" and -104 or -218); T.Surface(holder,"card")
   -- The buff and camp editors share one page; without this the taller buff Icon card would inset the camp preview.
   holder.visualInsetX=444
   ui.label(holder,"PREVIEW",14,-12,"GameFontDisableSmall",100)
@@ -92,7 +92,7 @@ function B:UpdateOptionsPreviews()
     local icon=preview.icon; local active=f:IsShown() and f.activeTab==8 and f.appearanceView==kind
     if not active then self:StopIconEffect(icon) else
       local d=self.db; local camp=kind=="camp"
-      local shown=math.min(96,camp and d.campSize or d.size); icon:SetSize(shown,shown); icon:SetAlpha(camp and d.campOpacity or d.opacity)
+      local shown=math.min(camp and 96 or 72,camp and d.campSize or d.size); icon:SetSize(shown,shown); icon:SetAlpha(camp and d.campOpacity or d.opacity)
       local sample
       if not camp then for _,def in ipairs(self.Buffs) do if def.class==A.Class("player") and def.kind~="group" then sample=def; break end end end
       icon.icon:SetTexture(camp and 135805 or sample and sample.icon or "Interface\\AddOns\\BuffTap\\Media\\BuffTapIcon")
@@ -118,7 +118,8 @@ function B:BuildReminderEditor(parent,kind,ui)
   section(ui,parent,"Layout",12,-12,416,100)
   section(ui,parent,"Text",12,-130,416,248)
   -- Buff reminder: Icon card (with Show icon as its first row), Preview, then Effect.
-  local ey=camp and 0 or -40
+  -- Icon, Preview and Effect must end above the status bar (about -630).
+  local ey=camp and 0 or 2
   section(ui,parent,"Effect",444,-404+ey,260,camp and 154 or 214)
   local function change(key,value) self:VisualSetting(key,value) end
   local function slider(key,title,x,y,min,max,step,width,multiplier)
@@ -162,7 +163,7 @@ function B:BuildReminderEditor(parent,kind,ui)
   end)) end
   ui.label(parent,camp and "The preview does not move or activate your live reminder." or "Hiding the icon keeps your binding and optional sounds active.",26,-550,"GameFontDisableSmall",404)
   -- Icon: style for both reminders; label placement, countdown sweep and out-of-range display for the buff reminder.
-  section(ui,parent,"Icon",444,-12,260,camp and 76 or 200)
+  section(ui,parent,"Icon",444,-12,260,camp and 76 or 192)
   local sy=camp and 0 or -32
   ui.label(parent,"Style",458,-54+sy,"GameFontHighlightSmall",76)
   local styleKey=camp and "campIconStyle" or "iconStyle"

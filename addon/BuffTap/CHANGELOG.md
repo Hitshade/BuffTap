@@ -1,3 +1,10 @@
+# BuffTap 1.21.1 (beta 4)
+
+### Customization page
+- The right column (Icon, Preview, Effect) no longer runs past the bottom of the page onto the status bar. The Icon and Preview cards are a little more compact, and the preview icon tops out at 72 pixels.
+
+---
+
 # BuffTap 1.21.1 (beta 3)
 
 ### Nearby cleansing shows in the Nearby window
