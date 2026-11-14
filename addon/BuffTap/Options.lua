@@ -2590,7 +2590,7 @@ function B:Options()
     local handKey=hand; local selected=self:WeaponPreference(hand,self:EditorSettings("weapons"))
     pick:SetText(selected and selected.name or L("Choose preferred buff"))
     local src=selected and self:WeaponChoiceSource(selected)
-    local preferredIcon=selected and A.Call(C_Spell and C_Spell.GetSpellTexture,selected.ranks[#selected.ranks])
+    local preferredIcon=selected and self:WeaponChoiceIcon(selected)
     pick.icon:SetTexture(src and src.icon or preferredIcon or "Interface\\Icons\\INV_Misc_QuestionMark")
     for _,row in ipairs(pick.menu.rows) do row:Hide() end
     local choices={{name=B:ItemImbueClass(weaponClass) and L("None") or "None (manual missing-buff alert)"}}
@@ -2604,7 +2604,7 @@ function B:Options()
       end); row.icon=row:CreateTexture(nil,"ARTWORK"); row.icon:SetSize(22,22); row.icon:SetPoint("LEFT",4,0); pick.menu.rows[i]=row end
       row.hand=handKey; row.choice=choiceKey
       local source,why=self:WeaponChoiceSource(choiceKey and choice or nil)
-      local icon=source and source.icon or (choiceKey and A.Call(C_Spell and C_Spell.GetSpellTexture,choice.ranks[#choice.ranks]))
+      local icon=source and source.icon or (choiceKey and self:WeaponChoiceIcon(choice))
       row.icon:SetTexture(icon or "Interface\\Icons\\INV_Misc_QuestionMark")
       local incompatible=choiceKey and B:ItemImbueClass(choice.class) and B:CoatingWeaponMatches(16,choice)~=true
       row:SetText(choice.name..(choiceKey and (incompatible and " (incompatible weapon)" or source and (source.count and " (in bags: "..source.count..")" or " (learned)") or " (unavailable)") or "")); fitButtonText(row,420); row:Show()
@@ -2619,7 +2619,7 @@ function B:Options()
     local src=selected and self:WeaponChoiceSource(selected)
     pick:SetText(selected and selected.name or L("None")); fitButtonText(pick,420)
     pick.icon:SetShown(selected~=nil)
-    pick.icon:SetTexture(src and src.icon or (selected and A.Call(C_Spell and C_Spell.GetSpellTexture,selected.ranks[1])) or "Interface\\Icons\\INV_Misc_QuestionMark")
+    pick.icon:SetTexture(src and src.icon or (selected and self:WeaponChoiceIcon(selected)) or "Interface\\Icons\\INV_Misc_QuestionMark")
     local choices={{name=L("None")}}
     for _,choice in ipairs(self.CoatingChoices) do choices[#choices+1]=choice end
     for i,choice in ipairs(choices) do
@@ -2637,7 +2637,7 @@ function B:Options()
       local matches=choice.key and self:CoatingWeaponMatches(hand=="main" and 16 or 17,choice)
       local status=choice.key and (matches~=true and " (incompatible weapon)" or source and " (uses: "..source.count..")" or " (unavailable)") or ""
       row:SetText(choice.name..status); fitButtonText(row,420)
-      row.icon:SetTexture(source and source.icon or (choice.key and A.Call(C_Spell and C_Spell.GetSpellTexture,choice.ranks[1])) or "Interface\\Icons\\INV_Misc_QuestionMark")
+      row.icon:SetTexture(source and source.icon or (choice.key and self:WeaponChoiceIcon(choice)) or "Interface\\Icons\\INV_Misc_QuestionMark")
       addHelp(row,choice.name,why or "Choose this temporary coating. Highest carried usable stone rank is selected. Other enchant categories are preserved.")
     end
     pick.menu.child:SetHeight(#choices*28)

@@ -81,7 +81,9 @@ function B:NormalizeAlerts()
     if self.db.supplySound==nil or self.db.supplySound=="default" then self.db.supplySound="glass" end
     if self.db.campAlertSound==nil or self.db.campAlertSound=="default" then self.db.campAlertSound="bell" end
   end
-  self.db.alertSoundVersion=2
+  -- 1.21.0: cleansing gets its own new sound; early beta builds defaulted to Harp.
+  if version<3 and (self.db.cleanseSound==nil or self.db.cleanseSound=="harp") then self.db.cleanseSound="cleanse" end
+  self.db.alertSoundVersion=3
   self:RegisterSharedSounds()
   local valid={}; for _,sound in ipairs(bundled) do valid[sound.key]=true end
   for _,definition in ipairs(definitions) do

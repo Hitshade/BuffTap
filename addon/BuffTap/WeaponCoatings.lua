@@ -254,6 +254,23 @@ function B:WeaponPreference(hand,settings)
   return self:WeaponChoice((settings and settings.weaponChoices or self:Preference("weaponChoices"))[hand])
 end
 
+-- Icon for a weapon buff even when none are carried: the item's own icon (known to the client
+-- without the item being cached), then the spell icon. Nil only when neither is available.
+function B:WeaponChoiceIcon(choice)
+  if not choice then return nil end
+  local instant=(C_Item and C_Item.GetItemInfoInstant) or GetItemInfoInstant
+  for i=#(choice.items or {}),1,-1 do
+    local id=choice.items[i][1]
+    if type(instant)=="function" then
+      local ok,_,_,_,_,icon=pcall(instant,id)
+      if ok and A.Public(icon) and (A.Number(icon) or A.Text(icon)) and icon~=134400 then return icon end
+    end
+  end
+  for i=#(choice.ranks or {}),1,-1 do
+    local icon=A.Call(C_Spell and C_Spell.GetSpellTexture,choice.ranks[i])
+    if (A.Number(icon) or A.Text(icon)) and icon~=134400 then return icon end
+  end
+end
 function B:WeaponChoiceSource(choice)
   if not choice then return nil,"Choose a weapon buff in Weapons options." end
   if choice.class=="SHAMAN" then
