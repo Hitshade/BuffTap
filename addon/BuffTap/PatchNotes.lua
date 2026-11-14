@@ -5,7 +5,8 @@ B.PatchNotes={
  {version="1.22.2",title="PvP realms and stealth",items={
   "Nearby now follows the same PvP rule as your group and target: flagged players are only skipped while you are unflagged. On PvP realms, Nearby works again in contested zones.",
   "The PvP protection switch is now also on the Nearby page.",
-  "BuffTap holds back while you are in Stealth, Prowl or Shadowmeld, so a buff never breaks it."}},
+  "BuffTap holds back while you are in Stealth, Prowl or Shadowmeld, so a buff never breaks it.",
+  "While Nearby is paused (stealthed, mounted or resting), its first row says so and the players below stay listed for invites."}},
  {version="1.22.1",title="Nearby dash restored",items={
   "Players with nothing to cast show the small grey dash in the Nearby window again. It was removed by mistake in 1.22.0."}},
  {version="1.22.0",title="Resurrection, and know when friends are near",items={
