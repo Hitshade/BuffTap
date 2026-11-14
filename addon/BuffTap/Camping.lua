@@ -245,7 +245,8 @@ function B:CampLabelText(state,preview)
     local label=(state.globalUnknown or state.campUnknown) and "?" or value and labelClock(value) or state.active and L("active") or L("missing")
     lines[#lines+1]=L("Camp:").." "..label
   end
-  if d.campTrackBag and (not state.bagNotNeeded or preview) and (d.campShowStacks or d.campShowCountdown) then
+  -- The bag line also shows while you have stacks, even where the bag isn't needed (max level).
+  if d.campTrackBag and (not state.bagNotNeeded or preview or (A.Number(state.bagStacks) and state.bagStacks>0)) and (d.campShowStacks or d.campShowCountdown) then
     local label
     if state.globalUnknown or state.bagUnknown then label="?"
     else
@@ -269,7 +270,9 @@ function B:StyleCampLabel(icon)
   style.labelFont=d.campTextFont; style.labelColor=d.campTextColor; style.labelSize=d.campTextSize; style.labelOutline=d.campTextOutline
   self:ApplyLabelStyle(icon.time,style,"GameFontHighlightSmall")
   icon.time:ClearAllPoints(); icon.time:SetPoint("TOP",icon,"BOTTOM",0,-d.campTextGap)
-  icon.time:SetWidth(math.max(160,(d.campTextSize>0 and d.campTextSize or 12)*20)); icon.time:SetJustifyH("CENTER"); icon.time:SetJustifyV("TOP"); icon.time:SetWordWrap(false)
+  icon.time:SetWidth(math.max(160,(d.campTextSize>0 and d.campTextSize or 12)*20)); icon.time:SetJustifyH("CENTER"); icon.time:SetJustifyV("TOP")
+  -- Two lines (camp, then bag): word wrap must be on or the second line is cut to "...".
+  icon.time:SetWordWrap(true); if icon.time.SetMaxLines then icon.time:SetMaxLines(2) end
 end
 function B:StyleCampIcon(icon)
   if not icon or not icon.art then return end

@@ -482,7 +482,12 @@ function B:ShowNearbyIntro(enableOnApply)
   f.enableOnApply=enableOnApply
   f.apply:SetText(self:Text(enableOnApply and "Turn on Nearby" or "Save"))
   f.pitch:SetText(self:NearbyPitch(A.Class("player")))
-  for _,c in ipairs(f.checks) do c:SetChecked(enableOnApply and true or self.db[c.key]==true); T.Check(c) end
+  -- First time turning Nearby on: everything on except buff requests (they whisper strangers).
+  -- Opened later from settings, the boxes show the current settings.
+  for _,c in ipairs(f.checks) do
+    if enableOnApply then c:SetChecked(c.key~="nearbyRequests") else c:SetChecked(self.db[c.key]==true) end
+    T.Check(c)
+  end
   -- Offer to switch on friendly nameplates when they are off; Nearby cannot see players without them.
   local off=self:FriendlyPlatesState()==false
   f.plates:SetShown(off); f.plateNote:SetWidth(off and 440 or INTRO_W-48)

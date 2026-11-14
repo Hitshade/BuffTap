@@ -378,13 +378,20 @@ end
 local MARKERS={pvp={"UIPvPFlag",.9,.36,.32,1},["pvp-unknown"]={"UIPvPFlag",.6,.6,.6,.55},blocked={"NavBlacklist",.95,.25,.22,1},
   friend={"UIFriend",.42,.72,1,1},guild={"UIGuild",.35,.9,.42,1}}
 B.NearbyTagStyles=MARKERS
+-- All players view while resting or mounted: the list stays up for invites and requests,
+-- while buffing itself stays paused (NearbyCandidates still returns nothing).
+function B:NearbyBrowsePause()
+  if not self.db or not self.db.nearbyShowAll then return nil end
+  local reason=self:ReminderPauseReason()
+  if reason=="resting" or reason=="mounted" then return reason end
+end
 function B:NearbyPlayers()
   local buffs=self:NearbyCandidates()
   local out,seen,byGUID={},{},{}
   self.nearbyCounts={need=0,total=0,flagged=0,blocked=0}
   for _,entry in ipairs(buffs) do byGUID[entry.guid]=entry end
   if not self.db.enabled or not self.db.nearbyEnabled or not platesOn() or A.Combat()
-    or self:ReminderPauseReason() then return out end
+    or (self:ReminderPauseReason() and not self:NearbyBrowsePause()) then return out end
   for unit,guid in pairs(self.nearbyUnits or {}) do
     if A.Text(guid) and not seen[guid] and A.Call(UnitGUID,unit)==guid
       and A.Call(UnitExists,unit)==true and A.Call(UnitCanAssist,"player",unit)==true
@@ -912,6 +919,30 @@ function B:CreateNearbyWindow()
   if not ok or result==false then self.nearbySetupError="Secure combat visibility failed"; f:Hide(); return end
   f:Hide()
 end
+-- Optional hidden title bar: the header fades out until the mouse is over the window, so it
+-- can still be dragged and its buttons used. The gold line can stay. Polls the mouse only
+-- while the option is on and the window is shown, ten times a second.
+function B:NearbyHeaderParts(f)
+  return {f.header,f.title,f.count,f.lock,f.close,f.allPlayers,f.countHelp}
+end
+function B:UpdateNearbyHeaderFade(force)
+  local f=self.nearbyFrame; if not f then return end
+  local hide=self.db.nearbyHideHeader==true
+  local shown=not hide or f:IsMouseOver(4,-4,-4,4)
+  if force or f.headerShown~=shown then
+    f.headerShown=shown
+    for _,part in ipairs(self:NearbyHeaderParts(f)) do if part then part:SetAlpha(shown and 1 or 0) end end
+    if f.line then f.line:SetAlpha((shown or self.db.nearbyKeepLine~=false) and 1 or 0) end
+  end
+  if not f.headerWatch then
+    f.headerWatch=CreateFrame("Frame",nil,f); f.headerWatch.elapsed=0
+    f.headerWatch:SetScript("OnUpdate",function(w,elapsed)
+      w.elapsed=w.elapsed+(elapsed or 0); if w.elapsed<.1 then return end; w.elapsed=0
+      B:UpdateNearbyHeaderFade()
+    end)
+  end
+  f.headerWatch:SetShown(hide)
+end
 function B:UpdateNearbyWindow()
   if A.Combat() or self.nearbyDragging then return end
   if not self.db.nearbyEnabled and not self.nearbyUserOpened then
@@ -955,7 +986,7 @@ function B:UpdateNearbyWindow()
   -- The header hairline follows the accent colour chosen under Customization > Interface.
   if self.InterfaceAccent then local r,g,b=self:InterfaceAccent(); f.line:SetColorTexture(r,g,b,.80) end
   local list=self:NearbyPlayers()
-  if not self.db.enabled or not self.db.nearbyEnabled or not platesOn() or self:ReminderPauseReason() then self.nearbyDisplay=nil end
+  if not self.db.enabled or not self.db.nearbyEnabled or not platesOn() or (self:ReminderPauseReason() and not self:NearbyBrowsePause()) then self.nearbyDisplay=nil end
   local display=self:NearbyDisplayList(list)
   local x,y=self.db.nearbyX,self.db.nearbyY
   x=A.Number(x) and x or 240; y=A.Number(y) and y or 0
@@ -968,7 +999,10 @@ function B:UpdateNearbyWindow()
     if (counts.flagged or 0)>0 then note=note.." |T"..media.."UIPvPFlag:12:12:0:0:64:64:0:64:0:64:230:92:82|t"..counts.flagged end
     if (counts.blocked or 0)>0 then note=note.." |T"..media.."NavBlacklist:12:12:0:0:64:64:0:64:0:64:242:64:56|t"..counts.blocked end
   end
-  f.count:SetText(counts.need.."/"..counts.total..note)
+  -- Browsing while resting or mounted: say why nothing is offered instead of a 0/N count.
+  local browse=self:NearbyBrowsePause()
+  if browse then f.count:SetText("|cffa0a8b0"..self:Text(browse=="resting" and "Paused: resting" or "Paused: mounted").."|r")
+  else f.count:SetText(counts.need.."/"..counts.total..note) end
   if f.allPlayers.showAll~=self.db.nearbyShowAll then
     f.allPlayers.showAll=self.db.nearbyShowAll
     for _,t in ipairs(f.allPlayers.parts) do
@@ -1058,6 +1092,7 @@ function B:UpdateNearbyWindow()
   else status="No nearby buffs needed." end
   f.status:SetText(status); f.status:SetShown(#display==0); f.statusButton:SetShown(#display==0)
   if self.db.nearbyEnabled and not platesOn() then f.status:SetTextColor(1,.55,.25) else f.status:SetTextColor(.75,.75,.72) end
+  self:UpdateNearbyHeaderFade(true)
   if not f:IsShown() then f:Show() end
 end
 

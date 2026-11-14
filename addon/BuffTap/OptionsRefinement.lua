@@ -317,6 +317,13 @@ function B:BuildNearbyAppearance(ui,p)
   f.nearbyFontSizeButton=ui.selector(p,"",410,-272,110,function() return B:NearbyTextSizes() end,function(v) B:VisualSetting("nearbyFontSize",v); B:Options() end,"scroll")
   f.nearbyFontOutlineButton=ui.selector(p,"",528,-272,160,function() return B:TextOutlineChoices() end,function(v) B:VisualSetting("nearbyFontOutline",v); B:Options() end)
   section(ui,p,"Position",12,-336,692,124)
+  section(ui,p,"Title bar",12,-476,692,84)
+  f.nearbyHideHeader=ui.check(p,"Hide the title bar until the mouse is over the window",26,-518,function(c)
+    B.db.nearbyHideHeader=c:GetChecked()==true; if B.nearbyFrame then B:UpdateNearbyHeaderFade(true) end; B:Options()
+  end)
+  f.nearbyKeepLine=ui.check(p,"Keep the gold line",480,-518,function(c)
+    B.db.nearbyKeepLine=c:GetChecked()==true; if B.nearbyFrame then B:UpdateNearbyHeaderFade(true) end
+  end)
   f.nearbyLock=ui.check(p,"Lock window position",26,-378,function(c) B.db.nearbyLocked=c:GetChecked()==true; if B.nearbyFrame then B:UpdateNearbyWindow() end end)
   f.nearbyOnTop=ui.check(p,"Keep above other windows",226,-378,function(c)
     if A.Combat() then return end
@@ -329,7 +336,7 @@ function B:BuildNearbyAppearance(ui,p)
     B.db.nearbyScale=1; B.db.nearbyRows=5; B.db.nearbyWidth=240; B.db.nearbyOpacity=.5; B.db.nearbyX=240; B.db.nearbyY=0; B.db.nearbyButtonSide="left"; B.db.nearbyFont="default"; B.db.nearbyFontSize=0; B.db.nearbyFontOutline="none"
     if B.nearbyFrame then B.nearbyFrame.positionX=nil; B.nearbyFrame.positionY=nil; B:UpdateNearbyWindow() end; B:Options()
   end))
-  ui.label(p,"Drag the window's title bar to move it, or use Move BuffTap frames to place all of them at once.",26,-478,"GameFontDisableSmall",650)
+  ui.label(p,"Drag the window's title bar to move it, or use Move BuffTap frames to place all of them at once. A hidden title bar comes back while the mouse is over the window.",26,-576,"GameFontDisableSmall",650)
 end
 
 function B:BuildPatchNotesPage(ui,tabs)
@@ -514,7 +521,7 @@ function B:UpdateRefinedOptions()
   if f.labelPositionButton then f.labelPositionButton:SetText(self:Text(positions[self.db.labelPosition] or "Split")) end
   if f.swipeCheck then f.swipeCheck:SetChecked(self.db.showSwipe==true) end
   if f.rangeCheck then f.rangeCheck:SetChecked(self.db.showOutOfRange==true) end
-  f.reduceMotion:SetChecked(self.db.optionsReduceMotion); f.nearbyLock:SetChecked(self.db.nearbyLocked==true); if f.nearbyOnTop then f.nearbyOnTop:SetChecked(self.db.nearbyOnTop==true) end; if f.nearbyShowLevel then f.nearbyShowLevel:SetChecked(self.db.nearbyShowLevel==true) end; if f.nearbyMarkSocial then f.nearbyMarkSocial:SetChecked(self.db.nearbyMarkSocial~=false) end; if f.nearbyFullNames then f.nearbyFullNames:SetChecked(self.db.nearbyFullNames~=false) end
+  f.reduceMotion:SetChecked(self.db.optionsReduceMotion); f.nearbyLock:SetChecked(self.db.nearbyLocked==true); if f.nearbyOnTop then f.nearbyOnTop:SetChecked(self.db.nearbyOnTop==true) end; if f.nearbyShowLevel then f.nearbyShowLevel:SetChecked(self.db.nearbyShowLevel==true) end; if f.nearbyMarkSocial then f.nearbyMarkSocial:SetChecked(self.db.nearbyMarkSocial~=false) end; if f.nearbyHideHeader then f.nearbyHideHeader:SetChecked(self.db.nearbyHideHeader==true); f.nearbyKeepLine:SetChecked(self.db.nearbyKeepLine~=false); f.nearbyKeepLine:SetEnabled(self.db.nearbyHideHeader==true) end; if f.nearbyFullNames then f.nearbyFullNames:SetChecked(self.db.nearbyFullNames~=false) end
   if f.nearbyFontButton then
     for _,v in ipairs(self:NearbyFonts()) do if v.key==self.db.nearbyFont then f.nearbyFontButton:SetText(self:Text(v.name)) end end
     for _,v in ipairs(self:NearbyTextSizes()) do if v.key==self.db.nearbyFontSize then f.nearbyFontSizeButton:SetText(v.name) end end
