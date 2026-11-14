@@ -1,14 +1,13 @@
-# BuffTap 1.21.1 (beta 4)
+# BuffTap 1.21.1
 
-### Customization page
-- The right column (Icon, Preview, Effect) no longer runs past the bottom of the page onto the status bar. The Icon and Preview cards are a little more compact, and the preview icon tops out at 72 pixels.
-
----
-
-# BuffTap 1.21.1 (beta 3)
+### Who gets each buff (friendly targets and Nearby)
+- Each single-target buff on the Target page has a Classes button that opens a class picker with class colours. The choice applies to friendly targets and Nearby players alike; party and raid keep their own class filters on the Groups page.
+- Defaults are unchanged except one fix: Arcane Intellect and Divine Spirit are no longer offered to Warriors and Rogues you target yourself (Nearby already skipped them). Thorns now defaults to Warrior, Rogue, Paladin and Druid, in groups too. A target you click still gets other buffs whatever the class, until you choose classes.
+- The first change in the picker saves every class, starting from what the picker shows, so targets and Nearby follow the same list from then on. "Use defaults" clears it. Choices save as you click, and the picker has a Done button.
+- Blessings keep their own class choices.
 
 ### Nearby cleansing shows in the Nearby window
-- With "Nearby players" on in Cleanse, a stranger with a debuff could put a cleanse on your binding while the main icon stayed hidden (Nearby casts never show it) and the Nearby window, which only listed buff needs, showed nothing. Nearby rows now include the cleanse as their first icon, and the row casts it on click.
+- With "Nearby players" on in Cleanse, a stranger with a debuff could put a cleanse on your binding while the main icon stayed hidden (Nearby casts never show it) and the Nearby window, which only listed buff needs, showed nothing. Nearby rows now include the cleanse as their first icon, and clicking the row casts it.
 - Players who need a cleanse sort to the top of the window. Their row gets a faint tint and a left bar in the debuff's colour, and the cleanse icon has a border in that colour. The tooltip reads "Click: cleanse <debuff>".
 - Nearby cleanses stay silent, like Nearby buffs.
 
@@ -22,23 +21,11 @@
 ### Diagnostics
 - "Copy for a report" is now "Full check-up": game and character, Diagnostics, Debug, Nearby, Supplies and your settings import string in one box to copy. Also /bt checkup.
 
-### Tests
-- The target class picker tests now run with the release suite.
-
----
-
-# BuffTap 1.21.1 (beta 2)
-
-### Who gets each buff (friendly targets and Nearby)
-- Each single-target buff on the Target page has a Classes button that opens a class picker (class colours, checkboxes). The choice applies to friendly targets and Nearby players alike; party and raid keep their own class filters on the Groups page.
-- Defaults are unchanged except one fix: Arcane Intellect and Divine Spirit are no longer offered to Warriors and Rogues you target yourself (Nearby already skipped them). Nearby keeps each buff's class list (Thorns now defaults to Warrior, Rogue, Paladin and Druid, in groups too) and a target you click still gets other buffs whatever the class, until you choose classes.
-- The first change in the picker saves every class, starting from what the picker shows, so targets and Nearby follow the same list from then on. "Use defaults" clears it.
-- Blessings keep their own class choices.
-- The class names in the picker keep their class colours when you change a choice.
-- The picker has a Done button. Choices save as you click.
+### Customization page
+- The right column (Icon, Preview, Effect) no longer runs past the bottom of the page onto the status bar. The Icon and Preview cards are a little more compact, and the preview icon tops out at 72 pixels.
 
 ### Tests
-- New tests for the class picker and target and Nearby class choices pass. The full suite runs before the final release.
+- 1862 Lua tests passed.
 
 ---
 
