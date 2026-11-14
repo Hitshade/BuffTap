@@ -122,8 +122,20 @@ function B:NoteNearbyClick(action)
   self.nearbyLastClick=action and (tostring(action.id).." -> "..action.target.." ("..(self:NearbyCastName(action) or "name unavailable")..")") or "cancelled: evidence changed"
 end
 -- Cast result on the Nearby row (optional): green "done" or red with the game's reason for about
--- a second, then the row clears or comes back. Only a cast on that player in the next 2 seconds counts.
-local RESULT_OK,RESULT_FAIL=1.1,1.6
+-- the global cooldown, then the row clears or comes back. Only a cast on that player in the next 2 seconds counts.
+local GCD=1.5
+-- When the global cooldown from this cast ends: the spell's own cooldown while it is the GCD, else 1.5s.
+local function gcdEnds(id,at)
+  local now=GetTime()
+  local start,duration
+  local info=A.Call(C_Spell and C_Spell.GetSpellCooldown,id)
+  if type(info)=="table" then start,duration=info.startTime,info.duration
+  else start,duration=A.Call(GetSpellCooldown,id) end
+  if A.Number(start) and A.Number(duration) and duration>0 and duration<=GCD+.05 and start+duration>now then
+    return math.max(start+duration,now+.6)
+  end
+  return math.max((at or now)+GCD,now+.6)
+end
 function B:NoteNearbyResult(action)
   self.nearbyResult=nil; self:CancelTimer("nearby-result")
   if not action or self.db.nearbyCastResult==false or not A.Text(action.targetGUID) then return end
@@ -136,7 +148,7 @@ end
 function B:SetNearbyResult(state,reason)
   local r=self.nearbyResult
   if not r or r.state~="pending" or GetTime()-r.at>2 then return end
-  r.state=state; r.reason=reason; r.untilTime=GetTime()+(state=="ok" and RESULT_OK or RESULT_FAIL)
+  r.state=state; r.reason=reason; r.untilTime=state=="ok" and gcdEnds(r.id,r.at) or GetTime()+GCD
   self:CancelTimer("nearby-result")
   self:StartTimer("nearby-result",r.untilTime-GetTime()+.02,function()
     B.nearbyResult=nil; B.nearbySnapshot=nil; if not A.Combat() then B:UpdateNearbyWindow() end
