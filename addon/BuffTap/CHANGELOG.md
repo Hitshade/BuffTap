@@ -7,8 +7,12 @@
 - Settings are on the Cleanse page, now called "Cleanse & revive": Offer resurrection, Your group, Your target and (Druids) Also use Rebirth.
 - Nearby players can't be resurrected: the game removes nameplates from dead players, so they never appear in the Nearby list.
 
+### Smaller changes
+- Nearby: players with nothing to cast no longer show a grey dash on the right of their row.
+- Customization > Binding & sound: the buff reminder position now sits inside the Quick access card, so the page no longer overlaps.
+
 ### Friend and guildmate alert (new, off by default)
-- Turn on "Play it when a friend or guildmate appears in Nearby" under Customization > Binding & sound. The first time a friend or guild member shows up in your Nearby list, BuffTap plays the new "Happy hello" sound (a bouncy kalimba "hey there", level-matched to the other BuffTap sounds; any sound can be chosen as the Friend sound) and their row glows briefly in blue for a friend or green for a guild member.
+- Turn on "Alert me when a friend or guildmate appears in Nearby" under Customization > Binding & sound. The first time a friend or guild member shows up in your Nearby list, BuffTap plays the new "Happy hello" sound (a bouncy kalimba "hey there", level-matched to the other BuffTap sounds; any sound can be chosen as the Friend sound) and their row glows briefly in blue for a friend or green for a guild member.
 - Two more new BuffTap sounds come with it, usable for any alert: "Twin bells" (a bright, cheerful ding-ding) and "Playful marimba".
 - Separate Friends and Guild switches. It works whether or not the heart and shield name tags are shown.
 - At most once per player per hour and one alert every 20 seconds; never in combat, in instances or for people in your group; quiet for the first seconds after a loading screen, so arriving in a busy guild hub doesn't set off a string of chimes.
