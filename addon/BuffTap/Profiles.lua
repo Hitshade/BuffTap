@@ -9,7 +9,7 @@ local shared={iconStyle=true,campIconStyle=true,labelPosition=true,showSwipe=tru
   helperQuick=true,helperDiscovery=true,minimap=true,brokerEnabled=true}
 local classKeys={"groupContextSettings","situationSettings","seconds","rebuffVersion","buffs","priorities","buffSeconds","group","smartGroup","groupNeed","blessingNeed",
   "salvationVersion","salvationMigration","friendlyTarget","targetSeconds","targetClassBlessings","targetBlessingFallback","targetBlessingClasses","targetBlessingPriorities",
-  "blessingGroupOverrides","blessingRaidDefaults","blessingPartyMode","blessingPartyUniform","blessingPartyExcluded","groupBlessingPriorities","blessingAssignments","blessingClasses","buffGroups","buffClasses","buffGroupNeed","buffRoles","blessingRoleChoices","roleGuess","targetBuffs","targetBuffSeconds","targetClasses","raidGroups",
+  "blessingGroupOverrides","blessingRaidDefaults","blessingPartyMode","blessingPartyUniform","blessingPartyExcluded","groupBlessingPriorities","blessingAssignments","blessingClasses","buffGroups","buffClasses","buffGroupNeed","buffRoles","buffSelf","blessingRoleChoices","roleGuess","targetBuffs","targetBuffSeconds","targetClasses","raidGroups",
   "consumablesEnabled","consumableFamilies","consumableChoices","consumableSeconds","suppliesEnabled","suppliesChat","suppliesSound","suppliesReadyCheck","supplySettings",
   "weaponReminder","weaponMainHand","weaponOffHand","weaponApply","weaponReplace","weaponChoices","weaponCoatings","weaponSeconds","weaponsPauseResting","consumablesPauseResting","consumablesInstanceOnly","buffPets",
   "helperTracking","helperTreasure","helperTracker","helperCoverage","helperPet","helperHealthstone","helperSoulstone","helperOath","oathAssigned","helperDemon","soulstoneParty","soulstoneRaid","soulstoneAssigned"}
@@ -260,7 +260,7 @@ end
 local classSpellKeys={buffs=true,priorities=true,buffSeconds=true,salvationVersion=true,salvationMigration=true,targetClassBlessings=true,
   targetBlessingFallback=true,targetBlessingClasses=true,targetBlessingPriorities=true,blessingGroupOverrides=true,blessingRaidDefaults=true,
   blessingPartyMode=true,blessingPartyUniform=true,blessingPartyExcluded=true,groupBlessingPriorities=true,blessingAssignments=true,
-  blessingClasses=true,buffGroups=true,buffClasses=true,buffGroupNeed=true,buffRoles=true,blessingRoleChoices=true,targetBuffs=true,
+  blessingClasses=true,buffGroups=true,buffClasses=true,buffGroupNeed=true,buffRoles=true,buffSelf=true,blessingRoleChoices=true,targetBuffs=true,
   targetBuffSeconds=true,targetClasses=true,groupContextSettings=true,situationSettings=true,weaponChoices=true,weaponCoatings=true,helperPet=true,
   helperHealthstone=true,helperSoulstone=true,helperOath=true,oathAssigned=true,helperDemon=true,soulstoneParty=true,soulstoneRaid=true,soulstoneAssigned=true}
 function B:ImportSettings(text)

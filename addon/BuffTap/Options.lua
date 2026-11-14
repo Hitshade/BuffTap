@@ -2444,7 +2444,16 @@ function B:Options()
           b:SetHeight(24); b.navStyle="segment"; b.roleMode=mode; row.roleButtons[i]=b
           addHelp(b,spec[2],mode=="class" and "The class checkboxes below decide who gets this buff." or mode=="tank" and "Every tank in your group gets this buff, whatever their class. Class choices below are not used. Mark target role sets a role yourself." or "Every healer in your group gets this buff, whatever their class. Class choices below are not used. Mark target role sets a role yourself.")
         end
-        row.filterHint=label(row,"",8,-221,"GameFontDisableSmall",450)
+        -- "Also on me": off means a buff you cast on others (Thorns for the tank) skips you in a group.
+        row.selfCheck=check(row,"Also on me",8,-216,function(s)
+          local def=row.def; if not def or A.Combat() then return end
+          local map=B:GroupEditorSettings().buffSelf
+          if s:GetChecked()==true then map[B:RootKey(def)]=nil else map[B:RootKey(def)]=false end
+          B:InvalidateAura(); B:RequestRefresh("buff self",0); B:Options()
+        end)
+        row.selfCheck:SetSize(20,20)
+        addHelp(row.selfCheck,"Also on me","Cast this buff on yourself too while you are in a group. Turn it off for buffs meant for others, such as Thorns for your tank. When you are solo you always get it.")
+        row.filterHint=label(row,"",8,-243,"GameFontDisableSmall",450)
         row.classes={}
         for i,class in ipairs(B.RecipientClasses) do
           local token=class
@@ -2485,7 +2494,8 @@ function B:Options()
       local groupDef=b.groupKey and self:FindBuff(b.groupKey)
       row.detail:SetText(groupDef and (L("Group")..": "..spellLabel(groupDef)) or L("Single-target only"))
       row.groupHeading:SetText(L(raid and "Raid groups" or "Party recipients"))
-      row.filterHint:SetText(L(raid and "Recipients must match group AND class. Personal buffs and open-world targets ignore these filters." or "Choose which classes in your party receive this buff. Personal buffs and open-world targets ignore these filters."))
+      row.filterHint:SetText(L(raid and "Recipients must match group and class." or "Choose which classes in your party get this buff."))
+      row.selfCheck:SetShown(b.kind=="single"); row.selfCheck:SetChecked(self:SelfRecipientAllowed(b,B:EditingGroupContext()))
       for i=1,8 do row.checks[i]:SetShown(raid or i==1); row.checks[i].Text:SetText(raid and tostring(i) or L("Include party")); row.checks[i]:SetChecked(self:GroupSelected(b,i,B:EditingGroupContext())) end
       for class,c in pairs(row.classes) do c:SetChecked(self:GroupClassAllowed(b,class,B:EditingGroupContext())) end
       local roleMode=self:BuffRoleMode(b,B:EditingGroupContext())
@@ -2493,7 +2503,7 @@ function B:Options()
       for _,c in pairs(row.classes) do c:SetEnabled(roleMode=="class"); c:SetAlpha(roleMode=="class" and 1 or .35) end
       row.allClasses:SetShown(roleMode=="class"); row.resetClasses:SetShown(roleMode=="class")
       if roleMode~="class" then
-        row.filterHint:SetText(L(roleMode=="tank" and "Every tank in your group gets this buff, whatever their class. Class choices below are not used." or "Every healer in your group gets this buff, whatever their class. Class choices below are not used."))
+        row.filterHint:SetText(L(roleMode=="tank" and "Every tank gets this buff, whatever their class." or "Every healer gets this buff, whatever their class."))
       end
       if f.roleGuess then f.roleGuess:SetChecked(self.db.roleGuess==true) end
       if groupDef then

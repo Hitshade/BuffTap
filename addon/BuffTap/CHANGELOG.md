@@ -1,3 +1,12 @@
+# BuffTap 1.22.3
+
+### New
+- "Also on me" switch for each single-target buff on the Groups page, under the class choices. It is on by default. Turn it off and, while you are in a party or raid, BuffTap casts that buff on the people it picks but not on you, for example Thorns only on your tank. It is saved separately for your party and raid setups, like the other Groups settings. Solo, you always get it.
+- Before, you were always included: turning Thorns off under My buffs turned it off for everyone, and leaving it on with "Tanks" still buffed you as well as the tank.
+- The hint under the class choices is shorter and no longer says personal buffs ignore these settings.
+
+---
+
 # BuffTap 1.22.2
 
 ### Fixes

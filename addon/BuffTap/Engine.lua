@@ -4,7 +4,7 @@
 
 local _, B = ...
 _G.BuffTap = B
-B.version = "1.22.2"
+B.version = "1.22.3-beta1"
 B.API = {}
 local A = B.API
 
@@ -107,7 +107,7 @@ function B:InitDB()
     nearbyEnabled=false, nearbyBuffing=true, nearbyShowAll=false, nearbyInvites=true, nearbyLocked=false, nearbyOnTop=false, nearbyFont="default", nearbyFontSize=0, nearbyFontOutline="none", nearbyShowLevel=false, nearbyMarkSocial=true, nearbyHideHeader=false, nearbyKeepLine=true, nearbyWhileResting=false, nearbyHoldShort=false, nearbyCastResult=true, nearbyKeys={}, effectUrgency=false, effectOnce=false, nearbyManaFloor=0, consumablesInstanceOnly=false, buffPets=false, helperDismissMinutes=10, helperThankDelay=0, readyCheckTopUp=true, pauseNotes=true, blockIgnored=true, blacklistTargets=true, blacklistInInstances=true, blockedPlayers={}, blockedGuilds={}, nearbyX=240, nearbyY=0, pvpProtection=true, helperDismiss=true, helperBounce=false, helperTracking=false, helperTreasure=false, helperCoverage=false,
     helperDiscovery=false, helperThanks=false, helperThankEmote="THANK", helperQuick=false, helperTracker=0, helperPet=false, helperHealthstone=false, helperSoulstone=false, helperOath=false, oathAssigned={}, soulstoneParty="healer", soulstoneRaid="remind", soulstoneAssigned="", helperDemon=0,
     raidGroups={true,true,true,true,true,true,true,true},
-    buffRoles={}, blessingRoleChoices={}, roleMarks={}, roleGuess=false, helperThanksResting=false,
+    buffRoles={}, buffSelf={}, blessingRoleChoices={}, roleMarks={}, roleGuess=false, helperThanksResting=false,
     nearbyRequests=false, requestMessage="", requestBuffs={}, nearbyButtonSide="left",
     iconStyle="classic", campIconStyle="classic", labelPosition="split", showSwipe=false, showOutOfRange=false}
   -- 1.20.0: right-click dismiss is on for 10 minutes on new characters; existing ones keep their choice.
@@ -1728,7 +1728,15 @@ function B:RecipientAllowed(b,entry)
     return choice==nil or choice==(b.singleKey or b.key)
   end
   if entry.quickTarget then return self:TargetClassAllowed(b,entry.class,entry.nearby) end
-  return entry.unit=="player" or self:GroupRecipientAllowed(b,entry)
+  if entry.unit=="player" then return self:SelfRecipientAllowed(b) end
+  return self:GroupRecipientAllowed(b,entry)
+end
+-- "Also on me" (Groups page, per party/raid setup): off means a buff you cast on others, such as
+-- Thorns for the tank, is not cast on you while you are in a group. Solo, you always get it.
+function B:SelfRecipientAllowed(b,context)
+  if not context and A.Call(IsInGroup)~=true then return true end
+  local map=self:GroupPreference("buffSelf",context)
+  return not (type(map)=="table" and map[self:RootKey(b)]==false)
 end
 
 local function needSort(a,b)

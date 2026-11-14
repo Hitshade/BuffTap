@@ -1,7 +1,7 @@
 -- This Source Code Form is subject to the Mozilla Public License, v. 2.0.
 local _,B=...
 local A=B.API
-local fields={group=true,smartGroup=true,groupNeed=true,blessingNeed=true,blessingAssignments=true,raidGroups=true,buffGroups=true,buffClasses=true,buffGroupNeed=true,buffRoles=true}
+local fields={group=true,smartGroup=true,groupNeed=true,blessingNeed=true,blessingAssignments=true,raidGroups=true,buffGroups=true,buffClasses=true,buffGroupNeed=true,buffRoles=true,buffSelf=true}
 local classes={WARRIOR=true,PALADIN=true,HUNTER=true,ROGUE=true,PRIEST=true,SHAMAN=true,MAGE=true,WARLOCK=true,DRUID=true}
 local proxySources=setmetatable({}, {__mode="k"})
 local function clone(value)
@@ -19,6 +19,12 @@ local function clean(owner,values)
       out[key]={}
       for name,mode in pairs(type(value)=="table" and value or base or {}) do
         if type(name)=="string" and owner:FindBuff(name) and B.RoleModes[mode] and mode~="class" then out[key][name]=mode end
+      end
+    elseif key=="buffSelf" then
+      -- Only "not on me" is stored; anything else means the default (you get it too).
+      out[key]={}
+      for name,v in pairs(type(value)=="table" and value or base or {}) do
+        if type(name)=="string" and owner:FindBuff(name) and v==false then out[key][name]=false end
       end
     elseif key=="raidGroups" then
       out[key]={}; for i=1,8 do local v=type(value)=="table" and value[i]; if type(v)~="boolean" then v=base[i] end; out[key][i]=v end

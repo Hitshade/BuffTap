@@ -2,6 +2,8 @@
 local _,B=...
 -- Keep the ten most recent releases within a 24 KiB content ceiling.
 B.PatchNotes={
+ {version="1.22.3",title="Buffs just for others",items={
+  "New \"Also on me\" switch for each buff on the Groups page. Turn it off and, in a party or raid, BuffTap casts that buff on others but not on you. Perfect for Thorns on your tank. Solo, you still get it."}},
  {version="1.22.2",title="PvP realms and stealth",items={
   "Nearby now follows the same PvP rule as your group and target: flagged players are only skipped while you are unflagged. On PvP realms, Nearby works again in contested zones.",
   "The PvP protection switch is now also on the Nearby page.",
@@ -69,10 +71,6 @@ B.PatchNotes={
   "A Nearby guide with a preview of the window, quick invite and request choices, and full player names.",
   "BuffTap's own sounds for supplies and camp, with a separate camp sound setting.",
   "Edit Mode now also moves the Nearby window and the camp reminder."}},
- {version="1.19.1",title="BuffTap's own sounds",items={
-  "BuffTap's own alert sounds: Marimba rise (the new reminder default), Glass chime, Warm bell and Harp arpeggio.",
-  "The sounds are shared with other addons through SharedMedia when it is installed.",
-  "Fixed see-through dropdown menus on some settings pages."}},
 }
 function B:PatchNotesUnread()
   return self.profileDB and self.db.optionsPatchDot~=false and self.profileDB.global.patchNotesSeen~=self.version
