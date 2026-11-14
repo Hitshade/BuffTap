@@ -248,7 +248,7 @@ function B:NearbyNeeds(entry,list)
     local enabled=self:Enabled(def) or (explicit and def.kind=="blessing") or (def.classWide and self:TargetBuffEnabled(def))
     if enabled and self:TargetBuffEnabled(def) and not def.singleKey
       and (def.kind=="single" or def.kind=="blessing") and self:Supported(def)
-      and (explicit and def.kind=="blessing" or fits(def,entry.class)) then
+      and (explicit and def.kind=="blessing" or (def.kind=="blessing" and fits(def,entry.class)) or (def.kind~="blessing" and self:TargetClassAllowed(def,entry.class,true))) then
       local missing=self:ScanMissing(def,{entry},scans,errors,self:TargetRebuffSeconds(def))
       if missing[1] then needs[#needs+1]=missing[1] end
     end

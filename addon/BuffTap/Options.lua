@@ -1919,7 +1919,7 @@ function B:Options()
     f.targetChild=targetChild; f.targetRows={}; f.targetScroll=targetScroll
     local resetTarget; resetTarget=button(target,L("Reset target settings"),0,0,132,function()
       if not A.Combat() then
-        B.db.friendlyTarget=false; B.db.targetSeconds=300; B.db.targetBuffs={}; B.db.targetBuffSeconds={}; B.db.targetClassBlessings=true; B.db.targetBlessingFallback=true; B.db.targetBlessingClasses={}; B.db.targetBlessingPriorities={}
+        B.db.friendlyTarget=false; B.db.targetSeconds=300; B.db.targetBuffs={}; B.db.targetBuffSeconds={}; B.db.targetClasses={}; B.db.targetClassBlessings=true; B.db.targetBlessingFallback=true; B.db.targetBlessingClasses={}; B.db.targetBlessingPriorities={}
         B:InitDB(); B:InvalidateAura("target"); B:RequestRefresh("reset target settings",0); B:Options()
       end
     end)

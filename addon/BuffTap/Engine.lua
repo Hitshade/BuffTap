@@ -98,7 +98,7 @@ function B:InitDB()
   local defaults = {enabled=true, showReminder=true, size=64, opacity=1, x=0, y=-180,
     seconds=45, rebuffVersion=1, sound=false, reminderSound="marimba", alertSoundVersion=0, supplySound="glass", campAlertSound="bell", cleanseSound="cleanse", cleanseEnabled=false, cleanseTypes={Magic=true,Curse=true,Poison=true,Disease=true}, cleanseSelf=true, cleanseGroup=true, cleanseTarget=true, cleanseNearby=false, cleansePreferAbolish=true, cleanseBorder=true, soundChannel="Master", soundInterval=5, glow=true, pulse=false, group=true, smartGroup=true,
     groupNeed=3, blessingNeed=2, friendlyTarget=false, targetSeconds=300, keys={"MOUSEWHEELDOWN"}, buffs={}, priorities={}, buffSeconds={},
-    pauseResting=false, targetClassBlessings=true, targetBlessingFallback=true, targetBlessingClasses={}, targetBlessingPriorities={}, groupBlessingPriorities={}, blessingAssignments=false, blessingClasses={}, blessingGroupOverrides={}, buffGroups={}, buffClasses={}, buffGroupNeed={}, targetBuffs={}, targetBuffSeconds={}, showBuffName=false, showTargetName=true, showTimer=false, showGroupBadge=true,
+    pauseResting=false, targetClassBlessings=true, targetClasses={}, targetBlessingFallback=true, targetBlessingClasses={}, targetBlessingPriorities={}, groupBlessingPriorities={}, blessingAssignments=false, blessingClasses={}, blessingGroupOverrides={}, buffGroups={}, buffClasses={}, buffGroupNeed={}, targetBuffs={}, targetBuffSeconds={}, showBuffName=false, showTargetName=true, showTimer=false, showGroupBadge=true,
     consumablesEnabled=false, consumableFamilies={}, consumableChoices={}, consumableSeconds={},
     suppliesEnabled=false, suppliesChat=false, suppliesSound=false, suppliesReadyCheck=false, supplySettings={},
     weaponReminder=true, weaponMainHand=true, weaponOffHand=true,
@@ -185,6 +185,8 @@ function B:InitDB()
   if type(self.db.buffGroupNeed) ~= "table" then self.db.buffGroupNeed = {} end
   if type(self.db.targetBuffs) ~= "table" then self.db.targetBuffs = {} end
   if type(self.db.targetBuffSeconds) ~= "table" then self.db.targetBuffSeconds = {} end
+  if type(self.db.targetClasses) ~= "table" then self.db.targetClasses = {} end
+  for key,map in pairs(self.db.targetClasses) do if type(key)~="string" or type(map)~="table" then self.db.targetClasses[key]=nil end end
   if type(self.db.consumableFamilies) ~= "table" then self.db.consumableFamilies = {} end
   if type(self.db.consumableChoices) ~= "table" then self.db.consumableChoices = {} end
   if type(self.db.consumableSeconds) ~= "table" then self.db.consumableSeconds = {} end
@@ -518,6 +520,37 @@ function B:TargetBuffEnabled(b)
   return root.defaultOn==true
 end
 
+-- Which classes a friendly target or Nearby player may receive this buff on. A class the player set
+-- always wins. Unset: buffs for mana users (Arcane Intellect, Divine Spirit) follow their class list
+-- everywhere; other buffs follow it for Nearby players (as before) and go to any class you target
+-- yourself. Blessings keep their own choices.
+function B:TargetManaOnly(b)
+  local root=b and (self:FindBuff(self:RootKey(b)) or b)
+  if not root or type(root.target)~="table" then return false end
+  for _,c in ipairs(root.target) do if c=="WARRIOR" or c=="ROGUE" then return false end end
+  return true
+end
+function B:TargetClassAllowed(b,class,nearby)
+  if not b or b.kind=="blessing" or not A.Text(class) then return true end
+  local key=self:RootKey(b); local root=self:FindBuff(key) or b
+  local map=key and self.db.targetClasses and self.db.targetClasses[key]
+  if type(map)=="table" and type(map[class])=="boolean" then return map[class] end
+  if type(root.target)~="table" then return true end
+  if not nearby and not self:TargetManaOnly(b) then return true end
+  for _,c in ipairs(root.target) do if c==class then return true end end
+  return false
+end
+function B:SetTargetClassAllowed(b,class,allowed)
+  if A.Combat() or not b or not A.Text(class) then return end
+  local key=self:RootKey(b); if not key then return end
+  local d=self.db; d.targetClasses[key]=d.targetClasses[key] or {}
+  d.targetClasses[key][class]=allowed and true or false
+  self:InvalidateAura(); self:RequestRefresh("target classes",0)
+end
+function B:ResetTargetClasses(b)
+  local key=b and self:RootKey(b); if not key or A.Combat() then return end
+  self.db.targetClasses[key]=nil; self:InvalidateAura(); self:RequestRefresh("target classes",0)
+end
 function B:TargetRebuffSeconds(b)
   if b and b.kind=="blessing" and self.db.targetClassBlessings then return self.db.targetSeconds or 300 end
   local key=self:RootKey(b)
@@ -1670,7 +1703,8 @@ function B:RecipientAllowed(b,entry)
     if choice==nil then choice=self:TargetBlessingChoice(entry) end
     return choice==nil or choice==(b.singleKey or b.key)
   end
-  return entry.quickTarget or entry.unit=="player" or self:GroupRecipientAllowed(b,entry)
+  if entry.quickTarget then return self:TargetClassAllowed(b,entry.class,entry.nearby) end
+  return entry.unit=="player" or self:GroupRecipientAllowed(b,entry)
 end
 
 local function needSort(a,b)

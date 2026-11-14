@@ -9,7 +9,7 @@ local shared={iconStyle=true,campIconStyle=true,labelPosition=true,showSwipe=tru
   helperQuick=true,helperDiscovery=true,minimap=true,brokerEnabled=true}
 local classKeys={"groupContextSettings","situationSettings","seconds","rebuffVersion","buffs","priorities","buffSeconds","group","smartGroup","groupNeed","blessingNeed",
   "salvationVersion","salvationMigration","friendlyTarget","targetSeconds","targetClassBlessings","targetBlessingFallback","targetBlessingClasses","targetBlessingPriorities",
-  "blessingGroupOverrides","blessingRaidDefaults","blessingPartyMode","blessingPartyUniform","blessingPartyExcluded","groupBlessingPriorities","blessingAssignments","blessingClasses","buffGroups","buffClasses","buffGroupNeed","buffRoles","blessingRoleChoices","roleGuess","targetBuffs","targetBuffSeconds","raidGroups",
+  "blessingGroupOverrides","blessingRaidDefaults","blessingPartyMode","blessingPartyUniform","blessingPartyExcluded","groupBlessingPriorities","blessingAssignments","blessingClasses","buffGroups","buffClasses","buffGroupNeed","buffRoles","blessingRoleChoices","roleGuess","targetBuffs","targetBuffSeconds","targetClasses","raidGroups",
   "consumablesEnabled","consumableFamilies","consumableChoices","consumableSeconds","suppliesEnabled","suppliesChat","suppliesSound","suppliesReadyCheck","supplySettings",
   "weaponReminder","weaponMainHand","weaponOffHand","weaponApply","weaponReplace","weaponChoices","weaponCoatings","weaponSeconds","weaponsPauseResting","consumablesPauseResting","consumablesInstanceOnly","buffPets",
   "helperTracking","helperTreasure","helperTracker","helperCoverage","helperPet","helperHealthstone","helperSoulstone","helperOath","oathAssigned","helperDemon","soulstoneParty","soulstoneRaid","soulstoneAssigned"}
@@ -259,7 +259,7 @@ local classSpellKeys={buffs=true,priorities=true,buffSeconds=true,salvationVersi
   targetBlessingFallback=true,targetBlessingClasses=true,targetBlessingPriorities=true,blessingGroupOverrides=true,blessingRaidDefaults=true,
   blessingPartyMode=true,blessingPartyUniform=true,blessingPartyExcluded=true,groupBlessingPriorities=true,blessingAssignments=true,
   blessingClasses=true,buffGroups=true,buffClasses=true,buffGroupNeed=true,buffRoles=true,blessingRoleChoices=true,targetBuffs=true,
-  targetBuffSeconds=true,groupContextSettings=true,situationSettings=true,weaponChoices=true,weaponCoatings=true,helperPet=true,
+  targetBuffSeconds=true,targetClasses=true,groupContextSettings=true,situationSettings=true,weaponChoices=true,weaponCoatings=true,helperPet=true,
   helperHealthstone=true,helperSoulstone=true,helperOath=true,oathAssigned=true,helperDemon=true,soulstoneParty=true,soulstoneRaid=true,soulstoneAssigned=true}
 function B:ImportSettings(text)
   if A.Combat() or not self.db then return false,self:Text("Not available in combat.") end
