@@ -8,6 +8,7 @@
 - Nearby players can't be resurrected: the game removes nameplates from dead players, so they never appear in the Nearby list.
 
 ### Smaller changes
+- New characters start with these sounds: Cleansing wash for buff reminders, Glass chime for supplies, Harp arpeggio for camping, Warm bell for cleansing and Happy hello for friends. Existing characters keep their choices.
 - Nearby: players with nothing to cast no longer show a grey dash on the right of their row.
 - Customization > Binding & sound: the buff reminder position now sits inside the Quick access card, so the page no longer overlaps.
 

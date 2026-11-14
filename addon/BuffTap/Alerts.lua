@@ -97,7 +97,8 @@ function B:NormalizeAlerts()
     local value=self.db[key]
     local shared=type(value)=="string" and value:sub(1,4)=="lsm:" and #value>4 and #value<=512
     -- Unknown or retired choices fall back to the BuffTap default for that alert.
-    if not valid[value] and not shared then self.db[key]=key=="campAlertSound" and "bell" or key=="cleanseSound" and "cleanse" or key=="socialSound" and "hello" or key=="supplySound" and "glass" or "marimba" end
+    -- 1.22.0 defaults (new characters): Cleansing wash, Glass chime, Harp arpeggio, Warm bell, Happy hello.
+    if not valid[value] and not shared then self.db[key]=key=="campAlertSound" and "harp" or key=="cleanseSound" and "bell" or key=="socialSound" and "hello" or key=="supplySound" and "glass" or "cleanse" end
   end
   if self.db.soundChannel~="Master" and self.db.soundChannel~="SFX" then self.db.soundChannel="Master" end
   local interval=self.db.soundInterval
