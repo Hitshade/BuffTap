@@ -222,6 +222,11 @@ local function names()
     if ok and A.Text(surname) and #surname>1 then found[surname]=true end
   end
   add("player"); add("target"); add("pet")
+  -- Players named in BuffTap's own status lines (last Nearby click, invitations, thanks) may have
+  -- walked away since; hide them too.
+  for name in pairs(B.reportNames or {}) do
+    for part in tostring(name):gmatch("[^%s%-]+") do if #part>1 then found[part]=true end end
+  end
   for i=1,4 do add("party"..i) end
   for i=1,40 do add("raid"..i); add("nameplate"..i) end
   local list={}; for n in pairs(found) do list[#list+1]=n end
@@ -242,8 +247,9 @@ function B:CheckupLines()
     out[#out+1]=""; out[#out+1]="== "..title.." =="
     for _,line in ipairs(lines or {}) do out[#out+1]=tostring(line) end
   end
-  local build,_,_,interface=A.Call(GetBuildInfo)
-  local _,class=A.Call(UnitClass,"player")
+  local okBuild,build,_,_,interface=pcall(GetBuildInfo)
+  if not okBuild then build,interface=nil,nil end
+  local class=A.Class("player")
   local inInstance,instanceType=A.Call(IsInInstance)
   local group=A.Call(IsInRaid)==true and "raid" or A.Call(IsInGroup)==true and "party" or "solo"
   add("Game",{"Client "..tostring(build).." ("..tostring(interface)..") | locale "..tostring(A.Call(GetLocale)),

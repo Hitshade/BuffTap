@@ -119,7 +119,9 @@ function B:NoteNearbyClick(action)
     -- Covers the two early target retries and the bounded late retry chain.
     self.nearbyQuietCast={recipient=action.targetGUID,previous=A.Call(UnitGUID,"target"),untilTime=GetTime()+5}
   end
-  self.nearbyLastClick=action and (tostring(action.id).." -> "..action.target.." ("..(self:NearbyCastName(action) or "name unavailable")..")") or "cancelled: evidence changed"
+  local castName=action and self:NearbyCastName(action)
+  if castName then self:RememberReportName(castName) end
+  self.nearbyLastClick=action and (tostring(action.id).." -> "..action.target.." ("..(castName or "name unavailable")..")") or "cancelled: evidence changed"
 end
 -- Cast result on the Nearby row (optional): green "done" or red with the game's reason for about
 -- the global cooldown, then the row clears or comes back. Only a cast on that player in the next 2 seconds counts.
@@ -236,6 +238,16 @@ function B:ShowNearbyRowResult(row,r)
   o.text:SetWidth(avail); fitText(o.text,avail,list,path,size or 11,flags or "")
   o:SetFrameLevel((row:GetFrameLevel() or 1)+5)
   dimRow(row,true); o:Show()
+end
+-- Names that appear in diagnostics text, so "Hide player names" can hide them later. Kept small.
+function B:RememberReportName(name)
+  if not A.Text(name) then return end
+  self.reportNames=self.reportNames or {}
+  if not self.reportNames[name] then
+    local n=0; for _ in pairs(self.reportNames) do n=n+1 end
+    if n>=50 then self.reportNames={} end
+    self.reportNames[name]=true
+  end
 end
 function B:ReminderSoundAllowed(action)
   if action and action.nearby then return false end
@@ -677,7 +689,7 @@ function B:InviteNearby(entry)
   if mode=="REQUEST_INVITE" then ok,result=pcall(self:RequestInviteAPI(),name)
   else ok,result=pcall(C_PartyInfo.InviteUnit,name) end
   if not ok or result==false then self.Print("The group invitation could not be requested."); return false end
-  self.nearbyInvited[entry.guid]=GetTime(); self.nearbyLastInvite=mode..": "..name
+  self.nearbyInvited[entry.guid]=GetTime(); self.nearbyLastInvite=mode..": "..name; self:RememberReportName(name)
   self:UpdateNearbyWindow()
   return true
 end

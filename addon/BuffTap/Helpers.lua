@@ -478,7 +478,7 @@ function B:DispatchSoloThanks()
           -- generated API documentation naming this return value success.
           if not A.Public(result) then self.helperThankStatus="Emote result restricted or unreadable; no retry"
           elseif result==true then self.helperThankStatus="Client restricted the emote; no retry"
-          else self.helperThankStatus="Thank emote requested for "..candidate.name.." ("..candidate.identity..")" end
+          else self.helperThankStatus="Thank emote requested for "..candidate.name.." ("..candidate.identity..")"; if self.RememberReportName then self:RememberReportName(candidate.name) end end
         else self.helperThankStatus="Emote call failed; no retry" end
         if #queue>0 then self:StartTimer("thanks-send",1,function() B:DispatchSoloThanks() end) end
         return
