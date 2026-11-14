@@ -206,7 +206,7 @@ function B:BuildRefinedOptions(ui,tabs)
     local kind=entry[3]; ui.button(binding,"Preview",510,y,178,function() B:PlayAlert(kind,true) end)
   end
   -- Friend sound: when a friend or guild member first shows up in Nearby (off by default).
-  f.socialAlert=ui.check(binding,"Play it when a friend or guildmate appears in Nearby",26,-384,function(c)
+  f.socialAlert=ui.check(binding,"Alert me when a friend or guildmate appears in Nearby",26,-384,function(c)
     B.db.nearbySocialAlert=c:GetChecked()==true; if B.db.nearbySocialAlert then B:SettleSocialAlerts(3) end; B:Options()
   end)
   f.socialAlert:HookScript("OnEnter",function(s) T.Tooltip(s,B:Text("Friend and guildmate alert"),B:Text("Plays the friend sound and briefly highlights their row the first time a friend or guild member shows up in the Nearby list. At most once per player an hour, never in combat or instances, and not for people in your group.")) end)
@@ -216,7 +216,8 @@ function B:BuildRefinedOptions(ui,tabs)
   ui.label(binding,"Audio channel",26,-424,"GameFontHighlightSmall",130); place(f.channelButton,binding,166,-418,196,26)
   ui.label(binding,"Minimum interval",380,-424,"GameFontHighlightSmall",130); place(f.soundInterval,binding,510,-418,178,24)
   place(f.soundCheck,binding,26,-456)
-  section(ui,binding,"Quick access",12,-506,692,80); place(f.minimapCheck,binding,26,-546); place(f.brokerCheck,binding,360,-546)
+  -- Quick access and the buff reminder position share one card: icons and reset on the first row, coordinates on the second.
+  section(ui,binding,"Quick access",12,-506,692,118); place(f.minimapCheck,binding,26,-546); place(f.brokerCheck,binding,360,-546)
   place(f.resetAllButton,binding,510,-542,178,26); reparent(f.resetConfirm,binding); f.resetConfirm:ClearAllPoints(); f.resetConfirm:SetPoint("TOPLEFT",16,-546); f.resetConfirm:Hide()
   local interface=f.appearancePanes.interface
   section(ui,interface,"Interface",12,-12,692,278)
@@ -524,11 +525,14 @@ function B:StandardizeOptionsPages(ui,tabs)
   f.selectConsumableView(false)
   -- Keep exact coordinates available without crowding the appearance editors.
   local binding=f.appearancePanes.binding
-  section(ui,binding,"Buff reminder position",12,-536,692,88)
-  ui.label(binding,"X",26,-584,"GameFontHighlightSmall",20); place(f.xEdit,binding,52,-576,94,24)
-  ui.label(binding,"Y",172,-584,"GameFontHighlightSmall",20); place(f.yEdit,binding,198,-576,94,24)
-  ui.label(binding,"Press Enter to save each coordinate.",310,-584,"GameFontDisableSmall",196)
-  T.Variant(ui.button(binding,"Move BuffTap frames",516,-578,172,function() B:MoveAllFrames("binding") end),"primary")
+  ui.label(binding,"Buff reminder position",26,-588,"GameFontHighlightSmall",150)
+  ui.label(binding,"X",186,-588,"GameFontHighlightSmall",20); place(f.xEdit,binding,204,-582,80,24)
+  ui.label(binding,"Y",300,-588,"GameFontHighlightSmall",20); place(f.yEdit,binding,318,-582,80,24)
+  for _,edit in ipairs({f.xEdit,f.yEdit}) do
+    edit:HookScript("OnEnter",function(s) T.Tooltip(s,B:Text("Buff reminder position"),B:Text("Press Enter to save each coordinate.")) end)
+    edit:HookScript("OnLeave",function() if GameTooltip then GameTooltip:Hide() end end)
+  end
+  T.Variant(ui.button(binding,"Move BuffTap frames",510,-582,178,function() B:MoveAllFrames("binding") end),"primary")
   -- The page area is 34 px taller than before; the list grows and the footer follows its bottom-anchored controls.
   ui.card(f.buffContent,12,-64,692,478)
   local rebuffFooter=ui.card(f.buffContent,12,-556,692,96)

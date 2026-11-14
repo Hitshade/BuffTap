@@ -1273,7 +1273,8 @@ function B:UpdateNearbyWindow()
       if pulse then row.socialFlash:SetColorTexture(pulse[1],pulse[2],pulse[3],.22) end
       row.socialFlash:SetShown(pulse and true or false)
       row:SetAlpha(row.action and (row.action.ready and 1 or .72) or (self.db.nearbyShowAll and .60 or .40))
-      row.idle:SetShown(self.db.nearbyShowAll and not row.action and #entry.actions==0)
+      -- Players with nothing to cast leave the right side empty (no idle dash).
+      row.idle:Hide()
       local invited=self.nearbyInvited and self.nearbyInvited[entry.guid]
       local inviteName,inviteMode=self:NearbyInviteName(entry)
       local request=inviteMode=="REQUEST_INVITE"

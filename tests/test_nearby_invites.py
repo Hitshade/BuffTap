@@ -10,7 +10,7 @@ refresh()
 """
 
 test('All-players view defaults off without changing ordinary nearby buffing',"assert(BuffTap.db.nearbyShowAll==false and BuffTap.db.nearbyBuffing==true and BuffTap.db.nearbyInvites==true)")
-test('Buffed stranger remains in all-players view without cast payload',social+"aura('nameplate1',5232,'Mark of the Wild'); aura('nameplate1',467,'Thorns'); refresh(); local r=BuffTap.nearbyFrame.rows[1]; assert(r.entry and not r.action and not r.attrs.type1 and r.idle.shown and r.invite.shown)")
+test('Buffed stranger remains in all-players view without cast payload',social+"aura('nameplate1',5232,'Mark of the Wild'); aura('nameplate1',467,'Thorns'); refresh(); local r=BuffTap.nearbyFrame.rows[1]; assert(r.entry and not r.action and not r.attrs.type1 and not r.idle.shown and r.invite.shown)")
 test('Scan-only view never arms nearby buff actions',social+"BuffTap.db.nearbyBuffing=false; refresh(); assert(not BuffTap:SelectNearby()); local r=BuffTap.nearbyFrame.rows[1]; assert(r.entry and not r.action and r.invite.shown and not r.attrs.type1)")
 test('All-player checkbox returns to buff-only view',social+"aura('nameplate1',5232,'Mark of the Wild'); aura('nameplate1',467,'Thorns'); refresh(); BuffTap:SetNearbyView(false); assert(#BuffTap:NearbyPlayers()==0 and not BuffTap.nearbyFrame.rows[1].shown)")
 test('Invites require deliberate click and preserve target',social+"assert(#invites==0); local r=BuffTap.nearbyFrame.rows[1]; r.invite.scripts.OnClick(); assert(#invites==1 and invites[1]=='Ally nameplate1'); assert(BuffTap.nearbyLastInvite=='INVITE: Ally nameplate1')")
