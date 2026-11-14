@@ -239,6 +239,32 @@ function B:ShowNearbyRowResult(row,r)
   o:SetFrameLevel((row:GetFrameLevel() or 1)+5)
   dimRow(row,true); o:Show()
 end
+-- While Nearby is paused (stealthed, mounted, resting), the first row is pinned to say so, in the
+-- same style as the cast results. The rows below keep listing players for invites.
+local PAUSE_TEXT={stealthed="Paused: stealthed",mounted="Paused: mounted",resting="Paused: resting"}
+function B:NearbyPauseRowText(reason,browsing)
+  local text=self:Text(PAUSE_TEXT[reason] or "Paused")
+  if browsing then text=text..". "..self:Text("Invites still work.") end
+  return text
+end
+function B:ShowNearbyPauseRow(f,reason,browsing)
+  local o=f.pauseRow
+  if not reason then if o then o:Hide() end; return end
+  local row=f.rows[1]
+  if not o then
+    o=CreateFrame("Frame",nil,row:GetParent()); o:SetPoint("TOPLEFT",row,"TOPLEFT"); o:SetPoint("BOTTOMRIGHT",row,"BOTTOMRIGHT")
+    if o.EnableMouse then o:EnableMouse(false) end
+    o.bg=o:CreateTexture(nil,"BACKGROUND"); o.bg:SetAllPoints(); o.bg:SetColorTexture(.30,.27,.17,.92)
+    o.bar=o:CreateTexture(nil,"BORDER"); o.bar:SetPoint("TOPLEFT",0,0); o.bar:SetPoint("BOTTOMLEFT",0,0); o.bar:SetWidth(2); o.bar:SetColorTexture(1,.75,.24,1)
+    o.text=o:CreateFontString(nil,"OVERLAY","GameFontHighlightSmall"); o.text:SetPoint("LEFT",8,0); o.text:SetPoint("RIGHT",-4,0)
+    o.text:SetJustifyH("LEFT"); o.text:SetWordWrap(false); o.text:SetTextColor(1,.84,.47); o.text:SetShadowColor(0,0,0,.95); o.text:SetShadowOffset(1,-1)
+    f.pauseRow=o
+  end
+  local path,size,flags=row.name:GetFont()
+  if path then o.text:SetFont(path,size or 11,flags or "") end
+  o:SetFrameLevel((row:GetFrameLevel() or 1)+6)
+  o.reason=reason; o.text:SetText(self:NearbyPauseRowText(reason,browsing)); o:Show()
+end
 -- Names that appear in diagnostics text, so "Hide player names" can hide them later. Kept small.
 function B:RememberReportName(name)
   if not A.Text(name) then return end
@@ -1211,10 +1237,13 @@ function B:UpdateNearbyWindow()
     if (counts.flagged or 0)>0 then note=note.." |T"..media.."UIPvPFlag:12:12:0:0:64:64:0:64:0:64:230:92:82|t"..counts.flagged end
     if (counts.blocked or 0)>0 then note=note.." |T"..media.."NavBlacklist:12:12:0:0:64:64:0:64:0:64:242:64:56|t"..counts.blocked end
   end
-  -- Browsing while resting or mounted: say why nothing is offered instead of a 0/N count.
+  -- Paused (stealthed, mounted, resting): the first row says so and the list starts one row lower.
   local browse=self:NearbyBrowsePause()
-  if browse then f.count:SetText("|cffa0a8b0"..self:Text(browse=="resting" and "Paused: resting" or browse=="stealthed" and "Paused: stealthed" or "Paused: mounted").."|r")
-  else f.count:SetText(counts.need.."/"..counts.total..note) end
+  local paused=self.db.enabled and self.db.nearbyEnabled and platesOn() and self:NearbyPauseReason() or nil
+  if not PAUSE_TEXT[paused or ""] then paused=nil end
+  local pin=paused and 1 or 0
+  self:ShowNearbyPauseRow(f,paused,browse~=nil)
+  f.count:SetText(counts.need.."/"..counts.total..note)
   if f.allPlayers.showAll~=self.db.nearbyShowAll then
     f.allPlayers.showAll=self.db.nearbyShowAll
     for _,t in ipairs(f.allPlayers.parts) do
@@ -1227,10 +1256,11 @@ function B:UpdateNearbyWindow()
   for _,t in ipairs(f.lock.shackle) do t:SetAlpha(self.db.nearbyLocked and 1 or .4) end
   f.lock.body:SetAlpha(self.db.nearbyLocked and 1 or .55)
   f:EnableMouseWheel(true)
-  self.nearbyOffset=math.max(0,math.min(self.nearbyOffset or 0,math.max(0,#display-ROWS)))
-  f.scroll:SetMinMaxValues(0,math.max(0,#display-ROWS)); f.scroll:SetValue(self.nearbyOffset); f.scroll:SetShown(#display>ROWS)
+  local shown=ROWS-pin
+  self.nearbyOffset=math.max(0,math.min(self.nearbyOffset or 0,math.max(0,#display-shown)))
+  f.scroll:SetMinMaxValues(0,math.max(0,#display-shown)); f.scroll:SetValue(self.nearbyOffset); f.scroll:SetShown(#display>shown)
   for i,row in ipairs(f.rows) do
-    local item=i<=ROWS and display[i+self.nearbyOffset] or nil; local entry=item and item.entry
+    local item=i<=ROWS and i>pin and display[i-pin+self.nearbyOffset] or nil; local entry=item and item.entry
     -- A failed cast keeps its action so the row can be clicked again straight away.
     local result=entry and self:NearbyResultFor(entry.guid)
     row.entry=entry; row.action=item and item.fresh and nextAction(entry) or (result and result.state=="fail" and result.action) or nil
@@ -1316,7 +1346,8 @@ function B:UpdateNearbyWindow()
   elseif #list==0 and self.nearbySafetyReason then status=self.nearbySafetyReason
   elseif #list==0 and (self.buffDataUnavailable or self.ownershipUnavailable) then status="Buff data unavailable."
   else status="No nearby buffs needed." end
-  f.status:SetText(status); f.status:SetShown(#display==0); f.statusButton:SetShown(#display==0)
+  local quiet=#display==0 and pin==0
+  f.status:SetText(status); f.status:SetShown(quiet); f.statusButton:SetShown(quiet)
   if self.db.nearbyEnabled and not platesOn() then f.status:SetTextColor(1,.55,.25) else f.status:SetTextColor(.75,.75,.72) end
   self:UpdateNearbyHeaderFade(true)
   if not f:IsShown() then f:Show() end
