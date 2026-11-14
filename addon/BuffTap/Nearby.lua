@@ -194,9 +194,21 @@ local function fitText(fs,avail,list,path,size,flags)
   return fs:GetText()
 end
 B.NearbyFitText=fitText
+-- The row's own name, class icon, buff icons and tags hide while a result shows, so nothing
+-- draws through the result whatever the frame layering.
+local function rowParts(row)
+  local parts={row.name,row.classIcon,row.classEdge,row.idle,row.cleanseTint,row.cleanseBar,row.marker}
+  for _,group in ipairs({row.icons,row.iconEdges,row.tags}) do for _,part in ipairs(group or {}) do parts[#parts+1]=part end end
+  return parts
+end
+local function dimRow(row,hidden)
+  if not hidden and not row.resultHidden then return end
+  row.resultHidden=hidden
+  for _,part in ipairs(rowParts(row)) do if part and part.SetAlpha then part:SetAlpha(hidden and 0 or (type(rawget(part,"baseAlpha"))=="number" and part.baseAlpha or 1)) end end
+end
 function B:ShowNearbyRowResult(row,r)
   local o=row.result
-  if not r then if o then o:Hide() end; return end
+  if not r then if o then o:Hide() end; dimRow(row,false); return end
   if not o then
     o=CreateFrame("Frame",nil,row); o:SetAllPoints(); o:SetFrameLevel((row:GetFrameLevel() or 1)+5)
     if o.EnableMouse then o:EnableMouse(false) end
@@ -222,7 +234,8 @@ function B:ShowNearbyRowResult(row,r)
   local width=row:GetWidth(); if not A.Number(width) then width=WIDTH end
   local avail=math.max(40,width-6-14-5-6)
   o.text:SetWidth(avail); fitText(o.text,avail,list,path,size or 11,flags or "")
-  o:Show()
+  o:SetFrameLevel((row:GetFrameLevel() or 1)+5)
+  dimRow(row,true); o:Show()
 end
 function B:ReminderSoundAllowed(action)
   if action and action.nearby then return false end
@@ -1188,7 +1201,7 @@ function B:UpdateNearbyWindow()
           tag:ClearAllPoints()
           if style then
             tag:SetPoint("RIGHT",row,"RIGHT",-8-slots*18-2-(j-1)*14,0)
-            tag:SetTexture("Interface\\AddOns\\BuffTap\\Media\\"..style[1]); tag:SetVertexColor(style[2],style[3],style[4]); tag:SetAlpha(style[5]); tag:Show()
+            tag:SetTexture("Interface\\AddOns\\BuffTap\\Media\\"..style[1]); tag:SetVertexColor(style[2],style[3],style[4]); tag:SetAlpha(style[5]); tag.baseAlpha=style[5]; tag:Show()
           else tag:Hide() end
         end
         row.name:SetWidth(WIDTH-26-12-slots*18-#tagged*14)
@@ -1229,7 +1242,7 @@ function B:UpdateNearbyWindow()
       row.marker:SetShown(row.action and row.action.ready and self.action and self.action.nearby and self.action.targetGUID==entry.guid or false)
       self:ShowNearbyRowResult(row,self:NearbyResultFor(entry.guid))
       if not row:IsShown() then row:Show() end
-    else row.style=nil; row.invite:Hide(); row.request:Hide(); row.idle:Hide(); row.cleanseTint:Hide(); row.cleanseBar:Hide(); if row.result then row.result:Hide() end; for _,tag in ipairs(row.tags) do tag:Hide() end; if row:IsShown() then row:Hide() end end
+    else row.style=nil; row.invite:Hide(); row.request:Hide(); row.idle:Hide(); row.cleanseTint:Hide(); row.cleanseBar:Hide(); if row.result then row.result:Hide() end; dimRow(row,false); for _,tag in ipairs(row.tags) do tag:Hide() end; if row:IsShown() then row:Hide() end end
   end
   local status
   if not self.db.enabled then status="BuffTap is disabled."

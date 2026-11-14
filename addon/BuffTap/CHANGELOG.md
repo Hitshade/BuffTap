@@ -17,6 +17,7 @@
 
 ### Nearby cast results
 - After you buff or cleanse a Nearby player (row click or binding), their row shows the result until the global cooldown from that cast ends (1.5 seconds when the game doesn't say): green with a tick and "<buff>: done" (or "Cleansed: <debuff>"), or red with a cross and the game's reason, such as out of range. Then the row clears, shows their next buff, or comes back so you can try again.
+- The result covers the whole row: the player's name, class icon, buff icons and tags hide while it shows and come back afterwards.
 - While a cast is pending or its result shows, the list holds still, so the row doesn't move away in busy places.
 - A failed row stays clickable: clicking it retries at once, even after an out of range or line of sight error that would otherwise skip that player for a few seconds.
 - A Nearby cleanse cast with your binding no longer plays the cleanse sound for that player while the cast briefly targets them.
