@@ -4,7 +4,7 @@ from test_nearby import setup
 G=setup+("local B=BuffTap; UnitIsInMyGuild=function(u) return u=='nameplate1' end; "
  "played=0; local lastFile; PlaySoundFile=function(f) played=played+1; lastFile=f; return true end; "
  "B.socialPresent={}; B.socialAlerted={}; B.lastSocialAlert=nil; B.socialReadyAt=nil; "
- "local function scan() B.nearbySnapshot=nil; B:NearbyPlayers() end; ")
+ "local function scan() B.nearbySnapshot=nil; B:NearbyPlayers(); B:UpdateNearbyWindow() end; ")
 test('Friend and guild alert is off by default',"assert(BuffTap.db.nearbySocialAlert==false and BuffTap.db.socialSound=='hello')")
 test('Off means no sound for a guildmate',G+"scan(); assert(played==0)")
 test('A guildmate showing up plays the friend sound once and lights the row',G+"B.db.nearbySocialAlert=true; scan(); assert(played==1 and lastFile:find('BuffTapHello',1,true)); B:UpdateNearbyWindow(); assert(B.nearbyFrame.rows[1].socialFlash.shown); advance(5); scan(); assert(played==1, 'repeated'); B:UpdateNearbyWindow(); assert(not B.nearbyFrame.rows[1].socialFlash.shown)")
@@ -14,3 +14,9 @@ test('No alert in instances or with guild switched off',G+"B.db.nearbySocialAler
 test('Works with the name tags turned off',G+"B.db.nearbySocialAlert=true; B.db.nearbyMarkSocial=false; scan(); assert(played==1)")
 test('Friend sound plays while resting and ignores the reminder sound switch',G+"B.db.nearbySocialAlert=true; B.db.sound=false; B.db.pauseResting=true; B.db.nearbyWhileResting=true; IsResting=function() return true end; scan(); assert(played==1)")
 test('Binding & sound has the friend sound and its switches',"local B=BuffTap; B:Options(); local f=B.options; assert(f.socialSoundButton and f.socialAlert and f.socialFriends and f.socialGuild); f.socialAlert:SetChecked(true); f.socialAlert.scripts.OnClick(f.socialAlert); assert(B.db.nearbySocialAlert==true)")
+test('The friend sound waits until their row is on screen',G+"B.db.nearbySocialAlert=true; B:UpdateNearbyWindow(); played=0; B.socialAlerted={}; B.socialPresent={}; B.socialPending={}; B.lastSocialAlert=nil; local row=B.nearbyFrame.rows[1]; local alpha; rawset(row,'SetAlpha',function(_,a) alpha=a end); B.nearbySnapshot=nil; B:NearbyPlayers(); assert(played==0,'played before shown'); B:UpdateNearbyWindow(); assert(played==1); assert(row.socialFlash.shown and alpha==1, 'glow at full brightness '..tostring(alpha))")
+test('A held (hovered) list delays the sound until the friend appears',G+"UnitIsInMyGuild=function() return false end; B:UpdateNearbyWindow(); B.db.nearbySocialAlert=true; B.nearbyHovered=B.nearbyFrame.rows[1].entry and B.nearbyFrame.rows[1].entry.guid or 'x'; B.nearbyDisplay={}; UnitIsInMyGuild=function(u) return u=='nameplate1' end; scan(); assert(played==0,'played while hidden'); B.nearbyHovered=nil; B:UpdateNearbyWindow(); assert(played==1)")
+test('Mounted with the all-players view off: the friend sound still plays',G+"B.db.nearbySocialAlert=true; B.db.nearbyShowAll=false; IsMounted=function() return true end; scan(); assert(played==1)")
+test('Mounted with the all-players view on: their row (below the pause row) glows',G+"B.db.nearbySocialAlert=true; B.db.nearbyShowAll=true; IsMounted=function() return true end; scan(); assert(played==1); local f=B.nearbyFrame; assert(f.pauseRow and f.pauseRow.shown); assert(f.rows[2].entry and f.rows[2].socialFlash.shown)")
+test('A friend who is not listed (needs nothing, buff-only view) still gets the sound',G+"B.db.nearbySocialAlert=true; B.db.nearbyShowAll=false; B.db.nearbyBuffing=false; scan(); assert(played==1)")
+test('Stealthed: the friend sound still plays',G+"B.db.nearbySocialAlert=true; IsStealthed=function() return true end; scan(); assert(played==1)")

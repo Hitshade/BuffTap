@@ -3,7 +3,8 @@ local _,B=...
 -- Keep the ten most recent releases within a 24 KiB content ceiling.
 B.PatchNotes={
  {version="1.22.4",title="Buff while resting fixed",items={
-  "Nearby \"Buff while resting\" now works when \"Pause reminders while resting\" is also on. Before, it only worked once that pause was turned off. Your own buffs still pause in cities and inns."}},
+  "Nearby \"Buff while resting\" now works when \"Pause reminders while resting\" is also on. Before, it only worked once that pause was turned off. Your own buffs still pause in cities and inns.",
+  "The friend and guildmate alert now plays when their row actually appears, with a brighter, pulsing glow. It also works while you are mounted, stealthed or resting."}},
  {version="1.22.3",title="Buffs just for others",items={
   "New \"Also on me\" switch for each buff on the Groups page. Turn it off and, in a party or raid, BuffTap casts that buff on others but not on you. Perfect for Thorns on your tank. Solo, you still get it."}},
  {version="1.22.2",title="PvP realms and stealth",items={

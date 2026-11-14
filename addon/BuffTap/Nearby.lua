@@ -572,8 +572,8 @@ function B:NearbyPlayers()
   local out,seen,byGUID={},{},{}
   self.nearbyCounts={need=0,total=0,flagged=0,blocked=0}
   for _,entry in ipairs(buffs) do byGUID[entry.guid]=entry end
-  if not self.db.enabled or not self.db.nearbyEnabled or not platesOn() or A.Combat()
-    or (self:NearbyPauseReason() and not self:NearbyBrowsePause()) then return out end
+  if not self.db.enabled or not self.db.nearbyEnabled or not platesOn() or A.Combat() then return out end
+  if self:NearbyPauseReason() and not self:NearbyBrowsePause() then self:NoteSocialWhilePaused(); return out end
   for unit,guid in pairs(self.nearbyUnits or {}) do
     if A.Text(guid) and not seen[guid] and A.Call(UnitGUID,unit)==guid
       and A.Call(UnitExists,unit)==true and A.Call(UnitCanAssist,"player",unit)==true
@@ -628,14 +628,52 @@ function B:NoteNearbySocial(entry)
   local last=self.socialAlerted[entry.guid]
   if last and now-last<3600 then return end
   if self.lastSocialAlert and now-self.lastSocialAlert<20 then return end
-  self.socialAlerted[entry.guid]=now; self.lastSocialAlert=now
+  -- The sound and glow wait until their row is actually on screen (the list holds still while hovered).
+  self.socialAlerted[entry.guid]=now
+  self.socialPending=self.socialPending or {}; self.socialPending[entry.guid]=now
+end
+-- Paused without a list (mounted, stealthed or resting, with the all-players view off): still notice friends.
+function B:NoteSocialWhilePaused()
+  if self.db.nearbySocialAlert~=true then return end
+  for unit,guid in pairs(self.nearbyUnits or {}) do
+    if A.Text(guid) and A.Call(UnitGUID,unit)==guid and A.Call(UnitIsUnit,unit,"player")==false and not self:NearbyGroupMember(unit) then
+      local kind=self:NearbySocialKind(unit,guid)
+      if kind then self:NoteNearbySocial({guid=guid,socialKind=kind}) end
+    end
+  end
+end
+local SOCIAL_GLOW=4
+-- Called when a row is drawn: plays the friend sound and starts the glow the first time it is visible.
+function B:FireNearbySocial(entry)
+  local pending=entry and self.socialPending and self.socialPending[entry.guid]
+  if not pending then return end
+  self.socialPending[entry.guid]=nil
+  local now=GetTime()
+  if now-pending>30 or A.Combat() or (self.lastSocialAlert and now-self.lastSocialAlert<20) then return end
+  self.lastSocialAlert=now
   self:PlayAlert("social")
-  self.socialPulse=self.socialPulse or {}; self.socialPulse[entry.guid]=now+3
-  self:StartTimer("nearby-social",3.05,function() if not A.Combat() then B:UpdateNearbyWindow() end end)
+  self.socialPulse=self.socialPulse or {}; self.socialPulse[entry.guid]=now+SOCIAL_GLOW
+  self:StartTimer("nearby-social",SOCIAL_GLOW+.05,function() if not A.Combat() then B:UpdateNearbyWindow() end end)
 end
 function B:NearbySocialPulse(entry)
   local untilTime=entry and self.socialPulse and self.socialPulse[entry.guid]
-  if untilTime and GetTime()<untilTime then return SOCIAL_COLORS[entry.socialKind or entry.social] end
+  if untilTime and GetTime()<untilTime then return SOCIAL_COLORS[entry.socialKind or entry.social],untilTime end
+end
+-- A gentle breathing glow that fades out, drawn at full row brightness.
+local function socialGlow(row,color,untilTime)
+  local fx=row.socialFx
+  if not color then if fx then fx:Hide() end; row.socialFlash:Hide(); return end
+  if not fx then
+    fx=CreateFrame("Frame",nil,row); row.socialFx=fx
+    fx:SetScript("OnUpdate",function(s)
+      local left=(s.untilTime or 0)-GetTime()
+      if left<=0 then s:Hide(); row.socialFlash:Hide(); return end
+      local t=SOCIAL_GLOW-left
+      row.socialFlash:SetAlpha((.55+.45*math.abs(math.cos(t*math.pi*.9)))*math.min(1,left/1.5))
+    end)
+  end
+  row.socialFlash:SetColorTexture(color[1],color[2],color[3],.42); row.socialFlash:SetAlpha(1); row.socialFlash:Show()
+  fx.untilTime=untilTime; fx:Show()
 end
 function B:SetNearbyView(showAll)
   if A.Combat() then return end
@@ -1305,10 +1343,10 @@ function B:UpdateNearbyWindow()
         row.cleanseTint:SetColorTexture(tint[1],tint[2],tint[3],.15); row.cleanseBar:SetColorTexture(tint[1],tint[2],tint[3],1)
       end
       row.cleanseTint:SetShown(tint and true or false); row.cleanseBar:SetShown(tint and true or false)
-      local pulse=self:NearbySocialPulse(entry)
-      if pulse then row.socialFlash:SetColorTexture(pulse[1],pulse[2],pulse[3],.22) end
-      row.socialFlash:SetShown(pulse and true or false)
-      row:SetAlpha(row.action and (row.action.ready and 1 or .72) or (self.db.nearbyShowAll and .60 or .40))
+      if i<=ROWS then self:FireNearbySocial(entry) end
+      local pulse,pulseUntil=self:NearbySocialPulse(entry)
+      socialGlow(row,pulse,pulseUntil)
+      row:SetAlpha(pulse and 1 or row.action and (row.action.ready and 1 or .72) or (self.db.nearbyShowAll and .60 or .40))
       row.idle:SetShown(self.db.nearbyShowAll and not row.action and #entry.actions==0)
       local invited=self.nearbyInvited and self.nearbyInvited[entry.guid]
       local inviteName,inviteMode=self:NearbyInviteName(entry)
@@ -1329,7 +1367,12 @@ function B:UpdateNearbyWindow()
       row.marker:SetShown(row.action and row.action.ready and self.action and self.action.nearby and self.action.targetGUID==entry.guid or false)
       self:ShowNearbyRowResult(row,self:NearbyResultFor(entry.guid))
       if not row:IsShown() then row:Show() end
-    else row.style=nil; row.invite:Hide(); row.request:Hide(); row.idle:Hide(); row.cleanseTint:Hide(); row.cleanseBar:Hide(); row.socialFlash:Hide(); if row.result then row.result:Hide() end; dimRow(row,false); for _,tag in ipairs(row.tags) do tag:Hide() end; if row:IsShown() then row:Hide() end end
+    else row.style=nil; row.invite:Hide(); row.request:Hide(); row.idle:Hide(); row.cleanseTint:Hide(); row.cleanseBar:Hide(); row.socialFlash:Hide(); if row.socialFx then row.socialFx:Hide() end; if row.result then row.result:Hide() end; dimRow(row,false); for _,tag in ipairs(row.tags) do tag:Hide() end; if row:IsShown() then row:Hide() end end
+  end
+  -- Friends who will not get a visible row (not listed in this view, paused, or scrolled out of
+  -- sight) still get the sound now. While the list is held under the mouse, wait for it to update.
+  if self.socialPending and next(self.socialPending) and not (self.nearbyHovered or self:NearbyResultActive()) then
+    for guid in pairs(self.socialPending) do self:FireNearbySocial({guid=guid}) end
   end
   local status
   if not self.db.enabled then status="BuffTap is disabled."

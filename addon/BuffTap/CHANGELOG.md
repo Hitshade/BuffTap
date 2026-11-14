@@ -2,6 +2,8 @@
 
 ### Fix
 - Nearby: "Buff while resting" now works while "Pause reminders while resting" (Helpers) is on. The list filled up, but your binding, the click check and Nearby cleanses still obeyed the resting pause, so nothing was cast until that pause was turned off. Now, in cities and inns, Nearby players are offered while your own buffs stay paused.
+- Friend and guildmate alert: the sound and glow now wait until the friend's row is actually on screen. The list holds still while your mouse is over it, so the sound used to play before the row appeared and the glow had already ended. The glow is also brighter, shown at full row brightness, gently pulses and fades out over four seconds.
+- Friends who don't get a row still get the sound: while you are mounted, stealthed or resting with the all-players view off, or when they need no buff in the buff-only view.
 
 ---
 
