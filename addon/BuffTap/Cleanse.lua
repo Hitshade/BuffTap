@@ -313,7 +313,7 @@ function B:BuildCleansePage(ui,tabs,headerSwitch,section)
   if not p then return end
   f.cleanseEnable=ui.check(p,"Enable cleansing",0,0,function(c)
     if A.Combat() then return end
-    B.db.cleanseEnabled=c:GetChecked()==true; B:RequestRefresh("cleanse toggled",0); B:UpdateCleansePage()
+    B.db.cleanseEnabled=c:GetChecked()==true; B:RequestRefresh("cleanse toggled",0); B:UpdateCleansePage(); B:UpdateNavStatus()
   end)
   headerSwitch(f.cleanseEnable,p)
   section(ui,p,"What to remove",12,-76,692,196)

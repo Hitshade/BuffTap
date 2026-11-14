@@ -2,10 +2,11 @@
 local _,B=...
 -- Keep the ten most recent releases within a 24 KiB content ceiling.
 B.PatchNotes={
- {version="1.21.0",title="Cleansing, and a clearer Nearby guide",items={
+ {version="1.21.0",title="Cleansing",items={
   "New Cleanse page, right after My buffs: BuffTap can offer the right spell to remove poisons, curses, diseases and magic out of combat, before buffs. It is off until you turn it on.",
   "Choose what to remove and who to help: you, your group, your target and, if you like, Nearby players. Abolish Poison and Abolish Disease are used when the effect has stacks or will last a while.",
   "Cleanse reminders have their own new sound and a border in the debuff's colour. Right-click one to never be offered that debuff again; the list is shared by all your characters.",
+  "Status lights in the sidebar show at a glance which features are on, and Blacklist moved down with the settings pages.",
   "Nearby can hide its title bar until the mouse is over the window, and keep the hairline if you like (Customization > Nearby window).",
   "In the all players view, friends and guild members are listed first once nobody needs a buff.",
   "Nearby can keep working while resting, so you can still buff, invite and answer requests in cities and inns.",

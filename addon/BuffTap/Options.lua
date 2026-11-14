@@ -1648,9 +1648,9 @@ function B:Options()
     f.navBackground=f.sidebarFill
     local navIcons={"Buffs","Groups","Target","Nearby","Consumables","Camping","Weapons","Customization","Helpers","Profiles","Diagnostics","PatchNotes","Blacklist","Cleanse"}
     f.navIcons=navIcons
-    -- Sidebar order. Blacklist (13) sits under Nearby; Cleanse (14) follows My buffs and is
-    -- left out for classes that cannot remove anything.
-    local order={TAB.Buffs,TAB.Cleanse,TAB.Groups,TAB.Target,TAB.Nearby,TAB.Blacklist,TAB.Consumables,TAB.Camping,TAB.Weapons,TAB.Appearance,TAB.Helpers,TAB.Profiles,TAB.Diagnostics,TAB.PatchNotes}
+    -- Sidebar order: pages you switch on (with a status light) first, then settings-only pages.
+    -- Cleanse (14) follows My buffs and is left out for classes that cannot remove anything.
+    local order={TAB.Buffs,TAB.Cleanse,TAB.Groups,TAB.Target,TAB.Nearby,TAB.Consumables,TAB.Camping,TAB.Weapons,TAB.Blacklist,TAB.Appearance,TAB.Helpers,TAB.Profiles,TAB.Diagnostics,TAB.PatchNotes}
     local slots={}; local nextSlot=1
     for _,index in ipairs(order) do
       if index~=TAB.Cleanse or B:CanCleanseAnything() then slots[index]=nextSlot; nextSlot=nextSlot+1 end

@@ -91,7 +91,7 @@ CreateFrame=function(...)
 end
 BuffTap:Options(); local f=BuffTap.options
 local previousBottom=132
-local slots={1,3,4,5,7,8,9,10,11,12,13,14,6,2}; local ordered={}; for i,tab in ipairs(f.tabs) do ordered[slots[i]]=tab end
+local slots={1,3,4,5,6,7,8,10,11,12,13,14,9,2}; local ordered={}; for i,tab in ipairs(f.tabs) do ordered[slots[i]]=tab end
 for _,tab in ipairs(ordered) do
  local x,y=tab.points[2],tab.points[3]
  -- 1.18 sidebar: full-width nav items under the banner header, left of the page area.

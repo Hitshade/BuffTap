@@ -229,6 +229,10 @@ function B:BuildRefinedOptions(ui,tabs)
   ui.label(interface,"Accent colours are adjusted when necessary to stay readable. Warning and player-class colours stay distinct.",26,-242,"GameFontDisableSmall",650)
   local restoreInterface=ui.button(interface,"Restore interface defaults",462,-320,230,function() B.db.optionsAccentMode="gold"; B.db.optionsAccentColor="75c8da"; B.db.optionsScale=1; B.db.optionsReduceMotion=false; B:Options() end)
   T.Variant(restoreInterface,"danger")
+  -- Keep the sidebar status lights in step with each page switch.
+  for _,control in ipairs({f.friendlyTarget,f.weaponEnable,f.consumablesEnable,f.supplyEnable,f.campingEnable,f.nearbyEnable,f.groupEnable,f.blessingGroupEnable}) do
+    if control then control:HookScript("OnClick",function() B:UpdateNavStatus() end) end
+  end
   self:RefineCampingPage(ui,tabs); self:RefineNearbyPage(ui,tabs); self:BuildPatchNotesPage(ui,tabs); self:BuildCleansePage(ui,tabs,headerSwitch,section); self:StandardizeOptionsPages(ui,tabs)
   f:HookScript("OnShow",function() B:UpdateOptionsPreviews() end); f:HookScript("OnHide",function() B:StopOptionsPreviews() end)
   self:SetAppearanceView("buff")
@@ -507,8 +511,44 @@ function B:StandardizeOptionsPages(ui,tabs)
   ui.card(f.pages[3],12,-174,692,498)
   f.weaponHint:Hide()
 end
+-- Sidebar status lights: a green light when a page's feature is on, a hollow ring when it is off.
+-- Pages with nothing to switch on have no light.
+function B:NavStatus(index)
+  local f,d=self.options,self.db
+  if index==1 then return d.enabled==true
+  elseif index==14 then return d.cleanseEnabled==true
+  elseif index==2 then local c=f.blessingGroupEnable or f.groupEnable; if c then return c:GetChecked()==true end; return d.group==true
+  elseif index==3 then return d.friendlyTarget==true
+  elseif index==4 then return d.nearbyEnabled==true
+  elseif index==5 then return d.consumablesEnabled==true or d.suppliesEnabled==true
+  elseif index==6 then return d.campReminder==true
+  elseif index==7 then return d.weaponReminder==true end
+end
+function B:UpdateNavStatus()
+  local f=self.options; if not f or not f.tabs then return end
+  local T=B.OptionsTheme
+  for i,tab in ipairs(f.tabs) do
+    local on=self:NavStatus(i)
+    if on~=nil then
+      local light=tab.statusLight
+      if not light then
+        light=tab:CreateTexture(nil,"OVERLAY"); light:SetSize(8,8); light:SetPoint("CENTER",tab,"RIGHT",-16,0); tab.statusLight=light
+        tab:HookScript("OnEnter",function(s)
+          if s.statusOn==nil then return end
+          T.Tooltip(s,s:GetText() or "",B:Text(s.statusOn and "Turned on" or "Turned off"))
+        end)
+        tab:HookScript("OnLeave",function() if GameTooltip then GameTooltip:Hide() end end)
+      end
+      tab.statusOn=on
+      light:SetTexture(T.media..(on and "UIStatusOn" or "UIStatusOff"))
+      if on then light:SetVertexColor(.35,.77,.43,1) else light:SetVertexColor(.45,.48,.53,1) end
+      light:Show()
+    end
+  end
+end
 function B:UpdateRefinedOptions()
   if self.UpdateCleansePage then self:UpdateCleansePage() end
+  self:UpdateNavStatus()
   local f=self.options; if not f or not f.appearancePanes then return end
   self:NormalizeVisualOptions()
   local width,height=A.Call(UIParent.GetWidth,UIParent),A.Call(UIParent.GetHeight,UIParent)

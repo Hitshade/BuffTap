@@ -13,6 +13,10 @@
 - Cleanse reminders read "Cleanse: <debuff>" with the stack count, play their own sound (new "Cleansing wash", a rising airy shimmer with a bright two-note sparkle; any sound can be chosen on the Cleanse page) and get a border in the debuff colour (blue Magic, purple Curse, green Poison, brown Disease; can be turned off).
 - The click checks again that the debuff is still there, the spell is usable and the player is in range.
 
+### Settings window
+- Status lights in the sidebar: a green light when a page's feature is on, a hollow ring when it is off (My buffs, Cleanse, Groups, Target, Nearby, Consumables, Camping, Weapons). Hover for "Turned on" or "Turned off".
+- Blacklist moved down with the settings-only pages (Customization, Helpers, Profiles, Diagnostics, Patch notes).
+
 ### Nearby
 - Hide the title bar until the mouse is over the window (Customization > Nearby window > Title bar), with an option to keep the hairline. Off by default.
 - New "Buff while resting" option on the Nearby page: Nearby keeps working in cities and inns while your own reminders still pause. In the all players view while resting or mounted the list is kept and the count shows why buffing is paused.
@@ -50,7 +54,7 @@
 - Em dashes removed from interface text in all languages.
 
 ### Tests
-- 14 new cleanse tests and 1 Nearby ordering test pass. The full suite runs before the final release.
+- 15 new cleanse and sidebar tests and 1 Nearby ordering test pass. The full suite runs before the final release.
 
 ---
 
