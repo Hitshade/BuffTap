@@ -86,7 +86,9 @@ function B:NormalizeAlerts()
   end
   -- 1.21.0: cleansing gets its own new sound; early beta builds defaulted to Harp.
   if version<3 and (self.db.cleanseSound==nil or self.db.cleanseSound=="harp") then self.db.cleanseSound="cleanse" end
-  self.db.alertSoundVersion=3
+  -- 1.22.0: the cleanse alert becomes Warm bell for everyone, once; later choices are kept.
+  if version<4 then self.db.cleanseSound="bell" end
+  self.db.alertSoundVersion=4
   self:RegisterSharedSounds()
   local valid={}; for _,sound in ipairs(bundled) do valid[sound.key]=true end
   for _,definition in ipairs(definitions) do

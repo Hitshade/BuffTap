@@ -444,7 +444,7 @@ function B:BuildCleansePage(ui,tabs,headerSwitch,section)
     B.db.cleanseEnabled=c:GetChecked()==true; B:RequestRefresh("cleanse toggled",0); B:UpdateCleansePage(); B:UpdateNavStatus()
   end)
   headerSwitch(f.cleanseEnable,p)
-  section(ui,p,"What to remove",12,-76,692,196)
+  section(ui,p,"What to remove",12,-76,692,220)
   f.cleanseRows={}
   for i,kind in ipairs(TYPE_ORDER) do
     local y=-112-(i-1)*30
@@ -464,58 +464,56 @@ function B:BuildCleansePage(ui,tabs,headerSwitch,section)
   end)
   f.cleansePreferAbolish:HookScript("OnEnter",function(s) T.Tooltip(s,B:Text("Prefer Abolish"),B:Text("Abolish keeps removing the effect as it ticks, so it handles stacks and several poisons or diseases at once. A single short one gets the plain cure.")) end)
   f.cleansePreferAbolish:HookScript("OnLeave",function() if GameTooltip then GameTooltip:Hide() end end)
-  section(ui,p,"Who",12,-286,692,84)
+  f.cleanseBorder=ui.check(p,"Border colour by type",48,-264,function(c)
+    B.db.cleanseBorder=c:GetChecked()==true; B:UpdateOverlay()
+  end)
+  section(ui,p,"Who",12,-310,692,84)
   local who={{"cleanseSelf","You",26},{"cleanseGroup","Your group",196},{"cleanseTarget","Your target",366},{"cleanseNearby","Nearby players",536}}
   f.cleanseWho={}
   for _,entry in ipairs(who) do
     local key=entry[1]
-    f.cleanseWho[key]=ui.check(p,entry[2],entry[3],-326,function(c)
+    f.cleanseWho[key]=ui.check(p,entry[2],entry[3],-350,function(c)
       if A.Combat() then return end
       B.db[key]=c:GetChecked()==true; B:RequestRefresh("cleanse who",0)
     end)
   end
   f.cleanseWho.cleanseNearby:HookScript("OnEnter",function(s) T.Tooltip(s,B:Text("Nearby players"),B:Text("Also offer to cleanse players in the Nearby list. Uses the same safety rules as Nearby buffing.")) end)
   f.cleanseWho.cleanseNearby:HookScript("OnLeave",function() if GameTooltip then GameTooltip:Hide() end end)
-  section(ui,p,"Alert",12,-384,692,84)
-  ui.label(p,"Cleanse sound",26,-429,"GameFontHighlightSmall",110)
-  f.cleanseSoundButton=ui.selector(p,"",138,-424,200,function() return B:SoundChoices() end,function(v) B.db.cleanseSound=v; B:UpdateCleansePage() end,true)
-  ui.button(p,"Play",346,-424,80,function() if not B:PlayAlert("cleanse",true) then B.Print(B:Text("Sound preview unavailable.")) end end)
-  f.cleanseBorder=ui.check(p,"Border colour by type",480,-426,function(c)
-    B.db.cleanseBorder=c:GetChecked()==true; B:UpdateOverlay()
-  end)
+  -- The cleanse sound lives with the other sounds under Customization > Binding & sound.
+  f.cleanseSoundShortcut=ui.button(p,"Sound settings",566,-35,138,function() f.selectTab(tabs.Appearance); B:SetAppearanceView("binding") end); f.cleanseSoundShortcut:SetHeight(20)
   -- Resurrection: one row. Works whether or not cleansing is on.
-  section(ui,p,"Resurrection",12,-482,692,84)
-  f.reviveEnable=ui.check(p,"Offer resurrection",26,-522,function(c)
+  section(ui,p,"Resurrection",12,-408,692,84)
+  f.reviveEnable=ui.check(p,"Offer resurrection",26,-448,function(c)
     if A.Combat() then return end
     B.db.reviveEnabled=c:GetChecked()==true; B:RequestRefresh("revive toggled",0); B:UpdateCleansePage()
   end)
   f.reviveEnable:HookScript("OnEnter",function(s) T.Tooltip(s,B:Text("Offer resurrection"),B:Text("Out of combat, puts your resurrection spell on the reminder for a dead group member, or a dead player you target. Never for someone who has released their spirit or already has a resurrection coming. Dead players have no nameplate, so Nearby can't offer it: target their corpse instead.")) end)
   f.reviveEnable:HookScript("OnLeave",function() if GameTooltip then GameTooltip:Hide() end end)
-  f.reviveGroup=ui.check(p,"Your group",236,-522,function(c) if A.Combat() then return end; B.db.reviveGroup=c:GetChecked()==true; B:RequestRefresh("revive who",0) end)
-  f.reviveTarget=ui.check(p,"Your target",386,-522,function(c) if A.Combat() then return end; B.db.reviveTarget=c:GetChecked()==true; B:RequestRefresh("revive who",0) end)
-  f.reviveRebirth=ui.check(p,"Also use Rebirth",536,-522,function(c) if A.Combat() then return end; B.db.reviveRebirth=c:GetChecked()==true; B:RequestRefresh("revive rebirth",0) end)
+  f.reviveGroup=ui.check(p,"Your group",236,-448,function(c) if A.Combat() then return end; B.db.reviveGroup=c:GetChecked()==true; B:RequestRefresh("revive who",0) end)
+  f.reviveTarget=ui.check(p,"Your target",386,-448,function(c) if A.Combat() then return end; B.db.reviveTarget=c:GetChecked()==true; B:RequestRefresh("revive who",0) end)
+  f.reviveRebirth=ui.check(p,"Also use Rebirth",536,-448,function(c) if A.Combat() then return end; B.db.reviveRebirth=c:GetChecked()==true; B:RequestRefresh("revive rebirth",0) end)
   f.reviveRebirth:HookScript("OnEnter",function(s) T.Tooltip(s,B:Text("Also use Rebirth"),B:Text("Rebirth has a long cooldown, so it is off unless you turn it on. When on, it is offered out of combat like any resurrection.")) end)
   f.reviveRebirth:HookScript("OnLeave",function() if GameTooltip then GameTooltip:Hide() end end)
-  f.reviveNote=ui.label(p,"",536,-529,"GameFontDisableSmall",160)
-  section(ui,p,"Never cleanse (shared by all your characters)",12,-580,692,138)
-  f.cleanseInput=ui.editbox(p,26,-620,260,false); f.cleanseInput:SetMaxLetters(80)
+  f.reviveNote=ui.label(p,"",536,-455,"GameFontDisableSmall",160)
+  section(ui,p,"Never cleanse (shared by all your characters)",12,-506,692,212)
+  f.cleanseInput=ui.editbox(p,26,-546,260,false); f.cleanseInput:SetMaxLetters(80)
   local function add()
     local text=f.cleanseInput:GetText()
     if A.Text(text) then B:SetCleanseNever(text,true); f.cleanseInput:SetText(""); f.cleanseInput:ClearFocus(); B:UpdateCleansePage() end
   end
   f.cleanseInput:SetScript("OnEnterPressed",add)
   f.cleanseInput:SetScript("OnEscapePressed",function(s) s:ClearFocus() end)
-  ui.button(p,"Add",298,-618,90,add)
-  ui.label(p,"Type the debuff's name, or right-click a cleanse reminder to add it.",400,-624,"GameFontDisableSmall",290)
+  ui.button(p,"Add",298,-544,90,add)
+  ui.label(p,"Type the debuff's name, or right-click a cleanse reminder to add it.",400,-550,"GameFontDisableSmall",290)
   f.cleanseScroll=CreateFrame("ScrollFrame",nil,p,"UIPanelScrollFrameTemplate")
-  f.cleanseRestore=ui.button(p,"Restore built-in entries",486,-586,204,function()
+  f.cleanseRestore=ui.button(p,"Restore built-in entries",486,-512,204,function()
     if A.Combat() then return end
     for id in pairs(B:CleanseBuiltInAllowed()) do B:SetCleanseBuiltInAllowed(id,false) end
     B:UpdateCleansePage()
   end)
   f.cleanseRestore:SetHeight(20)
-  f.cleanseScroll:SetPoint("TOPLEFT",26,-652); f.cleanseScroll:SetSize(640,60)
-  f.cleanseList=CreateFrame("Frame",nil,f.cleanseScroll); f.cleanseList:SetSize(640,60); f.cleanseScroll:SetScrollChild(f.cleanseList)
+  f.cleanseScroll:SetPoint("TOPLEFT",26,-578); f.cleanseScroll:SetSize(640,134)
+  f.cleanseList=CreateFrame("Frame",nil,f.cleanseScroll); f.cleanseList:SetSize(640,134); f.cleanseScroll:SetScrollChild(f.cleanseList)
   f.cleanseListRows={}
   function f.cleanseRow(index)
     local row=f.cleanseListRows[index]; if row then return row end
@@ -573,7 +571,6 @@ function B:UpdateCleansePage()
   f.cleansePreferAbolish:SetChecked(d.cleansePreferAbolish~=false); f.cleansePreferAbolish:SetEnabled(abolish and hasAbolish)
   for key,check in pairs(f.cleanseWho) do check:SetChecked(key=="cleanseNearby" and d[key]==true or key~="cleanseNearby" and d[key]~=false) end
   f.cleanseBorder:SetChecked(d.cleanseBorder~=false)
-  for _,choice in ipairs(self:SoundChoices()) do if choice.key==d.cleanseSound then f.cleanseSoundButton:SetText(self:Text(choice.name)) end end
   -- Never list: built-in entries first (locked), then the shared list, by name.
   local entries={}; local allowed=self:CleanseBuiltInAllowed(); local icons=self:CleanseNeverIcons()
   local fallback="Interface\\Icons\\Spell_Holy_DispelMagic"

@@ -8,7 +8,9 @@
 - Nearby players can't be resurrected: the game removes nameplates from dead players, so they never appear in the Nearby list.
 
 ### Smaller changes
-- New characters start with these sounds: Cleansing wash for buff reminders, Glass chime for supplies, Harp arpeggio for camping, Warm bell for cleansing and Happy hello for friends. Existing characters keep their choices.
+- The cleanse sound is now chosen with the other sounds under Customization > Binding & sound; the Cleanse & revive page has a "Sound settings" button that goes straight there. "Border colour by type" moved into What to remove, and the Never cleanse list shows more entries.
+- The cleanse alert now uses Warm bell, which sounds more like a warning. This applies once to every character; you can pick another sound afterwards.
+- New characters start with these sounds: Cleansing wash for buff reminders, Glass chime for supplies, Harp arpeggio for camping, Warm bell for cleansing and Happy hello for friends. Existing characters keep their other choices.
 - Nearby: players with nothing to cast no longer show a grey dash on the right of their row.
 - Customization > Binding & sound: the buff reminder position now sits inside the Quick access card, so the page no longer overlaps.
 
