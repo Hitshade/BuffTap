@@ -1,6 +1,6 @@
 # BuffTap 1.21.0
 
-1.20.1 was never released on its own; its changes ship in 1.21.0 and are listed below the new features.
+1.21.0 also includes everything from the unreleased 1.20.1 build, listed below the new features.
 
 ### Cleansing (new)
 - New Cleanse page, right after My buffs in the menu. Off by default. Classes with nothing to remove (Warriors, Rogues, Hunters, Warlocks) don't see it.
@@ -9,7 +9,7 @@
 - Abolish Poison and Abolish Disease are chosen when the debuff has 2 or more stacks, when several of that type are on the same player, or when it will last more than about 8 seconds. A single short one gets the plain cure. If Abolish is already ticking on that player, BuffTap waits for it. "Prefer Abolish" can be turned off.
 - Who: you, then your group, your friendly target, then Nearby players (option, off by default; uses the same safety rules as Nearby buffing, including PvP protection and the blacklist).
 - Debuffs with under 3 seconds left are skipped.
-- Never cleanse list, shared by all your characters: type a name on the Cleanse page, or right-click a cleanse reminder to add its debuff. A built-in list (starting with Naxxramas' Mutating Injection) is shown locked.
+- Never cleanse list, shared by all your characters: type a name on the Cleanse page, or right-click a cleanse reminder to add its debuff. A built-in list (starting with Naxxramas' Mutating Injection) is included.
 - Cleanse reminders read "Cleanse: <debuff>" with the stack count, play their own sound (new "Cleansing wash", a rising airy shimmer with a bright two-note sparkle; any sound can be chosen on the Cleanse page) and get a border in the debuff colour (blue Magic, purple Curse, green Poison, brown Disease; can be turned off).
 - The click checks again that the debuff is still there, the spell is usable and the player is in range.
 - The Never cleanse list shows each debuff's icon and name with a Remove button. Built-in entries can be removed too if you really want to cleanse them, and "Restore built-in entries" brings them back.
