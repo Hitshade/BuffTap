@@ -672,7 +672,7 @@ function B:ShowTargetClasses(anchor,def)
   if p and p:IsShown() and p.def==def then p:Hide(); return end
   if not p then
     p=CreateFrame("Frame","BuffTapTargetClasses",f,"BackdropTemplate"); f.targetClassPanel=p
-    p:SetSize(340,262); p:SetFrameStrata("DIALOG"); p:SetFrameLevel(f:GetFrameLevel()+100)
+    p:SetSize(340,272); p:SetFrameStrata("DIALOG"); p:SetFrameLevel(f:GetFrameLevel()+100)
     p:SetBackdrop({bgFile="Interface\\Buttons\\WHITE8X8",edgeFile="Interface\\Buttons\\WHITE8X8",edgeSize=1})
     p:SetBackdropColor(unpack(T.menu)); p:SetBackdropBorderColor(unpack(T.border)); p:EnableMouse(true); p:SetClampedToScreen(true)
     if UISpecialFrames then table.insert(UISpecialFrames,"BuffTapTargetClasses") end
@@ -685,15 +685,19 @@ function B:ShowTargetClasses(anchor,def)
         B:SetTargetClassAllowed(p.def,class,s:GetChecked()==true); p:Sync(); B:Options()
       end)
       local color=RAID_CLASS_COLORS and RAID_CLASS_COLORS[class]
+      c.visualKeepTextColor=true
       if color and c.Text then c.Text:SetTextColor(color.r,color.g,color.b); c.classColor=color end
       p.classes[class]=c
     end
     label(p,"Applies to friendly targets and Nearby players. Party and raid use the Groups page.",16,-146,"GameFontDisableSmall",308)
-    p.reset=button(p,"Use defaults",14,-196,130,function()
+    p.defaults=label(p,"",16,-184,"GameFontDisableSmall",308)
+    p.reset=button(p,"Use defaults",14,-228,150,function()
       if A.Combat() or not p.def then return end
       B:ResetTargetClasses(p.def); p:Sync(); B:Options()
     end)
-    p.defaults=label(p,"",156,-192,"GameFontDisableSmall",170)
+    -- Choices save as you click; Done just closes the picker.
+    p.done=button(p,"Done",176,-228,150,function() p:Hide() end)
+    T.Variant(p.done,"primary")
     p.Sync=function(self)
       local d=self.def; if not d then return end
       self.title:SetText(B:Text("%s: who can get it",spellLabel(d)))

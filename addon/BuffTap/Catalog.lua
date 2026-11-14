@@ -7,7 +7,7 @@ local coverage={wild={"Gift of the Wild","Mark of the Wild"},intellect={"Arcane 
 B.Buffs={
   {key="gotw",class="DRUID",kind="group",name="Gift of the Wild",ranks={21850,21849},icon=136078,defaultOn=true,coverage="wild",singleKey="motw",minNeed=3},
   {key="motw",class="DRUID",kind="single",name="Mark of the Wild",ranks={9885,9884,8907,5234,6756,5232,1126},icon=136078,defaultOn=true,coverage="wild",groupKey="gotw"},
-  {key="thorns",class="DRUID",kind="single",name="Thorns",ranks={9910,9756,8914,1075,782,467},icon=136104,defaultOn=true,covers={"Thorns"},target={"WARRIOR","PALADIN","DRUID"}},
+  {key="thorns",class="DRUID",kind="single",name="Thorns",ranks={9910,9756,8914,1075,782,467},icon=136104,defaultOn=true,covers={"Thorns"},target={"WARRIOR","ROGUE","PALADIN","DRUID"}},
   {key="natures-grasp",class="DRUID",kind="self",name="Nature's Grasp",ranks={17329,16813,16812,16811,16810,16689},icon=136063,defaultOn=false,covers={"Nature's Grasp"},noTimer=true},
   {key="aquatic-form",class="DRUID",kind="self",name="Aquatic Form",ranks={1066},icon=132112,defaultOn=false,covers={"Aquatic Form"},underwater=true,stance=true},
   {key="ab",class="MAGE",kind="group",name="Arcane Brilliance",ranks={23028},icon=135869,defaultOn=true,coverage="intellect",singleKey="ai",minNeed=3},

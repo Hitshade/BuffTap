@@ -5,7 +5,7 @@ B.PatchNotes={
  {version="1.21.1",title="Choose who gets each buff",items={
   "Each buff on the Target page has a Classes button: choose which classes can get it when they are your friendly target or a Nearby player. For example, Thorns for melee classes only.",
   "Arcane Intellect and Divine Spirit are no longer offered to Warriors and Rogues you target. Nearby already skipped them.",
-  "Everything else works as before until you change it. Party and raid keep their own class choices on the Groups page."}},
+  "Thorns now also goes to Rogues by default. Everything else works as before until you change it. Party and raid keep their own class choices on the Groups page."}},
  {version="1.21.0",title="Cleansing",items={
   "New Cleanse page, right after My buffs: BuffTap can offer the right spell to remove poisons, curses, diseases and magic out of combat, before buffs. It is off until you turn it on.",
   "Choose what to remove and who to help: you, your group, your target and, if you like, Nearby players. Abolish Poison and Abolish Disease are used when the effect has stacks or will last a while.",
