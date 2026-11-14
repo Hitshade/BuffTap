@@ -10,7 +10,7 @@
 - Who: you, then your group, your friendly target, then Nearby players (option, off by default; uses the same safety rules as Nearby buffing, including PvP protection and the blacklist).
 - Debuffs with under 3 seconds left are skipped.
 - Never cleanse list, shared by all your characters: type a name on the Cleanse page, or right-click a cleanse reminder to add its debuff. A built-in list (starting with Naxxramas' Mutating Injection) is shown locked.
-- Cleanse reminders read "Cleanse: <debuff>" with the stack count, play their own sound (default Harp arpeggio, chosen on the Cleanse page) and get a border in the debuff colour (blue Magic, purple Curse, green Poison, brown Disease; can be turned off).
+- Cleanse reminders read "Cleanse: <debuff>" with the stack count, play their own sound (new "Cleansing wash", a rising airy shimmer with a bright two-note sparkle; any sound can be chosen on the Cleanse page) and get a border in the debuff colour (blue Magic, purple Curse, green Poison, brown Disease; can be turned off).
 - The click checks again that the debuff is still there, the spell is usable and the player is in range.
 
 ### Nearby

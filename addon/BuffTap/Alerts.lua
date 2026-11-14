@@ -11,6 +11,7 @@ local bundled={
   {key="glass",name="Glass chime",file=SOUNDS.."BuffTapGlass.ogg"},
   {key="bell",name="Warm bell",file=SOUNDS.."BuffTapBell.ogg"},
   {key="harp",name="Harp arpeggio",file=SOUNDS.."BuffTapHarp.ogg"},
+  {key="cleanse",name="Cleansing wash",file=SOUNDS.."BuffTapCleanse.ogg"},
 }
 local definitions={
   {key="default",name="Ding (game)",id=12867},
@@ -91,7 +92,7 @@ function B:NormalizeAlerts()
     local value=self.db[key]
     local shared=type(value)=="string" and value:sub(1,4)=="lsm:" and #value>4 and #value<=512
     -- Unknown or retired choices fall back to the BuffTap default for that alert.
-    if not valid[value] and not shared then self.db[key]=key=="campAlertSound" and "bell" or key=="cleanseSound" and "harp" or key=="supplySound" and "glass" or "marimba" end
+    if not valid[value] and not shared then self.db[key]=key=="campAlertSound" and "bell" or key=="cleanseSound" and "cleanse" or key=="supplySound" and "glass" or "marimba" end
   end
   if self.db.soundChannel~="Master" and self.db.soundChannel~="SFX" then self.db.soundChannel="Master" end
   local interval=self.db.soundInterval
