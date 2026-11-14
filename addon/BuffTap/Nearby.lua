@@ -112,6 +112,7 @@ function B:PrepareNearbyCast(action)
 end
 function B:NoteNearbyClick(action)
   self.nearbyClickAt=GetTime(); self.nearbyClickError=nil
+  self:NoteNearbyResult(action)
   if action then
     self.buffCastAttempt={id=action.id,unit=action.target,guid=action.targetGUID,at=GetTime()}
     self.buffAuraFresh={unit=action.target,guid=action.targetGUID,untilTime=GetTime()+3}
@@ -119,6 +120,87 @@ function B:NoteNearbyClick(action)
     self.nearbyQuietCast={recipient=action.targetGUID,previous=A.Call(UnitGUID,"target"),untilTime=GetTime()+5}
   end
   self.nearbyLastClick=action and (tostring(action.id).." -> "..action.target.." ("..(self:NearbyCastName(action) or "name unavailable")..")") or "cancelled: evidence changed"
+end
+-- Cast result on the Nearby row (optional): green "done" or red with the game's reason for about
+-- a second, then the row clears or comes back. Only a cast on that player in the next 2 seconds counts.
+local RESULT_OK,RESULT_FAIL=1.1,1.6
+function B:NoteNearbyResult(action)
+  self.nearbyResult=nil; self:CancelTimer("nearby-result")
+  if not action or self.db.nearbyCastResult==false or not A.Text(action.targetGUID) then return end
+  local cleanse=action.source=="cleanse"
+  local spell=action.spellName or A.Call(GetSpellInfo,action.id)
+  local label=cleanse and action.debuffName or tostring(action.name or spell or ""):gsub("%s*%(.-%)$","")
+  self.nearbyResult={guid=action.targetGUID,id=action.id,spell=spell,label=label,cleanse=cleanse,at=GetTime(),state="pending"}
+  self:StartTimer("nearby-result",2,function() local r=B.nearbyResult; if r and r.state=="pending" then B.nearbyResult=nil end end)
+end
+function B:SetNearbyResult(state,reason)
+  local r=self.nearbyResult
+  if not r or r.state~="pending" or GetTime()-r.at>2 then return end
+  r.state=state; r.reason=reason; r.untilTime=GetTime()+(state=="ok" and RESULT_OK or RESULT_FAIL)
+  self:CancelTimer("nearby-result")
+  self:StartTimer("nearby-result",r.untilTime-GetTime()+.02,function()
+    B.nearbyResult=nil; B.nearbySnapshot=nil; if not A.Combat() then B:UpdateNearbyWindow() end
+  end)
+  if not A.Combat() and self.nearbyFrame then self:UpdateNearbyWindow() end
+end
+function B:NearbyResultFor(guid)
+  local r=self.nearbyResult
+  if r and r.state~="pending" and r.guid==guid and r.untilTime and GetTime()<r.untilTime and self.db.nearbyCastResult~=false then return r end
+end
+function B:NearbyResultSpell(spellID)
+  local r=self.nearbyResult
+  if not r or r.state~="pending" or not A.Number(spellID) then return false end
+  if spellID==r.id then return true end
+  local name=A.Call(GetSpellInfo,spellID)
+  return A.Text(name) and name==r.spell
+end
+-- Fit the result text to the row: full text, shorter text, a smaller size, then a trailing "...".
+local function fitText(fs,avail,list,path,size,flags)
+  for _,s in ipairs({size,math.max(8,size-1),math.max(8,size-2)}) do
+    fs:SetFont(path,s,flags)
+    for _,t in ipairs(list) do
+      fs:SetText(t); local w=fs:GetStringWidth()
+      if not A.Number(w) or w<=avail then return t end
+    end
+  end
+  local t=list[#list]
+  while #t>1 do
+    t=t:gsub("[%z\1-\127\194-\244][\128-\191]*$","")
+    fs:SetText(t.."..."); local w=fs:GetStringWidth()
+    if not A.Number(w) or w<=avail then return t.."..." end
+  end
+  return fs:GetText()
+end
+B.NearbyFitText=fitText
+function B:ShowNearbyRowResult(row,r)
+  local o=row.result
+  if not r then if o then o:Hide() end; return end
+  if not o then
+    o=CreateFrame("Frame",nil,row); o:SetAllPoints(); o:SetFrameLevel((row:GetFrameLevel() or 1)+5)
+    if o.EnableMouse then o:EnableMouse(false) end
+    o.bg=o:CreateTexture(nil,"BACKGROUND"); o.bg:SetAllPoints()
+    o.bar=o:CreateTexture(nil,"BORDER"); o.bar:SetPoint("TOPLEFT",0,0); o.bar:SetPoint("BOTTOMLEFT",0,0); o.bar:SetWidth(2)
+    o.mark=o:CreateTexture(nil,"ARTWORK"); o.mark:SetSize(14,14); o.mark:SetPoint("LEFT",6,0)
+    o.text=o:CreateFontString(nil,"OVERLAY","GameFontHighlightSmall"); o.text:SetPoint("LEFT",o.mark,"RIGHT",5,0)
+    o.text:SetJustifyH("LEFT"); o.text:SetWordWrap(false); o.text:SetShadowColor(0,0,0,.95); o.text:SetShadowOffset(1,-1)
+    row.result=o
+  end
+  local ok=r.state=="ok"; local c=ok and {.27,.78,.43} or {.90,.31,.27}
+  o.bg:SetColorTexture(c[1]*.18+.07,c[2]*.18+.07,c[3]*.18+.07,1); o.bar:SetColorTexture(c[1],c[2],c[3],1)
+  o.mark:SetTexture(ok and "Interface\\RaidFrame\\ReadyCheck-Ready" or "Interface\\RaidFrame\\ReadyCheck-NotReady")
+  local list
+  if ok and r.cleanse then list={self:Text("Cleansed: %s",r.label),self:Text("Cleansed")}
+  elseif ok then list={self:Text("%s: done",r.label),r.label}
+  else
+    local reason=A.Text(r.reason) and r.reason:gsub("[%.。]+$","") or nil
+    list=reason and {self:Text("Failed: %s",reason),reason} or {self:Text("Failed")}
+  end
+  local path,size,flags=row.name:GetFont()
+  if not path then path,size,flags=STANDARD_TEXT_FONT or "Fonts\\FRIZQT__.TTF",11,"" end
+  local width=row:GetWidth(); if not A.Number(width) then width=WIDTH end
+  local avail=math.max(40,width-6-14-5-6)
+  o.text:SetWidth(avail); fitText(o.text,avail,list,path,size or 11,flags or "")
+  o:Show()
 end
 function B:ReminderSoundAllowed(action)
   if action and action.nearby then return false end
@@ -598,7 +680,7 @@ function B:SyncNearby()
   self.nearbyNeedCache={}; self.nearbyNeedSettings=nil
   self.nearbyUnits={}; self.nearbyOrder={}; self.nearbySnapshot=nil; self.nearbyOffset=0; self.nearbyInvited={}; self.nearbyCounts={need=0,total=0}
   self:CancelTimer("nearby-settle"); self:CancelTimer("nearby-late")
-  for _,event in ipairs({"NAME_PLATE_UNIT_ADDED","NAME_PLATE_UNIT_REMOVED","CVAR_UPDATE","UI_ERROR_MESSAGE","UNIT_SPELLCAST_SUCCEEDED"}) do
+  for _,event in ipairs({"NAME_PLATE_UNIT_ADDED","NAME_PLATE_UNIT_REMOVED","CVAR_UPDATE","UI_ERROR_MESSAGE","UNIT_SPELLCAST_SUCCEEDED","UNIT_SPELLCAST_FAILED"}) do
     if enabled then pcall(self.nearbyEvents.RegisterEvent,self.nearbyEvents,event)
     else pcall(self.nearbyEvents.UnregisterEvent,self.nearbyEvents,event) end
   end
@@ -679,7 +761,7 @@ function B:NearbyDisplayList(list)
     if not safe then
       safetyRemoved=true
       if self.nearbyHovered==old.entry.guid then self.nearbyHovered=nil; if GameTooltip then GameTooltip:Hide() end end
-    elseif entry or self.nearbyHovered or (missing and now-missing<.65) then
+    elseif entry or self.nearbyHovered or (missing and now-missing<.65) or self:NearbyResultFor(old.entry.guid) then
       out[#out+1]={entry=entry or old.entry,fresh=entry~=nil,missingAt=missing}
       seen[old.entry.guid]=true
       if missing and now-missing<.65 then pending=math.min(pending or .65,.65-(now-missing)) end
@@ -1116,8 +1198,9 @@ function B:UpdateNearbyWindow()
       if requests then row.request.icon:SetTexture(requests[1].icon); row.request:SetAlpha(self:RequestCooling(entry) and .45 or 1) end
       row.request:SetShown(type(requests)=="table")
       row.marker:SetShown(row.action and row.action.ready and self.action and self.action.nearby and self.action.targetGUID==entry.guid or false)
+      self:ShowNearbyRowResult(row,self:NearbyResultFor(entry.guid))
       if not row:IsShown() then row:Show() end
-    else row.style=nil; row.invite:Hide(); row.request:Hide(); row.idle:Hide(); row.cleanseTint:Hide(); row.cleanseBar:Hide(); for _,tag in ipairs(row.tags) do tag:Hide() end; if row:IsShown() then row:Hide() end end
+    else row.style=nil; row.invite:Hide(); row.request:Hide(); row.idle:Hide(); row.cleanseTint:Hide(); row.cleanseBar:Hide(); if row.result then row.result:Hide() end; for _,tag in ipairs(row.tags) do tag:Hide() end; if row:IsShown() then row:Hide() end end
   end
   local status
   if not self.db.enabled then status="BuffTap is disabled."
@@ -1166,9 +1249,20 @@ frame:SetScript("OnEvent",function(_,event,unit,message,spellID)
   end
   B:SyncNearby()
   if not B.db.nearbyEnabled then return end
-  if event=="UNIT_SPELLCAST_SUCCEEDED" then B:NearbyCastSucceeded(unit,spellID); return
+  if event=="UNIT_SPELLCAST_SUCCEEDED" then
+    if unit=="player" and B:NearbyResultSpell(spellID) then B:SetNearbyResult("ok") end
+    B:NearbyCastSucceeded(unit,spellID); return
+  elseif event=="UNIT_SPELLCAST_FAILED" then
+    -- The game's reason usually arrives as a UI error just before or after; wait a moment for it.
+    if unit=="player" and B:NearbyResultSpell(spellID) then
+      B:StartTimer("nearby-result-fail",.1,function() B:SetNearbyResult("fail",B.nearbyClickError) end)
+    end
+    return
   elseif event=="UI_ERROR_MESSAGE" then
-    if B.nearbyClickAt and GetTime()-B.nearbyClickAt<1 and A.Text(message) then B.nearbyClickError=message end
+    if B.nearbyClickAt and GetTime()-B.nearbyClickAt<1 and A.Text(message) then
+      B.nearbyClickError=message
+      if B.nearbyResult and B.nearbyResult.state=="pending" then B:SetNearbyResult("fail",message) end
+    end
     return
   elseif event=="NAME_PLATE_UNIT_ADDED" then B:TrackNearby(unit); B:ScheduleNearbySettle()
   elseif event=="NAME_PLATE_UNIT_REMOVED" and A.Text(unit) then

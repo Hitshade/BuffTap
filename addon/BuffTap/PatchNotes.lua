@@ -9,7 +9,8 @@ B.PatchNotes={
   "Nearby players who need a cleanse now show in the Nearby window, at the top, with the cleanse icon and a tint in the debuff's colour. Before, your binding could hold a Nearby cleanse you couldn't see.",
   "New on the Nearby page: Hold back short buffs. In cities and inns, buffs of ten minutes or less, like Thorns, are not offered to Nearby players. The page is also tidier: how and when you buff on the left, how the list looks on the right.",
   "The Nearby light in the sidebar turns red when friendly nameplates are off, because Nearby can't see anyone without them.",
-  "Diagnostics has a Full check-up button (or /bt checkup) that gathers everything into one box to copy for a bug report."}},
+  "Diagnostics has a Full check-up button (or /bt checkup) that gathers everything into one box to copy for a bug report.",
+  "After you buff or cleanse a Nearby player, their row briefly shows whether it worked: green, or red with the reason, such as out of range. You can turn this off under Customization > Nearby window."}},
  {version="1.21.0",title="Cleansing",items={
   "New Cleanse page, right after My buffs: BuffTap can offer the right spell to remove poisons, curses, diseases and magic out of combat, before buffs. It is off until you turn it on.",
   "Choose what to remove and who to help: you, your group, your target and, if you like, Nearby players. Abolish Poison and Abolish Disease are used when the effect has stacks or will last a while.",

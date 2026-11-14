@@ -15,6 +15,11 @@
 - New "Hold back short buffs, like Thorns" (off by default): in cities and inns, Nearby doesn't offer buffs of ten minutes or less (Thorns, Dampen and Amplify Magic, Fear Ward, Shadow Protection, single blessings, Water Breathing and Walking, Unending Breath, Detect Invisibility). Longer buffs are still offered.
 - Player list rearranged: who and when you buff on the left (Offer nearby buffs, Buff while resting, Hold back short buffs, invite buttons), how the list looks on the right (Show all, Show full names, Show level, Mark friends and guild members, Mana reserve). "Open window" moved to the page header next to "Buff requests".
 
+### Nearby cast results
+- After you buff or cleanse a Nearby player (row click or binding), their row briefly shows the result: green with a tick and "<buff>: done" (or "Cleansed: <debuff>"), or red with a cross and the game's reason, such as out of range. Then the row clears, shows their next buff, or comes back so you can try again.
+- Only a cast of that spell in the next 2 seconds counts. The text shortens and then shrinks to fit narrow windows and long names like Greater Blessing of Wisdom.
+- On by default; Customization > Nearby window > "Show whether each cast worked" turns it off.
+
 ### Status lights
 - The Nearby light turns red when Nearby is on but friendly nameplates are off, with a tooltip pointing to Shift+V.
 

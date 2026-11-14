@@ -257,7 +257,8 @@ function B:CreateButton()
         if not B:PrepareNearbyCast(action) then B:Commit(nil,"nearby cleanse changed"); B:RequestRefresh("nearby cleanse changed",0); return end
         B.button:SetAttribute("macrotext",action.macroText)
       end
-      if not B:ValidateCleanse(action) then B:Commit(nil,"cleanse no longer needed"); B:RequestRefresh("cleanse changed",0) end
+      if not B:ValidateCleanse(action) then B:Commit(nil,"cleanse no longer needed"); B:RequestRefresh("cleanse changed",0)
+      elseif action.nearby and B.NoteNearbyResult then B.nearbyClickAt=GetTime(); B.nearbyClickError=nil; B:NoteNearbyResult(action) end
       return
     end
     if action.nearby then

@@ -62,4 +62,5 @@ import test_cleanse
 import test_target_classes
 import test_nearby_cleanse
 import test_beta3
+import test_cast_result
 print('FINAL_TOTAL',len(__import__('test_bufftap').tests))
