@@ -249,7 +249,7 @@ function B:NearbyCleanseAllowed(unit)
   local guid=self.nearbyUnits and self.nearbyUnits[unit]
   return guid~=nil and A.Call(UnitGUID,unit)==guid and A.Call(UnitIsPlayer,unit)==true and A.Call(UnitCanAssist,"player",unit)==true
     and not self:NearbyGroupMember(unit) and self:NearbyRecipientSafe(unit) and not (self.BlockReason and self:BlockReason(unit))
-    and not pvpUnsafe(self,unit)
+    and not pvpUnsafe(self,unit) and not (self.ManaFloorReached and self:ManaFloorReached())
 end
 -- The cleanse a Nearby player needs, if any. Shown first in their Nearby row, so a cleanse the
 -- keybind would cast is always visible in the window (Nearby casts never show the main icon).

@@ -302,7 +302,7 @@ function B:RefineNearbyPage(ui,tabs)
   ui.label(p,"Mana reserve",374,-219,"GameFontHighlightSmall",110)
   f.nearbyManaFloor=ui.slider(p,0,50,5,190,function(v) return tostring(v).."%" end,function(_,v) B.db.nearbyManaFloor=v; B:RequestRefresh("mana floor",.2) end)
   f.nearbyManaFloor:SetPoint("TOPLEFT",484,-216); f.nearbyManaFloor.visualKey="nearbyManaFloor"; f.refinedSliders[#f.refinedSliders+1]=f.nearbyManaFloor
-  f.nearbyManaFloor:HookScript("OnEnter",function(s) T.Tooltip(s,B:Text("Mana reserve"),B:Text("Stop offering buffs to players outside your group when your mana is below this. Your own buffs and your group's buffs are not affected. Set it to 0 to turn it off.")) end)
+  f.nearbyManaFloor:HookScript("OnEnter",function(s) T.Tooltip(s,B:Text("Mana reserve"),B:Text("Stop offering buffs and cleanses to players outside your group when your mana is below this, until it is a little above it again. Your own buffs and your group's are not affected. If the game hides your exact mana, BuffTap judges it from which of your spells you can afford, so it stops close to this value. Set it to 0 to turn it off.")) end)
   f.nearbyManaFloor:HookScript("OnLeave",function() if GameTooltip then GameTooltip:Hide() end end)
   -- How it works: the same drawn guide as the first-time introduction.
   section(ui,p,"How Nearby works",12,-272,692,452)

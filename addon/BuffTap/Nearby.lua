@@ -1381,6 +1381,7 @@ function B:NearbyDiagnosticsLines()
     "Nearby players: "..counts.need.." queued / "..counts.total.." detected | tracked: "..tracked.."/40",
     "Nearby nameplates: "..tostring(plates).." ("..setting..")",
     "Nearby casting: exact-name/cast/restore | notifications: quiet",
+    "Mana reserve: "..tostring(self.db.nearbyManaFloor or 0).."% | mana read: "..tostring(self.manaReading or "not checked").." | saving: "..tostring(self.manaFloorSaving==true),
   }
   if self.nearbyLastClick then out[#out+1]="Nearby last click: "..self.nearbyLastClick end
   if self.nearbyClickError then out[#out+1]="Nearby client error: "..self.nearbyClickError end

@@ -904,7 +904,7 @@ local itemRequested=event=="ITEM_DATA_LOAD_RESULT" and A.Number(arg) and ((B.ite
   -- Mana reserve: crossing the floor in either direction re-checks Nearby straight away
   -- (otherwise the list kept offering buffs after mana dropped below the reserve).
   if event=="UNIT_POWER_UPDATE" and arg=="player" and B.ManaFloorReached and (tonumber(B.db.nearbyManaFloor) or 0)>0 then
-    local below=B:ManaFloorReached()
+    B.manaFloorAt=nil; local below=B:ManaFloorReached()
     if below~=B.manaFloorState then B.manaFloorState=below; B.nearbySnapshot=nil; B:RequestRefresh("mana reserve",.05); if B.nearbyFrame and B.UpdateNearbyWindow and not A.Combat() then B:UpdateNearbyWindow() end; return end
   end
   if event=="UNIT_POWER_UPDATE" and (arg~="player" or not B.powerBlocked) then return end

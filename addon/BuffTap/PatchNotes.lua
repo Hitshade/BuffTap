@@ -2,6 +2,9 @@
 local _,B=...
 -- Keep the ten most recent releases within a 24 KiB content ceiling.
 B.PatchNotes={
+ {version="1.21.2",title="A mana reserve that works on Forever",items={
+  "The Nearby mana reserve now works when the game hides your exact mana, as WoW Forever does: BuffTap judges it from which of your spells you can afford, so it stops close to your reserve. Once it is saving mana it waits until you are a little above the reserve again.",
+  "Nearby cleanses respect the mana reserve too."}},
  {version="1.21.1",title="Who gets each buff, and Nearby feedback",items={
   "Each buff on the Target page has a Classes button: choose which classes can get it when they are your friendly target or a Nearby player. For example, Thorns for melee classes only.",
   "Arcane Intellect and Divine Spirit are no longer offered to Warriors and Rogues you target. Nearby already skipped them.",
@@ -74,10 +77,6 @@ B.PatchNotes={
   "Party and Raid follow unchanged Solo preferences until you customize them.",
   "Groups now keeps five-player Party and Raid preferences separately.",
   "Matching-class profile copies include these preferences."},thanks="Thanks to Xprit44 for the separate party weapon-buff idea."},
- {version="1.17.0",title="Camping and reminder appearance",items={
-  "Camping has its own reminder and setup tray, separate from ordinary buffing.",
-  "Keep sleeping-bag stacks and remaining time visible together.",
-  "Customize reminder effects and text, with a refreshed options sidebar."}},
 }
 function B:PatchNotesUnread()
   return self.profileDB and self.db.optionsPatchDot~=false and self.profileDB.global.patchNotesSeen~=self.version

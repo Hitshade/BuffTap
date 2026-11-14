@@ -63,13 +63,76 @@ function B:BlockedList()
   return out
 end
 
--- Mana floor: buffing players outside your group waits until mana is back above the floor.
+-- Mana floor: buffing and cleansing players outside your group waits until mana is back above
+-- the floor (plus a 5% margin once saving, so it doesn't flicker on and off).
+-- WoW Forever can hide your current mana from addons while your maximum stays readable. Then your
+-- own spells are the ruler: the game still says which ranks you can afford right now, and their
+-- costs bracket your mana.
+local MANA=(Enum and Enum.PowerType and Enum.PowerType.Mana) or 0
+function B:ManaRuler()
+  if self.manaRuler and self.manaRulerBook==self.book then return self.manaRuler end
+  local list,seen={},{}
+  for _,entry in ipairs(self.book or {}) do
+    if not seen[entry.id] then
+      seen[entry.id]=true
+      local costs=A.Call(C_Spell and C_Spell.GetSpellPowerCost,entry.id)
+      if type(costs)=="table" then
+        for _,c in ipairs(costs) do
+          if type(c)=="table" and A.Public(c.type) and c.type==MANA and A.Number(c.cost) and c.cost>0 then
+            list[#list+1]={id=entry.id,cost=c.cost}; break
+          end
+        end
+      end
+    end
+  end
+  table.sort(list,function(a,b) return a.cost<b.cost end)
+  self.manaRuler=list; self.manaRulerBook=self.book
+  return list
+end
+-- Your current mana as low,high,how: exact when readable, else bounds from what you can afford
+-- (high nil when every ranked spell is affordable). nil when neither is available.
+function B:ManaBounds()
+  local mana=A.Call(UnitPower,"player",MANA)
+  if A.Number(mana) then return mana,mana,"exact" end
+  local usable=C_Spell and C_Spell.IsSpellUsable
+  if type(usable)~="function" then return nil end
+  local low,high,seen=0,nil,false
+  for _,spell in ipairs(self:ManaRuler()) do
+    local ok,u,noMana=pcall(usable,spell.id)
+    if ok and A.Public(u) and A.Public(noMana) then
+      if u==true then seen=true; if spell.cost>low then low=spell.cost end
+      elseif noMana==true then seen=true; if not high or spell.cost<high then high=spell.cost end end
+    end
+  end
+  if not seen then return nil end
+  if high and low>=high then low=0 end
+  return low,high,"estimate"
+end
 function B:ManaFloorReached()
   local floor=self.db and tonumber(self.db.nearbyManaFloor) or 0
-  if floor<=0 then return false end
-  local power,max=A.Call(UnitPower,"player",0),A.Call(UnitPowerMax,"player",0)
-  if not A.Number(power) or not A.Number(max) or max<=0 then return false end
-  return power/max*100<floor
+  if floor<=0 then self.manaFloorSaving=nil; self.manaReading=nil; return false end
+  local now=GetTime()
+  if self.manaFloorAt==now and self.manaFloorCached~=nil then return self.manaFloorCached end
+  local max=A.Call(UnitPowerMax,"player",MANA)
+  local below=false
+  if A.Number(max) and max>0 then
+    local low,high,how=self:ManaBounds()
+    local limit=(self.manaFloorSaving and math.min(100,floor+5) or floor)/100*max
+    if not low then self.manaReading="unreadable"
+    elseif how=="exact" then below=low<limit; self.manaReading="exact "..math.floor(low/max*100+.5).."%"
+    else
+      -- Can't afford a spell costing no more than the limit: below. Can afford one costing at
+      -- least the limit: above. Otherwise the middle of what is known decides.
+      if high and high<=limit then below=true
+      elseif low>=limit then below=false
+      elseif high then below=(low+high)/2<limit
+      else below=false end
+      self.manaReading="estimate "..math.floor(low/max*100+.5).."%"..(high and ("-"..math.floor(high/max*100+.5).."%") or "+")
+    end
+  else self.manaReading="maximum mana unreadable" end
+  self.manaFloorSaving=below or nil
+  self.manaFloorAt=now; self.manaFloorCached=below
+  return below
 end
 
 -- Ready checks and long buffs in dungeons top up earlier.

@@ -1,3 +1,14 @@
+# BuffTap 1.21.2 (beta 1)
+
+### Mana reserve on WoW Forever
+- The Nearby mana reserve never triggered on Forever: the game hides your current mana from addons (your maximum stays readable), so the reserve check could not compare anything and let every cast through, down to zero mana.
+- When your exact mana is hidden, BuffTap now judges it from your own spells: it reads each rank's mana cost and asks the game which ones you can afford right now. A spell costing no more than the reserve that you can't afford means you are below it; one costing at least the reserve that you can afford means you are above it; in between, the middle of what is known decides. With many ranks (Healing Touch, Regrowth, heals, armors) it lands close to the reserve. When the exact value is readable it is still used.
+- Once it is saving mana, Nearby waits until you are 5% above the reserve before offering again, so it doesn't flicker on and off.
+- Nearby cleanses respect the reserve too.
+- The Full check-up's Nearby section shows the reserve, how your mana was read (exact or an estimated range) and whether it is saving mana.
+
+---
+
 # BuffTap 1.21.1
 
 ### Who gets each buff (friendly targets and Nearby)
