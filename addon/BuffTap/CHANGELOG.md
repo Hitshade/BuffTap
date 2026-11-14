@@ -1,4 +1,4 @@
-# BuffTap 1.22.0 (beta 1)
+# BuffTap 1.22.0
 
 ### Resurrection (new)
 - Priests, Paladins and Shamans: when a group member is dead (not yet released) and you are out of combat, your binding offers your highest known Resurrection, Redemption or Ancestral Spirit on them. A dead player you target outside your group is offered too.

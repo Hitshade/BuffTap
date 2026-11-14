@@ -5,7 +5,8 @@ B.PatchNotes={
  {version="1.22.0",title="Resurrection, and know when friends are near",items={
   "New: BuffTap offers your resurrection spell to dead group members and to a dead player you target, out of combat. Druids can also allow Rebirth. Find it on the Cleanse & revive page.",
   "New, off by default: a sound and a short highlight when a friend or guild member shows up in your Nearby list. Turn it on under Customization > Binding & sound, with separate switches for friends and guild.",
-  "It plays at most once per player an hour, never in combat or instances, and stays quiet right after a loading screen. Three new sounds come with it: Happy hello, Twin bells and Playful marimba."}},
+  "It plays at most once per player an hour, never in combat or instances, and stays quiet right after a loading screen. Three new sounds come with it: Happy hello, Twin bells and Playful marimba.",
+  "The cleanse sound now sits with the other sounds under Customization > Binding & sound, and cleansing alerts now use Warm bell."}},
  {version="1.21.2",title="A mana reserve that works on Forever",items={
   "The Nearby mana reserve now works when the game hides your exact mana, as WoW Forever does: BuffTap judges it from which of your spells you can afford, so it stops close to your reserve. Once it is saving mana it waits until you are a little above the reserve again.",
   "Nearby cleanses respect the mana reserve too."}},
