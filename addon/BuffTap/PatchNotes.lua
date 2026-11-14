@@ -7,6 +7,7 @@ B.PatchNotes={
   "Choose what to remove and who to help: you, your group, your target and, if you like, Nearby players. Abolish Poison and Abolish Disease are used when the effect has stacks or will last a while.",
   "Cleanse reminders have their own sound and a border in the debuff's colour. Right-click one to never be offered that debuff again; the list is shared by all your characters.",
   "Nearby can hide its title bar until the mouse is over the window, and keep the hairline if you like (Customization > Nearby window).",
+  "In the all players view, friends and guild members are listed first once nobody needs a buff.",
   "Nearby can keep working while resting, so you can still buff, invite and answer requests in cities and inns.",
   "Fixed the Nearby mana reserve not noticing when your mana dropped below it, and camp text being cut off.",
   "The Nearby guide is redrawn to look like the real window, with numbered markers for every button, the people icon, the buff and dash, and the name tags.",

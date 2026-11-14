@@ -420,7 +420,14 @@ function B:NearbyPlayers()
       end
     end
   end
-  table.sort(out,function(a,b) if a.order==b.order then return a.guid<b.guid end return a.order<b.order end)
+  -- Players with nothing needed: friends and guild members first, so they stay in the visible rows.
+  -- Tiers: needs a buff, then friends and guild members, then everyone else.
+  local function tier(e) return #e.actions>0 and 0 or e.social~=nil and 1 or 2 end
+  table.sort(out,function(a,b)
+    local at,bt=tier(a),tier(b)
+    if at~=bt then return at<bt end
+    if a.order==b.order then return a.guid<b.guid end return a.order<b.order
+  end)
   return out
 end
 function B:SetNearbyView(showAll)
@@ -677,6 +684,11 @@ function B:NearbyDisplayList(list)
       local an=a.fresh and #a.entry.actions>0 or false
       local bn=b.fresh and #b.entry.actions>0 or false
       if an~=bn then return an end
+      -- Among players with nothing needed, friends and guild members come first.
+      if not an then
+        local as,bs=a.entry.social~=nil,b.entry.social~=nil
+        if as~=bs then return as end
+      end
       if a.entry.order~=b.entry.order then return a.entry.order<b.entry.order end
       return a.entry.guid<b.entry.guid
     end)

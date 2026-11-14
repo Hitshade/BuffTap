@@ -17,6 +17,7 @@
 - Hide the title bar until the mouse is over the window (Customization > Nearby window > Title bar), with an option to keep the hairline. Off by default.
 - New "Buff while resting" option on the Nearby page: Nearby keeps working in cities and inns while your own reminders still pause. In the all players view while resting or mounted the list is kept and the count shows why buffing is paused.
 - Fix: the mana reserve didn't notice when your mana crossed it, so buffs kept being offered below the reserve.
+- All players view: once nobody needs a buff, friends and guild members are listed first, so they stay in the visible rows. Players who need a buff still come first.
 - First-time setup turns on every Nearby option except buff requests. Existing settings are not changed.
 
 ### Camping
@@ -49,7 +50,7 @@
 - Em dashes removed from interface text in all languages.
 
 ### Tests
-- 14 new cleanse tests pass. The full suite runs before the final release.
+- 14 new cleanse tests and 1 Nearby ordering test pass. The full suite runs before the final release.
 
 ---
 
