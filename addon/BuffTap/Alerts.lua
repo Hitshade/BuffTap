@@ -12,7 +12,9 @@ local bundled={
   {key="bell",name="Warm bell",file=SOUNDS.."BuffTapBell.ogg"},
   {key="harp",name="Harp arpeggio",file=SOUNDS.."BuffTapHarp.ogg"},
   {key="cleanse",name="Cleansing wash",file=SOUNDS.."BuffTapCleanse.ogg"},
-  {key="hello",name="Friendly hello",file=SOUNDS.."BuffTapHello.ogg"},
+  {key="hello",name="Happy hello",file=SOUNDS.."BuffTapHello.ogg"},
+  {key="twinbells",name="Twin bells",file=SOUNDS.."BuffTapTwinBells.ogg"},
+  {key="playful",name="Playful marimba",file=SOUNDS.."BuffTapPlayful.ogg"},
 }
 local definitions={
   {key="default",name="Ding (game)",id=12867},

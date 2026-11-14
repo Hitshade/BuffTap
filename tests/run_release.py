@@ -65,4 +65,5 @@ import test_beta3
 import test_cast_result
 import test_mana_reserve
 import test_social_alert
+import test_revive
 print('FINAL_TOTAL',len(__import__('test_bufftap').tests))

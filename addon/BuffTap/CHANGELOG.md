@@ -1,7 +1,15 @@
-# BuffTap 1.21.3 (beta 1)
+# BuffTap 1.22.0 (beta 1)
+
+### Resurrection (new)
+- Priests, Paladins and Shamans: when a group member is dead (not yet released) and you are out of combat, your binding offers your highest known Resurrection, Redemption or Ancestral Spirit on them. A dead player you target outside your group is offered too.
+- Druids can turn on "Also use Rebirth" (off by default, since it has a long cooldown and a reagent).
+- Players who have released their spirit, are offline, or are already being resurrected by someone else are skipped.
+- Settings are on the Cleanse page, now called "Cleanse & revive": Offer resurrection, Your group, Your target and (Druids) Also use Rebirth.
+- Nearby players can't be resurrected: the game removes nameplates from dead players, so they never appear in the Nearby list.
 
 ### Friend and guildmate alert (new, off by default)
-- Turn on "Play it when a friend or guildmate appears in Nearby" under Customization > Binding & sound. The first time a friend or guild member shows up in your Nearby list, BuffTap plays the new "Friendly hello" sound (a warm two-note chime, level-matched to the other BuffTap sounds; any sound can be chosen as the Friend sound) and their row glows briefly in blue for a friend or green for a guild member.
+- Turn on "Play it when a friend or guildmate appears in Nearby" under Customization > Binding & sound. The first time a friend or guild member shows up in your Nearby list, BuffTap plays the new "Happy hello" sound (a bouncy kalimba "hey there", level-matched to the other BuffTap sounds; any sound can be chosen as the Friend sound) and their row glows briefly in blue for a friend or green for a guild member.
+- Two more new BuffTap sounds come with it, usable for any alert: "Twin bells" (a bright, cheerful ding-ding) and "Playful marimba".
 - Separate Friends and Guild switches. It works whether or not the heart and shield name tags are shown.
 - At most once per player per hour and one alert every 20 seconds; never in combat, in instances or for people in your group; quiet for the first seconds after a loading screen, so arriving in a busy guild hub doesn't set off a string of chimes.
 - It uses the Nearby list, so it works wherever that list is active (with "Buff while resting" on, also in cities and inns). It has its own pacing, separate from the reminder sound's switch and minimum interval.

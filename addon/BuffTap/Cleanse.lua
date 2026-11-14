@@ -351,6 +351,89 @@ function B:UpdateOverlay(...)
   return result
 end
 
+-- Resurrection: dead (not released) group members, then a dead friendly player you target. Out of
+-- combat, never someone who already has a resurrection coming. Rebirth only when turned on.
+-- Nearby can't offer it: dead players have no nameplate on Forever.
+local REVIVE={
+  PRIEST={2006,2010,10880,10881,20770},
+  PALADIN={7328,10322,10324,20772,20773},
+  SHAMAN={2008,20609,20610,20776,20777},
+}
+local REBIRTH={20484,20739,20742,20747,20748}
+function B:ReviveSpell(rebirth)
+  local list=rebirth and REBIRTH or REVIVE[A.Class("player") or ""]
+  if not list then return nil end
+  for i=#list,1,-1 do if A.Known(list[i]) then return list[i] end end
+end
+function B:CanRevive()
+  return self:ReviveSpell(false)~=nil or (A.Class("player")=="DRUID" and self:ReviveSpell(true)~=nil)
+end
+local function reviveTargetOk(self,unit)
+  if A.Call(UnitExists,unit)~=true or A.Call(UnitIsPlayer,unit)~=true then return false end
+  if A.Call(UnitIsDead,unit)~=true or A.Call(UnitIsGhost,unit)~=false then return false end
+  if A.Call(UnitIsConnected,unit)==false then return false end
+  if type(UnitHasIncomingResurrection)=="function" and A.Call(UnitHasIncomingResurrection,unit)~=false then return false end
+  if self.BlockReason and self:BlockReason(unit) then return false end
+  return not pvpUnsafe(self,unit)
+end
+function B:BuildReviveAction(unit,id)
+  local name,icon=spellInfo(id)
+  if not name then return nil end
+  local who=A.Call(UnitName,unit) or unit
+  local action={id=id,spellName=name,icon=icon,target=unit,known=true,secureType="spell",valid=true,source="revive",
+    key="revive:"..tostring(A.Call(UnitGUID,unit) or unit),name=name,targetName=who,targetGUID=A.Call(UnitGUID,unit),
+    reason="revive: "..tostring(unit)}
+  return action
+end
+local function tryRevive(self,unit,id)
+  if not reviveTargetOk(self,unit) or not usable(id) then return nil end
+  local action=self:BuildReviveAction(unit,id)
+  if not action or self:SpellRange(action)==false then return nil end
+  return action
+end
+function B:SelectRevive()
+  local d=self.db
+  if not d or not d.enabled or d.reviveEnabled==false or A.Combat() then return nil end
+  if A.Call(UnitIsDeadOrGhost,"player")~=false or self:ReminderPauseReason() then return nil end
+  if A.Call(UnitCastingInfo,"player")~=nil or A.Call(UnitChannelInfo,"player")~=nil then return nil end
+  local ids={}
+  local normal=self:ReviveSpell(false); if normal then ids[#ids+1]=normal end
+  if d.reviveRebirth==true and A.Class("player")=="DRUID" then local r=self:ReviveSpell(true); if r then ids[#ids+1]=r end end
+  if #ids==0 then return nil end
+  for _,id in ipairs(ids) do
+    if d.reviveGroup~=false then
+      for _,unit in ipairs(groupUnits()) do local a=tryRevive(self,unit,id); if a then return a end end
+    end
+    if d.reviveTarget~=false and A.Call(UnitInParty,"target")~=true and not A.Number(A.Call(UnitInRaid,"target"))
+      and A.Call(UnitIsUnit,"target","player")~=true then
+      local a=tryRevive(self,"target",id); if a then return a end
+    end
+  end
+end
+function B:ValidateRevive(action)
+  if not action or A.Combat() or self.db.reviveEnabled==false then return false end
+  if A.Call(UnitGUID,action.target)~=action.targetGUID then return false end
+  if not reviveTargetOk(self,action.target) or not usable(action.id) then return false end
+  return self:SpellRange(action)~=false
+end
+local reviveBaseSelect=B.Select
+function B:Select()
+  local ok,action=pcall(self.SelectRevive,self)
+  if ok and action then
+    action.selectedAt=GetTime()
+    self.rangeBlocked=false; self.rangeBlockedActions={}; self.rangeBlockedKeys={}
+    self.powerBlocked=false; self.manaFloorBlocked=nil; self.manaBlocked=false; self.cooldownBlocked=false
+    self.dataPending=false; self.targetDataPending=false; self.pvpBlocked=false; self.nextWakeDelay=nil
+    return action,"revive"
+  end
+  return reviveBaseSelect(self)
+end
+local reviveBaseValidate=B.Validate
+function B:Validate(action)
+  if action and action.source=="revive" then return self:ValidateRevive(action) end
+  return reviveBaseValidate(self,action)
+end
+
 -- Options: the Cleanse page (after My buffs). Built from the shared options helpers.
 local TYPE_ORDER={"Poison","Curse","Disease","Magic"}
 function B:BuildCleansePage(ui,tabs,headerSwitch,section)
@@ -400,25 +483,39 @@ function B:BuildCleansePage(ui,tabs,headerSwitch,section)
   f.cleanseBorder=ui.check(p,"Border colour by type",480,-426,function(c)
     B.db.cleanseBorder=c:GetChecked()==true; B:UpdateOverlay()
   end)
-  section(ui,p,"Never cleanse (shared by all your characters)",12,-482,692,236)
-  f.cleanseInput=ui.editbox(p,26,-522,260,false); f.cleanseInput:SetMaxLetters(80)
+  -- Resurrection: one row. Works whether or not cleansing is on.
+  section(ui,p,"Resurrection",12,-482,692,84)
+  f.reviveEnable=ui.check(p,"Offer resurrection",26,-522,function(c)
+    if A.Combat() then return end
+    B.db.reviveEnabled=c:GetChecked()==true; B:RequestRefresh("revive toggled",0); B:UpdateCleansePage()
+  end)
+  f.reviveEnable:HookScript("OnEnter",function(s) T.Tooltip(s,B:Text("Offer resurrection"),B:Text("Out of combat, puts your resurrection spell on the reminder for a dead group member, or a dead player you target. Never for someone who has released their spirit or already has a resurrection coming. Dead players have no nameplate, so Nearby can't offer it: target their corpse instead.")) end)
+  f.reviveEnable:HookScript("OnLeave",function() if GameTooltip then GameTooltip:Hide() end end)
+  f.reviveGroup=ui.check(p,"Your group",236,-522,function(c) if A.Combat() then return end; B.db.reviveGroup=c:GetChecked()==true; B:RequestRefresh("revive who",0) end)
+  f.reviveTarget=ui.check(p,"Your target",386,-522,function(c) if A.Combat() then return end; B.db.reviveTarget=c:GetChecked()==true; B:RequestRefresh("revive who",0) end)
+  f.reviveRebirth=ui.check(p,"Also use Rebirth",536,-522,function(c) if A.Combat() then return end; B.db.reviveRebirth=c:GetChecked()==true; B:RequestRefresh("revive rebirth",0) end)
+  f.reviveRebirth:HookScript("OnEnter",function(s) T.Tooltip(s,B:Text("Also use Rebirth"),B:Text("Rebirth has a long cooldown, so it is off unless you turn it on. When on, it is offered out of combat like any resurrection.")) end)
+  f.reviveRebirth:HookScript("OnLeave",function() if GameTooltip then GameTooltip:Hide() end end)
+  f.reviveNote=ui.label(p,"",536,-529,"GameFontDisableSmall",160)
+  section(ui,p,"Never cleanse (shared by all your characters)",12,-580,692,138)
+  f.cleanseInput=ui.editbox(p,26,-620,260,false); f.cleanseInput:SetMaxLetters(80)
   local function add()
     local text=f.cleanseInput:GetText()
     if A.Text(text) then B:SetCleanseNever(text,true); f.cleanseInput:SetText(""); f.cleanseInput:ClearFocus(); B:UpdateCleansePage() end
   end
   f.cleanseInput:SetScript("OnEnterPressed",add)
   f.cleanseInput:SetScript("OnEscapePressed",function(s) s:ClearFocus() end)
-  ui.button(p,"Add",298,-520,90,add)
-  ui.label(p,"Type the debuff's name, or right-click a cleanse reminder to add it.",400,-526,"GameFontDisableSmall",290)
+  ui.button(p,"Add",298,-618,90,add)
+  ui.label(p,"Type the debuff's name, or right-click a cleanse reminder to add it.",400,-624,"GameFontDisableSmall",290)
   f.cleanseScroll=CreateFrame("ScrollFrame",nil,p,"UIPanelScrollFrameTemplate")
-  f.cleanseRestore=ui.button(p,"Restore built-in entries",486,-488,204,function()
+  f.cleanseRestore=ui.button(p,"Restore built-in entries",486,-586,204,function()
     if A.Combat() then return end
     for id in pairs(B:CleanseBuiltInAllowed()) do B:SetCleanseBuiltInAllowed(id,false) end
     B:UpdateCleansePage()
   end)
   f.cleanseRestore:SetHeight(20)
-  f.cleanseScroll:SetPoint("TOPLEFT",26,-558); f.cleanseScroll:SetSize(640,150)
-  f.cleanseList=CreateFrame("Frame",nil,f.cleanseScroll); f.cleanseList:SetSize(640,150); f.cleanseScroll:SetScrollChild(f.cleanseList)
+  f.cleanseScroll:SetPoint("TOPLEFT",26,-652); f.cleanseScroll:SetSize(640,60)
+  f.cleanseList=CreateFrame("Frame",nil,f.cleanseScroll); f.cleanseList:SetSize(640,60); f.cleanseScroll:SetScrollChild(f.cleanseList)
   f.cleanseListRows={}
   function f.cleanseRow(index)
     local row=f.cleanseListRows[index]; if row then return row end
@@ -448,6 +545,18 @@ function B:UpdateCleansePage()
   if not f or not f.cleanseEnable then return end
   local d=self.db
   f.cleanseEnable:SetChecked(d.cleanseEnabled==true)
+  if f.reviveEnable then
+    local can=self:CanRevive(); local druid=A.Class("player")=="DRUID"
+    local normal=self:ReviveSpell(false)
+    f.reviveEnable:SetChecked(can and d.reviveEnabled~=false); f.reviveEnable:SetEnabled(can)
+    f.reviveGroup:SetChecked(d.reviveGroup~=false); f.reviveGroup:SetEnabled(can and d.reviveEnabled~=false)
+    f.reviveTarget:SetChecked(d.reviveTarget~=false); f.reviveTarget:SetEnabled(can and d.reviveEnabled~=false)
+    f.reviveRebirth:SetShown(druid); f.reviveRebirth:SetChecked(d.reviveRebirth==true); f.reviveRebirth:SetEnabled(druid and d.reviveEnabled~=false and self:ReviveSpell(true)~=nil)
+    local note=""
+    if not can then note=self:Text("Your class can't resurrect.")
+    elseif not druid and normal then note=self:Text("Uses %s",(spellInfo(normal))) end
+    f.reviveNote:SetText(note); f.reviveNote:SetShown(not druid or not can)
+  end
   for _,row in ipairs(f.cleanseRows) do
     local classCan=self:CleanseClassSpells(row.kind)~=nil
     local names=classCan and knownNames(self,row.kind) or {}
