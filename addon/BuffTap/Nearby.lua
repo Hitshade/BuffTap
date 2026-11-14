@@ -523,7 +523,7 @@ end
 local MARKERS={pvp={"UIPvPFlag",.9,.36,.32,1},["pvp-unknown"]={"UIPvPFlag",.6,.6,.6,.55},blocked={"NavBlacklist",.95,.25,.22,1},
   friend={"UIFriend",.42,.72,1,1},guild={"UIGuild",.35,.9,.42,1}}
 B.NearbyTagStyles=MARKERS
--- All players view while resting or mounted: the list stays up for invites and requests,
+-- All players view while resting, mounted or stealthed: the list stays up for invites and requests,
 -- while buffing itself stays paused (NearbyCandidates still returns nothing).
 -- "Buff while resting": Nearby ignores the resting pause (other pauses still apply).
 function B:NearbyPauseReason()
@@ -539,7 +539,7 @@ end
 function B:NearbyBrowsePause()
   if not self.db or not self.db.nearbyShowAll then return nil end
   local reason=self:NearbyPauseReason()
-  if reason=="resting" or reason=="mounted" then return reason end
+  if reason=="resting" or reason=="mounted" or reason=="stealthed" then return reason end
 end
 function B:NearbyPlayers()
   local buffs=self:NearbyCandidates()
@@ -1213,7 +1213,7 @@ function B:UpdateNearbyWindow()
   end
   -- Browsing while resting or mounted: say why nothing is offered instead of a 0/N count.
   local browse=self:NearbyBrowsePause()
-  if browse then f.count:SetText("|cffa0a8b0"..self:Text(browse=="resting" and "Paused: resting" or "Paused: mounted").."|r")
+  if browse then f.count:SetText("|cffa0a8b0"..self:Text(browse=="resting" and "Paused: resting" or browse=="stealthed" and "Paused: stealthed" or "Paused: mounted").."|r")
   else f.count:SetText(counts.need.."/"..counts.total..note) end
   if f.allPlayers.showAll~=self.db.nearbyShowAll then
     f.allPlayers.showAll=self.db.nearbyShowAll

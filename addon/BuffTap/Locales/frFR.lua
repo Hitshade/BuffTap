@@ -1144,3 +1144,4 @@ B.Locales.frFR["Your class can't resurrect."]="Votre classe ne peut pas ressusci
 B.Locales.frFR["Uses %s"]="Utilise %s"
 B.Locales.frFR["Sound settings"]="Réglages du son"
 B.Locales.frFR["Only while you are unflagged. Same switch as on Helpers."]="Seulement tant que vous n'êtes pas marqué. Même réglage que dans Assistants."
+B.Locales.frFR["Paused: stealthed"]="En pause : camouflé"

@@ -3,7 +3,7 @@
 ### Fixes
 - Nearby and PvP realms: PvP protection now skips flagged Nearby players only while you are unflagged (or your flag is running out), the same rule your group and target already used. Before, Nearby skipped every flagged player even when you were flagged yourself, so on PvP realms it did nothing in contested zones. Battlegrounds and arenas keep the stricter check.
 - The "Prevent accidental PvP flagging" switch is now also on the Nearby page, under Player list. It is the same setting as the one on Helpers.
-- Stealth: BuffTap offers nothing while you are in Stealth, Prowl, Shadowmeld or any other stealth, so a buff, cleanse or item can't break it. Reminders come back as soon as stealth ends.
+- Stealth: BuffTap offers nothing while you are in Stealth, Prowl, Shadowmeld or any other stealth, so a buff, cleanse or item can't break it. Reminders come back as soon as stealth ends. With "Show all nearby players" on, the Nearby window stays listed while you are stealthed (header: "Paused: stealthed"), so invite buttons keep working; only buffing pauses, as it already did while mounted or resting.
 
 ---
 

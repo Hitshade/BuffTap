@@ -1144,3 +1144,4 @@ B.Locales.deDE["Your class can't resurrect."]="Deine Klasse kann nicht wiederbel
 B.Locales.deDE["Uses %s"]="Nutzt %s"
 B.Locales.deDE["Sound settings"]="Klangeinstellungen"
 B.Locales.deDE["Only while you are unflagged. Same switch as on Helpers."]="Nur solange du nicht markiert bist. Derselbe Schalter wie unter Helfer."
+B.Locales.deDE["Paused: stealthed"]="Pausiert: getarnt"
