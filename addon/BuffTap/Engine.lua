@@ -4,7 +4,7 @@
 
 local _, B = ...
 _G.BuffTap = B
-B.version = "1.21.0"
+B.version = "1.21.1-beta1"
 B.API = {}
 local A = B.API
 
@@ -543,9 +543,28 @@ end
 function B:SetTargetClassAllowed(b,class,allowed)
   if A.Combat() or not b or not A.Text(class) then return end
   local key=self:RootKey(b); if not key then return end
-  local d=self.db; d.targetClasses[key]=d.targetClasses[key] or {}
+  local d=self.db
+  if not d.targetClasses[key] then
+    -- First change: start from what the picker shows (the Nearby view) so every class is explicit
+    -- and targets and Nearby agree from then on.
+    local map={}; for _,c in ipairs(B.RecipientClasses) do map[c]=self:TargetClassAllowed(b,c,true) end
+    d.targetClasses[key]=map
+  end
   d.targetClasses[key][class]=allowed and true or false
   self:InvalidateAura(); self:RequestRefresh("target classes",0)
+end
+-- Short summary for the Target page button.
+function B:TargetClassSummary(b)
+  local key=self:RootKey(b); local map=key and self.db.targetClasses[key]
+  if type(map)~="table" then
+    if self:TargetManaOnly(b) then return self:Text("Mana users") end
+    local root=self:FindBuff(key) or b
+    return root.target and self:Text("Default") or self:Text("All")
+  end
+  local n=0; for _,c in ipairs(B.RecipientClasses) do if self:TargetClassAllowed(b,c,true) then n=n+1 end end
+  if n==#B.RecipientClasses then return self:Text("All") end
+  if n==0 then return self:Text("None") end
+  return self:Text("%d classes",n)
 end
 function B:ResetTargetClasses(b)
   local key=b and self:RootKey(b); if not key or A.Combat() then return end

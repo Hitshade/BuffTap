@@ -664,6 +664,54 @@ function B:BuildBlessingOptions(parent)
   end)
 
 end
+-- Target page: which classes a friendly target or Nearby player may get one buff on.
+local function className(token) return (LOCALIZED_CLASS_NAMES_MALE and LOCALIZED_CLASS_NAMES_MALE[token]) or token:sub(1,1)..token:sub(2):lower() end
+function B:ShowTargetClasses(anchor,def)
+  if A.Combat() or not def then return end
+  local f=self.options; local p=f.targetClassPanel
+  if p and p:IsShown() and p.def==def then p:Hide(); return end
+  if not p then
+    p=CreateFrame("Frame","BuffTapTargetClasses",f,"BackdropTemplate"); f.targetClassPanel=p
+    p:SetSize(340,262); p:SetFrameStrata("DIALOG"); p:SetFrameLevel(f:GetFrameLevel()+100)
+    p:SetBackdrop({bgFile="Interface\\Buttons\\WHITE8X8",edgeFile="Interface\\Buttons\\WHITE8X8",edgeSize=1})
+    p:SetBackdropColor(unpack(T.menu)); p:SetBackdropBorderColor(unpack(T.border)); p:EnableMouse(true); p:SetClampedToScreen(true)
+    if UISpecialFrames then table.insert(UISpecialFrames,"BuffTapTargetClasses") end
+    p.title=label(p,"",16,-14,T.fonts.Section,308); T.SectionTitle(p.title)
+    p.classes={}
+    for i,token in ipairs(B.RecipientClasses) do
+      local class=token
+      local c=check(p,className(class),14+((i-1)%3)*106,-40-math.floor((i-1)/3)*32,function(s)
+        if A.Combat() or not p.def then return end
+        B:SetTargetClassAllowed(p.def,class,s:GetChecked()==true); p:Sync(); B:Options()
+      end)
+      local color=RAID_CLASS_COLORS and RAID_CLASS_COLORS[class]
+      if color and c.Text then c.Text:SetTextColor(color.r,color.g,color.b); c.classColor=color end
+      p.classes[class]=c
+    end
+    label(p,"Applies to friendly targets and Nearby players. Party and raid use the Groups page.",16,-146,"GameFontDisableSmall",308)
+    p.reset=button(p,"Use defaults",14,-196,130,function()
+      if A.Combat() or not p.def then return end
+      B:ResetTargetClasses(p.def); p:Sync(); B:Options()
+    end)
+    p.defaults=label(p,"",156,-192,"GameFontDisableSmall",170)
+    p.Sync=function(self)
+      local d=self.def; if not d then return end
+      self.title:SetText(B:Text("%s: who can get it",spellLabel(d)))
+      for class,c in pairs(self.classes) do
+        c:SetChecked(B:TargetClassAllowed(d,class,true)); T.Check(c)
+        if c.classColor and c.Text then c.Text:SetTextColor(c.classColor.r,c.classColor.g,c.classColor.b) end
+      end
+      local root=B:FindBuff(B:RootKey(d)) or d
+      local nearby={}; for _,c in ipairs(root.target or {}) do nearby[#nearby+1]=className(c) end
+      local nearbyText=#nearby>0 and table.concat(nearby,", ") or B:Text("any class")
+      local targetText=B:TargetManaOnly(d) and B:Text("mana users") or B:Text("any class")
+      self.defaults:SetText(B:Text("Defaults. Nearby: %s. Your target: %s.",nearbyText,targetText))
+    end
+  end
+  if f.activeSelector and f.activeSelector~=p then f.activeSelector:Hide() end
+  p.def=def; p:ClearAllPoints(); p:SetPoint("TOPLEFT",anchor,"BOTTOMLEFT",0,-4)
+  f.activeSelector=p; p:Sync(); p:Show()
+end
 -- The fallback still honors older per-buff filters; keep those editable without
 -- rebuilding the former assignment page or duplicating explicit class plans.
 function B:ToggleBlessingFilters()
@@ -2466,6 +2514,8 @@ function B:Options()
       row.icon=row:CreateTexture(nil,"ARTWORK"); row.icon:SetSize(32,32); row.icon:SetPoint("TOPLEFT",42,-8)
       row.name=label(row,"",82,-6,"GameFontHighlightSmall",180)
       row.detail=label(row,"",82,-24,"GameFontDisableSmall",180)
+      row.classes=button(row,"",82,-25,170,function(s) B:ShowTargetClasses(s,s:GetParent().def) end); row.classes:SetHeight(18)
+      addHelp(row.classes,"Classes","Choose which classes can get this buff when they are your friendly target or a Nearby player.")
       row.custom=check(row,"Override",270,-12,function(s)
         local def=s:GetParent().def
         if def and not A.Combat() then
@@ -2487,6 +2537,10 @@ function B:Options()
     row.def=b; row:ClearAllPoints(); row:SetPoint("TOPLEFT",0,-(rowIndex-1)*52); row:Show()
     row.enable:SetChecked(self:TargetBuffEnabled(b)); row.icon:SetTexture(buffIcon(b)); row.name:SetText(spellLabel(b))
     row.detail:SetText(not learnedSpell(b) and unlearnedText() or b.classWide and L("Party/raid member only") or self:Enabled(b) and L("Single-target spell") or L("Disabled on Buffs tab"))
+    -- Learned, enabled single-target buffs show a Classes button in place of the plain label.
+    local picker=b.kind~="blessing" and not b.classWide and learnedSpell(b) and self:Enabled(b)
+    row.classes:SetShown(picker and true or false); row.detail:SetShown(not picker)
+    if picker then row.classes:SetText(L("Classes: %s",self:TargetClassSummary(b))); fitButtonText(row.classes,150) end
     local custom=self.db.targetBuffSeconds[b.key]~=nil
     row.custom:SetChecked(custom)
     local seconds=self:TargetRebuffSeconds(b)

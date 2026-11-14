@@ -1,3 +1,16 @@
+# BuffTap 1.21.1 (beta 1)
+
+### Who gets each buff (friendly targets and Nearby)
+- Each single-target buff on the Target page has a Classes button that opens a class picker (class colours, checkboxes). The choice applies to friendly targets and Nearby players alike; party and raid keep their own class filters on the Groups page.
+- Defaults are unchanged except one fix: Arcane Intellect and Divine Spirit are no longer offered to Warriors and Rogues you target yourself (Nearby already skipped them). Nearby keeps each buff's class list (Thorns: Warrior, Paladin, Druid) and a target you click still gets other buffs whatever the class, until you choose classes.
+- The first change in the picker saves every class, starting from what the picker shows, so targets and Nearby follow the same list from then on. "Use defaults" clears it.
+- Blessings keep their own class choices.
+
+### Tests
+- New tests for the class picker and target and Nearby class choices pass. The full suite runs before the final release.
+
+---
+
 # BuffTap 1.21.0
 
 1.21.0 also includes everything from the unreleased 1.20.1 build, listed below the new features.
