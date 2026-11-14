@@ -920,10 +920,9 @@ function B:NearbyDisplayList(list)
       if missing and now-missing<.65 then pending=math.min(pending or .65,.65-(now-missing)) end
     end
   end
-  if not frozen or safetyRemoved then
-    for _,entry in ipairs(list) do
-      if not seen[entry.guid] and #out<MAX_UNITS then out[#out+1]={entry=entry,fresh=true}; seen[entry.guid]=true end
-    end
+  -- New players join at the bottom, even while the list is held under the mouse: nothing above moves.
+  for _,entry in ipairs(list) do
+    if not seen[entry.guid] and #out<MAX_UNITS then out[#out+1]={entry=entry,fresh=true}; seen[entry.guid]=true end
   end
   if not frozen and self.db.nearbyShowAll then
     table.sort(out,function(a,b)
