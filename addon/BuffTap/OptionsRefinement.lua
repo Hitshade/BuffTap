@@ -229,7 +229,7 @@ function B:BuildRefinedOptions(ui,tabs)
   ui.label(interface,"Accent colours are adjusted when necessary to stay readable. Warning and player-class colours stay distinct.",26,-242,"GameFontDisableSmall",650)
   local restoreInterface=ui.button(interface,"Restore interface defaults",462,-320,230,function() B.db.optionsAccentMode="gold"; B.db.optionsAccentColor="75c8da"; B.db.optionsScale=1; B.db.optionsReduceMotion=false; B:Options() end)
   T.Variant(restoreInterface,"danger")
-  self:RefineCampingPage(ui,tabs); self:RefineNearbyPage(ui,tabs); self:BuildPatchNotesPage(ui,tabs); self:StandardizeOptionsPages(ui,tabs)
+  self:RefineCampingPage(ui,tabs); self:RefineNearbyPage(ui,tabs); self:BuildPatchNotesPage(ui,tabs); self:BuildCleansePage(ui,tabs,headerSwitch,section); self:StandardizeOptionsPages(ui,tabs)
   f:HookScript("OnShow",function() B:UpdateOptionsPreviews() end); f:HookScript("OnHide",function() B:StopOptionsPreviews() end)
   self:SetAppearanceView("buff")
 end
@@ -327,7 +327,7 @@ function B:BuildNearbyAppearance(ui,p)
   f.nearbyHideHeader=ui.check(p,"Hide the title bar until the mouse is over the window",26,-518,function(c)
     B.db.nearbyHideHeader=c:GetChecked()==true; if B.nearbyFrame then B:UpdateNearbyHeaderFade(true) end; B:Options()
   end)
-  f.nearbyKeepLine=ui.check(p,"Keep the gold line",480,-518,function(c)
+  f.nearbyKeepLine=ui.check(p,"Keep the hairline",480,-518,function(c)
     B.db.nearbyKeepLine=c:GetChecked()==true; if B.nearbyFrame then B:UpdateNearbyHeaderFade(true) end
   end)
   f.nearbyLock=ui.check(p,"Lock window position",26,-378,function(c) B.db.nearbyLocked=c:GetChecked()==true; if B.nearbyFrame then B:UpdateNearbyWindow() end end)
@@ -406,8 +406,8 @@ function B:BuildPatchNotesPage(ui,tabs)
 end
 function B:StandardizeOptionsPages(ui,tabs)
   local f=self.options; f.pageHeaders={}
-  local titles={"My buffs","Party & raid buffing","Friendly target buffing","Nearby buffing & players","Consumables & supplies","Camping & sleeping bag","Weapon buffs","Customization","Helpers","Profiles","Diagnostics & performance","Patch notes","Blacklist"}
-  local descriptions={"Your class buffs: what to cast, when to refresh, and in what order.","Independent preferences for your five-player party and raid.","Offer selected single-target buffs to the friendly player you target.","Buff observed players, invite someone new, or use the list on its own.","Maintain your chosen consumables and keep an eye on supplies.","Separate camp and sleeping-bag reminders, without blocking buffing.","Maintain your preferred weapon buffs with your normal binding.","Make your reminders and interface feel right for you.","Optional conveniences. Enable only the ones you find useful.","Save, switch and copy named setups between your characters.","Check what BuffTap is doing and collect information for a report.","A short, plain-language history of recent changes.","Players and guilds that BuffTap never offers buffs or invites to."}
+  local titles={"My buffs","Party & raid buffing","Friendly target buffing","Nearby buffing & players","Consumables & supplies","Camping & sleeping bag","Weapon buffs","Customization","Helpers","Profiles","Diagnostics & performance","Patch notes","Blacklist","Cleanse"}
+  local descriptions={"Your class buffs: what to cast, when to refresh, and in what order.","Independent preferences for your five-player party and raid.","Offer selected single-target buffs to the friendly player you target.","Buff observed players, invite someone new, or use the list on its own.","Maintain your chosen consumables and keep an eye on supplies.","Separate camp and sleeping-bag reminders, without blocking buffing.","Maintain your preferred weapon buffs with your normal binding.","Make your reminders and interface feel right for you.","Optional conveniences. Enable only the ones you find useful.","Save, switch and copy named setups between your characters.","Check what BuffTap is doing and collect information for a report.","A short, plain-language history of recent changes.","Players and guilds that BuffTap never offers buffs or invites to.","Remove poisons, curses, diseases and magic out of combat, before buffs."}
   local contextPages={[1]=true,[2]=true,[5]=true,[7]=true}
   for index,page in ipairs(f.pages) do
     local function hideHead(container)
@@ -508,6 +508,7 @@ function B:StandardizeOptionsPages(ui,tabs)
   f.weaponHint:Hide()
 end
 function B:UpdateRefinedOptions()
+  if self.UpdateCleansePage then self:UpdateCleansePage() end
   local f=self.options; if not f or not f.appearancePanes then return end
   self:NormalizeVisualOptions()
   local width,height=A.Call(UIParent.GetWidth,UIParent),A.Call(UIParent.GetHeight,UIParent)

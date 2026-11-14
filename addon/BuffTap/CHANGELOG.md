@@ -1,4 +1,26 @@
-# BuffTap 1.20.1
+# BuffTap 1.21.0 (beta 1)
+
+1.20.1 was never released on its own; its changes ship in 1.21.0 and are listed below the new features.
+
+### Cleansing (new)
+- New Cleanse page, right after My buffs in the menu. Off by default. Classes with nothing to remove (Warriors, Rogues, Hunters, Warlocks) don't see it.
+- BuffTap reads debuffs with their type (Magic, Curse, Poison, Disease), stacks and time left, and puts the right removal spell on the reminder, out of combat only. You still click or press your binding. A due cleanse comes before buffs.
+- Spells: Druid Remove Curse, Cure Poison, Abolish Poison; Mage Remove Lesser Curse; Priest Dispel Magic, Cure Disease, Abolish Disease; Paladin Purify and Cleanse; Shaman Cure Poison and Cure Disease.
+- Abolish Poison and Abolish Disease are chosen when the debuff has 2 or more stacks, when several of that type are on the same player, or when it will last more than about 8 seconds. A single short one gets the plain cure. If Abolish is already ticking on that player, BuffTap waits for it. "Prefer Abolish" can be turned off.
+- Who: you, then your group, your friendly target, then Nearby players (option, off by default; uses the same safety rules as Nearby buffing, including PvP protection and the blacklist).
+- Debuffs with under 3 seconds left are skipped.
+- Never cleanse list, shared by all your characters: type a name on the Cleanse page, or right-click a cleanse reminder to add its debuff. A built-in list (starting with Naxxramas' Mutating Injection) is shown locked.
+- Cleanse reminders read "Cleanse: <debuff>" with the stack count, play their own sound (default Harp arpeggio, chosen on the Cleanse page) and get a border in the debuff colour (blue Magic, purple Curse, green Poison, brown Disease; can be turned off).
+- The click checks again that the debuff is still there, the spell is usable and the player is in range.
+
+### Nearby
+- Hide the title bar until the mouse is over the window (Customization > Nearby window > Title bar), with an option to keep the hairline. Off by default.
+- New "Buff while resting" option on the Nearby page: Nearby keeps working in cities and inns while your own reminders still pause. In the all players view while resting or mounted the list is kept and the count shows why buffing is paused.
+- Fix: the mana reserve didn't notice when your mana crossed it, so buffs kept being offered below the reserve.
+- First-time setup turns on every Nearby option except buff requests. Existing settings are not changed.
+
+### Camping
+- Camp text wraps instead of being cut off, and the bag line shows whenever you have sleeping bag stacks.
 
 ### Nearby guide and fonts
 - The Nearby guide (Nearby page and first-time introduction) is redrawn to look like the real Nearby window: header with count, people icon, lock and close, gold-edged class and buff icons, levels before names, and the gold row your binding buffs next. Numbered markers point at each part, with a numbered key in two groups: Buttons (invite, ask to join, ask for a buff, all players view) and On each row (needs your buff, nothing needed), plus name tags in a two-by-two grid. It says "press your BuffTap binding" instead of naming a key.
@@ -27,7 +49,7 @@
 - Em dashes removed from interface text in all languages.
 
 ### Tests
-- 1815 Lua tests passed (full release suite, 0 failures).
+- 14 new cleanse tests pass. The full suite runs before the final release.
 
 ---
 

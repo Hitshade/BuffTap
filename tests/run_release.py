@@ -58,4 +58,5 @@ print('FINAL_TOTAL',len(__import__('test_bufftap').tests))
 import test_release_119
 import test_release_1194
 import test_release_1200b
+import test_cleanse
 print('FINAL_TOTAL',len(__import__('test_bufftap').tests))

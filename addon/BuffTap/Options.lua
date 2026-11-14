@@ -6,8 +6,8 @@ local ADDON,B=...
 local A=B.API
 local T=B.OptionsTheme
 local function L(key,...) return B:Text(key,...) end
-local TAB={Buffs=1,Groups=2,Target=3,Nearby=4,Consumables=5,Camping=6,Weapons=7,Appearance=8,Helpers=9,Profiles=10,Diagnostics=11,PatchNotes=12,Blacklist=13}
-local TAB_NAMES={L("My buffs"),L("Groups"),L("Target"),L("Nearby"),L("Consumables"),L("Camping"),L("Weapons"),L("Customization"),L("Helpers"),L("Profiles"),L("Diagnostics"),L("Patch notes"),L("Blacklist")}
+local TAB={Buffs=1,Groups=2,Target=3,Nearby=4,Consumables=5,Camping=6,Weapons=7,Appearance=8,Helpers=9,Profiles=10,Diagnostics=11,PatchNotes=12,Blacklist=13,Cleanse=14}
+local TAB_NAMES={L("My buffs"),L("Groups"),L("Target"),L("Nearby"),L("Consumables"),L("Camping"),L("Weapons"),L("Customization"),L("Helpers"),L("Profiles"),L("Diagnostics"),L("Patch notes"),L("Blacklist"),L("Cleanse")}
 local OPTIONS_WIDTH,OPTIONS_HEIGHT=932,900
 -- Page area inside the window: right of the 196 px sidebar, below the 120 px header, above the footer.
 B.OptionsPageLeft,B.OptionsPageTop,B.OptionsPageRight,B.OptionsPageBottom=208,-132,-12,40
@@ -1642,16 +1642,23 @@ function B:Options()
       if index==TAB.Appearance and B.UpdateOptionsPreviews then B:UpdateOptionsPreviews() end
       if index==TAB.Profiles and f.profiles then B:SaveClassSetup(); B:UpdateProfileOptions() end
       if index==TAB.Blacklist then B:UpdateBlacklistPage() end
+      if index==TAB.Cleanse then B:UpdateCleansePage() end
     end
     f.selectTab=setTab
     f.navBackground=f.sidebarFill
-    local navIcons={"Buffs","Groups","Target","Nearby","Consumables","Camping","Weapons","Customization","Helpers","Profiles","Diagnostics","PatchNotes","Blacklist"}
+    local navIcons={"Buffs","Groups","Target","Nearby","Consumables","Camping","Weapons","Customization","Helpers","Profiles","Diagnostics","PatchNotes","Blacklist","Cleanse"}
     f.navIcons=navIcons
-    -- Blacklist keeps tab number 13 but sits under Nearby in the sidebar.
-    local slots={1,2,3,4,6,7,8,9,10,11,12,13,5}
+    -- Sidebar order. Blacklist (13) sits under Nearby; Cleanse (14) follows My buffs and is
+    -- left out for classes that cannot remove anything.
+    local order={TAB.Buffs,TAB.Cleanse,TAB.Groups,TAB.Target,TAB.Nearby,TAB.Blacklist,TAB.Consumables,TAB.Camping,TAB.Weapons,TAB.Appearance,TAB.Helpers,TAB.Profiles,TAB.Diagnostics,TAB.PatchNotes}
+    local slots={}; local nextSlot=1
+    for _,index in ipairs(order) do
+      if index~=TAB.Cleanse or B:CanCleanseAnything() then slots[index]=nextSlot; nextSlot=nextSlot+1 end
+    end
     for i,name in ipairs(names) do
       local idx=i
-      local t=flatButton(f,name,10,-136-(slots[i]-1)*38,177,function() setTab(idx) end)
+      local t=flatButton(f,name,10,-136-((slots[i] or 1)-1)*38,177,function() setTab(idx) end)
+      if not slots[i] then t:Hide(); t.navHidden=true end
       t:SetSize(177,34); t.navStyle="sidebar"; f.tabs[i]=t
       t.icon=t:CreateTexture(nil,"ARTWORK"); t.icon:SetSize(18,18); t.icon:SetPoint("LEFT",14,0); t.icon:SetTexture(T.media.."Nav"..navIcons[i])
       T.Navigation(t,false)
@@ -2132,6 +2139,7 @@ function B:Options()
 
     -- BLACKLIST PAGE: players and guilds BuffTap never offers buffs or invites to.
     local black=panel(f); f.pages[TAB.Blacklist]=black
+    f.pages[TAB.Cleanse]=panel(f)
     label(black,L("Blacklist"),18,-16,"GameFontNormalLarge")
     label(black,"BuffTap never offers buffs or invites to these players or guilds. Your own group is not affected.",18,-42,"GameFontDisableSmall",680)
     card(black,12,-74,692,118)

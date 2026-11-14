@@ -55,7 +55,7 @@ test('Actual Party consumable action preserves Solo selection',cons+"refresh(); 
 test('Party Auto masks inherited explicit consumable',cons+"B:Options(); B:ChooseConsumable(B:ConsumableFamily('food'),nil,'party'); B.itemPicker.auto.scripts.OnClick(); assert(B:SituationValues('party','consumables').consumableChoices.food==false and B.db.consumableChoices.food==6888); B:InitDB(); assert(B:SituationValues('party','consumables').consumableChoices.food==false)")
 for cls in ['DRUID','PALADIN','WARRIOR','HUNTER','ROGUE','WARLOCK','SHAMAN','MAGE','PRIEST']:
  for locale in ['enUS','deDE','frFR','esES','ptBR']:
-  test('Integrated selectors '+cls+' '+locale,setup+"playerClass='"+cls+"'; B:InitDB(); B:Options(); assert(#B.options.pages==12); for _,category in ipairs({'buffs','weapons','consumables'}) do local p=B.contextControls[category]; for _,ctx in ipairs({'party','raid','solo'}) do p.buttons[ctx].scripts.OnClick(); assert(B:EditorContext(category)==ctx and B.situationCurrent=='solo') end end",locale=locale)
+  test('Integrated selectors '+cls+' '+locale,setup+"playerClass='"+cls+"'; B:InitDB(); B:Options(); assert(#B.options.pages==14); for _,category in ipairs({'buffs','weapons','consumables'}) do local p=B.contextControls[category]; for _,ctx in ipairs({'party','raid','solo'}) do p.buttons[ctx].scripts.OnClick(); assert(B:EditorContext(category)==ctx and B.situationCurrent=='solo') end end",locale=locale)
 
 
 case('Actual weapon timing slider stores numeric Party override',"B:Options(); B.contextControls.weapons.buttons.party.scripts.OnClick(); local s=B.options.weaponTiming; s.scripts.OnValueChanged(s,120); assert(B:SituationValues('party','weapons').weaponSeconds==120 and B.db.weaponSeconds~=120)")

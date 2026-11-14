@@ -214,7 +214,8 @@ function B:CreateButton()
       GameTooltip:AddLine("Rank: " .. (action.rank~="" and action.rank or "not exposed") .. " | ID " .. action.id,1,1,1)
       if action.rangeSource then GameTooltip:AddLine("Range check: "..action.rangeSource,0.75,0.75,0.75) end
     end
-    if B:HelperEnabled("helperDismiss") then GameTooltip:AddLine(L("Right-click: dismiss until zone change (restore in Helpers)."),0.8,0.8,0.8,true) end
+    if action.source=="cleanse" then GameTooltip:AddLine(L("Right-click: never offer to cleanse %s (undo on the Cleanse page).",action.debuffName or "?"),0.8,0.8,0.8,true)
+    elseif B:HelperEnabled("helperDismiss") then GameTooltip:AddLine(L("Right-click: dismiss until zone change (restore in Helpers)."),0.8,0.8,0.8,true) end
     if B:HelperEnabled("helperQuick") and action.source=="consumable" then B:ShowQuickChoices(action) end
     GameTooltip:AddLine(table.concat(B.db.keys,", "),0.8,0.8,0.8)
     GameTooltip:Show()
@@ -251,6 +252,14 @@ function B:CreateButton()
       else B:BeforeConsumableClick(action) end
       return
     end
+    if action.source=="cleanse" then
+      if action.nearby then
+        if not B:PrepareNearbyCast(action) then B:Commit(nil,"nearby cleanse changed"); B:RequestRefresh("nearby cleanse changed",0); return end
+        B.button:SetAttribute("macrotext",action.macroText)
+      end
+      if not B:ValidateCleanse(action) then B:Commit(nil,"cleanse no longer needed"); B:RequestRefresh("cleanse changed",0) end
+      return
+    end
     if action.nearby then
       if not B:ValidateNearby(action) or not B:PrepareNearbyCast(action) then B:NoteNearbyClick(nil); B:Commit(nil,"nearby click changed"); B:RequestRefresh("nearby click changed",0); return end
       B:NoteNearbyClick(action)
@@ -281,6 +290,7 @@ function B:CreateButton()
     if ok and not A.Combat() and down~=false then B:BeginHelperAttempt(B.action) end
   end)
   b:SetScript("PostClick",function(_,button,down)
+    if not A.Combat() and button=="RightButton" and not down and B.action and B.action.source=="cleanse" then B:SetCleanseNever(B.action.debuffName,true); B:Commit(nil,"never cleanse"); return end
     if not A.Combat() and button=="RightButton" and not down and B:HelperEnabled("helperDismiss") then B:DismissHelper(B.action); return end
     if A.Combat() or (button and button~="LeftButton") then return end
     local action=B.action

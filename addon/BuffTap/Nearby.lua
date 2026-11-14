@@ -926,7 +926,7 @@ function B:CreateNearbyWindow()
   f:Hide()
 end
 -- Optional hidden title bar: the header fades out until the mouse is over the window, so it
--- can still be dragged and its buttons used. The gold line can stay. Polls the mouse only
+-- can still be dragged and its buttons used. The hairline can stay. Polls the mouse only
 -- while the option is on and the window is shown, ten times a second.
 function B:NearbyHeaderParts(f)
   return {f.header,f.title,f.count,f.lock,f.close,f.allPlayers,f.countHelp}

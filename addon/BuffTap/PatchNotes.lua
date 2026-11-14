@@ -2,7 +2,13 @@
 local _,B=...
 -- Keep the ten most recent releases within a 24 KiB content ceiling.
 B.PatchNotes={
- {version="1.20.1",title="A clearer Nearby guide and fixes",items={
+ {version="1.21.0",title="Cleansing, and a clearer Nearby guide",items={
+  "New Cleanse page, right after My buffs: BuffTap can offer the right spell to remove poisons, curses, diseases and magic out of combat, before buffs. It is off until you turn it on.",
+  "Choose what to remove and who to help: you, your group, your target and, if you like, Nearby players. Abolish Poison and Abolish Disease are used when the effect has stacks or will last a while.",
+  "Cleanse reminders have their own sound and a border in the debuff's colour. Right-click one to never be offered that debuff again; the list is shared by all your characters.",
+  "Nearby can hide its title bar until the mouse is over the window, and keep the hairline if you like (Customization > Nearby window).",
+  "Nearby can keep working while resting, so you can still buff, invite and answer requests in cities and inns.",
+  "Fixed the Nearby mana reserve not noticing when your mana dropped below it, and camp text being cut off.",
   "The Nearby guide is redrawn to look like the real window, with numbered markers for every button, the people icon, the buff and dash, and the name tags.",
   "Font menus show each font name in its own font.",
   "The Nearby key can no longer cast after combat starts, and blacklisting from the Nearby menu now blocks only that player, not everyone with the same first name.",
