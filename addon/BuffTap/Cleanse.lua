@@ -256,7 +256,7 @@ end
 function B:NearbyCleanseAction(unit)
   local d=self.db
   if not d or not d.enabled or d.cleanseEnabled~=true or d.cleanseNearby~=true or not d.nearbyEnabled or A.Combat() then return nil end
-  if A.Call(UnitIsDeadOrGhost,"player")~=false or self:ReminderPauseReason() then return nil end
+  if A.Call(UnitIsDeadOrGhost,"player")~=false or self:NearbyPauseReason() then return nil end
   if not self:NearbyCleanseAllowed(unit) then return nil end
   local abilities=self:CleanseAbilities()
   if not next(abilities) then return nil end

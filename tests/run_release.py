@@ -68,4 +68,5 @@ import test_social_alert
 import test_revive
 import test_release_1222
 import test_release_1223
+import test_release_1224
 print('FINAL_TOTAL',len(__import__('test_bufftap').tests))

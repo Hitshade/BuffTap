@@ -4,7 +4,7 @@
 
 local _, B = ...
 _G.BuffTap = B
-B.version = "1.22.3"
+B.version = "1.22.4-beta1"
 B.API = {}
 local A = B.API
 
@@ -343,6 +343,12 @@ function B:ReminderPauseReason()
   if A.Call(IsMounted)==true then return "mounted" end
   if self.db and self.db.pauseResting and A.Call(IsResting)==true then return "resting" end
   if self:Stealthed() then return "stealthed" end
+end
+-- The pause that applies to one action: "Buff while resting" lets Nearby actions through the resting pause.
+function B:ActionPauseReason(action)
+  local paused=self:ReminderPauseReason()
+  if paused=="resting" and action and action.nearby and self.db and self.db.nearbyWhileResting==true then return nil end
+  return paused
 end
 -- Stealth, Prowl, Shadowmeld and similar: any cast or item use would break it.
 function B:Stealthed()
@@ -1163,7 +1169,7 @@ end
 function B:Validate(action)
   if not self:SituationActionCurrent(action) then return false,"setup changed before validation" end
   if self.CastRetryBlocked and self:CastRetryBlocked(action) then return false,"recipient temporarily skipped after cast failure" end
-  local paused=self:ReminderPauseReason(); if paused then return false,paused end
+  local paused=self:ActionPauseReason(action); if paused then return false,paused end
   if action and action.source=="readiness" then
     local needed,why=self:ReadinessStillNeeded(action)
     if not needed then return false,why end
@@ -1804,11 +1810,21 @@ function B:Select()
   if self.captureDiagnostics then self.diagnostics={} end
   if not self.db.enabled then return nil,"disabled" end
   if A.Call(UnitIsDeadOrGhost,"player") ~= false then return nil,"dead / ghost / player unavailable" end
-  local paused=self:ReminderPauseReason(); if paused then return nil,paused end
+  local paused=self:ReminderPauseReason()
+  -- "Buff while resting": in cities and inns only Nearby players are offered; your own buffs stay paused.
+  local nearbyOnly=paused=="resting" and self.db.nearbyWhileResting==true
+  if paused and not nearbyOnly then return nil,paused end
   local casting,castError=A.Call(UnitCastingInfo,"player")
   local channeling,channelError=A.Call(UnitChannelInfo,"player")
   if castError or channelError then return nil,"cast/channel state unreadable" end
   if casting ~= nil or channeling ~= nil then return nil,"casting / channeling" end
+  if nearbyOnly then
+    if self.SelectNearby and self:NearbyOnMainKey() then
+      local nearby=self:SelectNearby()
+      if nearby then return nearby,"nearby player" end
+    end
+    return nil,paused
+  end
 
   if self:BGSelfMode() then return self:SelectBGSelf() end
 

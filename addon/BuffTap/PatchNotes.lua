@@ -2,6 +2,8 @@
 local _,B=...
 -- Keep the ten most recent releases within a 24 KiB content ceiling.
 B.PatchNotes={
+ {version="1.22.4",title="Buff while resting fixed",items={
+  "Nearby \"Buff while resting\" now works when \"Pause reminders while resting\" is also on. Before, it only worked once that pause was turned off. Your own buffs still pause in cities and inns."}},
  {version="1.22.3",title="Buffs just for others",items={
   "New \"Also on me\" switch for each buff on the Groups page. Turn it off and, in a party or raid, BuffTap casts that buff on others but not on you. Perfect for Thorns on your tank. Solo, you still get it."}},
  {version="1.22.2",title="PvP realms and stealth",items={
@@ -65,12 +67,6 @@ B.PatchNotes={
  {version="1.19.3",title="Nearby window fixes",items={
   "Interface windows such as professions and bags now open on top of the Nearby window. Turn on Keep above other windows on the Nearby page for the old behaviour.",
   "Fixed the Nearby window jumping away from where you drop it when its scale is not 100%."}},
- {version="1.19.2",title="A guided setup and smarter defaults",items={
-  "A one-time setup for each character: recommended settings, class presets (like a Paladin blessing plan or Shaman caster or healer), and copying settings from another character. Reopen it with /bufftap setup.",
-  "Smarter defaults for every class, so situational buffs stay off and buff requests fit your class.",
-  "A Nearby guide with a preview of the window, quick invite and request choices, and full player names.",
-  "BuffTap's own sounds for supplies and camp, with a separate camp sound setting.",
-  "Edit Mode now also moves the Nearby window and the camp reminder."}},
 }
 function B:PatchNotesUnread()
   return self.profileDB and self.db.optionsPatchDot~=false and self.profileDB.global.patchNotesSeen~=self.version

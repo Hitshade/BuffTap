@@ -1,3 +1,10 @@
+# BuffTap 1.22.4
+
+### Fix
+- Nearby: "Buff while resting" now works while "Pause reminders while resting" (Helpers) is on. The list filled up, but your binding, the click check and Nearby cleanses still obeyed the resting pause, so nothing was cast until that pause was turned off. Now, in cities and inns, Nearby players are offered while your own buffs stay paused.
+
+---
+
 # BuffTap 1.22.3
 
 ### New

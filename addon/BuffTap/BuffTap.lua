@@ -229,7 +229,7 @@ function B:CreateButton()
     if A.Combat() then return end
     if B:SyncSituation() then B:Commit(nil,"setup changed before click"); B:RequestRefresh("setup changed",0); return end
     local action=B.action
-    local paused=B:ReminderPauseReason(); if paused then B:Commit(nil,paused); return end
+    local paused=B:ActionPauseReason(action); if paused then B:Commit(nil,paused); return end
     if not action then return end
     if B:HelperSuppressed(action) then B:Commit(nil,"dismissed"); return end
     if action.source=="readiness" then
@@ -299,7 +299,7 @@ function B:CreateButton()
     if not A.Combat() and button=="RightButton" and not down and B:HelperEnabled("helperDismiss") then B:DismissHelper(B.action); return end
     if A.Combat() or (button and button~="LeftButton") then return end
     local action=B.action
-    local paused=B:ReminderPauseReason(); if paused then B:Commit(nil,paused); return end
+    local paused=B:ActionPauseReason(action); if paused then B:Commit(nil,paused); return end
     if action then
       if action.source=="weapon-reminder" then B:AfterWeaponClick(action,down)
       elseif action.source=="readiness" then B:AfterReadinessClick(action,down)
