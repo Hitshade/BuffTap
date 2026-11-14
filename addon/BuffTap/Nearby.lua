@@ -244,9 +244,10 @@ function B:NearbyNeeds(entry,list)
   local selected=self.db.targetClassBlessings and self.db.targetBlessingClasses[entry.class]
   local explicit=selected and selected~="skip"
   local scans,errors={},{}
+  local holdShort=self:NearbyHoldsShort()
   for _,def in ipairs(list) do
     local enabled=self:Enabled(def) or (explicit and def.kind=="blessing") or (def.classWide and self:TargetBuffEnabled(def))
-    if enabled and self:TargetBuffEnabled(def) and not def.singleKey
+    if enabled and self:TargetBuffEnabled(def) and not def.singleKey and not (holdShort and def.short)
       and (def.kind=="single" or def.kind=="blessing") and self:Supported(def)
       and (explicit and def.kind=="blessing" or (def.kind=="blessing" and fits(def,entry.class)) or (def.kind~="blessing" and self:TargetClassAllowed(def,entry.class,true))) then
       local missing=self:ScanMissing(def,{entry},scans,errors,self:TargetRebuffSeconds(def))
@@ -309,7 +310,12 @@ function B:NearbyCandidates(force)
       end
     end
   end
-  table.sort(out,function(a,b) if a.order==b.order then return a.guid<b.guid end return a.order<b.order end)
+  -- Players who need a cleanse come first.
+  table.sort(out,function(a,b)
+    local ac,bc=a.actions[1].source=="cleanse",b.actions[1].source=="cleanse"
+    if ac~=bc then return ac end
+    if a.order==b.order then return a.guid<b.guid end return a.order<b.order
+  end)
   self.nearbySnapshot=out
   return out
 end
@@ -386,6 +392,11 @@ function B:NearbyPauseReason()
   if reason=="resting" and self.db and self.db.nearbyWhileResting==true then return nil end
   return reason
 end
+-- "Hold back short buffs": in cities and inns, Nearby does not offer buffs of ten minutes or
+-- less (Thorns, single blessings); they would wear off before they mattered.
+function B:NearbyHoldsShort()
+  return self.db and self.db.nearbyHoldShort==true and A.Call(IsResting)==true
+end
 function B:NearbyBrowsePause()
   if not self.db or not self.db.nearbyShowAll then return nil end
   local reason=self:NearbyPauseReason()
@@ -421,8 +432,8 @@ function B:NearbyPlayers()
     end
   end
   -- Players with nothing needed: friends and guild members first, so they stay in the visible rows.
-  -- Tiers: needs a buff, then friends and guild members, then everyone else.
-  local function tier(e) return #e.actions>0 and 0 or e.social~=nil and 1 or 2 end
+  -- Tiers: needs a cleanse, needs a buff, then friends and guild members, then everyone else.
+  local function tier(e) return e.actions[1] and e.actions[1].source=="cleanse" and 0 or #e.actions>0 and 1 or e.social~=nil and 2 or 3 end
   table.sort(out,function(a,b)
     local at,bt=tier(a),tier(b)
     if at~=bt then return at<bt end
@@ -684,6 +695,9 @@ function B:NearbyDisplayList(list)
       local an=a.fresh and #a.entry.actions>0 or false
       local bn=b.fresh and #b.entry.actions>0 or false
       if an~=bn then return an end
+      local ac=an and a.entry.actions[1].source=="cleanse"
+      local bc=bn and b.entry.actions[1].source=="cleanse"
+      if ac~=bc then return ac end
       -- Among players with nothing needed, friends and guild members come first.
       if not an then
         local as,bs=a.entry.social~=nil,b.entry.social~=nil
@@ -825,6 +839,9 @@ function B:CreateNearbyWindow()
     row.wash=wash(row,"BACKGROUND",.055,.075,.095,.34); row.wash:SetAllPoints()
     row.hover=wash(row,"HIGHLIGHT",.75,.60,.25,.17); row.hover:SetAllPoints()
     row.marker=wash(row,"BACKGROUND",.75,.60,.25,.075); row.marker:SetAllPoints()
+    -- A player who needs a cleanse: faint tint and a bar on the left, in the debuff's colour.
+    row.cleanseTint=wash(row,"BACKGROUND",.6,0,1,.15); row.cleanseTint:SetAllPoints(); row.cleanseTint:Hide()
+    row.cleanseBar=wash(row,"BORDER",.6,0,1,1); row.cleanseBar:SetPoint("TOPLEFT",0,0); row.cleanseBar:SetPoint("BOTTOMLEFT",0,0); row.cleanseBar:SetWidth(2); row.cleanseBar:Hide()
     row.classEdge=wash(row,"BORDER",.55,.47,.30,.70); row.classEdge:SetSize(16,16); row.classEdge:SetPoint("LEFT",4,0)
     row.classIcon=row:CreateTexture(nil,"ARTWORK"); row.classIcon:SetSize(14,14); row.classIcon:SetPoint("LEFT",5,0)
     row.name=label(row,"",26,-4); row.name:SetWidth(132); row.name:SetJustifyH("LEFT"); row.name:SetWordWrap(false)
@@ -919,6 +936,7 @@ function B:CreateNearbyWindow()
       elseif button.entry.marker=="pvp-unknown" then GameTooltip:AddLine(self:Text("PvP status unknown, so PvP protection skips them."),.75,.75,.75,true)
       elseif button.entry.marker=="blocked" then GameTooltip:AddLine(self:Text("Blacklisted. BuffTap offers no buffs or invites."),1,.4,.35,true) end
       if button.action and not button.action.ready then GameTooltip:AddLine("Waiting for cooldown.",.8,.8,.7)
+      elseif button.action and button.action.source=="cleanse" then GameTooltip:AddLine(self:Text("Click: cleanse %s",button.action.debuffName or ""),1,.82,0)
       elseif button.action then GameTooltip:AddLine("Click: next appropriate buff",1,.82,0) end
       GameTooltip:AddLine("Right-click: whisper, invite, ignore or blacklist",.7,.7,.7,true)
       GameTooltip:AddLine("Mouse wheel: scroll players",.7,.7,.7,true)
@@ -1041,7 +1059,7 @@ function B:UpdateNearbyWindow()
     self:SetNearbyRowPayload(row,row.action)
     if entry then
       local parts={entry.guid,self:NearbyDisplayName(entry),entry.class,tostring(entry.marker),tostring(entry.social)}
-      for _,action in ipairs(entry.actions) do parts[#parts+1]=tostring(action.id)..":"..tostring(action.icon) end
+      for _,action in ipairs(entry.actions) do parts[#parts+1]=tostring(action.id)..":"..tostring(action.icon)..":"..tostring(action.dispelType) end
       local style=table.concat(parts,"|")
       if row.style~=style then
         row.style=style; row.name:SetText(self:NearbyDisplayName(entry))
@@ -1069,8 +1087,16 @@ function B:UpdateNearbyWindow()
           local offset=-(count-j)*18-8
           edge:SetPoint("RIGHT",offset,0); icon:SetPoint("RIGHT",offset-1,0)
           icon:SetTexture(action and (action.icon or 134400)); icon:SetShown(action~=nil); edge:SetShown(action~=nil)
+          local tint=action and action.source=="cleanse" and B.CleanseColors and B.CleanseColors[action.dispelType]
+          if tint then edge:SetColorTexture(tint[1],tint[2],tint[3],1) else edge:SetColorTexture(.55,.47,.30,.70) end
         end
       end
+      local first=item.fresh and entry.actions[1]
+      local tint=first and first.source=="cleanse" and B.CleanseColors and B.CleanseColors[first.dispelType]
+      if tint then
+        row.cleanseTint:SetColorTexture(tint[1],tint[2],tint[3],.15); row.cleanseBar:SetColorTexture(tint[1],tint[2],tint[3],1)
+      end
+      row.cleanseTint:SetShown(tint and true or false); row.cleanseBar:SetShown(tint and true or false)
       row:SetAlpha(row.action and (row.action.ready and 1 or .72) or (self.db.nearbyShowAll and .60 or .40))
       row.idle:SetShown(self.db.nearbyShowAll and not row.action and #entry.actions==0)
       local invited=self.nearbyInvited and self.nearbyInvited[entry.guid]
@@ -1091,7 +1117,7 @@ function B:UpdateNearbyWindow()
       row.request:SetShown(type(requests)=="table")
       row.marker:SetShown(row.action and row.action.ready and self.action and self.action.nearby and self.action.targetGUID==entry.guid or false)
       if not row:IsShown() then row:Show() end
-    else row.style=nil; row.invite:Hide(); row.request:Hide(); row.idle:Hide(); for _,tag in ipairs(row.tags) do tag:Hide() end; if row:IsShown() then row:Hide() end end
+    else row.style=nil; row.invite:Hide(); row.request:Hide(); row.idle:Hide(); row.cleanseTint:Hide(); row.cleanseBar:Hide(); for _,tag in ipairs(row.tags) do tag:Hide() end; if row:IsShown() then row:Hide() end end
   end
   local status
   if not self.db.enabled then status="BuffTap is disabled."
@@ -1155,6 +1181,7 @@ frame:SetScript("OnEvent",function(_,event,unit,message,spellID)
   elseif event=="CVAR_UPDATE" then
     if not A.Text(unit) or (unit:lower()~="nameplateshowfriends" and unit:lower()~="nameplateshowfriendlyplayers") then return end
     if not A.Combat() then B:SeedNearby(); B:ScheduleNearbySettle() end
+    if B.options and B.UpdateNavStatus then B:UpdateNavStatus() end
   end
   B.nearbySnapshot=nil; B:RequestRefresh("nearby players changed",.12)
 end)

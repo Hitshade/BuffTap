@@ -986,6 +986,7 @@ SlashCmdList.BUFFTAP=function(text)
   elseif cmd=="supplies" then B:ShowSuppliesOptions(); return
   elseif cmd=="supplycheck" then B:ReportSupplies(); return
   elseif cmd=="restore" then B:RestoreHelpers(); return
+  elseif cmd=="checkup" then B:ShowReport("checkup"); return
   elseif cmd=="settings" and B.OpenOptionsCategory then B:OpenOptionsCategory(); return
   elseif cmd=="bind" then
     if arg=="" then B:CaptureBinding(); return end
@@ -1062,7 +1063,7 @@ SlashCmdList.BUFFTAP=function(text)
     if cmd=="glow" or cmd=="pulse" then B.db.effectStyle=nil end
     if cmd=="consumables" and B.InvalidateConsumables then B:InvalidateConsumables() end
   else
-    say("/bt config | bind | rebuff | target | targetrebuff | group | groups | groupneed | consumables | status | debug | profile | refresh | reset")
+    say("/bt config | bind | rebuff | target | targetrebuff | group | groups | groupneed | consumables | status | debug | checkup | profile | refresh | reset")
     return
   end
   B.appearance=nil

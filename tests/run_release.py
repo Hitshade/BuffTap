@@ -59,4 +59,7 @@ import test_release_119
 import test_release_1194
 import test_release_1200b
 import test_cleanse
+import test_target_classes
+import test_nearby_cleanse
+import test_beta3
 print('FINAL_TOTAL',len(__import__('test_bufftap').tests))

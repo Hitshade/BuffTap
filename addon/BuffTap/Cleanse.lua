@@ -236,16 +236,33 @@ function B:SelectCleanse()
     action=tryUnit(self,"target",abilities)
   end
   if not action and d.cleanseNearby==true and d.nearbyEnabled and self.nearbyUnits then
-    for unit,guid in pairs(self.nearbyUnits) do
-      if A.Call(UnitGUID,unit)==guid and A.Call(UnitIsPlayer,unit)==true and A.Call(UnitCanAssist,"player",unit)==true
-        and not self:NearbyGroupMember(unit) and self:NearbyRecipientSafe(unit) and not (self.BlockReason and self:BlockReason(unit))
-        and not pvpUnsafe(self,unit) then
-        action=tryUnit(self,unit,abilities,true); if action then break end
-      end
+    for unit in pairs(self.nearbyUnits) do
+      if self:NearbyCleanseAllowed(unit) then action=tryUnit(self,unit,abilities,true); if action then break end end
     end
   end
   if action then action.selectedAt=GetTime(); return action,"cleanse" end
   return nil,"nothing to cleanse"
+end
+
+-- A Nearby player may be cleansed: still the same tracked player, friendly, not grouped, safe.
+function B:NearbyCleanseAllowed(unit)
+  local guid=self.nearbyUnits and self.nearbyUnits[unit]
+  return guid~=nil and A.Call(UnitGUID,unit)==guid and A.Call(UnitIsPlayer,unit)==true and A.Call(UnitCanAssist,"player",unit)==true
+    and not self:NearbyGroupMember(unit) and self:NearbyRecipientSafe(unit) and not (self.BlockReason and self:BlockReason(unit))
+    and not pvpUnsafe(self,unit)
+end
+-- The cleanse a Nearby player needs, if any. Shown first in their Nearby row, so a cleanse the
+-- keybind would cast is always visible in the window (Nearby casts never show the main icon).
+function B:NearbyCleanseAction(unit)
+  local d=self.db
+  if not d or not d.enabled or d.cleanseEnabled~=true or d.cleanseNearby~=true or not d.nearbyEnabled or A.Combat() then return nil end
+  if A.Call(UnitIsDeadOrGhost,"player")~=false or self:ReminderPauseReason() then return nil end
+  if not self:NearbyCleanseAllowed(unit) then return nil end
+  local abilities=self:CleanseAbilities()
+  if not next(abilities) then return nil end
+  local action=tryUnit(self,unit,abilities,true)
+  if action then action.ready=true; action.needState="debuff"; action.selectedAt=GetTime() end
+  return action
 end
 
 -- Click-time check: same player, the debuff is still there, spell still usable and in range.
@@ -274,6 +291,16 @@ function B:Select()
     return action,"cleanse"
   end
   return baseSelect(self)
+end
+-- A Nearby player's cleanse comes before their buffs in the row (rows show up to four).
+local baseNearbyActions=B.NearbyActions
+function B:NearbyActions(entry)
+  local actions=baseNearbyActions(self,entry)
+  local ok,cleanse=pcall(self.NearbyCleanseAction,self,entry and entry.unit)
+  if ok and cleanse and not (self.HelperSuppressed and self:HelperSuppressed(cleanse)) then
+    table.insert(actions,1,cleanse); actions[5]=nil
+  end
+  return actions
 end
 -- Nearby players are cast on by a short targeting macro, as for buffs. Cleanse spells have one rank.
 local basePrepare=B.PrepareNearbyCast

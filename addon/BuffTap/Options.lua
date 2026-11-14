@@ -2272,7 +2272,8 @@ function B:Options()
     for i,spec in ipairs({{"debug","Debug"},{"status","Status"},{"nearby","Nearby"},{"supplies","Supplies"}}) do
       button(diag,L(spec[2]),330+(i-1)*94,-76,86,function() if not A.Combat() then B:ShowDiagnosticsReport(spec[1]) end end)
     end
-    T.Variant(button(diag,L("Copy for a report"),18,-684,180,function() if not A.Combat() then B:ShowDiagnosticsReport("diagnostics") end end),"primary")
+    f.diagCheckup=button(diag,L("Full check-up"),18,-684,180,function() if not A.Combat() then B:ShowDiagnosticsReport("checkup") end end); T.Variant(f.diagCheckup,"primary")
+    addHelp(f.diagCheckup,"Full check-up","Runs every check BuffTap has and puts it all in one box to copy: game and character, diagnostics, debug, Nearby, supplies and your settings. Paste it into a bug report.")
     f.diagHideNames=check(diag,L("Hide player names"),218,-686,function(c) B.reportHideNames=c:GetChecked()==true end)
     addHelp(f.diagHideNames,"Hide player names","Replaces the names BuffTap can see with Player1, Player2 and so on in captured text.")
     f.diagPauseNotes=check(diag,L("Explain pauses in chat"),440,-686,function(c) B.db.pauseNotes=c:GetChecked()==true end)

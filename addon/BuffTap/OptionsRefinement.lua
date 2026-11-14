@@ -265,22 +265,32 @@ function B:RefineNearbyPage(ui,tabs)
   local f=self.options; local p=f.pages[tabs.Nearby]; clearPage(p)
   headerSwitch(f.nearbyEnable,p)
   section(ui,p,"Player list",12,-72,692,182)
+  -- Left column: who and when you buff. Right column: how the list looks.
   place(f.nearbyBuffing,p,26,-112); place(f.nearbyAll,p,374,-112)
-  f.nearbyFullNames=ui.check(p,"Show full names (first name and surname)",26,-146,function(c)
+  f.nearbyFullNames=ui.check(p,"Show full names",374,-146,function(c)
     if A.Combat() then return end
     B.db.nearbyFullNames=c:GetChecked()==true; if B.nearbyFrame then B:UpdateNearbyWindow() end
   end)
-  f.nearbyShowLevel=ui.check(p,"Show level",374,-146,function(c)
+  f.nearbyFullNames:HookScript("OnEnter",function(s) T.Tooltip(s,B:Text("Show full names"),B:Text("Show each player's first name and surname.")) end)
+  f.nearbyFullNames:HookScript("OnLeave",function() if GameTooltip then GameTooltip:Hide() end end)
+  f.nearbyShowLevel=ui.check(p,"Show level",540,-146,function(c)
     if A.Combat() then return end
     B.db.nearbyShowLevel=c:GetChecked()==true; if B.nearbyFrame then B:UpdateNearbyWindow() end
   end)
-  f.nearbyWhileResting=ui.check(p,"Buff while resting",540,-146,function(c)
+  f.nearbyWhileResting=ui.check(p,"Buff while resting",26,-146,function(c)
     if A.Combat() then return end
     B.db.nearbyWhileResting=c:GetChecked()==true; B.nearbySnapshot=nil; B:RequestRefresh("nearby resting",0); if B.nearbyFrame then B:UpdateNearbyWindow() end
+    B:UpdateRefinedOptions()
   end)
+  f.nearbyHoldShort=ui.check(p,"Hold back short buffs, like Thorns",50,-180,function(c)
+    if A.Combat() then return end
+    B.db.nearbyHoldShort=c:GetChecked()==true; B.nearbyNeedCache={}; B.nearbySnapshot=nil; B:RequestRefresh("nearby short buffs",0); if B.nearbyFrame then B:UpdateNearbyWindow() end
+  end)
+  f.nearbyHoldShort:HookScript("OnEnter",function(s) T.Tooltip(s,B:Text("Hold back short buffs"),B:Text("In cities and inns, don't offer Nearby players buffs that last ten minutes or less, such as Thorns or a single blessing. They would wear off before they mattered. Longer buffs like Mark of the Wild are still offered.")) end)
+  f.nearbyHoldShort:HookScript("OnLeave",function() if GameTooltip then GameTooltip:Hide() end end)
   f.nearbyWhileResting:HookScript("OnEnter",function(s) T.Tooltip(s,B:Text("Buff while resting"),B:Text("Keep buffing nearby players in cities and inns even when reminders pause while resting. Your own reminders still pause.")) end)
   f.nearbyWhileResting:HookScript("OnLeave",function() if GameTooltip then GameTooltip:Hide() end end)
-  place(f.nearbyInvites,p,26,-180)
+  place(f.nearbyInvites,p,26,-214)
   f.nearbyMarkSocial=ui.check(p,"Mark friends and guild members",374,-180,function(c)
     if A.Combat() then return end
     B.db.nearbyMarkSocial=c:GetChecked()==true; if B.nearbyFrame then B:UpdateNearbyWindow() end
@@ -288,12 +298,11 @@ function B:RefineNearbyPage(ui,tabs)
   f.nearbyMarkSocial:HookScript("OnEnter",function(s) T.Tooltip(s,B:Text("Mark friends and guild members"),B:Text("A heart marks friends and a shield marks guild members, next to their buffs. It does not change who gets buffed.")) end)
   f.nearbyMarkSocial:HookScript("OnLeave",function() if GameTooltip then GameTooltip:Hide() end end)
   -- Mana reserve: 0% is off.
-  ui.label(p,"Mana reserve",26,-219,"GameFontHighlightSmall",110)
+  ui.label(p,"Mana reserve",374,-219,"GameFontHighlightSmall",110)
   f.nearbyManaFloor=ui.slider(p,0,50,5,190,function(v) return tostring(v).."%" end,function(_,v) B.db.nearbyManaFloor=v; B:RequestRefresh("mana floor",.2) end)
-  f.nearbyManaFloor:SetPoint("TOPLEFT",136,-216); f.nearbyManaFloor.visualKey="nearbyManaFloor"; f.refinedSliders[#f.refinedSliders+1]=f.nearbyManaFloor
+  f.nearbyManaFloor:SetPoint("TOPLEFT",484,-216); f.nearbyManaFloor.visualKey="nearbyManaFloor"; f.refinedSliders[#f.refinedSliders+1]=f.nearbyManaFloor
   f.nearbyManaFloor:HookScript("OnEnter",function(s) T.Tooltip(s,B:Text("Mana reserve"),B:Text("Stop offering buffs to players outside your group when your mana is below this. Your own buffs and your group's buffs are not affected. Set it to 0 to turn it off.")) end)
   f.nearbyManaFloor:HookScript("OnLeave",function() if GameTooltip then GameTooltip:Hide() end end)
-  T.Variant(ui.button(p,"Open nearby window",486,-212,198,function() B:ShowNearbySetup() end),"primary")
   -- How it works: the same drawn guide as the first-time introduction.
   section(ui,p,"How Nearby works",12,-272,692,452)
   local guide=CreateFrame("Frame",nil,p); guide:SetPoint("TOPLEFT",26,-312); guide:SetSize(664,400)
@@ -411,7 +420,7 @@ end
 function B:StandardizeOptionsPages(ui,tabs)
   local f=self.options; f.pageHeaders={}
   local titles={"My buffs","Party & raid buffing","Friendly target buffing","Nearby buffing & players","Consumables & supplies","Camping & sleeping bag","Weapon buffs","Customization","Helpers","Profiles","Diagnostics & performance","Patch notes","Blacklist","Cleanse"}
-  local descriptions={"Your class buffs: what to cast, when to refresh, and in what order.","Independent preferences for your five-player party and raid.","Offer selected single-target buffs to the friendly player you target.","Buff observed players, invite someone new, or use the list on its own.","Maintain your chosen consumables and keep an eye on supplies.","Separate camp and sleeping-bag reminders, without blocking buffing.","Maintain your preferred weapon buffs with your normal binding.","Make your reminders and interface feel right for you.","Optional conveniences. Enable only the ones you find useful.","Save, switch and copy named setups between your characters.","Check what BuffTap is doing and collect information for a report.","A short, plain-language history of recent changes.","Players and guilds that BuffTap never offers buffs or invites to.","Remove poisons, curses, diseases and magic out of combat, before buffs."}
+  local descriptions={"Your class buffs: what to cast, when to refresh, and in what order.","Independent preferences for your five-player party and raid.","Offer selected single-target buffs to the friendly player you target.","Buff players around you, invite someone new, or browse the list.","Maintain your chosen consumables and keep an eye on supplies.","Separate camp and sleeping-bag reminders, without blocking buffing.","Maintain your preferred weapon buffs with your normal binding.","Make your reminders and interface feel right for you.","Optional conveniences. Enable only the ones you find useful.","Save, switch and copy named setups between your characters.","Check what BuffTap is doing and collect information for a report.","A short, plain-language history of recent changes.","Players and guilds that BuffTap never offers buffs or invites to.","Remove poisons, curses, diseases and magic out of combat, before buffs."}
   local contextPages={[1]=true,[2]=true,[5]=true,[7]=true}
   for index,page in ipairs(f.pages) do
     local function hideHead(container)
@@ -464,6 +473,8 @@ function B:StandardizeOptionsPages(ui,tabs)
     if index==tabs.Nearby then
       -- Buff requests live on Helpers but are offered from the Nearby window, so link them here.
       page.requestsShortcut=ui.button(page,"Buff requests",566,-35,138,function() f.selectTab(tabs.Helpers) end); page.requestsShortcut:SetHeight(20)
+      page.openWindow=ui.button(page,"Open window",420,-35,138,function() B:ShowNearbySetup() end); page.openWindow:SetHeight(20)
+      description:SetWidth(366)
     end
     f.pageHeaders[index]={title=title,description=description}
   end
@@ -535,13 +546,18 @@ function B:UpdateNavStatus()
         light=tab:CreateTexture(nil,"OVERLAY"); light:SetSize(8,8); light:SetPoint("CENTER",tab,"RIGHT",-16,0); tab.statusLight=light
         tab:HookScript("OnEnter",function(s)
           if s.statusOn==nil then return end
+          if s.statusWarning then T.Tooltip(s,s:GetText() or "",B:Text(s.statusWarning)); return end
           T.Tooltip(s,s:GetText() or "",B:Text(s.statusOn and "Turned on" or "Turned off"))
         end)
         tab:HookScript("OnLeave",function() if GameTooltip then GameTooltip:Hide() end end)
       end
       tab.statusOn=on
+      -- Nearby on but friendly nameplates off: it can't see anyone, so the light turns red.
+      local warn=i==4 and on and self.FriendlyPlatesState and self:FriendlyPlatesState()==false
+      tab.statusWarning=warn and "Turned on, but friendly nameplates are off, so Nearby can't see other players. Press Shift+V to show them." or nil
       light:SetTexture(T.media..(on and "UIStatusOn" or "UIStatusOff"))
-      if on then light:SetVertexColor(.35,.77,.43,1) else light:SetVertexColor(.45,.48,.53,1) end
+      if warn then light:SetVertexColor(.93,.30,.26,1)
+      elseif on then light:SetVertexColor(.35,.77,.43,1) else light:SetVertexColor(.45,.48,.53,1) end
       light:Show()
     end
   end
@@ -568,7 +584,7 @@ function B:UpdateRefinedOptions()
   if f.labelPositionButton then f.labelPositionButton:SetText(self:Text(positions[self.db.labelPosition] or "Split")) end
   if f.swipeCheck then f.swipeCheck:SetChecked(self.db.showSwipe==true) end
   if f.rangeCheck then f.rangeCheck:SetChecked(self.db.showOutOfRange==true) end
-  f.reduceMotion:SetChecked(self.db.optionsReduceMotion); f.nearbyLock:SetChecked(self.db.nearbyLocked==true); if f.nearbyOnTop then f.nearbyOnTop:SetChecked(self.db.nearbyOnTop==true) end; if f.nearbyShowLevel then f.nearbyShowLevel:SetChecked(self.db.nearbyShowLevel==true) end; if f.nearbyMarkSocial then f.nearbyMarkSocial:SetChecked(self.db.nearbyMarkSocial~=false) end; if f.nearbyWhileResting then f.nearbyWhileResting:SetChecked(self.db.nearbyWhileResting==true) end; if f.nearbyHideHeader then f.nearbyHideHeader:SetChecked(self.db.nearbyHideHeader==true); f.nearbyKeepLine:SetChecked(self.db.nearbyKeepLine~=false); f.nearbyKeepLine:SetEnabled(self.db.nearbyHideHeader==true) end; if f.nearbyFullNames then f.nearbyFullNames:SetChecked(self.db.nearbyFullNames~=false) end
+  f.reduceMotion:SetChecked(self.db.optionsReduceMotion); f.nearbyLock:SetChecked(self.db.nearbyLocked==true); if f.nearbyOnTop then f.nearbyOnTop:SetChecked(self.db.nearbyOnTop==true) end; if f.nearbyShowLevel then f.nearbyShowLevel:SetChecked(self.db.nearbyShowLevel==true) end; if f.nearbyMarkSocial then f.nearbyMarkSocial:SetChecked(self.db.nearbyMarkSocial~=false) end; if f.nearbyWhileResting then f.nearbyWhileResting:SetChecked(self.db.nearbyWhileResting==true) end; if f.nearbyHoldShort then f.nearbyHoldShort:SetChecked(self.db.nearbyHoldShort==true); f.nearbyHoldShort:SetEnabled(not (self.db.pauseResting and self.db.nearbyWhileResting~=true)) end; if f.nearbyHideHeader then f.nearbyHideHeader:SetChecked(self.db.nearbyHideHeader==true); f.nearbyKeepLine:SetChecked(self.db.nearbyKeepLine~=false); f.nearbyKeepLine:SetEnabled(self.db.nearbyHideHeader==true) end; if f.nearbyFullNames then f.nearbyFullNames:SetChecked(self.db.nearbyFullNames~=false) end
   if f.nearbyFontButton then
     for _,v in ipairs(self:NearbyFonts()) do if v.key==self.db.nearbyFont then f.nearbyFontButton:SetText(self:Text(v.name)) end end
     for _,v in ipairs(self:NearbyTextSizes()) do if v.key==self.db.nearbyFontSize then f.nearbyFontSizeButton:SetText(v.name) end end

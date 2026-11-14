@@ -1,3 +1,25 @@
+# BuffTap 1.21.1 (beta 3)
+
+### Nearby cleansing shows in the Nearby window
+- With "Nearby players" on in Cleanse, a stranger with a debuff could put a cleanse on your binding while the main icon stayed hidden (Nearby casts never show it) and the Nearby window, which only listed buff needs, showed nothing. Nearby rows now include the cleanse as their first icon, and the row casts it on click.
+- Players who need a cleanse sort to the top of the window. Their row gets a faint tint and a left bar in the debuff's colour, and the cleanse icon has a border in that colour. The tooltip reads "Click: cleanse <debuff>".
+- Nearby cleanses stay silent, like Nearby buffs.
+
+### Nearby page
+- New "Hold back short buffs, like Thorns" (off by default): in cities and inns, Nearby doesn't offer buffs of ten minutes or less (Thorns, Dampen and Amplify Magic, Fear Ward, Shadow Protection, single blessings, Water Breathing and Walking, Unending Breath, Detect Invisibility). Longer buffs are still offered.
+- Player list rearranged: who and when you buff on the left (Offer nearby buffs, Buff while resting, Hold back short buffs, invite buttons), how the list looks on the right (Show all, Show full names, Show level, Mark friends and guild members, Mana reserve). "Open window" moved to the page header next to "Buff requests".
+
+### Status lights
+- The Nearby light turns red when Nearby is on but friendly nameplates are off, with a tooltip pointing to Shift+V.
+
+### Diagnostics
+- "Copy for a report" is now "Full check-up": game and character, Diagnostics, Debug, Nearby, Supplies and your settings import string in one box to copy. Also /bt checkup.
+
+### Tests
+- The target class picker tests now run with the release suite.
+
+---
+
 # BuffTap 1.21.1 (beta 2)
 
 ### Who gets each buff (friendly targets and Nearby)

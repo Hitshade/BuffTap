@@ -172,9 +172,35 @@ function B:CaptureOutput(run)
   if not ok then lines[#lines+1]="Error: "..tostring(err) end
   return lines
 end
+-- Full check-up: every report BuffTap has, in one box, so a bug report needs one copy.
+function B:CheckupLines()
+  local out={}
+  local function add(title,lines)
+    out[#out+1]=""; out[#out+1]="== "..title.." =="
+    for _,line in ipairs(lines or {}) do out[#out+1]=tostring(line) end
+  end
+  local build,_,_,interface=A.Call(GetBuildInfo)
+  local _,class=A.Call(UnitClass,"player")
+  local inInstance,instanceType=A.Call(IsInInstance)
+  local group=A.Call(IsInRaid)==true and "raid" or A.Call(IsInGroup)==true and "party" or "solo"
+  add("Game",{"Client "..tostring(build).." ("..tostring(interface)..") | locale "..tostring(A.Call(GetLocale)),
+    "Class "..tostring(class).." | level "..tostring(A.Call(UnitLevel,"player")).." | "..group
+      .." | instance "..tostring(inInstance==true and instanceType or "none").." | resting "..tostring(A.Call(IsResting)==true)
+      .." | combat "..tostring(A.Combat()==true),
+    "Friendly nameplates "..tostring(self.FriendlyPlatesState and self:FriendlyPlatesState())})
+  local function safe(fn) local ok,lines=pcall(fn); if ok then return lines end; return {"(unavailable: "..tostring(lines)..")"} end
+  if not A.Combat() then pcall(self.Refresh,self,true) end
+  add("Diagnostics",safe(function() return self:DiagnosticsLines() end))
+  add("Debug",safe(function() return self:CaptureOutput(function() B:Status(true) end) end))
+  add("Nearby",safe(function() return self:NearbyDiagnosticsLines() end))
+  add("Supplies",safe(function() return self:CaptureOutput(function() B:ReportSupplies() end) end))
+  add("Settings (import string)",safe(function() return {self:ExportSettings()} end))
+  return out
+end
 function B:ReportText(kind,hideNames)
   local lines
-  if kind=="status" then lines=self:CaptureOutput(function() B:Status(false) end)
+  if kind=="checkup" then lines=self:CheckupLines()
+  elseif kind=="status" then lines=self:CaptureOutput(function() B:Status(false) end)
   elseif kind=="debug" then lines=self:CaptureOutput(function() B:Status(true) end)
   elseif kind=="supplies" then lines=self:CaptureOutput(function() B:ReportSupplies() end)
   elseif kind=="nearby" then lines=self:NearbyDiagnosticsLines()
@@ -182,7 +208,7 @@ function B:ReportText(kind,hideNames)
     if not A.Combat() then self:Refresh(true) end
     lines=self:DiagnosticsLines()
   end
-  local text="BuffTap "..tostring(self.version).." | "..L(kind=="status" and "Status" or kind=="debug" and "Debug" or kind=="supplies" and "Supplies" or kind=="nearby" and "Nearby" or "Diagnostics").."\n"..table.concat(lines or {},"\n")
+  local text="BuffTap "..tostring(self.version).." | "..L(kind=="checkup" and "Full check-up" or kind=="status" and "Status" or kind=="debug" and "Debug" or kind=="supplies" and "Supplies" or kind=="nearby" and "Nearby" or "Diagnostics").."\n"..table.concat(lines or {},"\n")
   text=text:gsub("|c%x%x%x%x%x%x%x%x",""):gsub("|r","")
   if hideNames then
     -- Whole words only, so a short name like "Bo" does not rewrite "Boss".
