@@ -351,8 +351,10 @@ end
 -- Pretend players (names from the developer).
 local WIN_X,WIN_W,ROW_H,TOP=56,240,26,28
 function B:DrawNearbyGuide(g,width)
-  -- TOP leaves room above the window for the people icon's marker.
-  local win=CreateFrame("Frame",nil,g); win:SetPoint("TOPLEFT",WIN_X,-TOP); win:SetSize(WIN_W,27+5*ROW_H)
+  -- Layout: the numbered key (1-6) on the left, the drawn window with its name tags (7) on the
+  -- right. PX shifts the whole picture to the right column. TOP leaves room for marker 4.
+  local PX=width-332
+  local win=CreateFrame("Frame",nil,g); win:SetPoint("TOPLEFT",PX+WIN_X,-TOP); win:SetSize(WIN_W,27+5*ROW_H)
   local shadow=win:CreateTexture(nil,"BACKGROUND",nil,-8); shadow:SetTexture(MEDIA.."UIShadow"); shadow:SetPoint("TOPLEFT",-40,10); shadow:SetPoint("BOTTOMRIGHT",14,-14); shadow:SetVertexColor(0,0,0,.8)
   local head=swatch(win,"BORDER",.19,.235,.25,1); head:SetPoint("TOPLEFT"); head:SetSize(WIN_W,24)
   local title=win:CreateFontString(nil,"OVERLAY",T.fonts.Body); title:SetPoint("LEFT",head,"LEFT",8,0); title:SetText("BuffTap"); title:SetTextColor(1,.82,0)
@@ -374,7 +376,7 @@ function B:DrawNearbyGuide(g,width)
     local y=rowY(i)
     -- The first row is the one your binding buffs next, tinted like the real window.
     local bg=i==1 and swatch(win,"BORDER",.30,.28,.22,1) or swatch(win,"BORDER",.205,.245,.25,1); bg:SetPoint("TOPLEFT",0,-y); bg:SetSize(WIN_W,ROW_H-3)
-    local tile=CreateFrame("Frame",nil,g); tile:SetSize(22,ROW_H-3); tile:SetPoint("TOPLEFT",WIN_X-26,-(TOP+y)); drawGlyph(tile,spec[3])
+    local tile=CreateFrame("Frame",nil,g); tile:SetSize(22,ROW_H-3); tile:SetPoint("TOPLEFT",PX+WIN_X-26,-(TOP+y)); drawGlyph(tile,spec[3])
     local c=CLASS_ICON_TCOORDS and CLASS_ICON_TCOORDS[spec[1]]
     local cls=edgedIcon(win,16,CLASS_ICONS,c and {c[1],c[2],c[3],c[4]}); cls:SetPoint("TOPLEFT",4,-(y+2))
     local name=win:CreateFontString(nil,"OVERLAY",T.fonts.Body); name:SetPoint("TOPLEFT",28,-(y+4)); name:SetText(spec[2])
@@ -387,18 +389,18 @@ function B:DrawNearbyGuide(g,width)
   -- and a dash, 7 under the tag column.
   for n=1,3 do
     local y=TOP+rowY(n)+11
-    leader(g,12,WIN_X-28,y); local m=badge(g,n); m:SetPoint("CENTER",g,"TOPLEFT",8,-y)
+    leader(g,PX+12,PX+WIN_X-28,y); local m=badge(g,n); m:SetPoint("CENTER",g,"TOPLEFT",PX+8,-y)
   end
-  local peopleX=WIN_X+WIN_W-55
+  local peopleX=PX+WIN_X+WIN_W-55
   leader(g,8,TOP+4,peopleX,true); local four=badge(g,4); four:SetPoint("CENTER",g,"TOPLEFT",peopleX,-8)
   for _,spec in ipairs({{5,1},{6,3}}) do
     local y=TOP+rowY(spec[2])+11
-    leader(g,WIN_X+WIN_W+2,WIN_X+WIN_W+20,y); local m=badge(g,spec[1]); m:SetPoint("CENTER",g,"TOPLEFT",WIN_X+WIN_W+26,-y)
+    leader(g,PX+WIN_X+WIN_W+2,PX+WIN_X+WIN_W+20,y); local m=badge(g,spec[1]); m:SetPoint("CENTER",g,"TOPLEFT",PX+WIN_X+WIN_W+26,-y)
   end
-  local bottom=TOP+27+5*ROW_H; local tagX=WIN_X+WIN_W-35
+  local bottom=TOP+27+5*ROW_H; local tagX=PX+WIN_X+WIN_W-35
   leader(g,bottom-2,bottom+12,tagX,true); local seven=badge(g,7); seven:SetPoint("CENTER",g,"TOPLEFT",tagX,-(bottom+19))
   -- Name tags under the window: a two-by-two grid of tag and meaning, then the PvP note.
-  local tagsTitle=g:CreateFontString(nil,"OVERLAY",T.fonts.Body); tagsTitle:SetPoint("TOPLEFT",g,"TOPLEFT",24,-(bottom+38)); tagsTitle:SetText(self:Text("Name tags"))
+  local tagsTitle=g:CreateFontString(nil,"OVERLAY",T.fonts.Body); tagsTitle:SetPoint("TOPLEFT",g,"TOPLEFT",PX+WIN_X-26,-(bottom+38)); tagsTitle:SetText(self:Text("Name tags"))
   local tagsBadge=badge(g,7); tagsBadge:SetPoint("RIGHT",tagsTitle,"LEFT",-6,0)
   local col=136
   for i,spec in ipairs({{"pvp","PvP flagged"},{"blocked","Blacklisted"},{"friend","Friend"},{"guild","Guild member"}}) do
@@ -406,10 +408,10 @@ function B:DrawNearbyGuide(g,width)
     local icon=g:CreateTexture(nil,"ARTWORK"); icon:SetSize(12,12); icon:SetPoint("TOPLEFT",tagsTitle,"BOTTOMLEFT",x,y-1); icon:SetTexture(MEDIA..t[1]); icon:SetVertexColor(t[2],t[3],t[4])
     local label=g:CreateFontString(nil,"OVERLAY",T.fonts.Muted); label:SetPoint("LEFT",icon,"RIGHT",6,0); label:SetText(self:Text(spec[2]))
   end
-  local note=g:CreateFontString(nil,"OVERLAY",T.fonts.Muted); note:SetWidth(WIN_X+WIN_W-24); note:SetJustifyH("LEFT"); note:SetWordWrap(true)
+  local note=g:CreateFontString(nil,"OVERLAY",T.fonts.Muted); note:SetWidth(290); note:SetJustifyH("LEFT"); note:SetWordWrap(true)
   note:SetPoint("TOPLEFT",tagsTitle,"BOTTOMLEFT",0,-46); note:SetText(self:Text("With PvP protection on, flagged players are skipped."))
-  -- The numbered key, right of the picture.
-  local rx=WIN_X+WIN_W+48; local cw=width-rx; local last
+  -- The numbered key, left of the picture.
+  local rx=0; local cw=PX-20; local last
   local function heading(label,gap)
     local h=g:CreateFontString(nil,"OVERLAY",T.fonts.Section); h:SetWidth(cw); h:SetJustifyH("LEFT"); h:SetText(self:Text(label)); T.SectionTitle(h)
     if last then h:SetPoint("TOPLEFT",last,"BOTTOMLEFT",-24,-(gap or 14)) else h:SetPoint("TOPLEFT",g,"TOPLEFT",rx,0) end
@@ -431,7 +433,7 @@ function B:DrawNearbyGuide(g,width)
   heading("On each row")
   item(5,"Needs your buff",self:Text("Click the row or press your BuffTap binding to cast it. The gold row is the one your binding buffs next. Want a separate key for Nearby? Set one under Customization > Binding & sound."))
   item(6,"Nothing needed",self:Text("A dash means that player already has what you can give."))
-  local plates=g:CreateFontString(nil,"OVERLAY",T.fonts.Muted); plates:SetWidth(WIN_X+WIN_W-24); plates:SetJustifyH("LEFT"); plates:SetWordWrap(true)
+  local plates=g:CreateFontString(nil,"OVERLAY",T.fonts.Muted); plates:SetWidth(290); plates:SetJustifyH("LEFT"); plates:SetWordWrap(true)
   plates:SetPoint("TOPLEFT",note,"BOTTOMLEFT",0,-12); plates:SetText(self:Text("Nearby needs friendly nameplates (normally Shift+V). Window size, text and position: Customization > Nearby window."))
 end
 -- Why Nearby helps, worded for the player's class. Classes without a buff for others still get
