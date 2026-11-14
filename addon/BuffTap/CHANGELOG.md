@@ -15,6 +15,8 @@
 - Before, you were always included: turning Thorns off under My buffs turned it off for everyone, and leaving it on with "Tanks" still buffed you as well as the tank.
 - The hint under the class choices is shorter and no longer says personal buffs ignore these settings.
 
+Thanks to Lufia_TM for reporting this.
+
 ---
 
 # BuffTap 1.22.2
@@ -24,6 +26,8 @@
 - The "Prevent accidental PvP flagging" switch is now also on the Nearby page, under Player list. It is the same setting as the one on Helpers.
 - Stealth: BuffTap offers nothing while you are in Stealth, Prowl, Shadowmeld or any other stealth, so a buff, cleanse or item can't break it. Reminders come back as soon as stealth ends. With "Show all nearby players" on, the Nearby window stays listed while you are stealthed, so invite buttons keep working; only buffing pauses, as it already did while mounted or resting.
 - Nearby: while paused (stealthed, mounted or resting), the first row now says so, for example "Paused: stealthed. Invites still work.", in the same style as cast results. It shows whether or not the title bar is hidden, and the title bar keeps its usual count.
+
+Thanks to bruinsfan825 (PvP realms) and user_vvl9721yymgwdslx85417 (stealth) for reporting these.
 
 ---
 

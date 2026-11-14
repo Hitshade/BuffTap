@@ -4,14 +4,15 @@ local _,B=...
 B.PatchNotes={
  {version="1.22.4",title="Buff while resting fixed",items={
   "Nearby \"Buff while resting\" now works when \"Pause reminders while resting\" is also on. Before, it only worked once that pause was turned off. Your own buffs still pause in cities and inns.",
-  "The friend and guildmate alert now plays when their row actually appears, with a brighter, pulsing glow. It also works while you are mounted, stealthed or resting."}},
+  "The friend and guildmate alert now plays when their row actually appears, with a brighter, pulsing glow. It also works while you are mounted, stealthed or resting.",
+  "New players now join the Nearby list even while your mouse is over it."}},
  {version="1.22.3",title="Buffs just for others",items={
-  "New \"Also on me\" switch for each buff on the Groups page. Turn it off and, in a party or raid, BuffTap casts that buff on others but not on you. Perfect for Thorns on your tank. Solo, you still get it."}},
+  "New \"Also on me\" switch for each buff on the Groups page. Turn it off and, in a party or raid, BuffTap casts that buff on others but not on you. Perfect for Thorns on your tank. Solo, you still get it."},thanks="Thanks to Lufia_TM for the report."},
  {version="1.22.2",title="PvP realms and stealth",items={
   "Nearby now follows the same PvP rule as your group and target: flagged players are only skipped while you are unflagged. On PvP realms, Nearby works again in contested zones.",
   "The PvP protection switch is now also on the Nearby page.",
   "BuffTap holds back while you are in Stealth, Prowl or Shadowmeld, so a buff never breaks it.",
-  "While Nearby is paused (stealthed, mounted or resting), its first row says so and the players below stay listed for invites."}},
+  "While Nearby is paused (stealthed, mounted or resting), its first row says so and the players below stay listed for invites."},thanks="Thanks to bruinsfan825 and user_vvl9721yymgwdslx85417 for the reports."},
  {version="1.22.1",title="Nearby dash restored",items={
   "Players with nothing to cast show the small grey dash in the Nearby window again. It was removed by mistake in 1.22.0."}},
  {version="1.22.0",title="Resurrection, and know when friends are near",items={
