@@ -3,6 +3,8 @@
 ### Changes
 - Nearby: new optional "Animated list" (Customization > Nearby window > Title bar and rows, off by default). When someone new arrives, the rows below glide down to make room and the newcomer fades in. Gaps left by players who were buffed or walked away close instantly, so all visible motion flows the same way. Only the drawing moves: each clickable row stays in its slot, so a click always reaches the player shown there. No animation in combat, while scrolling, or with Reduce animation on.
 - Nearby, all-players view: below the players who need a buff and your friends and guildmates, everyone else is now listed newest arrival first. Someone who just came into range always appears in the same place, near the top, instead of at the bottom or wherever they happened to sort.
+- Nearby: "Buff while resting" now works on its own. Before, it only mattered when the Helpers "Pause reminders while resting" was on; otherwise Nearby always buffed in cities and inns. Characters that were buffing in towns keep doing so; new characters start with Nearby paused there. Your own reminders still follow the Helpers pause.
+- Nearby window: new zZ button in the title bar to switch Nearby buffing in cities and inns on (gold) or off (grey) without opening the settings.
 - Cleanse & revive: the Resurrection switches now line up with the Who switches above them.
 - New `/bt combatprobe` (diagnostic): during your next fight it records whether WoW Forever lets addons read who cast your buffs and send emotes, and prints the results when combat ends. Nothing is cast or sent.
 

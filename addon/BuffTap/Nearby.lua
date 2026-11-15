@@ -552,9 +552,12 @@ B.NearbyTagStyles=MARKERS
 -- All players view while resting, mounted or stealthed: the list stays up for invites and requests,
 -- while buffing itself stays paused (NearbyCandidates still returns nothing).
 -- "Buff while resting": Nearby ignores the resting pause (other pauses still apply).
+-- Nearby has its own resting rule ("Buff while resting", also the zZ title-bar button), whatever
+-- the Helpers resting pause says about your own reminders.
 function B:NearbyPauseReason()
   local reason=self:ReminderPauseReason()
-  if reason=="resting" and self.db and self.db.nearbyWhileResting==true then return nil end
+  if reason=="resting" then reason=self:Stealthed() and "stealthed" or nil end
+  if not reason and self.db and self.db.nearbyWhileResting~=true and A.Call(IsResting)==true then return "resting" end
   return reason
 end
 -- "Hold back short buffs": in cities and inns, Nearby does not offer buffs of ten minutes or
@@ -1027,6 +1030,19 @@ function B:CreateNearbyWindow()
   people:SetTexture("Interface\\AddOns\\BuffTap\\Media\\UIPeople"); people:SetVertexColor(.65,.65,.62,1)
   f.allPlayers.parts[1]=people
   f.allPlayers:SetScript("OnClick",function() self:SetNearbyView(not self.db.nearbyShowAll) end)
+  -- zZ: Nearby buffing in cities and inns. Grey pauses there, gold buffs there.
+  f.resting=CreateFrame("Button",nil,c); f.resting:SetFrameLevel(f:GetFrameLevel()+3)
+  f.resting:SetSize(16,16); f.resting:SetPoint("TOPLEFT",136,-3)
+  f.resting.text=f.resting:CreateFontString(nil,"OVERLAY","GameFontNormalSmall"); f.resting.text:SetPoint("CENTER",0,1)
+  f.resting.text:SetText("zZ"); f.resting.text:SetTextColor(.65,.65,.62)
+  f.resting:SetScript("OnClick",function()
+    if A.Combat() then return end
+    self.db.nearbyWhileResting=self.db.nearbyWhileResting~=true
+    if GameTooltip then GameTooltip:Hide() end
+    self.nearbySnapshot=nil; self:RequestRefresh("nearby resting",0); self:UpdateNearbyWindow()
+    if self.options and self.options.nearbyWhileResting then self.options.nearbyWhileResting:SetChecked(self.db.nearbyWhileResting) end
+  end)
+  hint(f.resting,function() return self:Text(self.db.nearbyWhileResting and "Buffing in cities and inns" or "Paused in cities and inns") end,self:Text("Click to switch. Gold: Nearby buffs players in cities and inns. Grey: it pauses there. Your own reminders follow the Helpers resting pause."))
   hint(f.allPlayers,function() return self.db.nearbyShowAll and "Show only players needing buffs" or "Show all nearby players" end,"Grey: buff candidates only. Gold: all observed strangers. Invite buttons are available in either view.")
   f.status=label(c,"",6,-31); f.status:SetWidth(198); f.status:SetJustifyH("LEFT"); f.status:SetWordWrap(true)
   f.statusButton=CreateFrame("Button",nil,c); f.statusButton:SetPoint("TOPLEFT",4,-25); f.statusButton:SetSize(198,34)
@@ -1298,7 +1314,8 @@ function B:UpdateNearbyWindow()
     f.lock:ClearAllPoints(); f.lock:SetPoint("TOPLEFT",WIDTH-34,-3)
     f.close:ClearAllPoints(); f.close:SetPoint("TOPLEFT",WIDTH-17,-3)
     f.allPlayers:ClearAllPoints(); f.allPlayers:SetPoint("TOPLEFT",WIDTH-56,-3)
-    f.count:SetWidth(WIDTH-135); f.countHelp:SetWidth(WIDTH-131)
+    f.resting:ClearAllPoints(); f.resting:SetPoint("TOPLEFT",WIDTH-75,-3)
+    f.count:SetWidth(WIDTH-150); f.countHelp:SetWidth(WIDTH-146)
     f.status:SetWidth(WIDTH-12); f.statusButton:SetWidth(WIDTH-12)
     f.scroll:ClearAllPoints(); f.scroll:SetPoint("TOPLEFT",WIDTH-5,-25); f.scroll:SetHeight(ROWS*ROW_HEIGHT-2)
     for i,row in ipairs(f.rows) do
@@ -1331,6 +1348,7 @@ function B:UpdateNearbyWindow()
   local pin=paused and 1 or 0
   self:ShowNearbyPauseRow(f,paused,browse~=nil)
   f.count:SetText(counts.need.."/"..counts.total..note)
+  f.resting.text:SetTextColor(unpack(self.db.nearbyWhileResting and {1,.82,0} or {.65,.65,.62}))
   if f.allPlayers.showAll~=self.db.nearbyShowAll then
     f.allPlayers.showAll=self.db.nearbyShowAll
     for _,t in ipairs(f.allPlayers.parts) do

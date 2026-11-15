@@ -112,10 +112,15 @@ function B:InitDB()
     iconStyle="classic", campIconStyle="classic", labelPosition="split", showSwipe=false, showOutOfRange=false}
   -- 1.20.0: right-click dismiss is on for 10 minutes on new characters; existing ones keep their choice.
   local existingDismiss=type(self.db.helperDismiss)=="boolean" and self.db.helperDismissMinutes==nil
+  -- 1.22.5: Nearby's "Buff while resting" works on its own. Existing characters that buffed in
+  -- towns (Helpers resting pause off) keep doing so; new characters start paused in towns.
+  local existingResting=self.db.enabled~=nil and self.db.nearbyRestingRule==nil
   for k,v in pairs(defaults) do
     if type(self.db[k]) ~= type(v) then self.db[k] = v end
   end
   if existingDismiss then self.db.helperDismissMinutes=0 end
+  if existingResting and self.db.pauseResting~=true then self.db.nearbyWhileResting=true end
+  self.db.nearbyRestingRule=1
   -- 1.20.0: party and raid buffing turns on once for everyone; later choices are kept.
   if self.db.groupDefaultVersion~=1 then
     self.db.group=true
@@ -346,9 +351,8 @@ function B:ReminderPauseReason()
 end
 -- The pause that applies to one action: "Buff while resting" lets Nearby actions through the resting pause.
 function B:ActionPauseReason(action)
-  local paused=self:ReminderPauseReason()
-  if paused=="resting" and action and action.nearby and self.db and self.db.nearbyWhileResting==true then return nil end
-  return paused
+  if action and action.nearby and self.NearbyPauseReason then return self:NearbyPauseReason() end
+  return self:ReminderPauseReason()
 end
 -- Stealth, Prowl, Shadowmeld and similar: any cast or item use would break it.
 function B:Stealthed()
