@@ -1154,4 +1154,4 @@ B.Locales.esES["Choose which classes in your party get this buff."]="Elige qué 
 B.Locales.esES["Every tank gets this buff, whatever their class."]="Cada tanque recibe este beneficio, sea cual sea su clase."
 B.Locales.esES["Every healer gets this buff, whatever their class."]="Cada sanador recibe este beneficio, sea cual sea su clase."
 B.Locales.esES["Animated list"]="Lista animada"
-B.Locales.esES["Players glide to their new place when the list reorders, and new players slide in. Off when Reduce animation is on."]="Los jugadores se deslizan a su nuevo lugar cuando la lista se reordena, y los nuevos entran deslizándose. Desactivado con Reducir animaciones."
+B.Locales.esES["Players glide to their new place when the list reorders, and new players fade in. Off when Reduce animation is on."]="Los jugadores se deslizan a su nuevo lugar cuando la lista se reordena, y los nuevos aparecen gradualmente. Desactivado con Reducir animaciones."

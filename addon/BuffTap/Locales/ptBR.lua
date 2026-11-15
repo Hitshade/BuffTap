@@ -1154,4 +1154,4 @@ B.Locales.ptBR["Choose which classes in your party get this buff."]="Escolha qua
 B.Locales.ptBR["Every tank gets this buff, whatever their class."]="Todo tanque recebe este buff, seja qual for a classe."
 B.Locales.ptBR["Every healer gets this buff, whatever their class."]="Todo curador recebe este buff, seja qual for a classe."
 B.Locales.ptBR["Animated list"]="Lista animada"
-B.Locales.ptBR["Players glide to their new place when the list reorders, and new players slide in. Off when Reduce animation is on."]="Os jogadores deslizam para o novo lugar quando a lista se reorganiza, e novos jogadores entram deslizando. Desligado com Reduzir animações."
+B.Locales.ptBR["Players glide to their new place when the list reorders, and new players fade in. Off when Reduce animation is on."]="Os jogadores deslizam para o novo lugar quando a lista se reorganiza, e novos jogadores aparecem suavemente. Desligado com Reduzir animações."

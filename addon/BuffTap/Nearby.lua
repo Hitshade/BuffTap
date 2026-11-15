@@ -1218,8 +1218,8 @@ function B:UpdateNearbyHeaderFade(force)
   end
   f.headerWatch:SetShown(hide)
 end
--- Animated list (optional): rows that change place glide from their old slot, new players slide in
--- from the right. Only the drawing moves; each clickable row stays anchored in its slot, so a click
+-- Animated list (optional): rows that change place glide from their old slot, and new players
+-- fade in where they belong. Only the drawing moves; each clickable row stays anchored in its slot, so a click
 -- always lands on the player now shown there. Never in combat, never while scrolling.
 local GLIDE=.22
 local function rowMotion(row)
@@ -1238,6 +1238,8 @@ local function playMotion(row,dx,dy,fadeIn)
   m.jump:SetOffset(dx,dy); m.glide:SetOffset(-dx,-dy)
   local a=row:GetAlpha() or 1
   m.fade:SetFromAlpha(fadeIn and 0 or a); m.fade:SetToAlpha(a)
+  -- Newcomers fade in where they belong just after the others have glided to make room.
+  if m.fade.SetStartDelay then m.fade:SetStartDelay(fadeIn and GLIDE*.45 or 0) end
   m.ag:Play()
 end
 function B:AnimateNearbyRows(f,shown)
@@ -1250,7 +1252,7 @@ function B:AnimateNearbyRows(f,shown)
     for guid,i in pairs(now) do
       local old=prev[guid]
       if old and old~=i then playMotion(f.rows[i],0,(i-old)*ROW_HEIGHT,false); moved=moved+1
-      elseif not old then playMotion(f.rows[i],28,0,true); added=added+1 end
+      elseif not old then playMotion(f.rows[i],0,0,true); added=added+1 end
     end
   end
   self.nearbyRowSlots=now; self.nearbyRowSlotsOffset=offset

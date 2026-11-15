@@ -364,7 +364,7 @@ function B:BuildNearbyAppearance(ui,p)
   f.nearbyAnimate=ui.check(p,"Animated list",480,-552,function(c)
     B.db.nearbyAnimate=c:GetChecked()==true; B.nearbyRowSlots=nil
   end)
-  f.nearbyAnimate:HookScript("OnEnter",function(s) T.Tooltip(s,B:Text("Animated list"),B:Text("Players glide to their new place when the list reorders, and new players slide in. Off when Reduce animation is on.")) end)
+  f.nearbyAnimate:HookScript("OnEnter",function(s) T.Tooltip(s,B:Text("Animated list"),B:Text("Players glide to their new place when the list reorders, and new players fade in. Off when Reduce animation is on.")) end)
   f.nearbyAnimate:HookScript("OnLeave",function() if GameTooltip then GameTooltip:Hide() end end)
   f.nearbyCastResult=ui.check(p,"Show whether each cast worked",26,-552,function(c)
     B.db.nearbyCastResult=c:GetChecked()==true; if not B.db.nearbyCastResult then B.nearbyResult=nil end; if B.nearbyFrame then B:UpdateNearbyWindow() end
