@@ -1259,7 +1259,9 @@ function B:AnimateNearbyRows(f,shown)
   if enabled and prev and self.nearbyRowSlotsOffset==offset and next(prev) then
     for guid,i in pairs(now) do
       local old=prev[guid]
-      if old and old~=i then playMotion(f.rows[i],0,(i-old)*ROW_HEIGHT,false); moved=moved+1
+      -- Only downward moves glide (the list making room for someone); gaps close instantly, so all
+      -- visible motion flows the same way.
+      if old and i>old then playMotion(f.rows[i],0,(i-old)*ROW_HEIGHT,false); moved=moved+1
       elseif not old then playMotion(f.rows[i],0,0,true); added=added+1 end
     end
   end
