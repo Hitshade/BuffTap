@@ -1,6 +1,7 @@
 # BuffTap 1.22.6
 
 ### Changes
+- Nearby: the animated list is now on for everyone (turned on once; switch it off under Customization > Nearby window > Title bar and rows if you prefer, and it stays off).
 - Nearby window: new icons in the title bar. The resting button shows rising z's, and the lock is a padlock: closed and gold when the window is locked, open and grey when it is not. Both match the style of the all-players icon.
 
 ---

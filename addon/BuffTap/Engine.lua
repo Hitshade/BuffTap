@@ -104,7 +104,7 @@ function B:InitDB()
     weaponReminder=true, weaponMainHand=true, weaponOffHand=true,
     consumablesPauseResting=false, weaponsPauseResting=false,
     weaponApply=false, weaponReplace=false, weaponChoices={}, weaponCoatings={}, weaponSeconds=60,
-    nearbyEnabled=false, nearbyBuffing=true, nearbyShowAll=false, nearbyInvites=true, nearbyLocked=false, nearbyOnTop=false, nearbyFont="default", nearbyFontSize=0, nearbyFontOutline="none", nearbyShowLevel=false, nearbyMarkSocial=true, nearbyHideHeader=false, nearbyKeepLine=true, nearbyWhileResting=false, nearbyHoldShort=false, nearbyCastResult=true, nearbyAnimate=false, nearbyKeys={}, effectUrgency=false, effectOnce=false, nearbyManaFloor=0, consumablesInstanceOnly=false, buffPets=false, helperDismissMinutes=10, helperThankDelay=0, readyCheckTopUp=true, pauseNotes=true, blockIgnored=true, blacklistTargets=true, blacklistInInstances=true, blockedPlayers={}, blockedGuilds={}, nearbyX=240, nearbyY=0, pvpProtection=true, helperDismiss=true, helperBounce=false, helperTracking=false, helperTreasure=false, helperCoverage=false,
+    nearbyEnabled=false, nearbyBuffing=true, nearbyShowAll=false, nearbyInvites=true, nearbyLocked=false, nearbyOnTop=false, nearbyFont="default", nearbyFontSize=0, nearbyFontOutline="none", nearbyShowLevel=false, nearbyMarkSocial=true, nearbyHideHeader=false, nearbyKeepLine=true, nearbyWhileResting=false, nearbyHoldShort=false, nearbyCastResult=true, nearbyAnimate=true, nearbyKeys={}, effectUrgency=false, effectOnce=false, nearbyManaFloor=0, consumablesInstanceOnly=false, buffPets=false, helperDismissMinutes=10, helperThankDelay=0, readyCheckTopUp=true, pauseNotes=true, blockIgnored=true, blacklistTargets=true, blacklistInInstances=true, blockedPlayers={}, blockedGuilds={}, nearbyX=240, nearbyY=0, pvpProtection=true, helperDismiss=true, helperBounce=false, helperTracking=false, helperTreasure=false, helperCoverage=false,
     helperDiscovery=false, helperThanks=false, helperThankEmote="THANK", helperQuick=false, helperTracker=0, helperPet=false, helperHealthstone=false, helperSoulstone=false, helperOath=false, oathAssigned={}, soulstoneParty="healer", soulstoneRaid="remind", soulstoneAssigned="", helperDemon=0,
     raidGroups={true,true,true,true,true,true,true,true},
     buffRoles={}, buffSelf={}, blessingRoleChoices={}, roleMarks={}, roleGuess=false, helperThanksResting=false,
@@ -121,6 +121,8 @@ function B:InitDB()
   if existingDismiss then self.db.helperDismissMinutes=0 end
   if existingResting and self.db.pauseResting~=true then self.db.nearbyWhileResting=true end
   self.db.nearbyRestingRule=1
+  -- 1.22.6: the animated Nearby list turns on once for everyone; turning it off afterwards sticks.
+  if self.db.nearbyAnimateRule~=1 then self.db.nearbyAnimate=true; self.db.nearbyAnimateRule=1 end
   -- 1.20.0: party and raid buffing turns on once for everyone; later choices are kept.
   if self.db.groupDefaultVersion~=1 then
     self.db.group=true
