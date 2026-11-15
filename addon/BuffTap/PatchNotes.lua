@@ -2,6 +2,11 @@
 local _,B=...
 -- Keep the ten most recent releases within a 24 KiB content ceiling.
 B.PatchNotes={
+ {version="1.22.5",title="Nearby in town, and a livelier list",items={
+  "Nearby's \"Buff while resting\" now works on its own, and the new zZ button in the Nearby title bar switches it: gold buffs players in cities and inns, grey pauses there. Characters that were buffing in towns keep doing so.",
+  "In the all-players view, players who just came into range now appear near the top, under those who need a buff and your friends.",
+  "Optional \"Animated list\" (Customization > Nearby window): rows glide down to make room and newcomers fade in.",
+  "The Resurrection switches line up with the Who switches on the Cleanse & revive page."}},
  {version="1.22.4",title="Buff while resting fixed",items={
   "Nearby \"Buff while resting\" now works when \"Pause reminders while resting\" is also on. Before, it only worked once that pause was turned off. Your own buffs still pause in cities and inns.",
   "The friend and guildmate alert now plays when their row actually appears, with a brighter, pulsing glow. It also works while you are mounted, stealthed or resting.",
@@ -66,9 +71,6 @@ B.PatchNotes={
   "New smooth icons for the invite and request to join buttons.",
   "Nearby window looks moved to Customization > Nearby window, with a new font, text size and outline choice from the game's fonts or any SharedMedia font. The Nearby page now shows how the window works.",
   "New Show level option on the Nearby page puts each player's level before their name, like (28) Bob Loblaw."}},
- {version="1.19.3",title="Nearby window fixes",items={
-  "Interface windows such as professions and bags now open on top of the Nearby window. Turn on Keep above other windows on the Nearby page for the old behaviour.",
-  "Fixed the Nearby window jumping away from where you drop it when its scale is not 100%."}},
 }
 function B:PatchNotesUnread()
   return self.profileDB and self.db.optionsPatchDot~=false and self.profileDB.global.patchNotesSeen~=self.version
