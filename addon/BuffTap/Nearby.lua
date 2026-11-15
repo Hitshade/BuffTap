@@ -1000,12 +1000,8 @@ function B:CreateNearbyWindow()
   f.title=label(c,"BuffTap",5,-5); f.title:SetTextColor(1,.82,0)
   f.count=label(c,"0/0",69,-5); f.count:SetWidth(75); f.count:SetJustifyH("RIGHT"); f.count:SetTextColor(.82,.82,.79)
   f.lock=CreateFrame("Button",nil,c); f.lock:SetSize(12,15); f.lock:SetPoint("TOPLEFT",176,-3)
-  f.lock.body=wash(f.lock,"ARTWORK",.8,.8,.76,1); f.lock.body:SetSize(8,6); f.lock.body:SetPoint("BOTTOM",0,2)
-  f.lock.key=wash(f.lock,"OVERLAY",.10,.12,.15,1); f.lock.key:SetSize(1,3); f.lock.key:SetPoint("BOTTOM",0,3)
-  f.lock.shackle={}
-  for i,point in ipairs({{-3,2,1,5},{3,2,1,5},{0,4.5,7,1}}) do
-    local t=wash(f.lock,"ARTWORK",.8,.8,.76,1); t:SetSize(point[3],point[4]); t:SetPoint("CENTER",point[1],point[2]); f.lock.shackle[i]=t
-  end
+  -- Padlock: closed and gold when locked, open and grey when unlocked.
+  f.lock.icon=f.lock:CreateTexture(nil,"ARTWORK"); f.lock.icon:SetSize(14,14); f.lock.icon:SetPoint("CENTER",0,0)
   f.lock:SetScript("OnClick",function() if not A.Combat() then self.db.nearbyLocked=not self.db.nearbyLocked; self:UpdateNearbyWindow() end end)
   hint(f.lock,function() return self.db.nearbyLocked and "Unlock position" or "Lock position" end,"Drag the header to move. Shift-left-click the minimap icon to toggle Nearby.")
   f.close=CreateFrame("Button",nil,c); f.close:SetSize(14,16); f.close:SetPoint("TOPLEFT",193,-3)
@@ -1033,8 +1029,8 @@ function B:CreateNearbyWindow()
   -- zZ: Nearby buffing in cities and inns. Grey pauses there, gold buffs there.
   f.resting=CreateFrame("Button",nil,c); f.resting:SetFrameLevel(f:GetFrameLevel()+3)
   f.resting:SetSize(16,16); f.resting:SetPoint("TOPLEFT",136,-3)
-  f.resting.text=f.resting:CreateFontString(nil,"OVERLAY","GameFontNormalSmall"); f.resting.text:SetPoint("CENTER",0,1)
-  f.resting.text:SetText("zZ"); f.resting.text:SetTextColor(.65,.65,.62)
+  f.resting.icon=f.resting:CreateTexture(nil,"ARTWORK"); f.resting.icon:SetSize(15,15); f.resting.icon:SetPoint("CENTER",0,0)
+  f.resting.icon:SetTexture("Interface\\AddOns\\BuffTap\\Media\\UISleep"); f.resting.icon:SetVertexColor(.65,.65,.62,1)
   f.resting:SetScript("OnClick",function()
     if A.Combat() then return end
     self.db.nearbyWhileResting=self.db.nearbyWhileResting~=true
@@ -1349,7 +1345,9 @@ function B:UpdateNearbyWindow()
   local pin=paused and 1 or 0
   self:ShowNearbyPauseRow(f,paused,browse~=nil)
   f.count:SetText(counts.need.."/"..counts.total..note)
-  f.resting.text:SetTextColor(unpack(self.db.nearbyWhileResting and {1,.82,0} or {.65,.65,.62}))
+  if self.db.nearbyWhileResting then f.resting.icon:SetVertexColor(1,.82,0,1) else f.resting.icon:SetVertexColor(.65,.65,.62,1) end
+  f.lock.icon:SetTexture(self.db.nearbyLocked and "Interface\\AddOns\\BuffTap\\Media\\UILock" or "Interface\\AddOns\\BuffTap\\Media\\UIUnlock")
+  if self.db.nearbyLocked then f.lock.icon:SetVertexColor(1,.82,0,1) else f.lock.icon:SetVertexColor(.65,.65,.62,1) end
   if f.allPlayers.showAll~=self.db.nearbyShowAll then
     f.allPlayers.showAll=self.db.nearbyShowAll
     for _,t in ipairs(f.allPlayers.parts) do
@@ -1359,8 +1357,6 @@ function B:UpdateNearbyWindow()
   for guid,at in pairs(self.nearbyInvited or {}) do
     if GetTime()-at>=10 then self.nearbyInvited[guid]=nil end
   end
-  for _,t in ipairs(f.lock.shackle) do t:SetAlpha(self.db.nearbyLocked and 1 or .4) end
-  f.lock.body:SetAlpha(self.db.nearbyLocked and 1 or .55)
   f:EnableMouseWheel(true)
   local shown=ROWS-pin
   self.nearbyOffset=math.max(0,math.min(self.nearbyOffset or 0,math.max(0,#display-shown)))
