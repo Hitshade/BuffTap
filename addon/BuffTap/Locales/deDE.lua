@@ -1159,3 +1159,5 @@ B.Locales.deDE["Buffing in cities and inns"]="Stärkt in Städten und Gasthäuse
 B.Locales.deDE["Paused in cities and inns"]="Pausiert in Städten und Gasthäusern"
 B.Locales.deDE["Click to switch. Gold: Nearby buffs players in cities and inns. Grey: it pauses there. Your own reminders follow the Helpers resting pause."]="Klicken zum Umschalten. Gold: Umgebung stärkt Spieler in Städten und Gasthäusern. Grau: dort pausiert sie. Deine eigenen Erinnerungen folgen der Ruhepause unter Helfer."
 B.Locales.deDE["Paused: saving mana"]="Pausiert: Mana wird gespart"
+B.Locales.deDE["Return the favor"]="Gefallen erwidern"
+B.Locales.deDE["Someone who buffed you in the last five minutes moves to the top of the list, below cleanses, when they need your buff or theirs is a quarter gone. A buff that answers one of yours does not count, and each player moves up at most once per half hour."]="Wer dich in den letzten fünf Minuten gebufft hat, rückt unter Reinigungen an die Spitze der Liste, wenn er deinen Buff braucht oder seiner zu einem Viertel abgelaufen ist. Ein Buff als Antwort auf deinen zählt nicht, und jeder Spieler rückt höchstens einmal pro halbe Stunde auf."

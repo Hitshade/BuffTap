@@ -4,7 +4,7 @@
 
 local _, B = ...
 _G.BuffTap = B
-B.version = "1.22.6"
+B.version = "1.22.7"
 B.API = {}
 local A = B.API
 
@@ -104,7 +104,7 @@ function B:InitDB()
     weaponReminder=true, weaponMainHand=true, weaponOffHand=true,
     consumablesPauseResting=false, weaponsPauseResting=false,
     weaponApply=false, weaponReplace=false, weaponChoices={}, weaponCoatings={}, weaponSeconds=60,
-    nearbyEnabled=false, nearbyBuffing=true, nearbyShowAll=false, nearbyInvites=true, nearbyLocked=false, nearbyOnTop=false, nearbyFont="default", nearbyFontSize=0, nearbyFontOutline="none", nearbyShowLevel=false, nearbyMarkSocial=true, nearbyHideHeader=false, nearbyKeepLine=true, nearbyWhileResting=false, nearbyHoldShort=false, nearbyCastResult=true, nearbyAnimate=true, nearbyKeys={}, effectUrgency=false, effectOnce=false, nearbyManaFloor=0, consumablesInstanceOnly=false, buffPets=false, helperDismissMinutes=10, helperThankDelay=0, readyCheckTopUp=true, pauseNotes=true, blockIgnored=true, blacklistTargets=true, blacklistInInstances=true, blockedPlayers={}, blockedGuilds={}, nearbyX=240, nearbyY=0, pvpProtection=true, helperDismiss=true, helperBounce=false, helperTracking=false, helperTreasure=false, helperCoverage=false,
+    nearbyEnabled=false, nearbyBuffing=true, nearbyShowAll=false, nearbyInvites=true, nearbyLocked=false, nearbyOnTop=false, nearbyFont="default", nearbyFontSize=0, nearbyFontOutline="none", nearbyShowLevel=false, nearbyMarkSocial=true, nearbyHideHeader=false, nearbyKeepLine=true, nearbyWhileResting=false, nearbyHoldShort=false, nearbyCastResult=true, nearbyAnimate=true, nearbyReturnFavor=true, nearbyKeys={}, effectUrgency=false, effectOnce=false, nearbyManaFloor=0, consumablesInstanceOnly=false, buffPets=false, helperDismissMinutes=10, helperThankDelay=0, readyCheckTopUp=true, pauseNotes=true, blockIgnored=true, blacklistTargets=true, blacklistInInstances=true, blockedPlayers={}, blockedGuilds={}, nearbyX=240, nearbyY=0, pvpProtection=true, helperDismiss=true, helperBounce=false, helperTracking=false, helperTreasure=false, helperCoverage=false,
     helperDiscovery=false, helperThanks=false, helperThankEmote="THANK", helperQuick=false, helperTracker=0, helperPet=false, helperHealthstone=false, helperSoulstone=false, helperOath=false, oathAssigned={}, soulstoneParty="healer", soulstoneRaid="remind", soulstoneAssigned="", helperDemon=0,
     raidGroups={true,true,true,true,true,true,true,true},
     buffRoles={}, buffSelf={}, blessingRoleChoices={}, roleMarks={}, roleGuess=false, helperThanksResting=false,
@@ -1090,7 +1090,8 @@ function B:Missing(b,action,auras,rebuffSeconds)
       configured=self.EarlyTopUpSeconds and self:EarlyTopUpSeconds(configured,a.duration) or configured
       -- Short charge-style buffs such as Nature's Grasp only remind once they are gone.
       if b.noTimer then configured=0 end
-      local threshold=math.min(a.duration*0.5,configured)
+      -- Return the favor (Nearby) refreshes once a quarter of their buff is gone; otherwise half.
+      local threshold=math.min(a.duration*(self.favorScan and 0.75 or 0.5),configured)
       local remaining=math.max(0,a.expirationTime-now)
       shownThreshold=math.max(shownThreshold,threshold)
       bestRemaining=math.max(bestRemaining or 0,remaining)

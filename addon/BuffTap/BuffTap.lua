@@ -880,6 +880,7 @@ local itemRequested=event=="ITEM_DATA_LOAD_RESULT" and A.Number(arg) and ((B.ite
     if B.InvalidateConsumables then B:InvalidateConsumables(arg) end
     if B.RefreshInventoryWindows then B:RefreshInventoryWindows() end
   elseif event=="UNIT_AURA" then
+    if arg=="player" and B.ScanFavors then B:ScanFavors() end
     if not B:IsWatchedUnit(arg) and not (B:HelperEnabled("helperCoverage") and A.Text(arg) and arg:match("^party[1-4]$")) then return end
     B:InvalidateAura(arg)
   elseif event=="UNIT_CONNECTION" then

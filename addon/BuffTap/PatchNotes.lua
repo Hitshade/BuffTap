@@ -2,6 +2,11 @@
 local _,B=...
 -- Keep the ten most recent releases within a 24 KiB content ceiling.
 B.PatchNotes={
+ {version="1.22.7",title="Return the favor",items={
+  "New: Return the favor. When someone buffs you, they move to the top of your Nearby list (below cleanses) if they need one of your buffs, or theirs is a quarter gone. Their row shows a small gold arrow.",
+  "It never loops: a buff that answers one of yours does not count, and each player moves up at most once per half hour. You still click or press your binding every time.",
+  "On by default. Find the switch on the Nearby page.",
+  "Friends and guild members who need a buff now come before other players in the Nearby list, and your binding buffs them first."}},
  {version="1.22.6",title="A livelier Nearby window",items={
   "The animated Nearby list is now on for everyone: rows glide down to make room and newcomers fade in. You can switch it off under Customization > Nearby window.",
   "New title-bar icons: rising z's for buffing in cities and inns, and a padlock that turns gold when the window is locked.",
@@ -41,22 +46,6 @@ B.PatchNotes={
   "The Nearby light in the sidebar turns red when friendly nameplates are off, because Nearby can't see anyone without them.",
   "Diagnostics has a Full check-up button (or /bt checkup) that gathers everything into one box to copy for a bug report.",
   "After you buff or cleanse a Nearby player, their row briefly shows whether it worked: green, or red with the reason, such as out of range. You can turn this off under Customization > Nearby window."}},
- {version="1.21.0",title="Cleansing",items={
-  "New Cleanse page, right after My buffs: BuffTap can offer the right spell to remove poisons, curses, diseases and magic out of combat, before buffs. It is off until you turn it on.",
-  "Choose what to remove and who to help: you, your group, your target and, if you like, Nearby players. Abolish Poison and Abolish Disease are used when the effect has stacks or will last a while.",
-  "Cleanse reminders have their own new sound and a border in the debuff's colour. Right-click one to never be offered that debuff again; the list is shared by all your characters.",
-  "Status lights in the sidebar show at a glance which features are on, and Blacklist moved down with the settings pages.",
-  "Nearby can hide its title bar until the mouse is over the window, and keep the hairline if you like (Customization > Nearby window).",
-  "In the all players view, friends and guild members are listed first once nobody needs a buff.",
-  "Nearby can keep working while resting, so you can still buff, invite and answer requests in cities and inns.",
-  "Fixed the Nearby mana reserve not noticing when your mana dropped below it, and camp text being cut off.",
-  "The Nearby guide is redrawn to look like the real window, with numbered markers for every button, the people icon, the buff and dash, and the name tags.",
-  "Font menus show each font name in its own font.",
-  "The Nearby key can no longer cast after combat starts, and blacklisting from the Nearby menu now blocks only that player, not everyone with the same first name.",
-  "Pets only get Arcane Intellect or Divine Spirit if they use mana, and a buffed or summoned pet is noticed sooner.",
-  "Party and raid timing per buff now keeps values from When gone up to 10 minutes, like solo.",
-  "Smoother settings: the window scale applies when you let go of the slider, and colour and bag changes no longer rebuild the window on every tick.",
-  "Plenty of smaller fixes from a full code review."},thanks="Thank you for playing and for the feedback."},
 }
 function B:PatchNotesUnread()
   return self.profileDB and self.db.optionsPatchDot~=false and self.profileDB.global.patchNotesSeen~=self.version

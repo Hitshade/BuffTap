@@ -154,6 +154,11 @@ function B:SetNearbyResult(state,reason)
   local r=self.nearbyResult
   if not r or r.state~="pending" or GetTime()-r.at>2 then return end
   r.state=state; r.reason=reason; r.untilTime=state=="ok" and gcdEnds(r.id,r.at) or GetTime()+GCD
+  -- A buff you gave counts for Return the favor: their reply is not a new favor, and theirs is returned.
+  if state=="ok" and A.Text(r.guid) then
+    self.favorGiven=self.favorGiven or {}; self.favorGiven[r.guid]=GetTime()
+    if self.favors then self.favors[r.guid]=nil end
+  end
   self:CancelTimer("nearby-result")
   self:StartTimer("nearby-result",r.untilTime-GetTime()+.02,function()
     B.nearbyResult=nil; B.nearbySnapshot=nil; if not A.Combat() then B:UpdateNearbyWindow() end
@@ -385,6 +390,7 @@ function B:NearbyNeeds(entry,list)
   self.nearbyNeedCache=self.nearbyNeedCache or {}
   local now=GetTime()
   local guid,level=A.Call(UnitGUID,entry.unit),A.Call(UnitLevel,entry.unit)
+  local favor=self:FavorActive(guid); entry.favor=favor or nil
   local auras=self:GetAuras(entry.unit,false,true)
   local reusable=auras and not auras.incomplete and not auras.timingRestricted
     and A.Text(guid) and A.Number(level) and level>0 and not self.captureDiagnostics
@@ -395,7 +401,7 @@ function B:NearbyNeeds(entry,list)
     and (type(UnitIsVisible)~="function" or A.Call(UnitIsVisible,entry.unit)==true)
   local cached=self.nearbyNeedCache[entry.unit]
   if reusable and cached and cached.guid==guid and cached.class==entry.class and cached.level==level
-    and cached.auras==auras and now<cached.untilTime then
+    and cached.auras==auras and cached.favor==favor and now<cached.untilTime then
     if cached.wakeAt then self:ConsiderWake(cached.wakeAt-now) end
     return cached.needs
   end
@@ -411,14 +417,18 @@ function B:NearbyNeeds(entry,list)
     if enabled and self:TargetBuffEnabled(def) and not def.singleKey and not (holdShort and def.short)
       and (def.kind=="single" or def.kind=="blessing") and self:Supported(def)
       and (explicit and def.kind=="blessing" or (def.kind=="blessing" and fits(def,entry.class)) or (def.kind~="blessing" and self:TargetClassAllowed(def,entry.class,true))) then
-      local missing=self:ScanMissing(def,{entry},scans,errors,self:TargetRebuffSeconds(def))
+      -- Favor: refresh once a quarter of their buff is gone.
+      self.favorScan=favor or nil
+      local ok,missing=pcall(self.ScanMissing,self,def,{entry},scans,errors,favor and 86400 or self:TargetRebuffSeconds(def))
+      self.favorScan=nil
+      if not ok then error(missing,0) end
       if missing[1] then needs[#needs+1]=missing[1] end
     end
   end
   local wake=self.nextWakeDelay
   if priorWake then self:ConsiderWake(priorWake) end
   if reusable and not self.ownershipUnavailable and not self.buffDataUnavailable and not self.dataPending then
-    self.nearbyNeedCache[entry.unit]={guid=guid,class=entry.class,level=level,auras=auras,needs=needs,
+    self.nearbyNeedCache[entry.unit]={guid=guid,class=entry.class,level=level,auras=auras,needs=needs,favor=favor,
       untilTime=now+math.min(.5,wake or .5),wakeAt=wake and now+wake}
   else self.nearbyNeedCache[entry.unit]=nil end
   return needs
@@ -467,14 +477,20 @@ function B:NearbyCandidates(force)
       local actions=self:NearbyActions(entry)
       local name=A.Call(UnitName,unit)
       if #actions>0 and A.Text(name) then
-        out[#out+1]={unit=unit,guid=guid,name=name,surname=B:NearbySurname(unit),class=entry.class,actions=actions,order=self.nearbyOrder[guid] or 0}
+        out[#out+1]={unit=unit,guid=guid,name=name,surname=B:NearbySurname(unit),class=entry.class,actions=actions,order=self.nearbyOrder[guid] or 0,favor=entry.favor,
+          social=self.NearbySocialKind and self:NearbySocialKind(unit,guid) or nil}
       end
     end
   end
-  -- Players who need a cleanse come first.
+  -- Players who need a cleanse come first, then anyone whose favor you can return.
   table.sort(out,function(a,b)
     local ac,bc=a.actions[1].source=="cleanse",b.actions[1].source=="cleanse"
     if ac~=bc then return ac end
+    local af,bf=a.favor==true,b.favor==true
+    if af~=bf then return af end
+    -- Then friends and guild members.
+    local as,bs=a.social~=nil,b.social~=nil
+    if as~=bs then return as end
     if a.order==b.order then return a.guid<b.guid end return a.order<b.order
   end)
   self.nearbySnapshot=out
@@ -547,8 +563,49 @@ function B:NearbySocialKind(unit,guid)
 end
 -- Name-field tags, right-aligned next to the buff column: {texture, r, g, b, alpha}.
 local MARKERS={pvp={"UIPvPFlag",.9,.36,.32,1},["pvp-unknown"]={"UIPvPFlag",.6,.6,.6,.55},blocked={"NavBlacklist",.95,.25,.22,1},
-  friend={"UIFriend",.42,.72,1,1},guild={"UIGuild",.35,.9,.42,1}}
+  friend={"UIFriend",.42,.72,1,1},guild={"UIGuild",.35,.9,.42,1},favor={"UIFavor",1,.82,0,1}}
 B.NearbyTagStyles=MARKERS
+-- Return the favor (optional, on by default): someone who buffed you in the last five minutes moves
+-- up the Nearby list when they need one of your buffs, or theirs is at least a quarter gone. A buff that
+-- answers one of yours does not count, and each player is bumped at most once per half hour.
+local FAVOR_WINDOW,REPLY_WINDOW,BUMP_COOLDOWN=300,300,1800
+function B:FavorActive(guid)
+  if not self.db or self.db.nearbyReturnFavor==false or not A.Text(guid) then return false end
+  local at=self.favors and self.favors[guid]
+  return at and GetTime()-at<FAVOR_WINDOW or false
+end
+function B:NoteFavor(guid)
+  local now=GetTime()
+  self.favors=self.favors or {}; self.favorGiven=self.favorGiven or {}; self.favorBumped=self.favorBumped or {}
+  if self.favorGiven[guid] and now-self.favorGiven[guid]<REPLY_WINDOW then return end
+  if self.favorBumped[guid] and now-self.favorBumped[guid]<BUMP_COOLDOWN then return end
+  self.favors[guid]=now; self.favorBumped[guid]=now
+  self.nearbySnapshot=nil; self.nearbyNeedCache=nil
+  if self.RequestRefresh then self:RequestRefresh("favor",0) end
+end
+-- Watches your own buffs (out of combat) for new or refreshed ones cast by another player.
+function B:ScanFavors()
+  if not self.db or self.db.nearbyReturnFavor==false or not self.db.nearbyEnabled or A.Combat() then return end
+  self.favorAuras=self.favorAuras or {}
+  local seen,primed={},self.favorAurasPrimed
+  for i=1,40 do
+    local ok,a=pcall(C_UnitAuras.GetAuraDataByIndex,"player",i,"HELPFUL")
+    if not ok or type(a)~="table" then break end
+    local id,exp,src=a.auraInstanceID,a.expirationTime,a.sourceUnit
+    if A.Public(id) and A.Public(exp) and A.Public(src) and A.Number(exp) then
+      seen[id]=true
+      local prev=self.favorAuras[id]
+      local fresh=(prev==nil and primed) or (prev and exp>prev+1)
+      self.favorAuras[id]=exp
+      if fresh and A.Text(src) and src~="player" and A.Call(UnitIsPlayer,src)==true and A.Call(UnitIsUnit,src,"player")==false then
+        local g=A.Call(UnitGUID,src)
+        if A.Text(g) then self:NoteFavor(g) end
+      end
+    end
+  end
+  for id in pairs(self.favorAuras) do if not seen[id] then self.favorAuras[id]=nil end end
+  self.favorAurasPrimed=true
+end
 -- All players view while resting, mounted or stealthed: the list stays up for invites and requests,
 -- while buffing itself stays paused (NearbyCandidates still returns nothing).
 -- "Buff while resting": Nearby ignores the resting pause (other pauses still apply).
@@ -606,7 +663,7 @@ function B:NearbyPlayers()
   end
   -- Players with nothing needed: friends and guild members first, so they stay in the visible rows.
   -- Tiers: needs a cleanse, needs a buff, then friends and guild members, then everyone else.
-  local function tier(e) return e.actions[1] and e.actions[1].source=="cleanse" and 0 or #e.actions>0 and 1 or e.social~=nil and 2 or 3 end
+  local function tier(e) return e.actions[1] and e.actions[1].source=="cleanse" and 0 or (#e.actions>0 and e.favor) and .5 or (#e.actions>0 and e.social~=nil) and .7 or #e.actions>0 and 1 or e.social~=nil and 2 or 3 end
   table.sort(out,function(a,b)
     local at,bt=tier(a),tier(b)
     if at~=bt then return at<bt end
@@ -940,11 +997,13 @@ function B:NearbyDisplayList(list)
       local ac=an and a.entry.actions[1].source=="cleanse"
       local bc=bn and b.entry.actions[1].source=="cleanse"
       if ac~=bc then return ac end
-      -- Among players with nothing needed, friends and guild members stay on top; then the newest
-      -- arrival comes first, so newcomers always appear in the same place.
+      local af,bf=an and a.entry.favor==true,bn and b.entry.favor==true
+      if af~=bf then return af end
+      -- Friends and guild members come next, whether or not they need a buff. Among players with
+      -- nothing needed, the newest arrival comes first, so newcomers always appear in the same place.
+      local as,bs=(a.entry.socialKind or a.entry.social)~=nil,(b.entry.socialKind or b.entry.social)~=nil
+      if as~=bs then return as end
       if not an then
-        local as,bs=a.entry.social~=nil,b.entry.social~=nil
-        if as~=bs then return as end
         local at,bt=arrived[a.entry.guid] or 0,arrived[b.entry.guid] or 0
         if at~=bt then return at>bt end
       end
@@ -1159,7 +1218,7 @@ function B:CreateNearbyWindow()
     -- Tags at the right end of the name field, next to the buffs: PvP flag or blacklist mark,
     -- then friend or guild. The buff column stays free for the buff itself.
     row.tags={}
-    for j=1,2 do local tag=row:CreateTexture(nil,"ARTWORK"); tag:SetSize(12,12); tag:Hide(); row.tags[j]=tag end
+    for j=1,3 do local tag=row:CreateTexture(nil,"ARTWORK"); tag:SetSize(12,12); tag:Hide(); row.tags[j]=tag end
     row.icons={}; row.iconEdges={}
     for j=1,4 do
       local icon=row:CreateTexture(nil,"ARTWORK"); icon:SetSize(14,14); icon:SetTexCoord(.07,.93,.07,.93); row.icons[j]=icon
@@ -1370,7 +1429,7 @@ function B:UpdateNearbyWindow()
     row.entry=entry; row.action=item and item.fresh and nextAction(entry) or (result and result.state=="fail" and result.action) or nil
     self:SetNearbyRowPayload(row,row.action)
     if entry then
-      local parts={entry.guid,self:NearbyDisplayName(entry),entry.class,tostring(entry.marker),tostring(entry.social)}
+      local parts={entry.guid,self:NearbyDisplayName(entry),entry.class,tostring(entry.marker),tostring(entry.social),tostring(entry.favor and #entry.actions>0)}
       for _,action in ipairs(entry.actions) do parts[#parts+1]=tostring(action.id)..":"..tostring(action.icon)..":"..tostring(action.dispelType) end
       local style=table.concat(parts,"|")
       if row.style~=style then
@@ -1384,6 +1443,7 @@ function B:UpdateNearbyWindow()
         local tagged={}
         if MARKERS[entry.marker or ""] then tagged[#tagged+1]=MARKERS[entry.marker] end
         if MARKERS[entry.social or ""] then tagged[#tagged+1]=MARKERS[entry.social] end
+        if entry.favor and #entry.actions>0 then tagged[#tagged+1]=MARKERS.favor end
         for j,tag in ipairs(row.tags) do
           local style=tagged[#tagged+1-j]
           tag:ClearAllPoints()
