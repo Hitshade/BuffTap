@@ -2,6 +2,9 @@
 local _,B=...
 -- Keep the ten most recent releases within a 24 KiB content ceiling.
 B.PatchNotes={
+ {version="1.22.6",title="A livelier Nearby window",items={
+  "The animated Nearby list is now on for everyone: rows glide down to make room and newcomers fade in. You can switch it off under Customization > Nearby window.",
+  "New title-bar icons: rising z's for buffing in cities and inns, and a padlock that turns gold when the window is locked."}},
  {version="1.22.5",title="Nearby in town, and a livelier list",items={
   "Nearby's \"Buff while resting\" now works on its own, and the new zZ button in the Nearby title bar switches it: gold buffs players in cities and inns, grey pauses there. Characters that were buffing in towns keep doing so.",
   "In the all-players view, players who just came into range now appear near the top, under those who need a buff and your friends.",
@@ -53,24 +56,6 @@ B.PatchNotes={
   "Party and raid timing per buff now keeps values from When gone up to 10 minutes, like solo.",
   "Smoother settings: the window scale applies when you let go of the slider, and colour and bag changes no longer rebuild the window on every tick.",
   "Plenty of smaller fixes from a full code review."},thanks="Thank you for playing and for the feedback."},
- {version="1.20.0",title="Smarter buffing, everywhere",items={
-  "Party and raid buffing is now on by default, and this update turns it on once for every character. Turn it off on the Groups page if you prefer.",
-  "Fixed the reminder popping up right after login or a loading screen before your buffs had loaded.",
-  "Smarter default timing: short buffs remind when they wear off, hour-long buffs 5 minutes early, and food and flasks no longer remind too soon.",
-  "A new Blacklist page: never offer buffs or invites to chosen players, whole guilds, or anyone on your ignore list. Right-click a name in the Nearby window to whisper, invite, ignore or blacklist.",
-  "Optional Nearby key under Customization: buff nearby players with a second key, so your main key covers only you and your group.",
-  "Mana reserve: stop offering buffs to players outside your group while your mana is below a level you choose, from 0 to 50%.",
-  "The Nearby window marks friends with a heart and guild members with a shield, and shows PvP flags and blacklisted players next to the name, so the buff icon always stays visible.",
-  "Buffs top up at ready checks, and long buffs top up a little earlier in dungeons and raids.",
-  "Consumable reminders can be limited to dungeons and raids, and a right-click dismiss can last 5, 15 or 30 minutes.",
-  "Optional: buff pets, and a short delay before solo thanks. Unending Breath and Water Breathing remind only while underwater, and Druids can add an Aquatic Form reminder.",
-  "Export and import settings on the Profiles page, even between classes. Diagnostics can capture debug output for you to copy into a bug report.",
-  "New icon effects: Shine, Ripple, Bounce and Orbit, plus an optional urgency colour and a flash-once mode.",
-  "A tidier settings window: page switches and shortcuts in the same place on every page, a Move BuffTap frames button, roomier Helpers, a taller Diagnostics box and smoother patch notes scrolling. Timing sliders now show the timing each buff really gets.",
-  "Any profile except the one you are using can be deleted, with a warning when other characters use it.",
-  "New smooth icons for the invite and request to join buttons.",
-  "Nearby window looks moved to Customization > Nearby window, with a new font, text size and outline choice from the game's fonts or any SharedMedia font. The Nearby page now shows how the window works.",
-  "New Show level option on the Nearby page puts each player's level before their name, like (28) Bob Loblaw."}},
 }
 function B:PatchNotesUnread()
   return self.profileDB and self.db.optionsPatchDot~=false and self.profileDB.global.patchNotesSeen~=self.version
