@@ -4,7 +4,8 @@ local _,B=...
 B.PatchNotes={
  {version="1.22.6",title="A livelier Nearby window",items={
   "The animated Nearby list is now on for everyone: rows glide down to make room and newcomers fade in. You can switch it off under Customization > Nearby window.",
-  "New title-bar icons: rising z's for buffing in cities and inns, and a padlock that turns gold when the window is locked."}},
+  "New title-bar icons: rising z's for buffing in cities and inns, and a padlock that turns gold when the window is locked.",
+  "When your mana reserve stops Nearby buffing, the window now says so: \"Paused: saving mana\". Players stay listed for invites."}},
  {version="1.22.5",title="Nearby in town, and a livelier list",items={
   "Nearby's \"Buff while resting\" now works on its own, and the new zZ button in the Nearby title bar switches it: gold buffs players in cities and inns, grey pauses there. Characters that were buffing in towns keep doing so.",
   "In the all-players view, players who just came into range now appear near the top, under those who need a buff and your friends.",

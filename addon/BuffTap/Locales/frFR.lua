@@ -1158,3 +1158,4 @@ B.Locales.frFR["Buff nearby players in cities and inns. When off, Nearby pauses 
 B.Locales.frFR["Buffing in cities and inns"]="Buffs dans les villes et auberges"
 B.Locales.frFR["Paused in cities and inns"]="En pause dans les villes et auberges"
 B.Locales.frFR["Click to switch. Gold: Nearby buffs players in cities and inns. Grey: it pauses there. Your own reminders follow the Helpers resting pause."]="Cliquez pour changer. Or : Proximité buffe les joueurs dans les villes et auberges. Gris : elle s'y met en pause. Vos propres rappels suivent la pause au repos des Assistants."
+B.Locales.frFR["Paused: saving mana"]="En pause : économie de mana"

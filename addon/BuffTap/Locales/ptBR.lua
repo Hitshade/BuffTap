@@ -1158,3 +1158,4 @@ B.Locales.ptBR["Buff nearby players in cities and inns. When off, Nearby pauses 
 B.Locales.ptBR["Buffing in cities and inns"]="Buffando em cidades e estalagens"
 B.Locales.ptBR["Paused in cities and inns"]="Pausado em cidades e estalagens"
 B.Locales.ptBR["Click to switch. Gold: Nearby buffs players in cities and inns. Grey: it pauses there. Your own reminders follow the Helpers resting pause."]="Clique para alternar. Dourado: Proximidade buffa jogadores em cidades e estalagens. Cinza: pausa ali. Seus próprios lembretes seguem a pausa em descanso de Assistentes."
+B.Locales.ptBR["Paused: saving mana"]="Pausado: poupando mana"

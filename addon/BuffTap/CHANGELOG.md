@@ -2,6 +2,7 @@
 
 ### Changes
 - Nearby: the animated list is now on for everyone (turned on once; switch it off under Customization > Nearby window > Title bar and rows if you prefer, and it stays off).
+- Nearby: when your mana reserve holds back Nearby buffs, the first row now says "Paused: saving mana" (with "Invites still work." in the all-players view), like the stealth and resting pauses. Before, buffs just stopped without saying why. It only shows when BuffTap can tell you are below your reserve, so in cat or bear form buffs stay available as before.
 - Nearby window: new icons in the title bar. The resting button shows rising z's, and the lock is a padlock: closed and gold when the window is locked, open and grey when it is not. Both match the style of the all-players icon.
 
 ---

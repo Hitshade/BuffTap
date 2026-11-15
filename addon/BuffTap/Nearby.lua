@@ -241,7 +241,7 @@ function B:ShowNearbyRowResult(row,r)
 end
 -- While Nearby is paused (stealthed, mounted, resting), the first row is pinned to say so, in the
 -- same style as the cast results. The rows below keep listing players for invites.
-local PAUSE_TEXT={stealthed="Paused: stealthed",mounted="Paused: mounted",resting="Paused: resting"}
+local PAUSE_TEXT={stealthed="Paused: stealthed",mounted="Paused: mounted",resting="Paused: resting",mana="Paused: saving mana"}
 function B:NearbyPauseRowText(reason,browsing)
   local text=self:Text(PAUSE_TEXT[reason] or "Paused")
   if browsing then text=text..". "..self:Text("Invites still work.") end
@@ -558,6 +558,8 @@ function B:NearbyPauseReason()
   local reason=self:ReminderPauseReason()
   if reason=="resting" then reason=self:Stealthed() and "stealthed" or nil end
   if not reason and self.db and self.db.nearbyWhileResting~=true and A.Call(IsResting)==true then return "resting" end
+  -- Mana reserve: only when BuffTap can tell you are below it (never in cat or bear form).
+  if not reason and self.ManaFloorReached and self:ManaFloorReached() then return "mana" end
   return reason
 end
 -- "Hold back short buffs": in cities and inns, Nearby does not offer buffs of ten minutes or
@@ -568,7 +570,7 @@ end
 function B:NearbyBrowsePause()
   if not self.db or not self.db.nearbyShowAll then return nil end
   local reason=self:NearbyPauseReason()
-  if reason=="resting" or reason=="mounted" or reason=="stealthed" then return reason end
+  if reason=="resting" or reason=="mounted" or reason=="stealthed" or reason=="mana" then return reason end
 end
 function B:NearbyPlayers()
   local buffs=self:NearbyCandidates()
