@@ -1039,7 +1039,7 @@ function B:CreateNearbyWindow()
     if self.options and self.options.nearbyWhileResting then self.options.nearbyWhileResting:SetChecked(self.db.nearbyWhileResting) end
   end)
   hint(f.resting,function() return self:Text(self.db.nearbyWhileResting and "Buffing in cities and inns" or "Paused in cities and inns") end,self:Text("Click to switch. Gold: Nearby buffs players in cities and inns. Grey: it pauses there. Your own reminders follow the Helpers resting pause."))
-  hint(f.allPlayers,function() return self.db.nearbyShowAll and "Show only players needing buffs" or "Show all nearby players" end,"Grey: buff candidates only. Gold: all observed strangers. Invite buttons are available in either view.")
+  hint(f.allPlayers,function() return self.db.nearbyShowAll and "Show only players needing buffs" or "Show all nearby players" end,"Grey: only players who need your buffs. Gold: everyone nearby. Every listed player has an invite button.")
   f.status=label(c,"",6,-31); f.status:SetWidth(198); f.status:SetJustifyH("LEFT"); f.status:SetWordWrap(true)
   f.statusButton=CreateFrame("Button",nil,c); f.statusButton:SetPoint("TOPLEFT",4,-25); f.statusButton:SetSize(198,34)
   hint(f.statusButton,function() return "Nearby buffing" end,"Uses your Target preferences. Friendly player nameplates must be enabled (Shift+V). Shift-click the minimap icon to toggle. Players in combat are skipped; PvP protection skips flagged or unreadable players.")
