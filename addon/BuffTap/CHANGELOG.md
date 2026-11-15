@@ -1,3 +1,11 @@
+# BuffTap 1.22.5
+
+### Changes
+- Cleanse & revive: the Resurrection switches now line up with the Who switches above them.
+- New `/bt combatprobe` (diagnostic): during your next fight it records whether WoW Forever lets addons read who cast your buffs and send emotes, and prints the results when combat ends. Nothing is cast or sent.
+
+---
+
 # BuffTap 1.22.4
 
 ### Fix

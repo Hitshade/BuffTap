@@ -992,6 +992,7 @@ SlashCmdList.BUFFTAP=function(text)
   elseif cmd=="supplycheck" then B:ReportSupplies(); return
   elseif cmd=="restore" then B:RestoreHelpers(); return
   elseif cmd=="checkup" then B:ShowReport("checkup"); return
+  elseif cmd=="combatprobe" then B:ArmCombatProbe(); return
   elseif cmd=="settings" and B.OpenOptionsCategory then B:OpenOptionsCategory(); return
   elseif cmd=="bind" then
     if arg=="" then B:CaptureBinding(); return end

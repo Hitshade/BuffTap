@@ -450,3 +450,54 @@ function B:ShowBlacklist()
   if A.Combat() then self.Print(L("Settings are available after combat.")); return end
   self:Options(); if self.options and self.options.selectTab then self.options.selectTab(13) end
 end
+
+-- Combat probe (beta): /bt combatprobe records, during the next fight, whether Forever still lets
+-- addons read who cast your buffs and send emotes. Results print once combat ends. Nothing is cast or sent.
+local function secretFlag(v) if issecretvalue then local ok,r=pcall(issecretvalue,v); return ok and r==true end; return false end
+function B:CombatProbeReading(label)
+  local r={label=label,combat=InCombatLockdown and InCombatLockdown() or false}
+  local ok,lock=pcall(function() return C_ChatInfo and C_ChatInfo.InChatMessagingLockdown and C_ChatInfo.InChatMessagingLockdown() end)
+  r.chatLock=ok and (secretFlag(lock) and "secret" or tostring(lock)) or "error"
+  local kind=Enum and Enum.AddOnRestrictionType and Enum.AddOnRestrictionType.Chat
+  local ok2,state=pcall(function() return C_RestrictedActions and C_RestrictedActions.GetAddOnRestrictionState and C_RestrictedActions.GetAddOnRestrictionState(kind) end)
+  r.chatState=ok2 and tostring(state) or "error"
+  r.auras,r.other,r.casterSecret,r.expirySecret,r.nameSecret=0,0,0,0,0
+  for i=1,40 do
+    local ok3,a=pcall(C_UnitAuras.GetAuraDataByIndex,"player",i,"HELPFUL")
+    if not ok3 or not a then break end
+    r.auras=r.auras+1
+    if secretFlag(a.sourceUnit) then r.casterSecret=r.casterSecret+1
+    elseif type(a.sourceUnit)=="string" and a.sourceUnit~="player" then
+      r.other=r.other+1
+      local ok4,name=pcall(UnitName,a.sourceUnit); if not ok4 or secretFlag(name) then r.nameSecret=r.nameSecret+1 end
+    end
+    if secretFlag(a.expirationTime) then r.expirySecret=r.expirySecret+1 end
+  end
+  return r
+end
+function B:ArmCombatProbe()
+  self.combatProbe={armed=true,readings={}}
+  self.Print("Combat probe armed. Get into a fight (ideally with a buff from another player on you); results print when combat ends.")
+  if not self.combatProbeFrame then
+    local f=CreateFrame("Frame"); self.combatProbeFrame=f
+    f:RegisterEvent("PLAYER_REGEN_DISABLED"); f:RegisterEvent("PLAYER_REGEN_ENABLED"); f:RegisterUnitEvent("UNIT_AURA","player")
+    f:SetScript("OnEvent",function(_,event)
+      local p=B.combatProbe; if not p or not p.armed then return end
+      if event=="PLAYER_REGEN_DISABLED" then
+        p.inFight=true
+        C_Timer.After(1,function() if p.inFight then p.readings[#p.readings+1]=B:CombatProbeReading("1s into combat") end end)
+      elseif event=="UNIT_AURA" and p.inFight and #p.readings<4 then
+        p.readings[#p.readings+1]=B:CombatProbeReading("buff change in combat")
+      elseif event=="PLAYER_REGEN_ENABLED" and p.inFight then
+        p.armed=false; p.inFight=false
+        B.Print("Combat probe results:")
+        for _,r in ipairs(p.readings) do
+          B.Print(("%s: combat=%s chatLock=%s chatState=%s auras=%d fromOthers=%d casterHidden=%d expiryHidden=%d nameHidden=%d"):format(
+            r.label,tostring(r.combat),r.chatLock,r.chatState,r.auras,r.other,r.casterSecret,r.expirySecret,r.nameSecret))
+        end
+        if #p.readings==0 then B.Print("No readings were taken.") end
+      end
+    end)
+  end
+end
+
