@@ -1560,6 +1560,10 @@ frame:SetScript("OnEvent",function(_,event,unit,message,spellID)
     return
   elseif event=="UI_ERROR_MESSAGE" then
     if B.nearbyClickAt and GetTime()-B.nearbyClickAt<1 and A.Text(message) then
+      -- The game's distance errors are long ("You must be closer...") and get cut off in the row.
+      local far={ERR_OUT_OF_RANGE,SPELL_FAILED_OUT_OF_RANGE,ERR_USE_TOO_FAR,ERR_TOO_FAR_TO_INTERACT}
+      for _,text in pairs(far) do if A.Text(text) and message==text then message=B:Text("Out of range"); break end end
+      if message:lower():find("closer",1,true) then message=B:Text("Out of range") end
       B.nearbyClickError=message
       if B.nearbyResult and B.nearbyResult.state=="pending" then B:SetNearbyResult("fail",message) end
     end

@@ -1161,3 +1161,4 @@ B.Locales.deDE["Click to switch. Gold: Nearby buffs players in cities and inns. 
 B.Locales.deDE["Paused: saving mana"]="Pausiert: Mana wird gespart"
 B.Locales.deDE["Return the favor"]="Gefallen erwidern"
 B.Locales.deDE["Someone who buffed you in the last five minutes moves to the top of the list, below cleanses, when they need your buff or theirs is a quarter gone. A buff that answers one of yours does not count, and each player moves up at most once per half hour."]="Wer dich in den letzten fünf Minuten gebufft hat, rückt unter Reinigungen an die Spitze der Liste, wenn er deinen Buff braucht oder seiner zu einem Viertel abgelaufen ist. Ein Buff als Antwort auf deinen zählt nicht, und jeder Spieler rückt höchstens einmal pro halbe Stunde auf."
+B.Locales.deDE["Out of range"]="Außer Reichweite"

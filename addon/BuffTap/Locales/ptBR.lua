@@ -1161,3 +1161,4 @@ B.Locales.ptBR["Click to switch. Gold: Nearby buffs players in cities and inns. 
 B.Locales.ptBR["Paused: saving mana"]="Pausado: poupando mana"
 B.Locales.ptBR["Return the favor"]="Retribuir o favor"
 B.Locales.ptBR["Someone who buffed you in the last five minutes moves to the top of the list, below cleanses, when they need your buff or theirs is a quarter gone. A buff that answers one of yours does not count, and each player moves up at most once per half hour."]="Quem te bufou nos últimos cinco minutos sobe ao topo da lista, abaixo das purificações, se precisar do seu bônus ou se o dele tiver perdido um quarto. Um bônus em resposta ao seu não conta, e cada jogador sobe no máximo uma vez a cada meia hora."
+B.Locales.ptBR["Out of range"]="Fora de alcance"

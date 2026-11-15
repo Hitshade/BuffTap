@@ -6,7 +6,8 @@ B.PatchNotes={
   "New: Return the favor. When someone buffs you, they move to the top of your Nearby list (below cleanses) if they need one of your buffs, or theirs is a quarter gone. Their row shows a small gold arrow.",
   "It never loops: a buff that answers one of yours does not count, and each player moves up at most once per half hour. You still click or press your binding every time.",
   "On by default. Find the switch on the Nearby page.",
-  "Friends and guild members who need a buff now come before other players in the Nearby list, and your binding buffs them first."}},
+  "Friends and guild members who need a buff now come before other players in the Nearby list, and your binding buffs them first.",
+  "A Nearby cast that fails because the player is too far away now just says \"Out of range\" instead of the game's long, cut-off message."}},
  {version="1.22.6",title="A livelier Nearby window",items={
   "The animated Nearby list is now on for everyone: rows glide down to make room and newcomers fade in. You can switch it off under Customization > Nearby window.",
   "New title-bar icons: rising z's for buffing in cities and inns, and a padlock that turns gold when the window is locked.",
