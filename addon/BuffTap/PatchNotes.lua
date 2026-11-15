@@ -2,6 +2,17 @@
 local _,B=...
 -- Keep the ten most recent releases within a 24 KiB content ceiling.
 B.PatchNotes={
+ {version="1.23.0",title="Elixirs, utility and your own supplies",items={
+  "Elixirs stack on Forever, so the Elixirs row on the Consumables page is now a checklist. Click Choose and tick every elixir you want kept up.",
+  "Each ticked elixir gets its own reminder, and BuffTap offers whichever one is missing or running low.",
+  "Elixirs of the same line replace each other (for example Mongoose and Greater Agility), so only one of them can be ticked, and either one counts.",
+  "Utility works the same way: tick Firewater, Dragonbreath Chili and Gift of Arthas together.",
+  "Both rows show an icon for each ticked item. Hover one for its name and how many you carry. Choose has a Clear all button and remembers In bags only.",
+  "Track any item on the Supplies page: drag it from your bags onto the list, or type its name in Add by name. Great for reagents and crafting materials. BuffTap only warns about stock.",
+  "The Supplies list now scrolls, so every tracked item fits, and it shows even with supply warnings off.",
+  "New Supplies reminder icon that shows what is running low. By default it only appears while resting in a city or inn; turn on Outside towns on the Supplies page to see it everywhere. Change its look and position under Customization > Supplies.",
+  "The Choose window uses BuffTap's orange check boxes.",
+  "Your current elixir and utility choices carry over."},thanks="Thanks to Drusangus for the suggestion."},
  {version="1.22.7",title="Return the favor",items={
   "New: Return the favor. When someone buffs you, they move to the top of your Nearby list (below cleanses) if they need one of your buffs, or theirs is a quarter gone. Their row shows a small gold arrow.",
   "It never loops: a buff that answers one of yours does not count, and each player moves up at most once per half hour. You still click or press your binding every time.",
@@ -38,15 +49,6 @@ B.PatchNotes={
  {version="1.21.2",title="A mana reserve that works on Forever",items={
   "The Nearby mana reserve now works when the game hides your exact mana, as WoW Forever does: BuffTap judges it from which of your spells you can afford, so it stops close to your reserve. Once it is saving mana it waits until you are a little above the reserve again.",
   "Nearby cleanses respect the mana reserve too."}},
- {version="1.21.1",title="Who gets each buff, and Nearby feedback",items={
-  "Each buff on the Target page has a Classes button: choose which classes can get it when they are your friendly target or a Nearby player. For example, Thorns for melee classes only.",
-  "Arcane Intellect and Divine Spirit are no longer offered to Warriors and Rogues you target. Nearby already skipped them.",
-  "Thorns now also goes to Rogues by default. Everything else works as before until you change it. Party and raid keep their own class choices on the Groups page.",
-  "Nearby players who need a cleanse now show in the Nearby window, at the top, with the cleanse icon and a tint in the debuff's colour. Before, your binding could hold a Nearby cleanse you couldn't see.",
-  "New on the Nearby page: Hold back short buffs. In cities and inns, buffs of ten minutes or less, like Thorns, are not offered to Nearby players. The page is also tidier: how and when you buff on the left, how the list looks on the right.",
-  "The Nearby light in the sidebar turns red when friendly nameplates are off, because Nearby can't see anyone without them.",
-  "Diagnostics has a Full check-up button (or /bt checkup) that gathers everything into one box to copy for a bug report.",
-  "After you buff or cleanse a Nearby player, their row briefly shows whether it worked: green, or red with the reason, such as out of range. You can turn this off under Customization > Nearby window."}},
 }
 function B:PatchNotesUnread()
   return self.profileDB and self.db.optionsPatchDot~=false and self.profileDB.global.patchNotesSeen~=self.version

@@ -43,6 +43,7 @@ function B:VisualSetting(key,value)
   if A.Combat() then return end
   self.db[key]=value; self:NormalizeVisualOptions()
   if key:match("^camp") then self:NormalizeCamping(); self:UpdateCamping() end
+  if key:match("^supply") and self.UpdateSupplyBadge then self:UpdateSupplyBadge() end
   self.appearance=nil; self:RequestRefresh("appearance preference",.05)
   -- Interface colour and scale: coalesce, so dragging the colour wheel or the scale slider
   -- does not rebuild the whole window on every tick.
@@ -61,7 +62,8 @@ function B:VisualSetting(key,value)
 end
 function B:CreateOptionsPreview(parent,kind,ui)
   -- Right column order: Icon, Preview, Effect. The preview is compact and ends level with Effect's top.
-  local holder=CreateFrame("Frame",nil,parent,"BackdropTemplate"); holder:SetSize(260,kind=="camp" and 284 or 168); holder:SetPoint("TOPLEFT",444,kind=="camp" and -104 or -218); T.Surface(holder,"card")
+  local holder=CreateFrame("Frame",nil,parent,"BackdropTemplate"); local campLike=kind=="camp" or kind=="supply"
+  holder:SetSize(260,campLike and 284 or 168); holder:SetPoint("TOPLEFT",444,campLike and -104 or -218); T.Surface(holder,"card")
   -- The buff and camp editors share one page; without this the taller buff Icon card would inset the camp preview.
   holder.visualInsetX=444
   ui.label(holder,"PREVIEW",14,-12,"GameFontDisableSmall",100)
@@ -77,7 +79,7 @@ function B:CreateOptionsPreview(parent,kind,ui)
   icon.count=ui.label(icon,"3",0,0,"GameFontNormalSmall",24); icon.count:ClearAllPoints(); icon.count:SetPoint("TOPRIGHT",-2,-2)
   icon.time=ui.label(icon,"",0,0,"GameFontHighlightSmall",240); icon.time:SetJustifyH("CENTER")
   for _,fs in ipairs({icon.nameLabel,icon.recipient,icon.timer,icon.count,icon.time}) do T.Track(fs,"preview") end
-  holder.hint=ui.label(holder,kind=="camp" and "Camp timer and rest stacks" or "Hidden icon: binding stays active",14,-(holder:GetHeight()-27),"GameFontDisableSmall",232)
+  holder.hint=ui.label(holder,kind=="supply" and "What is running low" or kind=="camp" and "Camp timer and rest stacks" or "Hidden icon: binding stays active",14,-(holder:GetHeight()-27),"GameFontDisableSmall",232)
   holder.hint:SetJustifyH("CENTER")
   holder.icon=icon; holder.kind=kind
   holder:HookScript("OnHide",function() B:StopIconEffect(icon) end)
@@ -90,7 +92,21 @@ function B:UpdateOptionsPreviews()
   local f=self.options; if not f or not self.optionsPreviews then return end
   for kind,preview in pairs(self.optionsPreviews) do
     local icon=preview.icon; local active=f:IsShown() and f.activeTab==8 and f.appearanceView==kind
-    if not active then self:StopIconEffect(icon) else
+    if active and kind=="supply" then
+      local d=self.db; self:NormalizeSupplyReminder()
+      local shown=math.min(96,d.supplySize); icon:SetSize(shown,shown); icon:SetAlpha(d.supplyOpacity)
+      -- Preview your own supplies: something low first, then the first item you track, else a plain bag.
+      local sample=(self.supplyWarnings or {})[1]
+      if not sample then local ok,list=pcall(self.SupplyDisplayEntries,self); sample=ok and list and list[1] or nil end
+      sample=sample or {name=self:Text("Your item"),count=2,settings={target=8},icon="Interface\\Icons\\INV_Crate_01"}
+      icon.icon:SetTexture(sample.icon or "Interface\\Icons\\INV_Crate_01")
+      for _,fs in ipairs({icon.nameLabel,icon.recipient,icon.timer,icon.count}) do fs:Hide() end
+      icon.time:Show(); self:StyleSupplyLabel(icon.time,icon)
+      icon.time:SetText(self:SupplyLabelText(sample))
+      self:ApplyIconStyle(icon,icon.icon,d.supplyIconStyle)
+      self:ApplyIconEffect(icon,true,{effectStyle=d.supplyEffectStyle,effectColor=d.supplyEffectColor,effectSpeed=d.supplyEffectSpeed})
+      preview.hint:SetText(self:Text("What is running low")); icon.icon:SetAlpha(1)
+    elseif not active then self:StopIconEffect(icon) else
       local d=self.db; local camp=kind=="camp"
       local shown=math.min(camp and 96 or 72,camp and d.campSize or d.size); icon:SetSize(shown,shown); icon:SetAlpha(camp and d.campOpacity or d.opacity)
       local sample
@@ -113,8 +129,27 @@ function B:UpdateOptionsPreviews()
     end
   end
 end
+B.EffectChoices={{key="none",name="Effect: None"},{key="soft",name="Effect: Soft glow"},{key="pulse",name="Effect: Pulse"},{key="pixel",name="Effect: Pixel border"},{key="autocast",name="Effect: Sparkles"},{key="proc",name="Effect: Spell glow"},{key="shine",name="Effect: Shine"},{key="ripple",name="Effect: Ripple"},{key="bounce",name="Effect: Bounce"},{key="orbit",name="Effect: Orbit"}}
+B.EffectColorChoices={{key="gold",name="Gold"},{key="cyan",name="Cyan"},{key="green",name="Green"},{key="red",name="Red"},{key="white",name="White"}}
+B.EffectSpeedChoices={{key="slow",name="Slow"},{key="normal",name="Normal"},{key="fast",name="Fast"}}
 function B:BuildReminderEditor(parent,kind,ui)
-  local f=self.options; local camp=kind=="camp"; local d=self.db
+  local f=self.options; local d=self.db
+  -- The Supplies reminder uses the camping layout with its own settings.
+  local sup=kind=="supply"
+  if sup then
+    self:NormalizeSupplyReminder()
+    local function sel(key,width,choices) return ui.selector(parent,"",0,0,width,choices,function(v) B:VisualSetting(key,v) end) end
+    f.supplyTextFont=sel("supplyTextFont",228,function() return B:ReminderFonts(B.db.supplyTextFont) end)
+    f.supplyTextColor=sel("supplyTextColor",228,function() return B:ReminderColors(true) end)
+    f.supplyTextOutline=sel("supplyTextOutline",228,function() return B:TextOutlineChoices() end)
+    f.supplyEffect=sel("supplyEffectStyle",232,function() return B.EffectChoices end)
+    f.supplyColor=sel("supplyEffectColor",232,function() return B.EffectColorChoices end)
+    f.supplySpeed=sel("supplyEffectSpeed",232,function() return B.EffectSpeedChoices end)
+    f.supplyShowName=ui.check(parent,"Item name",0,0,function(c) B:VisualSetting("supplyShowName",c:GetChecked()==true) end)
+    f.supplyShowCount=ui.check(parent,"Count / want",0,0,function(c) B:VisualSetting("supplyShowCount",c:GetChecked()==true) end)
+  end
+  local camp=kind=="camp" or sup
+  local function K(campKey) return sup and (campKey:gsub("^camp","supply")) or campKey end
   section(ui,parent,"Layout",12,-12,416,100)
   section(ui,parent,"Text",12,-130,416,248)
   -- Buff reminder: Icon card (with Show icon as its first row), Preview, then Effect.
@@ -130,34 +165,40 @@ function B:BuildReminderEditor(parent,kind,ui)
     s:SetPoint("TOPLEFT",x+126,y); s.visualKey=key; s.visualMultiplier=multiplier; if unit then s:SetUnit(unit) end
     f.refinedSliders[#f.refinedSliders+1]=s; return s
   end
-  local size=slider(camp and "campSize" or "size","Icon size (px)",26,-48,24,camp and 96 or 160,1,228)
-  local opacity=slider(camp and "campOpacity" or "opacity","Opacity (%)",26,-84,camp and 25 or 0,100,1,228,100)
+  local size=slider(camp and K("campSize") or "size","Icon size (px)",26,-48,24,camp and 96 or 160,1,228)
+  local opacity=slider(camp and K("campOpacity") or "opacity","Opacity (%)",26,-84,camp and 25 or 0,100,1,228,100)
   if not camp then f.sizeEdit=size.valueEdit; f.opacityEdit=opacity.valueEdit end
-  local font=camp and f.campingTextFont or f.fontButton
+  local font=sup and f.supplyTextFont or camp and f.campingTextFont or f.fontButton
   ui.label(parent,"Font",26,-169,"GameFontHighlightSmall",110); place(font,parent,152,-164,228,26)
-  slider(camp and "campTextSize" or "labelSize","Text size (px)",26,-210,8,20,1,228)
-  slider(camp and "campTextGap" or "labelGap","Text spacing (px)",26,-250,0,20,1,228)
-  local outline=camp and f.campingTextOutline or f.labelOutlineButton
-  local color=camp and f.campingTextColor or f.colorButton
+  slider(camp and K("campTextSize") or "labelSize","Text size (px)",26,-210,8,20,1,228)
+  slider(camp and K("campTextGap") or "labelGap","Text spacing (px)",26,-250,0,20,1,228)
+  local outline=sup and f.supplyTextOutline or camp and f.campingTextOutline or f.labelOutlineButton
+  local color=sup and f.supplyTextColor or camp and f.campingTextColor or f.colorButton
   ui.label(parent,"Outline",26,-292,"GameFontHighlightSmall",110); place(outline,parent,152,-286,228,26)
   ui.label(parent,"Text colour",26,-330,"GameFontHighlightSmall",110); place(color,parent,152,-324,228,26)
-  local effect=camp and f.campingEffect or f.effectButton
-  local effectColor=camp and f.campingColor or f.effectColorButton
-  local speed=camp and f.campingSpeed or f.effectSpeedButton
+  local effect=sup and f.supplyEffect or camp and f.campingEffect or f.effectButton
+  local effectColor=sup and f.supplyColor or camp and f.campingColor or f.effectColorButton
+  local speed=sup and f.supplySpeed or camp and f.campingSpeed or f.effectSpeedButton
   place(effect,parent,458,-442+ey,232,26); place(effectColor,parent,458,-480+ey,232,26); place(speed,parent,458,-518+ey,232,26)
   if not camp then place(f.effectUrgency,parent,458,-556+ey); place(f.effectOnce,parent,458,-584+ey) end
   section(ui,parent,"Visible labels",12,-396,416,camp and 70 or 96)
-  if camp then
+  if sup then
+    place(f.supplyShowName,parent,26,-428); place(f.supplyShowCount,parent,208,-428)
+  elseif camp then
     place(f.campingCountdown,parent,26,-428); place(f.campingStacks,parent,208,-428)
   else
     place(f.buffNameCheck,parent,26,-428); place(f.targetNameCheck,parent,208,-428)
     place(f.timerCheck,parent,26,-458); place(f.groupBadgeCheck,parent,208,-458)
     place(f.showReminderCheck,parent,458,-46,184,24); f.showReminderCheck.Text:SetText(self:Text("Show icon"))
   end
-  ui.button(parent,camp and "Move camping reminder" or "Move buff reminder",26,-506,176,function() B:MoveAllFrames(camp and "camp" or "buff") end)
-  ui.button(parent,"Center",212,-506,72,function() if camp then B.db.campX=0; B.db.campY=0; B:PreviewCampReminder() else B.db.x=0; B.db.y=-180; B.appearance=nil; B:RequestRefresh("center reminder",0) end end)
+  ui.button(parent,sup and "Move supplies reminder" or camp and "Move camping reminder" or "Move buff reminder",26,-506,176,function() B:MoveAllFrames(sup and "supply" or camp and "camp" or "buff") end)
+  ui.button(parent,"Center",212,-506,72,function() if sup then B.db.supplyX=0; B.db.supplyY=0; B:UpdateSupplyBadge() elseif camp then B.db.campX=0; B.db.campY=0; B:PreviewCampReminder() else B.db.x=0; B.db.y=-180; B.appearance=nil; B:RequestRefresh("center reminder",0) end end)
   if not camp then place(f.resetLookButton,parent,294,-506,132,26) end
-  if camp then T.Confirm(ui.button(parent,"Reset camp look",294,-506,132,function()
+  if sup then T.Confirm(ui.button(parent,"Reset supplies look",294,-506,132,function()
+    for _,k in ipairs({"supplySize","supplyOpacity","supplyEffectStyle","supplyEffectColor","supplyEffectSpeed","supplyTextFont","supplyTextSize","supplyTextColor","supplyTextOutline","supplyTextGap","supplyShowName","supplyShowCount","supplyIconStyle"}) do B.db[k]=nil end
+    B:NormalizeSupplyReminder(); B:UpdateSupplyBadge(); B:Options()
+  end))
+  elseif camp then T.Confirm(ui.button(parent,"Reset camp look",294,-506,132,function()
     for k,v in pairs({campSize=40,campOpacity=1,campEffectStyle="soft",campEffectColor="gold",campEffectSpeed="normal",campTextFont="default",campTextSize=0,campTextColor="white",campTextOutline="outline",campTextGap=4,campShowCountdown=true,campShowStacks=true}) do B.db[k]=v end
     B:NormalizeCamping(); B:UpdateCamping(); B:Options()
   end)) end
@@ -166,9 +207,9 @@ function B:BuildReminderEditor(parent,kind,ui)
   section(ui,parent,"Icon",444,-12,260,camp and 76 or 192)
   local sy=camp and 0 or -32
   ui.label(parent,"Style",458,-54+sy,"GameFontHighlightSmall",76)
-  local styleKey=camp and "campIconStyle" or "iconStyle"
+  local styleKey=camp and K("campIconStyle") or "iconStyle"
   local style=ui.selector(parent,"",540,-48+sy,150,function() return B:IconStyleChoices() end,function(v) change(styleKey,v) end)
-  if camp then f.campIconStyleButton=style else
+  if sup then f.supplyIconStyleButton=style elseif camp then f.campIconStyleButton=style else
     f.iconStyleButton=style
     ui.label(parent,"Labels",458,-120,"GameFontHighlightSmall",76)
     f.labelPositionButton=ui.selector(parent,"",540,-114,150,function() return {{key="split",name="Split"},{key="above",name="Above icon"},{key="below",name="Below icon"}} end,function(v) change("labelPosition",v) end)
@@ -184,13 +225,14 @@ function B:BuildRefinedOptions(ui,tabs)
   for _,child in ipairs({app:GetChildren()}) do if child~=app.NineSlice then child:Hide() end end
   for _,region in ipairs({app:GetRegions()}) do if region.optionsLabel or region.optionsDecoration then region:Hide() end end
   f.appearancePanes={}; f.appearanceTabs={}; f.appearanceView="buff"
-  for i,entry in ipairs({{"buff","Buff reminder"},{"camp","Camping reminder"},{"nearby","Nearby window"},{"binding","Binding & sound"},{"interface","Interface"}}) do
+  for i,entry in ipairs({{"buff","Buff reminder"},{"camp","Camping"},{"supply","Supplies"},{"nearby","Nearby window"},{"binding","Binding & sound"},{"interface","Interface"}}) do
     local key=entry[1]; local pane=CreateFrame("Frame",nil,app); pane:SetPoint("TOPLEFT",0,-104); pane:SetPoint("BOTTOMRIGHT",0,0); pane:Hide(); f.appearancePanes[key]=pane
-    f.appearanceTabs[key]=ui.flatButton(app,entry[2],18+(i-1)*138,-68,130,function() B:SetAppearanceView(key) end)
+    f.appearanceTabs[key]=ui.flatButton(app,entry[2],18+(i-1)*115,-68,110,function() B:SetAppearanceView(key) end)
     f.appearanceTabs[key].navStyle="underline"
   end
   T.Rule(app,12,-95,692)
   self:BuildReminderEditor(f.appearancePanes.buff,"buff",ui); self:BuildReminderEditor(f.appearancePanes.camp,"camp",ui)
+  self:BuildSupplyAppearance(f.appearancePanes.supply,ui)
   local binding=f.appearancePanes.binding
   section(ui,binding,"Binding",12,-12,692,140); place(f.bindingText,binding,26,-52,340)
   T.Variant(ui.button(binding,"Set binding",398,-46,134,function() B:CaptureBinding() end),"primary")
@@ -251,6 +293,17 @@ function B:SetAppearanceView(view)
   local f=self.options; self:StopOptionsPreviews(); f.appearanceView=view
   for key,pane in pairs(f.appearancePanes) do pane:SetShown(key==view); T.Navigation(f.appearanceTabs[key],key==view) end
   self:UpdateRefinedOptions(); self:UpdateOptionsPreviews()
+  if self.UpdateSupplyBadge then self:UpdateSupplyBadge() end
+end
+-- Customization > Supplies: the camping layout, with the Supplies reminder's own settings.
+function B:BuildSupplyAppearance(parent,ui)
+  self:BuildReminderEditor(parent,"supply",ui)
+  parent:HookScript("OnShow",function() B:UpdateSupplyBadge() end)
+  parent:HookScript("OnHide",function() if not A.Combat() then B:UpdateSupplyBadge() end end)
+end
+function B:SupplyOptionsShown()
+  local f=self.options
+  return f and f.appearancePanes and f.appearancePanes.supply and f.appearancePanes.supply:IsVisible() or false
 end
 local function clearPage(page)
   for _,child in ipairs({page:GetChildren()}) do if child~=page.NineSlice then child:Hide() end end
@@ -606,7 +659,7 @@ function B:UpdateRefinedOptions()
   if A.Number(width) and A.Number(height) then f:SetScale(math.min(self.db.optionsScale,(width-32)/932,(height-32)/900)) end
   for _,s in ipairs(f.refinedSliders) do
     local value=self.db[s.visualKey]
-    if (s.visualKey=="labelSize" or s.visualKey=="campTextSize") and (not value or value==0) then local _,size=self:BaseTextFont("GameFontHighlightSmall"); value=A.Number(size) and size or 12 end
+    if (s.visualKey=="labelSize" or s.visualKey=="campTextSize" or s.visualKey=="supplyTextSize") and (not value or value==0) then local _,size=self:BaseTextFont("GameFontHighlightSmall"); value=A.Number(size) and size or 12 end
     if type(value)=="number" then s.silent=true; s:SetValue(value*(s.visualMultiplier or 1)); s.silent=false end
   end
   f.accentPick:SetEnabled(ColorPickerFrame and type(ColorPickerFrame.SetupColorPickerAndShow)=="function" or false)
@@ -616,6 +669,16 @@ function B:UpdateRefinedOptions()
   local styles={classic="Classic",modern="Modern square"}; local positions={split="Split",above="Above icon",below="Below icon"}
   if f.iconStyleButton then f.iconStyleButton:SetText(self:Text(styles[self.db.iconStyle] or "Classic")) end
   if f.campIconStyleButton then f.campIconStyleButton:SetText(self:Text(styles[self.db.campIconStyle] or "Classic")) end
+  if f.supplyIconStyleButton then
+    self:NormalizeSupplyReminder(); local d=self.db
+    f.supplyIconStyleButton:SetText(self:Text(styles[d.supplyIconStyle] or "Classic"))
+    local function pick(button,list,value) for _,v in ipairs(list) do if v.key==value then button:SetText(self:Text(v.name)) end end end
+    pick(f.supplyTextFont,self:ReminderFonts(d.supplyTextFont),self:NormalizeTextFontKey(d.supplyTextFont))
+    pick(f.supplyTextColor,self:ReminderColors(true),d.supplyTextColor)
+    pick(f.supplyTextOutline,self:TextOutlineChoices(),d.supplyTextOutline)
+    pick(f.supplyEffect,B.EffectChoices,d.supplyEffectStyle); pick(f.supplyColor,B.EffectColorChoices,d.supplyEffectColor); pick(f.supplySpeed,B.EffectSpeedChoices,d.supplyEffectSpeed)
+    f.supplyShowName:SetChecked(d.supplyShowName); f.supplyShowCount:SetChecked(d.supplyShowCount)
+  end
   if f.labelPositionButton then f.labelPositionButton:SetText(self:Text(positions[self.db.labelPosition] or "Split")) end
   if f.swipeCheck then f.swipeCheck:SetChecked(self.db.showSwipe==true) end
   if f.rangeCheck then f.rangeCheck:SetChecked(self.db.showOutOfRange==true) end

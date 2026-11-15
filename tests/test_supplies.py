@@ -1,4 +1,6 @@
-from test_weapons import test
+from test_weapons import test as _base_test
+# The Supplies reminder shows only while resting by default; these tests check its behaviour in town.
+def test(name,code,*a,**k): return _base_test(name,'IsResting=function() return true end\n'+code,*a,**k)
 from test_bufftap import tests, ROOT
 
 flask = '''
@@ -62,13 +64,13 @@ test('Supply tracking respects an existing elixir default without changing it', 
 BuffTap.db.consumablesEnabled=true; BuffTap.db.consumableFamilies.ferocity=true; BuffTap.db.suppliesEnabled=true
 BuffTap:InitDB(); advance(2.1); assert(#BuffTap.supplyEntries==1 and #BuffTap.supplyEntries[1].ids==1 and BuffTap.supplyEntries[1].ids[1]==250350 and not BuffTap.db.consumableChoices.ferocity)
 ''')
-test('Stock badge remains useful with an empty cast queue', flask+'''
+test('Stock badge remains useful with an empty cast queue', 'IsResting=function() return true end\n'+flask+'''
 aura('player',17626,'Flask of the Titans'); bags[13510]=0; bagEvent()
 assert(not BuffTap.action and BuffTap.supplyBadge.shown and not next(bindings))
 assert(BuffTap.supplyBadge.parent==UIParent and not BuffTap.supplyBadge.protected)
 ''')
 test('Supply warning never replaces an available class spell', '''
-stock(13510,17626); BuffTap.db.consumablesEnabled=true; BuffTap.db.consumableFamilies.flask=true
+IsResting=function() return true end; stock(13510,17626); BuffTap.db.consumablesEnabled=true; BuffTap.db.consumableFamilies.flask=true
 BuffTap.db.consumableChoices.flask=13510; bags[13510]=0; BuffTap.db.suppliesEnabled=true; BuffTap:InitDB(); advance(2.1); refresh()
 assert(BuffTap.action.id==5232 and not BuffTap.action.manual and BuffTap.supplyBadge.shown)
 ''')

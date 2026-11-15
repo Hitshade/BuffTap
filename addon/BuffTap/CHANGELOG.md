@@ -1,3 +1,27 @@
+# BuffTap 1.23.0
+
+### Changes
+- Elixirs stack on Forever, so the Elixirs row on the Consumables page is now a checklist. Click Choose and tick every elixir you want kept up. Each ticked elixir gets its own reminder, and BuffTap offers whichever one is missing or running low.
+- Elixirs of the same line replace each other (for example Mongoose and Greater Agility), so only one of them can be ticked, and either one counts.
+- Utility works the same way: tick Firewater, Dragonbreath Chili and Gift of Arthas together.
+- Both rows show an icon for each ticked item. The Choose window uses BuffTap's orange check boxes, has a Clear all button, remembers In bags only, and a second click unticks an item.
+- Track any item on the Supplies page: drag it from your bags onto the list, or type its name in Add by name. Great for reagents and crafting materials. BuffTap only warns about stock.
+- The Supplies list scrolls and shows even with supply warnings off.
+- New Supplies reminder icon that shows what is running low. By default it only appears while resting in a city or inn; turn on Outside towns on the Supplies page to see it everywhere. Change its look and position under Customization > Supplies.
+- Your current elixir and utility choices carry over.
+- Thanks to Drusangus for the suggestion.
+
+---
+
+# BuffTap 1.22.7
+
+### Changes
+- New: Return the favor. When someone buffs you, they move to the top of your Nearby list (below cleanses) if they need one of your buffs, or theirs is a quarter gone. Their row shows a small gold arrow. It never loops, and you still click or press your binding every time. On by default; find the switch on the Nearby page.
+- Friends and guild members who need a buff now come before other players in the Nearby list, and your binding buffs them first.
+- A Nearby cast that fails because the player is too far away now just says "Out of range" instead of the game's long, cut-off message.
+
+---
+
 # BuffTap 1.22.6
 
 ### Changes

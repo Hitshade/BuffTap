@@ -4,7 +4,7 @@
 
 local _, B = ...
 _G.BuffTap = B
-B.version = "1.22.7"
+B.version = "1.23.0"
 B.API = {}
 local A = B.API
 
@@ -99,7 +99,7 @@ function B:InitDB()
     seconds=45, rebuffVersion=1, sound=false, reminderSound="cleanse", alertSoundVersion=0, supplySound="glass", campAlertSound="harp", cleanseSound="bell", socialSound="hello", nearbySocialAlert=false, nearbySocialFriends=true, nearbySocialGuild=true, cleanseEnabled=false, cleanseTypes={Magic=true,Curse=true,Poison=true,Disease=true}, cleanseSelf=true, cleanseGroup=true, cleanseTarget=true, cleanseNearby=false, cleansePreferAbolish=true, cleanseBorder=true, reviveEnabled=true, reviveGroup=true, reviveTarget=true, reviveRebirth=false, soundChannel="Master", soundInterval=5, glow=true, pulse=false, group=true, smartGroup=true,
     groupNeed=3, blessingNeed=2, friendlyTarget=false, targetSeconds=300, keys={"MOUSEWHEELDOWN"}, buffs={}, priorities={}, buffSeconds={},
     pauseResting=false, targetClassBlessings=true, targetClasses={}, targetBlessingFallback=true, targetBlessingClasses={}, targetBlessingPriorities={}, groupBlessingPriorities={}, blessingAssignments=false, blessingClasses={}, blessingGroupOverrides={}, buffGroups={}, buffClasses={}, buffGroupNeed={}, targetBuffs={}, targetBuffSeconds={}, showBuffName=false, showTargetName=true, showTimer=false, showGroupBadge=true,
-    consumablesEnabled=false, consumableFamilies={}, consumableChoices={}, consumableSeconds={},
+    pickerBagsOnly=true, supplyCustom={}, consumablesEnabled=false, consumableFamilies={}, consumableChoices={}, consumableSeconds={},
     suppliesEnabled=false, suppliesChat=false, suppliesSound=false, suppliesReadyCheck=false, supplySettings={},
     weaponReminder=true, weaponMainHand=true, weaponOffHand=true,
     consumablesPauseResting=false, weaponsPauseResting=false,

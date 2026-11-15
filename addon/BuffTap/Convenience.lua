@@ -295,6 +295,7 @@ local function editMover(key,caption,iconTexture)
         local nx,ny=x-cx,y-cy
         if B.NearbyCenterOffset then nx,ny=B:NearbyCenterOffset(s) end
         if nx then B.db.nearbyX=nx; B.db.nearbyY=ny end
+      elseif key=="supply" then B.db.supplyX=x-cx; B.db.supplyY=y-cy
       else B.db.campX=x-cx; B.db.campY=y-cy end
     end
   end
@@ -317,9 +318,15 @@ function B:ShowEditMovers()
     local f=self.editCamp; local size=A.Number(d.campSize) and d.campSize or 40
     f:SetSize(size,size); f:ClearAllPoints(); f:SetPoint("CENTER",UIParent,"CENTER",A.Number(d.campX) and d.campX or 100,A.Number(d.campY) and d.campY or 0); f:Show()
   elseif self.editCamp then self.editCamp:Hide() end
+  if d.supplyReminder~=false then
+    if self.NormalizeSupplyReminder then self:NormalizeSupplyReminder() end
+    self.editSupply=self.editSupply or editMover("supply","Supplies reminder: drag to move",132912)
+    local f=self.editSupply; local size=A.Number(d.supplySize) and d.supplySize or 40
+    f:SetSize(size,size); f:ClearAllPoints(); f:SetPoint("CENTER",UIParent,"CENTER",d.supplyX or 0,d.supplyY or 0); f:Show()
+  elseif self.editSupply then self.editSupply:Hide() end
 end
 function B:HideEditMovers()
-  for _,f in ipairs({self.editNearby,self.editCamp}) do
+  for _,f in ipairs({self.editNearby,self.editCamp,self.editSupply}) do
     if f then
       if f.dragging and not A.Combat() then f.savePosition(f) end
       f:StopMovingOrSizing(); f.dragging=false; f:Hide()
@@ -328,6 +335,7 @@ function B:HideEditMovers()
   if not A.Combat() then
     if self.nearbyFrame and self.UpdateNearbyWindow then self:UpdateNearbyWindow() end
     if self.UpdateCamping then self:UpdateCamping() end
+    if self.UpdateSupplyBadge then self:UpdateSupplyBadge() end
   end
 end
 -- Only an unprotected preview participates in editing. No Blizzard system registration,

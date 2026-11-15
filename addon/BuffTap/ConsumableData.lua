@@ -243,6 +243,39 @@ elixir.items={
 -- Recognize other verified elixirs without offering utility/legacy choices.
 elixir.auraSpellIDs={673,2367,2374,2378,3160,3164,3166,3219,3220,3222,3223,3593,7844,8212,11328,11334,11348,11349,11390,11396,11405,11474,16589,17535,17537,17538,17539,21920,24361,24363,27652,27653,417627,426606,426612,439959,1245244,1245249,1250918,1250920,1250922,1250924,1250925,1250926,1250928,1250931,1250932,1250940,1250941,1250942,1250944,1250948,1250971,1250972,1250974,1250976,1250978,1250979,1250981,1250984,1250985,1250986,1250988,1250989,1310077}
 
+-- Elixirs stack on Forever (no battle/guardian slots), so the Elixirs row is a checklist:
+-- each ticked elixir becomes its own hidden family with its own reminder. Elixirs of the same
+-- line replace each other, so a ticked elixir is also satisfied by any elixir from its line.
+elixir.name="Elixirs"
+elixir.multi=true
+elixir.protectPresent=nil
+local ELIXIR_LINES={
+  agility={2457,3390,8949,9187,13452}, strength={2454,3391,9206,250349}, fortitude={2458,3825,250334,250335},
+  troll={3382,3388,3826,20004}, defense={5997,3389,8951,13445}, intellect={3383,250353,250354,9179},
+  spirit={250344,250345,250346,250347}, mageblood={250339,250340,20007,250341}, cleric={250330,250331,250332,250333},
+  arcane={247754,250342,9155,13454}}
+B.ChecklistChildren={}
+-- Turns a family into a checklist: one hidden family per item, each with its own reminder.
+function B.MakeChecklist(parent,prefix,lines)
+  local lineOf,byID={},{}
+  for line,ids in pairs(lines) do for _,id in ipairs(ids) do lineOf[id]=line end end
+  for _,item in ipairs(parent.items) do byID[item.id]=item; item.line=lineOf[item.id] end
+  parent.children={}
+  for _,item in ipairs(parent.items) do
+    local covers={}
+    for _,id in ipairs(item.line and lines[item.line] or {item.id}) do
+      for _,aura in ipairs(byID[id] and byID[id].auraIDs or {}) do covers[#covers+1]=aura end
+    end
+    local child={key=prefix..item.id,name=item.name,hidden=true,parent=parent,thresholdKey=parent.key,
+      defaultSeconds=parent.defaultSeconds,pendingSeconds=2,auraSpellIDs=covers,items={item},line=item.line}
+    parent.children[#parent.children+1]=child
+    B.ChecklistChildren[#B.ChecklistChildren+1]=child
+    B.ConsumableFamilies[#B.ConsumableFamilies+1]=child
+  end
+  return parent.children
+end
+B.ElixirFamilies=B.MakeChecklist(elixir,"elixir:",ELIXIR_LINES)
+
 -- Current 1.60.1.70888 ItemEffect/SpellEffect mappings, cross-checked against
 -- Forever item tooltips. One optional utility choice; existing effects are kept.
 B.ConsumableFamilies[#B.ConsumableFamilies+1]={
@@ -255,3 +288,12 @@ B.ConsumableFamilies[#B.ConsumableFamilies+1]={
     {id=9088,useSpell=11371,auraIDs={11371},name="Gift of Arthas",note="10 Shadow resistance and a reactive disease effect for 30 min."},
   },
 }
+
+-- Utility effects stack too (the two Firewaters share one effect), so Utility is a checklist as well.
+do
+  local utility=B.ConsumableFamilies[#B.ConsumableFamilies]
+  if utility and utility.key=="utility" then
+    utility.name="Utility"; utility.multi=true; utility.protectPresent=nil
+    B.UtilityFamilies=B.MakeChecklist(utility,"utility:",{firewater={246948,12820}})
+  end
+end

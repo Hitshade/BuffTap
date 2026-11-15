@@ -83,8 +83,57 @@ function B:ConsumableFamily(key)
   for _,family in ipairs(self.ConsumableFamilies or {}) do if family.key==key then return family end end
 end
 
+-- Ticked elixirs. Before anything is ticked, the old single Elixir choice (or Ferocity) counts.
+function B:ElixirTicked(child,settings)
+  local values=settings and settings.consumableFamilies or self:Preference("consumableFamilies") or {}
+  local any=false
+  local parent=child.parent
+  for _,other in ipairs(parent.children or {}) do if values[other.key]~=nil then any=true; break end end
+  if any then return values[child.key]==true end
+  local chosen=self:ConsumableChoiceID(parent,settings)
+  if not chosen and not parent.explicitChoice then
+    -- Old "Auto" choice: the first supported item carried counts until something is ticked.
+    for _,item in ipairs(parent.items or {}) do if self:ConsumableCount(item.id)>0 then chosen=item.id; break end end
+  end
+  return child.items[1].id==chosen
+end
+
+function B:ElixirFamilyFor(itemID)
+  for _,child in ipairs(self.ChecklistChildren or {}) do if child.items[1].id==itemID then return child end end
+end
+
+-- Name of a ticked elixir from the same line, if any (those replace each other).
+function B:ElixirLineTicked(child,settings)
+  if not child or not child.line then return nil end
+  settings=settings or self:EditorSettings("consumables")
+  for _,other in ipairs(child.parent.children or {}) do
+    if other~=child and other.line==child.line and self:ElixirTicked(other,settings) then
+      local info=self:ConsumableItemInfo(other.items[1].id,other.items[1])
+      return (info and info.name) or other.name
+    end
+  end
+end
+
+function B:ToggleElixir(itemID)
+  local child=self:ElixirFamilyFor(itemID)
+  if not child or A.Combat() then return end
+  local settings=self:EditorSettings("consumables")
+  local values=settings.consumableFamilies
+  local on=not self:ElixirTicked(child,settings)
+  if on then
+    for _,other in ipairs(child.parent.children or {}) do
+      if other.line and other.line==child.line then values[other.key]=false end
+    end
+    values[child.parent.key]=true
+  end
+  values[child.key]=on
+  self:InvalidateConsumables(); if self.InvalidateSupplies then self:InvalidateSupplies(false) end
+  self:RequestRefresh("elixir choice",0)
+end
+
 function B:ConsumableFamilySelected(family,settings)
   if not self.db or not family then return false end
+  if family.parent then return self:ConsumableFamilySelected(family.parent,settings) and self:ElixirTicked(family,settings) end
   local values=settings and settings.consumableFamilies or self:Preference("consumableFamilies")
   local value=values and values[family.key]
   if type(value)=="boolean" then return value end
@@ -98,7 +147,7 @@ end
 
 function B:ConsumableThreshold(family,settings)
   local values=settings and settings.consumableSeconds or self:Preference("consumableSeconds")
-  local value=family and values and values[family.key]
+  local value=family and values and values[family.thresholdKey or family.key]
   if type(value)=="number" then return math.max(30,math.min(1800,value)) end
   return family and family.defaultSeconds or 300
 end
@@ -442,7 +491,7 @@ function B:SelectConsumable()
   if self.stats then self.stats.consumableSelects=(self.stats.consumableSelects or 0)+1 end
   self:RebuildConsumableCache(false)
   for _,family in ipairs(self.ConsumableFamilies or {}) do
-    if self:ConsumableFamilyEnabled(family) then
+    if not family.multi and self:ConsumableFamilyEnabled(family) then
       local action,why=self:ResolveConsumable(family)
       if action then
         action.reason="consumable: "..tostring(action.needState or "missing")

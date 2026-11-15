@@ -929,6 +929,33 @@ function B:BuildSupplyOptions(parent)
   label(p,L("Optional bag-stock warnings for selected weapon consumables and buff items."),18,-42,"GameFontDisableSmall",670)
   f.supplyEnable=check(p,L("Enable supply warnings"),18,-70,function(c) setAndRefresh("suppliesEnabled",c:GetChecked()==true); B:UpdateSupplyOptions() end)
   addHelp(f.supplyEnable,"Supply warnings","Shows a small stock indicator beside BuffTap. Counts carried usable items only. No purchases, bank tracking, or changes to casting priorities.")
+  -- Track any item: shift-click or drag it into the box, or type its name, then press Enter or Add.
+  -- Supplies reminder icon (look and position under Customization > Supplies).
+  f.supplyShowIcon=check(p,L("Reminder icon"),18,-70,function(c) if not A.Combat() then B.db.supplyReminder=c:GetChecked()==true; B:UpdateSupplyBadge() end end)
+  f.supplyAnywhereCheck=check(p,L("Outside towns"),190,-70,function(c) if not A.Combat() then B.db.supplyAnywhere=c:GetChecked()==true; B:UpdateSupplyBadge() end end)
+  addHelp(f.supplyShowIcon,"Reminder icon","An icon that appears when something you track runs low. Left-click opens Supplies, right-click snoozes it, drag to move. Change its look under Customization > Supplies.")
+  addHelp(f.supplyAnywhereCheck,"Outside towns","Off: the icon only shows while resting in a city or inn, where you can restock. On: it shows everywhere out of combat.")
+  label(p,L("Add by name"),378,-75,"GameFontHighlightSmall",90)
+  f.supplyAddBox=editbox(p,470,-70,150,false); f.supplyAddBox:SetJustifyH("LEFT")
+  local function addItem()
+    if A.Combat() then return end
+    local text=f.supplyAddBox:GetText()
+    local ok,why=B:AddSupplyItem(text)
+    if ok then f.supplyAddBox:SetText(""); f.supplyAddBox:ClearFocus() elseif why then B.Print(why) end
+    B:UpdateSupplyOptions()
+  end
+  f.supplyAddBox:SetScript("OnEnterPressed",addItem)
+  f.supplyAddBox:SetScript("OnEscapePressed",function(e) e:SetText(""); e:ClearFocus() end)
+  local function dropped(e)
+    local kind,id; if GetCursorInfo then kind,id=GetCursorInfo() end
+    if kind=="item" and A.Number(id) then ClearCursor(); e:SetText(tostring(id)); addItem() end
+  end
+  f.supplyAddBox:SetScript("OnReceiveDrag",dropped); f.supplyAddBox:SetScript("OnMouseDown",dropped)
+  local insert=(ChatFrameUtil and ChatFrameUtil.InsertLink and "ChatFrameUtil") or (ChatEdit_InsertLink and "ChatEdit_InsertLink")
+  if insert=="ChatEdit_InsertLink" then hooksecurefunc("ChatEdit_InsertLink",function(link) if f.supplyAddBox:HasFocus() and A.Text(link) then f.supplyAddBox:SetText(link) end end)
+  elseif insert then hooksecurefunc(ChatFrameUtil,"InsertLink",function(link) if f.supplyAddBox:HasFocus() and A.Text(link) then f.supplyAddBox:SetText(link) end end) end
+  f.supplyAdd=button(p,L("Add"),626,-69,56,addItem)
+  addHelp(f.supplyAddBox,"Add by name","Type an item's name and press Enter, or click in this box and then shift-click the item. The easiest way: drag the item from your bags onto the list below. BuffTap only warns about stock; it never uses these items.")
   f.supplyChat=check(p,L("Private chat alerts"),18,-102,function(c) setAndRefresh("suppliesChat",c:GetChecked()==true) end)
   f.supplySound=check(p,L("Alert sound"),230,-102,function(c) setAndRefresh("suppliesSound",c:GetChecked()==true) end)
   f.supplyReady=check(p,L("Private ready-check summary"),410,-102,function(c) setAndRefresh("suppliesReadyCheck",c:GetChecked()==true) end)
@@ -940,10 +967,40 @@ function B:BuildSupplyOptions(parent)
   label(p,"Warn below",365,-158,"GameFontDisableSmall",75)
   label(p,"Want",462,-158,"GameFontDisableSmall",55)
   label(p,"Missing",550,-158,"GameFontDisableSmall",70)
+  -- The list is a drop target: drag any item from your bags onto it to start tracking it.
+  local list=CreateFrame("Frame",nil,p,"BackdropTemplate"); f.supplyList=list
+  list:SetPoint("TOPLEFT",6,-174); list:SetSize(702,244)
+  list:SetBackdrop({bgFile="Interface\\Buttons\\WHITE8X8",edgeFile="Interface\\Buttons\\WHITE8X8",edgeSize=1})
+  list:SetBackdropColor(0,0,0,.45); list:SetBackdropBorderColor(.25,.25,.27,1)
+  list.drop=list:CreateFontString(nil,"OVERLAY","GameFontNormalLarge"); list.drop:SetPoint("CENTER"); list.drop:Hide()
+  list.drop:SetText(L("Drop to track this item"))
+  local function dropOnList()
+    local kind,id; if GetCursorInfo then kind,id=GetCursorInfo() end
+    if kind=="item" and A.Number(id) and not A.Combat() then
+      ClearCursor(); local ok,why=B:AddSupplyItem(tostring(id)); if not ok and why then B.Print(why) end
+      B:UpdateSupplyOptions(); return true
+    end
+  end
+  f.supplyDrop=dropOnList
+  list:EnableMouse(true); list:SetScript("OnReceiveDrag",dropOnList); list:SetScript("OnMouseUp",dropOnList)
+  list.elapsed=0
+  list:SetScript("OnUpdate",function(s,dt)
+    s.elapsed=s.elapsed+dt; if s.elapsed<.1 then return end; s.elapsed=0
+    local kind=GetCursorInfo and GetCursorInfo()
+    local holding=kind=="item"
+    if holding~=s.holding then
+      s.holding=holding
+      s:SetBackdropBorderColor(holding and 1 or .25,holding and .42 or .25,holding and .07 or .27,1)
+      s:SetBackdropColor(0,0,0,holding and .75 or .45); s.drop:SetShown(holding)
+    end
+  end)
   f.supplyRows={}
   for i=1,5 do
     local row=CreateFrame("Frame",nil,p,"BackdropTemplate")
     row:SetSize(676,43); row:SetPoint("TOPLEFT",12,-180-(i-1)*47)
+    row:EnableMouse(true); row:SetFrameLevel(list:GetFrameLevel()+2)
+    row:SetScript("OnReceiveDrag",function() f.supplyDrop() end)
+    row:HookScript("OnMouseUp",function() f.supplyDrop() end)
     row:SetBackdrop({bgFile="Interface\\Buttons\\WHITE8X8"}); row:SetBackdropColor(unpack(T.row)); T.Row(row,8)
     row.enable=check(row,"",0,-7,function(c)
       if A.Combat() then return end
@@ -973,29 +1030,57 @@ function B:BuildSupplyOptions(parent)
       row[field]:SetScript("OnEscapePressed",function(e) e:ClearFocus(); B:UpdateSupplyOptions() end)
     end
     addHelp(row.minimum,"Warn below","Alert when usable stock falls below this number. Zero stock always warns. Press Enter to save.")
+    row.remove=button(row,L("Remove"),612,-9,62,function(b) local entry=b:GetParent().entry; if entry and entry.itemID and not A.Combat() then B:RemoveSupplyItem(entry.itemID); B:UpdateSupplyOptions() end end)
+    row.remove:SetSize(62,24); addHelp(row.remove,"Stop tracking","Remove this item from Supplies.")
     addHelp(row.target,L("Desired stock"),"Your personal target quantity. Missing shows how many more usable items would reach it. BuffTap does not buy them. Press Enter to save.")
     f.supplyRows[i]=row
     label(row,L("Enter to save"),366,-31,"GameFontDisableSmall",144)
   end
+  -- More than five tracked supplies (several elixirs, for example): scroll the list.
+  f.supplyOffset=0
+  f.supplyScroll=CreateFrame("Slider",nil,p,"OptionsSliderTemplate"); f.supplyScroll:SetOrientation("VERTICAL")
+  f.supplyScroll:SetSize(12,227); f.supplyScroll:SetPoint("TOPLEFT",692,-180); f.supplyScroll:SetMinMaxValues(0,1); f.supplyScroll:SetValueStep(1)
+  if f.supplyScroll.SetObeyStepOnDrag then f.supplyScroll:SetObeyStepOnDrag(true) end
+  for _,part in ipairs({"Text","Low","High"}) do if f.supplyScroll[part] then f.supplyScroll[part]:Hide() end end
+  f.supplyScroll:SetScript("OnValueChanged",function(s,value)
+    if s.silent or A.Combat() then return end
+    f.supplyOffset=math.floor(value+.5); B:UpdateSupplyOptions()
+  end)
+  local function wheel(_,delta)
+    if A.Combat() then return end
+    f.supplyOffset=math.max(0,math.min(f.supplyMaxOffset or 0,(f.supplyOffset or 0)-delta)); B:UpdateSupplyOptions()
+  end
+  for _,row in ipairs(f.supplyRows) do row:EnableMouseWheel(true); row:SetScript("OnMouseWheel",wheel) end
+  f.supplyList:EnableMouseWheel(true); f.supplyList:SetScript("OnMouseWheel",wheel)
+  f.supplyScroll:ClearAllPoints(); f.supplyScroll:SetPoint("TOPRIGHT",f.supplyList,"TOPRIGHT",-2,-6)
   f.supplyEmpty=label(p,"",18,-190,"GameFontHighlightSmall",665)
   f.supplySnooze=button(p,L("Snooze 10 min"),18,-468,122,function() B:SnoozeSupplies() end)
   button(p,L("Restore alerts"),150,-468,118,function() B:RestoreSupplies() end)
   button(p,L("Check supplies"),554,-468,126,function() B:ReportSupplies() end)
-  f.supplyHint=label(p,"Warnings do not block your buff queue. Shared weapon consumable choices count once.",18,-434,"GameFontDisableSmall",660)
+  f.supplyHint=label(p,"Drag any item from your bags onto the list to track it. Warnings do not block your buff queue.",18,-434,"GameFontDisableSmall",660)
 end
 
 function B:UpdateSupplyOptions()
   local f=self.options
   if not f or not f.supplyBody or A.Combat() then return end
-  local entries=self:SyncSupplies()
+  local entries=self:SupplyDisplayEntries()
   f.supplyEnable:SetChecked(self.db.suppliesEnabled)
+  if self.NormalizeSupplyReminder then self:NormalizeSupplyReminder() end
+  if f.supplyShowIcon then f.supplyShowIcon:SetChecked(self.db.supplyReminder); f.supplyAnywhereCheck:SetChecked(self.db.supplyAnywhere) end
   f.supplyChat:SetChecked(self.db.suppliesChat); f.supplySound:SetChecked(self.db.suppliesSound); f.supplyReady:SetChecked(self.db.suppliesReadyCheck)
+  f.supplyMaxOffset=math.max(0,#entries-#f.supplyRows)
+  f.supplyOffset=math.max(0,math.min(f.supplyOffset or 0,f.supplyMaxOffset))
+  if f.supplyScroll then
+    f.supplyScroll.silent=true; f.supplyScroll:SetMinMaxValues(0,math.max(1,f.supplyMaxOffset)); f.supplyScroll:SetValue(f.supplyOffset); f.supplyScroll.silent=false
+    f.supplyScroll:SetShown(f.supplyMaxOffset>0)
+  end
   for i,row in ipairs(f.supplyRows) do
-    local entry=entries[i]
+    local entry=entries[i+(f.supplyOffset or 0)]
     if row.entry and (not entry or row.entry.key~=entry.key) then row.minimum:ClearFocus(); row.target:ClearFocus() end
     row.entry=entry; row:SetShown(entry~=nil)
     if entry then
       row.enable:SetChecked(entry.settings.enabled); row.icon:SetTexture(entry.icon); row.name:SetText(entry.name)
+      row.remove:SetShown(entry.kind=="custom")
       local states={loading="Inventory settling",unknown="Stock or item data unavailable",empty=L("Out of stock"),unusable="Carried, none usable",low="Low stock",ok="Stock ready"}
       row.state:SetText(states[entry.state] or "Unknown")
       row.count:SetText(entry.count~=nil and tostring(entry.count) or "?")
@@ -1007,10 +1092,9 @@ function B:UpdateSupplyOptions()
     end
   end
   f.supplyEmpty:SetShown(#entries==0)
-  f.supplyEmpty:SetText(not self.db.enabled and "Enable BuffTap to resume supply tracking." or not self.db.suppliesEnabled and "Enable supply warnings to configure stock thresholds." or
-    "Enable a buff consumable reminder, or select a poison, oil or stone for an equipped weapon.")
+  f.supplyEmpty:SetText(not self.db.enabled and "Enable BuffTap to resume supply tracking." or "Nothing tracked yet. Drag an item from your bags onto this list to track it.")
   f.supplyHint:SetText(self:SupplySnoozed() and "Stock alerts are snoozed for 10 minutes; ready-check summaries remain available." or
-    "Warnings do not block your buff queue. Shared weapon consumable choices count once.")
+    "Drag any item from your bags onto the list to track it. Warnings do not block your buff queue.")
 end
 
 function B:ShowSuppliesOptions()
@@ -1553,7 +1637,7 @@ function B:ChooseConsumable(family,anchor,situation)
     button(f,L("Close"),550,-14,78,function() f:Hide() end)
     label(f,L("Search"),20,-59,"GameFontHighlightSmall")
     f.search=editbox(f,76,-54,300,false)
-    f.bags=check(f,L("In bags only"),410,-54,function() f.offset=0; B:UpdateConsumablePicker() end)
+    f.bags=check(f,L("In bags only"),410,-54,function(c) B.pickerBagsOnly=c:GetChecked()==true; B.db.pickerBagsOnly=B.pickerBagsOnly; f.offset=0; B:UpdateConsumablePicker() end)
     f.auto=flatButton(f,"",20,-90,606,function()
       if A.Combat() then return end
       if f.situation then B:SetSituationValue(f.situation,"consumables","consumableChoices",nil,f.family.key) else B:SetConsumableChoice(f.family,nil); B:InvalidateConsumables(); B:RequestRefresh("auto selected",0) end; B:Options(); B:UpdateConsumablePicker()
@@ -1563,13 +1647,20 @@ function B:ChooseConsumable(family,anchor,situation)
     for i=1,8 do
       local row=flatButton(f,"",20,-147-(i-1)*34,580,function(btn)
         if A.Combat() then return end
-        if f.situation then B:SetSituationValue(f.situation,"consumables","consumableChoices",btn.itemID,f.family.key) else B:SetConsumableChoice(f.family,btn.itemID); B:InvalidateConsumables(); B:RequestRefresh("item selected",0) end
+        if f.family.multi then B:ToggleElixir(btn.itemID); B:Options(); B:UpdateConsumablePicker(); return end
+        -- Clicking the chosen item again unticks it (back to Auto).
+        local current=B:ConsumableChoiceID(f.family,f.situation and B:SituationPreview(f.situation,"consumables") or B.db)
+        local value=btn.itemID
+        if current==btn.itemID and not f.family.explicitChoice then value=nil end
+        if f.situation then B:SetSituationValue(f.situation,"consumables","consumableChoices",value,f.family.key) else B:SetConsumableChoice(f.family,value); B:InvalidateConsumables(); B:RequestRefresh("item selected",0) end
         B:Options(); B:UpdateConsumablePicker()
       end)
       row:SetHeight(32)
-      row.mark=label(row,"",6,-9,"GameFontNormalSmall",20)
-      row.icon=row:CreateTexture(nil,"ARTWORK"); row.icon:SetSize(24,24); row.icon:SetPoint("TOPLEFT",25,-4)
-      row.name=label(row,"",56,-9,"GameFontHighlightSmall",380)
+      row.mark=label(row,"",6,-9,"GameFontNormalSmall",20); row.mark:Hide()
+      -- The theme's orange check box, for checklists and single choices alike.
+      row.tick=check(row,"",2,-4,function(c) local click=row:GetScript("OnClick"); c:SetChecked(not c:GetChecked()); if click then click(row) end end)
+      row.icon=row:CreateTexture(nil,"ARTWORK"); row.icon:SetSize(24,24); row.icon:SetPoint("TOPLEFT",32,-4)
+      row.name=label(row,"",62,-9,"GameFontHighlightSmall",380)
       row.stock=label(row,"",448,-9,"GameFontHighlightSmall",124)
       f.rows[i]=row
     end
@@ -1589,6 +1680,13 @@ function B:ChooseConsumable(family,anchor,situation)
     f.summary=label(f,"",20,-428,"GameFontNormal",590)
     f.hint=label(f,"",20,-452,"GameFontHighlightSmall",600)
     f.count=label(f,"",20,-515,"GameFontHighlightSmall",400)
+    f.clear=button(f,L("Clear all"),430,-508,100,function()
+      if A.Combat() or not f.family or not f.family.multi then return end
+      local values=B:EditorSettings("consumables").consumableFamilies
+      for _,child in ipairs(f.family.children or {}) do values[child.key]=false end
+      B:InvalidateConsumables(); if B.InvalidateSupplies then B:InvalidateSupplies(false) end
+      B:RequestRefresh("elixirs cleared",0); B:Options(); B:UpdateConsumablePicker()
+    end)
     button(f,L("Done"),540,-508,86,function() f:Hide() end)
     f.search:SetScript("OnTextChanged",function() f.offset=0; B:UpdateConsumablePicker() end)
     f:RegisterEvent("PLAYER_REGEN_DISABLED")
@@ -1599,7 +1697,14 @@ function B:ChooseConsumable(family,anchor,situation)
     if UISpecialFrames then table.insert(UISpecialFrames,"BuffTapItemPicker") end
   end
   f:ClearAllPoints(); f:SetPoint("CENTER",self.options,"CENTER")
-  f.family=family; f.situation=situation; f.offset=0; f.bags:SetChecked(true); f.search:SetText("")
+  f.family=family; f.situation=situation; f.offset=0; local bagsOnly=self.pickerBagsOnly; if bagsOnly==nil then bagsOnly=self.db.pickerBagsOnly~=false end; f.bags:SetChecked(bagsOnly); f.search:SetText("")
+  if family.multi then
+    -- Ticked set is stored per elixir; seed it from the old single choice the first time.
+    local values=self:EditorSettings("consumables").consumableFamilies
+    local any=false
+    for _,child in ipairs(family.children or {}) do if values[child.key]~=nil then any=true; break end end
+    if not any then for _,child in ipairs(family.children or {}) do if self:ElixirTicked(child,self:EditorSettings("consumables")) then values[child.key]=true end end end
+  end
   self:UpdateConsumablePicker(); f:Show()
 end
 
@@ -1627,23 +1732,38 @@ function B:UpdateConsumablePicker()
   f.scroll.silent=true; f.scroll:SetMinMaxValues(0,math.max(1,f.maxOffset)); f.scroll:SetValue(f.offset); f.scroll.silent=false
   f.scroll:SetShown(f.maxOffset>0); f.empty:SetShown(#list==0)
   f.title:SetText(L("Choose %s",L(family.name))..(f.situation and " - "..L(({solo="Solo",party="Party",raid="Raid"})[f.situation]) or ""))
-  f.auto:SetShown(not family.explicitChoice)
-  f.auto:SetText((not selected and "(o) " or "( ) ")..L("Auto - first usable supported item"))
+  f.auto:SetShown(not family.explicitChoice and not family.multi)
+  if f.clear then f.clear:SetShown(family.multi==true) end
+  f.auto:SetText(L("Auto - first usable supported item")..(not selected and ("  |cffff6b13"..L("(selected)").."|r") or ""))
   for i,row in ipairs(f.rows) do
     local item=list[f.offset+i]
     if item then
       row.itemID=item.id; row.mark:SetText(selected==item.id and "(o)" or "( )")
+      local blockedBy; local rowSel=selected==item.id
+      if family.multi then
+        local child=self:ElixirFamilyFor(item.id)
+        local on=child and self:ElixirTicked(child,self:EditorSettings("consumables"))
+        blockedBy=not on and child and self:ElixirLineTicked(child)
+        row.mark:SetText(on and "[x]" or "[ ]"); rowSel=on
+      end
       local info=self.ConsumableItemInfo and self:ConsumableItemInfo(item.id,item)
-      row.name:SetText((info and info.name) or item.name); row.stock:SetText(item.count>0 and ("|cff88dd88"..item.count.."|r") or ("|cffffc466"..L("Out of stock").."|r"))
+      row.name:SetText(((info and info.name) or item.name)..(blockedBy and ("  |cff9a7a3c"..L("Same line as %s",blockedBy).."|r") or "")); row.stock:SetText(item.count>0 and ("|cff88dd88"..item.count.."|r") or ("|cffffc466"..L("Out of stock").."|r"))
       row.icon:SetTexture((info and info.texture) or item.icon or 134400)
-      row:SetBackdropColor(selected==item.id and 0.16 or 0.065,selected==item.id and 0.15 or 0.085,selected==item.id and 0.09 or 0.10,1)
+      row:SetBackdropColor(rowSel and 0.16 or 0.065,rowSel and 0.12 or 0.085,rowSel and 0.08 or 0.10,1)
+      row.tick:SetChecked(rowSel and true or false); row.tick:SetAlpha(blockedBy and .45 or 1)
       addHelp(row,item.name,item.note or "Supported item; availability is checked again before use."); row:Show()
     else row.itemID=nil; row:Hide() end
   end
   local choice=consumableChoiceLabel(family,f.situation and self:SituationPreview(f.situation,"consumables") or self.db)
+  if family.multi then
+    local n=0; for _,child in ipairs(family.children or {}) do if self:ElixirTicked(child,self:EditorSettings("consumables")) then n=n+1 end end
+    f.summary:SetText(L("Ticked: %d",n)); f.title:SetText(family.children==B.ElixirFamilies and L("Choose elixirs") or L("Choose %s",L(family.name)))
+  else
   f.summary:SetText(L("Selected: %s",choice)..(selected and ("  -  "..L("%d in bags",self:ConsumableCount(selected))) or ""))
+  end
   local note=family.protectPresent and L("One elixir choice. Existing elixir buffs are preserved until expiry.") or L("One choice at a time. Your selection stays saved when out of stock.")
-  for _,item in ipairs(family.items or {}) do if item.id==selected and item.note then note=note.."\n"..item.note; break end end
+  if family.multi then note=L("Tick as many as you like. Each one gets its own reminder. Your choices stay saved when out of stock.")
+  else for _,item in ipairs(family.items or {}) do if item.id==selected and item.note then note=note.."\n"..item.note; break end end end
   f.hint:SetText(note)
   f.count:SetText(L("%d matching items",#list)..(f.maxOffset>0 and (" - "..L("scroll for more")) or ""))
 end
@@ -1995,7 +2115,7 @@ function B:Options()
     end
     f.selectConsumableView(false)
     label(consume,L("Consumables"),18,-16,"GameFontNormalLarge")
-    label(consume,"Choose food, a flask, an elixir and an optional utility consumable.",18,-42,"GameFontDisableSmall",680)
+    label(consume,"Choose food, a flask, elixirs and an optional utility consumable.",18,-42,"GameFontDisableSmall",680)
     f.consumablesEnable=check(consume,"Enable consumable reminders",18,-72,function(c)
       if not A.Combat() then B:EditorSettings("consumables").consumablesEnabled=c:GetChecked()==true; if B.InvalidateConsumables then B:InvalidateConsumables() end; B:RequestRefresh("consumables master",0); B:Options() end
     end)
@@ -2007,7 +2127,10 @@ function B:Options()
     addHelp(f.consumableRestPause,"Pause while resting","Skip food, flask, elixir and utility reminders in cities and inns, so you do not use them while resting. Buff reminders continue as usual.")
     line(consume,-108)
     f.consumableRows={}
-    for index,family in ipairs(B.ConsumableFamilies or {}) do
+    local visibleFamilies={}
+    for _,family in ipairs(B.ConsumableFamilies or {}) do if not family.hidden then visibleFamilies[#visibleFamilies+1]=family end end
+    B.ConsumableVisibleFamilies=visibleFamilies
+    for index,family in ipairs(visibleFamilies) do
       local row=CreateFrame("Frame",nil,consume,"BackdropTemplate")
       row:SetSize(686,76); row:SetPoint("TOPLEFT",10,-116-(index-1)*80)
       row:SetBackdrop({bgFile="Interface\\Buttons\\WHITE8X8"}); row:SetBackdropColor(unpack(T.row)); T.Row(row,8)
@@ -2032,9 +2155,21 @@ function B:Options()
         if fam then B:SetSituationValue(B:EditorContext("consumables"),"consumables","consumableSeconds",value,fam.key); B:InvalidateAura("player"); B:RequestRefresh("consumable threshold",0.08) end
       end)
       row.threshold:SetPoint("TOPLEFT",108,-54)
+      if family.multi then
+        -- Ticked items: a row of icons (hover for the name and stock).
+        row.strip={}
+        for j=1,12 do
+          local b=CreateFrame("Frame",nil,row); b:SetSize(18,18); b:SetPoint("TOPLEFT",150+(j-1)*21,-27); b:EnableMouse(true)
+          b.tex=b:CreateTexture(nil,"ARTWORK"); b.tex:SetAllPoints(); b:Hide()
+          b:SetScript("OnEnter",function(s) if s.title then T.Tooltip(s,s.title,s.body) end end)
+          b:SetScript("OnLeave",function() if GameTooltip then GameTooltip:Hide() end end)
+          row.strip[j]=b
+        end
+        row.more=label(row,"",150+12*21,-29,"GameFontDisableSmall",40)
+      end
       f.consumableRows[index]=row
     end
-    local consumeFooterY=-116-(#(B.ConsumableFamilies or {}))*80-4
+    local consumeFooterY=-116-(#visibleFamilies)*80-4
 
     f.consumeRetry=button(consume,L("Retry reminders"),528,consumeFooterY-48,154,function() B:RetryConsumableReminders(); B:Options() end)
     addHelp(f.consumeRetry,L("Retry reminders"),L("Restarts item loading and paused consumable reminders. Changed item effects remain blocked."))
@@ -2353,7 +2488,9 @@ function B:Options()
   self:UpdateHelperOptions()
   self:UpdateProfileOptions()
   self:UpdateContextControls(); f.setupBadge:SetText(self:SituationBadge())
-  self:UpdateSupplyOptions()
+  -- One page's refresh must never stop the rest of the window from filling in.
+  local supplyOK,supplyErr=pcall(self.UpdateSupplyOptions,self)
+  if not supplyOK then self.Print("Supplies page error (please report): "..tostring(supplyErr)) end
   local paladin=A.Call(function() local _,token=UnitClass("player"); return token end)=="PALADIN"
   f.buffInstruction:SetText(L("Choose your buffs. Move the most important ones to the top."))
   f.targetBlessingPanel:SetShown(paladin); f.targetClassAware:SetChecked(self.db.targetClassBlessings)
@@ -2572,7 +2709,7 @@ function B:Options()
     f.consumablesEnable:SetChecked(self:EditorSettings("consumables").consumablesEnabled==true); f.consumableRestPause:SetChecked(self.db.consumablesPauseResting==true); f.consumableInstanceOnly:SetChecked(self.db.consumablesInstanceOnly==true)
     f.consumeBuild:Hide()
     if self.RebuildConsumableCache then self:RebuildConsumableCache(false) end
-    for index,family in ipairs(self.ConsumableFamilies or {}) do
+    for index,family in ipairs(self.ConsumableVisibleFamilies or {}) do
       local row=f.consumableRows[index]
       if row then
         row.enable:SetChecked(self.ConsumableFamilySelected and self:ConsumableFamilySelected(family,self:EditorSettings("consumables")) or false)
@@ -2592,7 +2729,31 @@ function B:Options()
         row.prev:Show()
         if family.protectPresent then row.threshold:Hide(); row.threshold.valueText:Hide() end
         local chosen=self:ConsumableChoiceID(family,self:EditorSettings("consumables"))
-        if chosen then
+        if family.multi then
+          local names,carried,first,ticked={},0,nil,{}
+          for _,child in ipairs(family.children or {}) do
+            if self:ElixirTicked(child,self:EditorSettings("consumables")) then
+              local item=child.items[1]; local info=self:ConsumableItemInfo(item.id,item)
+              local name=(info and info.name) or item.name; local count=self:ConsumableCount(item.id)
+              names[#names+1]=name; carried=carried+count
+              first=first or (info and info.texture)
+              ticked[#ticked+1]={name=name,count=count,icon=(info and info.texture) or 134400}
+            end
+          end
+          for j,b in ipairs(row.strip or {}) do
+            local e=ticked[j]
+            if e then
+              b.tex:SetTexture(e.icon); b.tex:SetDesaturated(e.count<1)
+              b.title=e.name; b.body=e.count>0 and L("%d in bags",e.count) or L("Out of stock"); b:Show()
+            else b.title=nil; b:Hide() end
+          end
+          if row.more then row.more:SetText(#ticked>#(row.strip or {}) and ("+"..(#ticked-#row.strip)) or "") end
+          row.inventory:SetText(#ticked==0 and "" or carried>0 and ("|cff88dd88"..carried.." in bags|r") or "|cffffbb44Out of stock|r")
+          row.choice:SetText(#names==0 and L("None ticked") or L("%d ticked",#names))
+          row.icon:SetTexture(first or 134400)
+          local isElixir=family.children==self.ElixirFamilies
+          addHelp(row,family.name,(#names>0 and (table.concat(names,"\n").."\n\n") or "")..(not isElixir and L("Tick each item to keep up. Each one gets its own reminder. The two Firewaters share one effect, so only one of them can be ticked.") or "")..(isElixir and L("Tick each elixir to keep up. Each one gets its own reminder. Elixirs of the same line replace each other, so only one of them can be ticked.") or ""))
+        elseif chosen then
           local count=self:ConsumableCount(chosen)
           row.inventory:SetText(count>0 and ("|cff88dd88"..count.." in bags|r") or "|cffffbb44Out of stock|r")
         elseif family.explicitChoice then row.choice:SetText(L("Choose an item to track")); row.inventory:SetText(L("Not selected")) end
