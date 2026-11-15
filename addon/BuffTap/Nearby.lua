@@ -1222,7 +1222,7 @@ end
 -- can still be dragged and its buttons used. The hairline can stay. Polls the mouse only
 -- while the option is on and the window is shown, ten times a second.
 function B:NearbyHeaderParts(f)
-  return {f.header,f.title,f.count,f.lock,f.close,f.allPlayers,f.countHelp}
+  return {f.header,f.title,f.count,f.lock,f.close,f.allPlayers,f.resting,f.countHelp}
 end
 function B:UpdateNearbyHeaderFade(force)
   local f=self.nearbyFrame; if not f then return end
@@ -1245,25 +1245,26 @@ end
 -- Animated list (optional): rows that change place glide from their old slot, and new players
 -- fade in where they belong. Only the drawing moves; each clickable row stays anchored in its slot, so a click
 -- always lands on the player now shown there. Never in combat, never while scrolling.
-local GLIDE=.22
+local GLIDE=.32
 local function rowMotion(row)
   if row.motion then return row.motion end
   if type(row.CreateAnimationGroup)~="function" then return nil end
   local ag=row:CreateAnimationGroup(); if not ag then return nil end
   local jump=ag:CreateAnimation("Translation"); jump:SetOrder(1); jump:SetDuration(0)
-  local glide=ag:CreateAnimation("Translation"); glide:SetOrder(2); glide:SetDuration(GLIDE); glide:SetSmoothing("OUT")
+  local glide=ag:CreateAnimation("Translation"); glide:SetOrder(2); glide:SetDuration(GLIDE); glide:SetSmoothing("IN_OUT")
   local fade=ag:CreateAnimation("Alpha"); fade:SetOrder(2); fade:SetDuration(GLIDE)
   row.motion={ag=ag,jump=jump,glide=glide,fade=fade}
   return row.motion
 end
 local function playMotion(row,dx,dy,fadeIn)
   local m=rowMotion(row); if not m then return end
-  m.ag:Stop()
+  -- A row already gliding finishes its move rather than snapping back and starting over.
+  if m.ag:IsPlaying() then return end
   m.jump:SetOffset(dx,dy); m.glide:SetOffset(-dx,-dy)
   local a=row:GetAlpha() or 1
   m.fade:SetFromAlpha(fadeIn and 0 or a); m.fade:SetToAlpha(a)
-  -- Newcomers fade in where they belong just after the others have glided to make room.
-  if m.fade.SetStartDelay then m.fade:SetStartDelay(fadeIn and GLIDE*.45 or 0) end
+  -- Newcomers fade in where they belong while the others glide to make room (no delay, so they
+  -- never flash at full brightness first).
   m.ag:Play()
 end
 function B:AnimateNearbyRows(f,shown)
