@@ -1153,3 +1153,5 @@ B.Locales.deDE["Recipients must match group and class."]="Empfänger müssen zu 
 B.Locales.deDE["Choose which classes in your party get this buff."]="Wähle, welche Klassen deiner Gruppe diesen Buff bekommen."
 B.Locales.deDE["Every tank gets this buff, whatever their class."]="Jeder Tank bekommt diesen Buff, egal welche Klasse."
 B.Locales.deDE["Every healer gets this buff, whatever their class."]="Jeder Heiler bekommt diesen Buff, egal welche Klasse."
+B.Locales.deDE["Animated list"]="Animierte Liste"
+B.Locales.deDE["Players glide to their new place when the list reorders, and new players slide in. Off when Reduce animation is on."]="Spieler gleiten an ihren neuen Platz, wenn sich die Liste neu ordnet, und neue Spieler gleiten herein. Aus, wenn Animationen reduzieren aktiv ist."

@@ -70,4 +70,5 @@ import test_release_1222
 import test_release_1223
 import test_release_1224
 import test_combat_probe
+import test_nearby_motion
 print('FINAL_TOTAL',len(__import__('test_bufftap').tests))

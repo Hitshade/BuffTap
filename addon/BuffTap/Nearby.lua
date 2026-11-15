@@ -1218,6 +1218,44 @@ function B:UpdateNearbyHeaderFade(force)
   end
   f.headerWatch:SetShown(hide)
 end
+-- Animated list (optional): rows that change place glide from their old slot, new players slide in
+-- from the right. Only the drawing moves; each clickable row stays anchored in its slot, so a click
+-- always lands on the player now shown there. Never in combat, never while scrolling.
+local GLIDE=.22
+local function rowMotion(row)
+  if row.motion then return row.motion end
+  if type(row.CreateAnimationGroup)~="function" then return nil end
+  local ag=row:CreateAnimationGroup(); if not ag then return nil end
+  local jump=ag:CreateAnimation("Translation"); jump:SetOrder(1); jump:SetDuration(0)
+  local glide=ag:CreateAnimation("Translation"); glide:SetOrder(2); glide:SetDuration(GLIDE); glide:SetSmoothing("OUT")
+  local fade=ag:CreateAnimation("Alpha"); fade:SetOrder(2); fade:SetDuration(GLIDE)
+  row.motion={ag=ag,jump=jump,glide=glide,fade=fade}
+  return row.motion
+end
+local function playMotion(row,dx,dy,fadeIn)
+  local m=rowMotion(row); if not m then return end
+  m.ag:Stop()
+  m.jump:SetOffset(dx,dy); m.glide:SetOffset(-dx,-dy)
+  local a=row:GetAlpha() or 1
+  m.fade:SetFromAlpha(fadeIn and 0 or a); m.fade:SetToAlpha(a)
+  m.ag:Play()
+end
+function B:AnimateNearbyRows(f,shown)
+  local now={}
+  for i=1,shown do local row=f.rows[i]; local e=row and row:IsShown() and row.entry; if e and e.guid then now[e.guid]=i end end
+  local prev,offset=self.nearbyRowSlots,self.nearbyOffset or 0
+  local enabled=self.db.nearbyAnimate==true and not self.db.optionsReduceMotion and not A.Combat()
+  local moved,added=0,0
+  if enabled and prev and self.nearbyRowSlotsOffset==offset and next(prev) then
+    for guid,i in pairs(now) do
+      local old=prev[guid]
+      if old and old~=i then playMotion(f.rows[i],0,(i-old)*ROW_HEIGHT,false); moved=moved+1
+      elseif not old then playMotion(f.rows[i],28,0,true); added=added+1 end
+    end
+  end
+  self.nearbyRowSlots=now; self.nearbyRowSlotsOffset=offset
+  self.nearbyMotion={moved=moved,added=added}
+end
 function B:UpdateNearbyWindow()
   if A.Combat() or self.nearbyDragging then return end
   if not self.db.nearbyEnabled and not self.nearbyUserOpened then
@@ -1368,6 +1406,7 @@ function B:UpdateNearbyWindow()
       if not row:IsShown() then row:Show() end
     else row.style=nil; row.invite:Hide(); row.request:Hide(); row.idle:Hide(); row.cleanseTint:Hide(); row.cleanseBar:Hide(); row.socialFlash:Hide(); if row.socialFx then row.socialFx:Hide() end; if row.result then row.result:Hide() end; dimRow(row,false); for _,tag in ipairs(row.tags) do tag:Hide() end; if row:IsShown() then row:Hide() end end
   end
+  self:AnimateNearbyRows(f,ROWS)
   -- Friends who will not get a visible row (not listed in this view, paused, or scrolled out of
   -- sight) still get the sound now. While the list is held under the mouse, wait for it to update.
   if self.socialPending and next(self.socialPending) and not (self.nearbyHovered or self:NearbyResultActive()) then
