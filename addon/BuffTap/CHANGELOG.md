@@ -2,6 +2,7 @@
 
 ### Changes
 - Nearby: new optional "Animated list" (Customization > Nearby window > Title bar and rows, off by default). When the list reorders, players glide to their new place, and new players fade in where they belong once the others have made room. Only the drawing moves: each clickable row stays in its slot, so a click always reaches the player shown there. No animation in combat, while scrolling, or with Reduce animation on.
+- Nearby, all-players view: below the players who need a buff and your friends and guildmates, everyone else is now listed newest arrival first. Someone who just came into range always appears in the same place, near the top, instead of at the bottom or wherever they happened to sort.
 - Cleanse & revive: the Resurrection switches now line up with the Who switches above them.
 - New `/bt combatprobe` (diagnostic): during your next fight it records whether WoW Forever lets addons read who cast your buffs and send emotes, and prints the results when combat ends. Nothing is cast or sent.
 

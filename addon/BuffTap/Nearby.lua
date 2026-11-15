@@ -899,6 +899,9 @@ function B:NearbyDisplayList(list)
   local now,fresh,seen,out=GetTime(),{},{},{}
   local frozen=self.nearbyHovered or self:NearbyResultActive()
   for _,entry in ipairs(list) do fresh[entry.guid]=entry end
+  -- When each player came into range: the all-players view lists the newest arrivals first.
+  local arrived=self.nearbyArrived or {}; self.nearbyArrived=arrived
+  for guid in pairs(fresh) do if not arrived[guid] then arrived[guid]=now end end
   local pending,safetyRemoved
   for _,old in ipairs(self.nearbyDisplay or {}) do
     local entry=fresh[old.entry.guid]
@@ -932,16 +935,21 @@ function B:NearbyDisplayList(list)
       local ac=an and a.entry.actions[1].source=="cleanse"
       local bc=bn and b.entry.actions[1].source=="cleanse"
       if ac~=bc then return ac end
-      -- Among players with nothing needed, friends and guild members come first.
+      -- Among players with nothing needed, friends and guild members stay on top; then the newest
+      -- arrival comes first, so newcomers always appear in the same place.
       if not an then
         local as,bs=a.entry.social~=nil,b.entry.social~=nil
         if as~=bs then return as end
+        local at,bt=arrived[a.entry.guid] or 0,arrived[b.entry.guid] or 0
+        if at~=bt then return at>bt end
       end
       if a.entry.order~=b.entry.order then return a.entry.order<b.entry.order end
       return a.entry.guid<b.entry.guid
     end)
   end
   self.nearbyDisplay=out
+  -- Players who left range count as new arrivals if they come back.
+  for guid in pairs(arrived) do if not seen[guid] and not fresh[guid] then arrived[guid]=nil end end
   self:CancelTimer("nearby-display")
   if pending then self:StartTimer("nearby-display",math.max(.03,pending+.02),function() if not A.Combat() then B:UpdateNearbyWindow() end end) end
   return out
