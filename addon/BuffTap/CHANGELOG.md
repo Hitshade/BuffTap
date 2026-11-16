@@ -30,12 +30,12 @@
 
 # BuffTap 1.24.5
 
-### Fixed — tracking state and preference persistence
+### Fixed: tracking state and preference persistence
 - Replaced the legacy gathering-only saved-ID validator in `Engine.lua` with bounded, integral spell-ID validation. Class tracking selections, including Hunter and Paladin tracking, now persist through database initialization, reload and profile operations; runtime spellbook/trackability checks remain separate from saved-setting normalization.
 - Reworked minimap tracking reconciliation in `Helpers.lua` and `BuffTap.lua`: `MINIMAP_UPDATE_TRACKING` schedules a debounced update, prevents the previously preferred tracker from being re-armed while the client settles, and refreshes the secure action only after the selection is reconciled.
 - Reconcile tracking again when the helper is enabled, after post-login/loading settling, and following `PLAYER_REGEN_ENABLED` when a switch occurred during combat. Maintain the last preference when no primary tracker is currently active; independent Find Treasure tracking remains separate.
 
-### Fixed — inventory, privacy and defensive data handling
+### Fixed: inventory, privacy and defensive data handling
 - Restricted `weaponSkipEmpty` suppression in `WeaponCoatings.lua` to ordinary coatings (oils/sharpening stones) and Rogue poisons. Mage scroll and Warlock stone readiness still produce their normal out-of-stock reminders.
 - Extended privacy-filtered `ExportSettings(true)` in `Profiles.lua` to omit `blessingSaved`, `oathAssigned` and `soulstoneAssigned`, as well as the previously excluded blacklist identities. Explicit user-requested settings exports preserve class settings. This specifically affects shareable Full check-up reports, not normal gameplay preferences.
 - Hardened `NormalizeBlessingAssignments()` for imported `blessingSaved` tables: validate Player GUIDs, recognized classes and blessing choices, remove unsafe name markup and invalid records, sort keys deterministically and cap accepted records at 200.
@@ -49,7 +49,7 @@
 
 # BuffTap 1.24.4
 
-### Changed — dedicated Supplies configuration page
+### Changed: dedicated Supplies configuration page
 - Promoted Supplies from the Consumables page's internal view switch to its own sidebar tab and settings panel. `Options.lua` defines the additional page at internal index 15 and inserts it immediately after Consumables in the visible navigation order; the global UI now contains 15 page definitions.
 - Routed entry points such as `ShowSuppliesOptions()` to the new page; updated `OptionsRefinement.lua` page titles, descriptions, header controls, Customize look shortcut and Supply appearance navigation accordingly.
 - Separated navigation-status lights: the Consumables indicator now reflects `consumablesEnabled` alone, while Supplies reflects `suppliesEnabled`, removing the previous combined active state.
@@ -64,13 +64,13 @@
 
 # BuffTap 1.24.3
 
-### Added — class-aware minimap tracking
+### Added: class-aware minimap tracking
 - Expanded `Helpers.lua` tracking discovery from three gathering spell IDs to learned, spell-backed entries exposed by `C_Minimap.GetNumTrackingTypes()` / `GetTrackingInfo()`, including class-specific tracking such as Hunter tracking and Paladin Sense Undead.
 - Added `TrackingChoices()` to combine the active/learned minimap list with eligible curated-but-unlearned spellbook catalog entries, allowing a preference to be selected before its ability is trained.
 - Replaced the three hard-coded tracking buttons with an icon-bearing, scrollable selector in Helpers. Added `helperTrackingFollow` (default on): after a minimap-menu change, the selected primary tracking spell becomes BuffTap's preferred tracker instead of being immediately replaced. Dwarf Find Treasure stays on its own independent toggle.
 - Added a Druid Track Humanoids guard: only offer that reminder while in Cat Form (`GetShapeshiftFormID()==1`). Tracking choice persistence and event-race issues in this first implementation were subsequently corrected in **1.24.5**.
 
-### Changed — weapon stock and untimed buffs
+### Changed: weapon stock and untimed buffs
 - Added the `weaponSkipEmpty` preference and Weapons-page control to omit reminders for out-of-stock weapon consumables; persisted it in class-settings import/export. The initial condition was broader than intended; **1.24.5** narrowed it so class-created Mage/Warlock items remain eligible for their normal reminders.
 - Marked until-cancelled auras and aspects as `noTimer` / `permanent` in `Catalog.lua`, including Trueshot Aura, Shadowform and Soul Link. The Buffs settings display now shows an untimed state rather than a nonfunctional rebuff slider.
 - Resolved overlapping Resurrection controls for Druids without a learned resurrection spell. The UI conditionally shows Rebirth options or a single not-yet-learned note.
@@ -84,13 +84,13 @@
 
 # BuffTap 1.24.2
 
-### Fixed — secure item use and blessing resolution
+### Fixed: secure item use and blessing resolution
 - For self-maintenance consumables, `BuffTap.lua` now writes `unit="player"` alongside secure item attributes and verifies that `type1`, `item` and `unit` match before the action is offered. This prevents a targetable Juju or Crystal from unintentionally using an arbitrary selected friendly target; weapon-item actions retain their distinct handling.
 - Corrected context-specific Paladin blessing exceptions: `GetBlessingPlayer()` now returns no override if the requested Party/Raid choice does not exist, so a Raid-only saved choice cannot suppress Party healer/tank role preferences, or vice versa.
 - Kept the per-class remembered-player editor accessible even when no player of that class currently appears in the group, allowing absent remembered records to be inspected and removed.
 - Corrected retrieval of the second `UnitClass()` return when persisting remembered blessings, instead of relying on the first-value-only API wrapper.
 
-### Fixed — settings export/import and layout
+### Fixed: settings export/import and layout
 - Suppressed `blessingSaved` in privacy-filtered Full check-up settings exports while retaining it in explicit profile exports. **This version did not yet exclude Oath/Soulstone assignment identities; that was extended in 1.24.5.**
 - Added `blessingSelf` and `blessingSaved` to the class-spell exclusion rules so Paladin-specific player exceptions cannot be imported unintentionally onto another class.
 - Corrected the Supplies page's overlapping master warning/icon checkbox positions and synchronized the root and bundled READMEs.
@@ -102,7 +102,7 @@
 
 # BuffTap 1.24.1
 
-### Added — persistent Paladin per-player blessing exceptions
+### Added: persistent Paladin per-player blessing exceptions
 - Added `blessingSelf`: the Paladin's personal blessing exception now persists across sessions, independently for the Party and Raid contexts.
 - Added opt-in `blessingSaved`, keyed by recipient GUID, for retaining other players' blessing exceptions across sessions. Unremembered exceptions remain session-scoped. Saving and forgetting a player invalidates relevant aura checks and refreshes recommendations.
 - Expanded the Groups player-exception editor with **Remember** controls for current members and a greyed-out display with **Remove** for absent remembered members. Display names preserve WoW Forever surname information when available.
@@ -114,13 +114,13 @@
 
 # BuffTap 1.24.0
 
-### Added — curated specialty utility consumables
+### Added: curated specialty utility consumables
 - Extended `ConsumableData.lua`'s utility checklist with Magical Awareness source items (Elemental Attractor and Arcane Censer), Spirit/Sheen/Swiftness of Zanza, Juju Power/Might/Guile/Ember/Chill, Blasted Lands stat consumables, Crystal Force/Ward and Dire Maul drinks.
 - Extended `MakeChecklist(parent,prefix,lines,sharedLines)` so distinct item IDs may be alternative sources of the same recognized effect. Magical Awareness can be refreshed from either carried source; Zanza choices are mutually exclusive as a replacement line. Existing same-effect Firewaters retain their shared-line behaviour.
 - Retained conservative curated item mapping and effect-pause behaviour. New utility entries were registered with Forever on-use spell IDs as expected aura IDs; if the expected buff isn't observed after use, the reminder is paused rather than repeatedly consuming items. The aura IDs have not all been verified in game.
 - Excluded intentionally short/combat-only Juju Flurry/Juju Escape, Flask of Petrification, Predatory Senses, targetable Crystal Spire and zone-specific Winterspring Shrouding from automatic maintenance. The comprehensive external consumables research catalog is broader than the application's active whitelist.
 
-### Fixed — Supplies and configuration portability
+### Fixed: Supplies and configuration portability
 - Kept Supplies inventory counts fresh when warning delivery is disabled by invalidating the stock cache on relevant bag/item events, while not producing alerts. The Supplies list remains readable in the options window.
 - Added a repeating alpha-animation group for the live Supplies icon's Pulse effect, matching the functioning preview rather than leaving the live glow static.
 - Extended the class-settings schema to include `supplyCustom`, `supplyReminder`, `supplyAnywhere` and picker preferences. Extended shared profile appearance serialization for the Supplies reminder's size, position, text formatting, icon style and effects.
@@ -131,13 +131,13 @@
 
 # BuffTap 1.23.0
 
-### Added — independently maintained elixirs and utility buffs
+### Added: independently maintained elixirs and utility buffs
 - Converted the previously single-choice elixir and utility families into checklists. `MakeChecklist()` creates hidden child families for individual items; each checked item has its own maintenance reminder, while its refresh threshold inherits the parent family via `thresholdKey`.
 - Added explicit replacement-line definitions for elixir families. Selecting one item unticks other members of that *same line*, and their equivalent recognized auras can satisfy it; unrelated checked elixirs can be maintained simultaneously on WoW Forever. The two Firewater item IDs likewise share one utility effect.
 - Extended the item chooser with multi-select checkmarks, same-line conflict feedback, item counts, search, a clear-all operation and remembered **In bags only** preference. Existing single-item elixir/utility choices are used as a migration fallback until an explicit checklist preference exists.
 - Adjusted `Consumables.lua` selection and `Supplies.lua` tracking to skip the new parent multi-families and evaluate the selected hidden child families, preventing duplicate parent-and-child maintenance actions.
 
-### Added — custom stock-only Supplies tracking and movable reminder
+### Added: custom stock-only Supplies tracking and movable reminder
 - Added arbitrary tracked inventory IDs (`supplyCustom`) and per-item `custom:<itemID>` stock entries. Item IDs can be resolved from supported item links/names or selected from bags; adding an item does not grant permission to use or cast it.
 - Added custom tracked-item remove controls, a scrollable Supplies list, and display-only stock refresh even with the alerts master switch off. Custom entries count carried inventory, not spell usability; they never become secure consumable actions.
 - Replaced the compact Supplies status badge with a dedicated movable, nonsecure reminder featuring per-category stock details, icon/text appearance controls, click-through to settings and 10-minute snooze. By default it appears while resting; an optional setting permits display outdoors. Added its own positioning support to Edit Mode and the Customization editor.
@@ -153,13 +153,13 @@
 
 # BuffTap 1.22.7
 
-### Added — Return the Favor priority for Nearby recipients
+### Added: Return the Favor priority for Nearby recipients
 - Added optional-on-by-default favor detection driven by newly observed or refreshed player helpful auras (`UNIT_AURA` for `player`), using identifiable player-source units and GUIDs. This is evidence-driven rather than automatic chat or combat-log guessing.
 - A detected favor remains eligible for 300 seconds; a buff BuffTap itself gave is excluded from reciprocation for 300 seconds, and the same recipient cannot be bumped again for 1,800 seconds. Favor state is reflected in Nearby cache keys and invalidates cached recipients when necessary.
 - Nearby sorts actionable cleanses first, followed by favorable recipients needing buffs, then other buff candidates with friend/guild priority. A small gold icon marks favor status while an action is available. Every spell still requires an explicit click or assigned binding.
 - Improved default priority for friends and guild members within eligible Nearby buff recipients, with deterministic ordering within priority tiers.
 
-### Fixed — readable Nearby errors
+### Fixed: readable Nearby errors
 - Normalized Blizzard's long range-related `UI_ERROR_MESSAGE` strings to a short localized **Out of range** result, using known error constants and a narrow string fallback so the message fits the Nearby row.
 
 ---
