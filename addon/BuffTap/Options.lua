@@ -927,7 +927,11 @@ function B:UpdateBlessingOptions()
     for _,entry in ipairs(entries) do local value=self:GetBlessingPlayer(A.Call(UnitGUID,entry.unit),f.blessingContext); if value and value.choice then exceptions=exceptions+1 end end
     row.players:SetText(exceptions>0 and L(exceptions==1 and "%d exception" or "%d exceptions",exceptions) or L("Players"))
     row.players:SetBackdropColor(exceptions>0 and .16 or 0,exceptions>0 and .14 or 0,exceptions>0 and .06 or 0,exceptions>0 and 1 or 0)
-    row.players:SetEnabled(#entries>0 and not A.Combat()); row.players:SetAlpha(#entries>0 and 1 or 0.4)
+    -- Remembered players of this class keep the panel reachable even with none of them in the group.
+    local remembered=false
+    if type(self.db.blessingSaved)=="table" then for _,s in pairs(self.db.blessingSaved) do if type(s)=="table" and s.class==row.class then remembered=true; break end end end
+    local reachable=#entries>0 or remembered
+    row.players:SetEnabled(reachable and not A.Combat()); row.players:SetAlpha(reachable and 1 or 0.4)
     T.Glyph(row.players.arrow,f.expandedBlessing==row.class and "up" or "down",12)
     local chosen=self:GroupBlessingSettings(row.class,scope,true,f.blessingContext); local status="Current settings"
     if self:GroupEditorSettings().blessingAssignments then
@@ -956,7 +960,7 @@ function B:BuildSupplyOptions(parent)
   p:SetPoint("TOPLEFT",0,-36); p:SetPoint("BOTTOMRIGHT",0,0); f.supplyBody=p
   label(p,L("Supplies"),18,-16,"GameFontNormalLarge")
   label(p,L("Optional bag-stock warnings for selected weapon consumables and buff items."),18,-42,"GameFontDisableSmall",670)
-  f.supplyEnable=check(p,L("Enable supply warnings"),18,-70,function(c) setAndRefresh("suppliesEnabled",c:GetChecked()==true); B:UpdateSupplyOptions() end)
+  f.supplyEnable=check(p,L("Enable supply warnings"),18,-44,function(c) setAndRefresh("suppliesEnabled",c:GetChecked()==true); B:UpdateSupplyOptions() end)
   addHelp(f.supplyEnable,"Supply warnings","Shows a small stock indicator beside BuffTap. Counts carried usable items only. No purchases, bank tracking, or changes to casting priorities.")
   -- Track any item: shift-click or drag it into the box, or type its name, then press Enter or Add.
   -- Supplies reminder icon (look and position under Customization > Supplies).

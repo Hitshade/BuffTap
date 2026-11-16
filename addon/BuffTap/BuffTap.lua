@@ -409,10 +409,13 @@ function B:Commit(action,reason)
       b:SetAttribute("type1",nil); b:SetAttribute("item",nil); b:SetAttribute("unit",nil); self.reason="secure item attribute verification failed"; return
     end
   elseif action.source=="consumable" or (action.source=="weapon-reminder" and action.secureType=="item") then
+    -- Personal consumables (Juju Power, Crystal Force...) can target others: always aim them at yourself.
+    local unit=action.source=="consumable" and action.target=="player" and "player" or nil
     b:SetAttribute("item",action.itemToken)
+    b:SetAttribute("unit",unit)
     b:SetAttribute("type1","item")
-    if b:GetAttribute("item")~=action.itemToken or b:GetAttribute("type1")~="item" then
-      b:SetAttribute("type1",nil); b:SetAttribute("item",nil); self.reason="secure item attribute verification failed"; return
+    if b:GetAttribute("item")~=action.itemToken or b:GetAttribute("type1")~="item" or b:GetAttribute("unit")~=unit then
+      b:SetAttribute("type1",nil); b:SetAttribute("item",nil); b:SetAttribute("unit",nil); self.reason="secure item attribute verification failed"; return
     end
   else
     b:SetAttribute("spell",action.id)

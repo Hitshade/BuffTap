@@ -4,7 +4,7 @@
 
 local _, B = ...
 _G.BuffTap = B
-B.version = "1.24.1"
+B.version = "1.24.2"
 B.API = {}
 local A = B.API
 
@@ -1471,7 +1471,11 @@ function B:GetBlessingPlayer(guid,context)
   if not value and type(saved)=="table" then value=saved end
   if not value then return nil end
   context=context or self:BlessingContext()
-  return {choice=context=="Raid" and value.raidChoice or context=="Party" and value.choice or nil}
+  -- Only a choice for this context counts: a Raid-only exception must not hide Party role choices.
+  local choice
+  if context=="Raid" then choice=value.raidChoice elseif context=="Party" then choice=value.choice end
+  if choice==nil then return nil end
+  return {choice=choice}
 end
 local retiredBlessings={bos=true,gbos=true,bol=true,gbol=true}
 function B:NormalizeBlessingAssignments()
@@ -1606,8 +1610,8 @@ function B:SetBlessingRemember(entry,on)
   if on then
     local value=self.blessingPlayers and self.blessingPlayers[guid]
     if not value or not (value.choice or value.raidChoice) then return end
-    local _,class=A.Call(UnitClass,entry.unit)
-    saved[guid]={choice=value.choice,raidChoice=value.raidChoice,name=B.FullUnitName(entry.unit),class=class or entry.class}
+    local ok,_,class=pcall(UnitClass,entry.unit)
+    saved[guid]={choice=value.choice,raidChoice=value.raidChoice,name=B.FullUnitName(entry.unit),class=(ok and class) or entry.class}
   else
     local old=saved[guid]
     if type(old)=="table" and (old.choice or old.raidChoice) then

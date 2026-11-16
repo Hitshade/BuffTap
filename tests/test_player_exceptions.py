@@ -41,3 +41,18 @@ test('Exception rows show realm and class colour',setup+"""UnitName=function(u) 
 RAID_CLASS_COLORS={HUNTER={r=0.67,g=0.83,b=0.45}}
 assert(BuffTap.FullUnitName('party1')=='Mizi Doomhowl'); assert(BuffTap.FullUnitName('player')=='Me')
 local t=BuffTap.ClassColoredName('party1','HUNTER'); assert(t=='|cffabd473Mizi Doomhowl|r',t)""")
+test('Raid-only exception does not hide Party choices (audit #1)',setup+"""local g=UnitGUID('party1'); BuffTap.blessingPlayers={[g]={raidChoice='bow'}}
+assert(BuffTap:GetBlessingPlayer(g,'Party')==nil,'party nil'); assert(BuffTap:GetBlessingPlayer(g,'Raid').choice=='bow')
+BuffTap.blessingPlayers=nil; BuffTap.db.blessingSaved={[g]={choice='bok',name='X',class='WARRIOR'}}
+assert(BuffTap:GetBlessingPlayer(g,'Raid')==nil,'remembered party-only'); assert(BuffTap:GetBlessingPlayer(g,'Party').choice=='bok')""")
+test('Shared reports leave remembered players out, full export keeps them (audit #4)',setup+"""local B=BuffTap; B.db.blessingSaved={['Player-1-9']={choice='bok',name='Absentname Moonweaver',class='WARRIOR'}}
+assert(not B:ExportSettings(true):find('Absentname'),'private export'); assert(B:ExportSettings(false):find('Absentname'),'full export')""")
+test('Exceptions are Paladin-only on import (audit #5)',setup+"""local B=BuffTap; B.db.blessingSaved={['Player-1-9']={choice='bok',name='A',class='WARRIOR'}}; B.db.blessingSelf={choice='bok'}
+local text=B:ExportSettings(false); B.db.blessingSaved=nil; B.db.blessingSelf=nil
+local real=UnitClass; UnitClass=function(u) if u=='player' then return 'Mage','MAGE' end return real(u) end
+B:ImportSettings(text); UnitClass=real
+assert(B.db.blessingSaved==nil and B.db.blessingSelf==nil,'skipped for another class')""")
+test('Remember reads the class when roster metadata is missing (audit #7)',setup+"""BuffTap:SetBlessingPlayer({unit='party1'},'bok')
+local real=UnitClass; UnitClass=function(u) if u=='party1' then return 'Warrior','WARRIOR' end return real(u) end
+BuffTap:SetBlessingRemember({unit='party1'},true); UnitClass=real
+assert(BuffTap.db.blessingSaved[UnitGUID('party1')].class=='WARRIOR')""")

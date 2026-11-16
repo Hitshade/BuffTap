@@ -1,3 +1,15 @@
+# BuffTap 1.24.2
+
+### Fixes
+- Personal consumables such as Juju Power and Crystal Force are now always used on yourself, even with someone else targeted.
+- Paladins: a blessing exception set only for raids no longer overrides your tank and healer choices in a party, and the other way around.
+- Remembered players can be reached and removed even when nobody of their class is in your group.
+- Full check-up reports leave out remembered players. Your own settings export still keeps them.
+- Blessing exceptions are no longer copied when you import settings onto a character of another class.
+- Remember now reads a player's class directly, so it works even when the group list has not caught up yet.
+
+---
+
 # BuffTap 1.24.1
 
 ### Changes

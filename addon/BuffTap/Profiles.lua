@@ -256,12 +256,13 @@ local PRIVATE={blockedPlayers=true,blockedGuilds=true}
 function B:ExportSettings(private)
   local data={shared={},class={}}
   for key in pairs(shared) do if not (private and PRIVATE[key]) then data.shared[key]=clone(self.db[key]) end end
-  for _,key in ipairs(classKeys) do data.class[key]=clone(self.db[key]) end
+  -- Remembered blessing exceptions name other players: kept in full exports, left out of shared reports.
+  for _,key in ipairs(classKeys) do if not (private and key=="blessingSaved") then data.class[key]=clone(self.db[key]) end end
   local out={}; encode(data,out,0)
   return "BuffTap1:"..tostring(token() or "NONE")..":"..table.concat(out)
 end
 -- Settings tied to one class's spells. Everything else in the class setup applies to any class.
-local classSpellKeys={buffs=true,priorities=true,buffSeconds=true,salvationVersion=true,salvationMigration=true,targetClassBlessings=true,
+local classSpellKeys={blessingSelf=true,blessingSaved=true,buffs=true,priorities=true,buffSeconds=true,salvationVersion=true,salvationMigration=true,targetClassBlessings=true,
   targetBlessingFallback=true,targetBlessingClasses=true,targetBlessingPriorities=true,blessingGroupOverrides=true,blessingRaidDefaults=true,
   blessingPartyMode=true,blessingPartyUniform=true,blessingPartyExcluded=true,groupBlessingPriorities=true,blessingAssignments=true,
   blessingClasses=true,buffGroups=true,buffClasses=true,buffGroupNeed=true,buffRoles=true,buffSelf=true,blessingRoleChoices=true,targetBuffs=true,

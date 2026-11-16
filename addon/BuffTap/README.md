@@ -13,7 +13,7 @@ Choose what to maintain, who receives it, and when to refresh it.
 - **Personal and friendly-target buffing** with independent settings and class-aware Paladin target choices.
 - **Per-buff raid-group and class filters**, priorities, and refresh thresholds.
 - **Smart group spells** that check who still needs the buff before spending reagents.
-- **Paladin blessing assignments and ordered priorities** with separate party/raid plans, uniform or per-class choices, subgroup overrides, visual assignment icons, and player exceptions.
+- **Paladin blessing assignments and ordered priorities** with separate party/raid plans, uniform or per-class choices, subgroup overrides, visual assignment icons, and player exceptions. Your own exception is saved, and **Remember** keeps another player's exception for the next time you group.
 
 ## 👥 Nearby buffing & quick party invites
 
@@ -38,7 +38,7 @@ Weapon application is optional and starts disabled.
 
 ## 🧪 Consumables without the bag search
 
-Select supported **food buffs, flasks, elixirs and selected utility consumables** using a searchable picker with an in-bags filter. Keep a preferred item selected or use supported automatic choices.
+Select supported **food buffs, flasks, elixirs and special buffs** (Magical Awareness, Zanza, Juju, Blasted Lands, Un'Goro crystals, Dire Maul drinks) using a searchable picker with an in-bags filter. Keep a preferred item selected or use supported automatic choices.
 
 Optional **low-stock warnings** cover selected buff and weapon consumables, with configurable thresholds, private alerts, sounds, and ready-check summaries. Consumable management and stock warnings start disabled.
 

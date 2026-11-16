@@ -13,13 +13,13 @@ Choose what to maintain, who receives it, and when to refresh it.
 - **Personal and friendly-target buffing** with independent settings and class-aware Paladin target choices.
 - **Per-buff raid-group and class filters**, priorities, and refresh thresholds.
 - **Smart group spells** that check who still needs the buff before spending reagents.
-- **Paladin blessing assignments and ordered priorities** with separate party/raid plans, uniform or per-class choices, subgroup overrides, visual assignment icons, and player exceptions.
+- **Paladin blessing assignments and ordered priorities** with separate party/raid plans, uniform or per-class choices, subgroup overrides, visual assignment icons, and player exceptions. Your own exception is saved, and **Remember** keeps another player's exception for the next time you group.
 
 ## 👥 Nearby buffing & quick party invites
 
 Share buffs with nearby players from a **compact, movable window**, with class-coloured names and missing-buff icons. **Players needing an eligible buff appear first**. Click a player or use your normal mouse-wheel or key binding to apply the next buff.
 
-- **Stable, fixed-size list** with five visible rows, a scrollbar and support for up to 40 detected players.
+- **Stable, fixed-size list** with 2–40 configurable visible rows (five by default), a scrollbar and support for up to 40 detected players.
 - **Optional all-players view** keeps nearby strangers listed after buffing, with a small header icon to switch views.
 - **Quick party invites** beside player names, or suggestions to your group leader when the game offers that action. Invite shortcuts work in either view.
 - **Independent controls** for nearby buffing, the player list and invitation buttons in the **Nearby tab**. **Shift-left-click the minimap icon** to toggle the window.
@@ -38,7 +38,7 @@ Weapon application is optional and starts disabled.
 
 ## 🧪 Consumables without the bag search
 
-Select supported **food buffs, flasks, elixirs and selected utility consumables** using a searchable picker with an in-bags filter. Keep a preferred item selected or use supported automatic choices.
+Select supported **food buffs, flasks, elixirs and special buffs** (Magical Awareness, Zanza, Juju, Blasted Lands, Un'Goro crystals, Dire Maul drinks) using a searchable picker with an in-bags filter. Keep a preferred item selected or use supported automatic choices.
 
 Optional **low-stock warnings** cover selected buff and weapon consumables, with configurable thresholds, private alerts, sounds, and ready-check summaries. Consumable management and stock warnings start disabled.
 
@@ -53,6 +53,8 @@ Enable **Hunter/Warlock pet readiness, personal Healthstone creation, Soulstone 
 Helpers are opt-in, so you choose how much assistance you want. Paladins can also maintain an explicitly assigned Oath of Light recipient when talented.
 
 ## 🎨 Make it your own
+
+Open **Customization** for live buff/camping previews and separate appearance, binding/sound and interface sections. Choose gold, class or custom interface accents and window scale. **Patch notes** keeps ten recent updates, with older history linked online.
 
 Open **Customization** to adjust your binding, appearance, sounds and quick access. Use arrows to arrange buff priorities. Move and resize the reminder, including alongside Blizzard Edit Mode, and adjust opacity, label fonts/colors, timers, glow style, color and speed. Both reminders have independent text font, size, color, outline and spacing controls. Choose separate reminder and low-stock sounds from game assets or installed SharedMedia packs, search and preview them, and control alert frequency. Reminders pause while mounted; optionally pause them in cities and inns too.
 

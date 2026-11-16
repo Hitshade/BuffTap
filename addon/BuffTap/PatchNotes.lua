@@ -2,6 +2,13 @@
 local _,B=...
 -- Keep the ten most recent releases within a 24 KiB content ceiling.
 B.PatchNotes={
+ {version="1.24.2",title="Fixes",items={
+  "Personal consumables such as Juju Power and Crystal Force are now always used on yourself, even with someone else targeted.",
+  "Paladins: a blessing exception set only for raids no longer overrides your tank and healer choices in a party, and the other way around.",
+  "Remembered players can be reached and removed even when nobody of their class is in your group.",
+  "Full check-up reports leave out remembered players. Your own settings export still keeps them.",
+  "Blessing exceptions are no longer copied when you import settings onto a character of another class.",
+  "Remember now reads a player's class directly, so it works even when the group list has not caught up yet."}},
  {version="1.24.1",title="Blessing exceptions you can keep",items={
   "Paladins: the blessing exception you set for yourself on the Groups page (for example Kings instead of Wisdom) is now saved and survives reloads and logouts.",
   "Exceptions for other players still last for the current session, unless you tick Remember on their row. Remembered players keep their blessing the next time you group, and show greyed out with a Remove button while they are away."},thanks="Thanks to Misketadam for the report."},
@@ -51,8 +58,6 @@ B.PatchNotes={
   "The PvP protection switch is now also on the Nearby page.",
   "BuffTap holds back while you are in Stealth, Prowl or Shadowmeld, so a buff never breaks it.",
   "While Nearby is paused (stealthed, mounted or resting), its first row says so and the players below stay listed for invites."},thanks="Thanks to bruinsfan825 and user_vvl9721yymgwdslx85417 for the reports."},
- {version="1.22.1",title="Nearby dash restored",items={
-  "Players with nothing to cast show the small grey dash in the Nearby window again. It was removed by mistake in 1.22.0."}},
 }
 function B:PatchNotesUnread()
   return self.profileDB and self.db.optionsPatchDot~=false and self.profileDB.global.patchNotesSeen~=self.version
