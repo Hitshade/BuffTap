@@ -691,6 +691,8 @@ function B:DiagnosticsLines()
   out[#out+1]="PvP protection: "..(self.db and self.db.pvpProtection and "on" or "off")
   if self.buffDataUnavailable then out[#out+1]="Buff information unavailable or incomplete; missing coverage cannot be assumed." end
   if self.ownershipUnavailable then out[#out+1]="Blessing ownership unavailable; replacing your own blessing is prevented." end
+  if self.db and self.trackingFollowPending then out[#out+1]="Tracking: updating the preference from the minimap." end
+  if self.effectPauses and next(self.effectPauses) then out[#out+1]="Consumables: an effect was not detected; use Retry reminders." end
   if self.pvpBlocked then out[#out+1]="PvP protection blocked at least one recipient or group cast." end
   if self.deferredBlocked then out[#out+1]="A failed recipient is temporarily deferred; automatic retry is scheduled." end
   if self.refreshDue then out[#out+1]="Next event scan: "..string.format("%.1fs",math.max(0,self.refreshDue-GetTime())).." ("..tostring(self.refreshReason or "scheduled")..")" end

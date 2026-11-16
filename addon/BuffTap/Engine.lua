@@ -4,7 +4,7 @@
 
 local _, B = ...
 _G.BuffTap = B
-B.version = "1.24.5"
+B.version = "1.24.6"
 B.API = {}
 local A = B.API
 
@@ -96,7 +96,7 @@ function B:InitDB()
   if type(self.db.showGroupBadge)~="boolean" and type(self.db.showGroupIndicator)=="boolean" then self.db.showGroupBadge=self.db.showGroupIndicator end
   self.db.showRemaining=nil; self.db.showGroupIndicator=nil
   local defaults = {enabled=true, showReminder=true, size=64, opacity=1, x=0, y=-180,
-    seconds=45, rebuffVersion=1, sound=false, reminderSound="cleanse", alertSoundVersion=0, supplySound="glass", campAlertSound="harp", cleanseSound="bell", socialSound="hello", nearbySocialAlert=false, nearbySocialFriends=true, nearbySocialGuild=true, cleanseEnabled=false, cleanseTypes={Magic=true,Curse=true,Poison=true,Disease=true}, cleanseSelf=true, cleanseGroup=true, cleanseTarget=true, cleanseNearby=false, cleansePreferAbolish=true, cleanseBorder=true, reviveEnabled=true, reviveGroup=true, reviveTarget=true, reviveRebirth=false, soundChannel="Master", soundInterval=5, glow=true, pulse=false, group=true, smartGroup=true,
+    seconds=45, rebuffVersion=1, sound=false, reminderSound="cleanse", alertSoundVersion=0, supplySound="glass", campAlertSound="harp", cleanseSound="bell", socialSound="hello", nearbySocialAlert=false, nearbySocialFriends=true, nearbySocialGuild=true, cleanseEnabled=false, cleanseTypes={Magic=true,Curse=true,Poison=true,Disease=true}, cleanseSelf=true, cleanseGroup=true, cleanseTarget=true, cleanseNearby=false, cleansePreferAbolish=true, cleanseBorder=true, reviveEnabled=true, reviveGroup=true, reviveTarget=true, reviveRebirth=false, cleanseFirst=false, soundChannel="Master", soundInterval=5, glow=true, pulse=false, group=true, smartGroup=true,
     groupNeed=3, blessingNeed=2, friendlyTarget=false, targetSeconds=300, keys={"MOUSEWHEELDOWN"}, buffs={}, priorities={}, buffSeconds={},
     pauseResting=false, targetClassBlessings=true, targetClasses={}, targetBlessingFallback=true, targetBlessingClasses={}, targetBlessingPriorities={}, groupBlessingPriorities={}, blessingAssignments=false, blessingClasses={}, blessingGroupOverrides={}, buffGroups={}, buffClasses={}, buffGroupNeed={}, targetBuffs={}, targetBuffSeconds={}, showBuffName=false, showTargetName=true, showTimer=false, showGroupBadge=true,
     pickerBagsOnly=true, supplyCustom={}, consumablesEnabled=false, consumableFamilies={}, consumableChoices={}, consumableSeconds={},
@@ -105,7 +105,7 @@ function B:InitDB()
     consumablesPauseResting=false, weaponsPauseResting=false, weaponSkipEmpty=false, helperTrackingFollow=true,
     weaponApply=false, weaponReplace=false, weaponChoices={}, weaponCoatings={}, weaponSeconds=60,
     nearbyEnabled=false, nearbyBuffing=true, nearbyShowAll=false, nearbyInvites=true, nearbyLocked=false, nearbyOnTop=false, nearbyFont="default", nearbyFontSize=0, nearbyFontOutline="none", nearbyShowLevel=false, nearbyMarkSocial=true, nearbyHideHeader=false, nearbyKeepLine=true, nearbyWhileResting=false, nearbyHoldShort=false, nearbyCastResult=true, nearbyAnimate=true, nearbyReturnFavor=true, nearbyKeys={}, effectUrgency=false, effectOnce=false, nearbyManaFloor=0, consumablesInstanceOnly=false, buffPets=false, helperDismissMinutes=10, helperThankDelay=0, readyCheckTopUp=true, pauseNotes=true, blockIgnored=true, blacklistTargets=true, blacklistInInstances=true, blockedPlayers={}, blockedGuilds={}, nearbyX=240, nearbyY=0, pvpProtection=true, helperDismiss=true, helperBounce=false, helperTracking=false, helperTreasure=false, helperCoverage=false,
-    helperDiscovery=false, helperThanks=false, helperThankEmote="THANK", helperQuick=false, helperTracker=0, helperPet=false, helperHealthstone=false, helperSoulstone=false, helperOath=false, oathAssigned={}, soulstoneParty="healer", soulstoneRaid="remind", soulstoneAssigned="", helperDemon=0,
+    helperDiscovery=false, helperThanks=false, helperThankEmote="THANK", helperQuick=false, helperTracker=0, helperPet=false, helperHealthstone=false, helperSoulstone=false, helperOath=false, oathAssigned={}, soulstoneParty="healer", soulstoneRaid="remind", soulstoneAssigned="", soulstoneAssignedGUID="", helperDemon=0,
     raidGroups={true,true,true,true,true,true,true,true},
     buffRoles={}, buffSelf={}, blessingRoleChoices={}, roleMarks={}, roleGuess=false, helperThanksResting=false,
     nearbyRequests=false, requestMessage="", requestBuffs={}, nearbyButtonSide="left",
@@ -137,6 +137,11 @@ function B:InitDB()
   if self.db.soulstoneParty~="healer" and self.db.soulstoneParty~="self" and self.db.soulstoneParty~="assigned" then self.db.soulstoneParty="healer" end
   if self.db.soulstoneRaid~="remind" and self.db.soulstoneRaid~="assigned" then self.db.soulstoneRaid="remind" end
   if #self.db.soulstoneAssigned>64 then self.db.soulstoneAssigned="" end
+  local assignedGUID=self.db.soulstoneAssignedGUID
+  if not A.Text(assignedGUID) or #assignedGUID>128 or (assignedGUID~="" and (not assignedGUID:match("^Player%-") or assignedGUID:find("[%c|]"))) then
+    self.db.soulstoneAssignedGUID=""
+  end
+  if self.db.soulstoneAssigned=="" then self.db.soulstoneAssignedGUID="" end
   local oath=self.db.oathAssigned
   if type(oath)~="table" or not A.Text(oath.guid) or not oath.guid:match("^Player%-")
     or not A.Text(oath.name) or #oath.name>128 or oath.name:find("[%c|]") then self.db.oathAssigned={} end
@@ -1918,7 +1923,16 @@ function B:Select()
     return nil,paused
   end
 
-  if self:BGSelfMode() then return self:SelectBGSelf() end
+  if self:BGSelfMode() then
+    local bgAction,bgReason=self:SelectBGSelf()
+    if bgAction then return bgAction,bgReason end
+    -- Tracking reads the minimap list, not hidden auras, so it stays safe here.
+    if self.TrackingAction and not A.Combat() then
+      local tracking=self:TrackingAction()
+      if tracking then tracking.selectedAt=GetTime(); return tracking,"tracking reminder" end
+    end
+    return nil,bgReason
+  end
 
   if self:Preference("consumablesEnabled") and self:Preference("consumableFamilies").food then
     local eatingAuras=self:GetAuras("player",false)
@@ -2109,6 +2123,17 @@ function B:Select()
     elseif self:Enabled(b) and not supported and b.kind~="weapon" then self:AddDiag(b.key .. ": " .. why) end
   end
 
+  -- Class readiness you can actually cast (pet recovery, Healthstone, Soulstone) comes before optional
+  -- consumables. A manual-only notice has no cast, so it waits until everything castable was tried.
+  local deferredReadiness
+  if self.SelectReadiness then
+    local readiness=self:SelectReadiness()
+    if readiness then
+      if not readiness.manual then return readiness,"class readiness" end
+      deferredReadiness=readiness
+    end
+  end
+
   -- Personal consumables are intentionally evaluated after class/group/target
   -- spell maintenance so food/flasks never block a more immediate class buff.
   if type(self.SelectConsumable)=="function" then
@@ -2121,11 +2146,6 @@ function B:Select()
   if self.TrackingAction then
     local tracking=self:TrackingAction()
     if tracking then tracking.selectedAt=GetTime(); return tracking,"tracking reminder" end
-  end
-
-  if self.SelectReadiness then
-    local readiness=self:SelectReadiness()
-    if readiness then return readiness,readiness.manual and "manual pet recovery" or "class readiness" end
   end
 
   -- Weapon applications and manual coating reminders follow ordinary buffs
@@ -2142,6 +2162,7 @@ function B:Select()
     local nearby=self:SelectNearby()
     if nearby then return nearby,"nearby player" end
   end
+  if deferredReadiness then return deferredReadiness,"manual pet recovery" end
   if self.manaBlocked then return nil,"not enough mana" end
   if self.powerBlocked then return nil,"spell unavailable: form, reagents or requirements" end
   if self.cooldownBlocked then return nil,"waiting for cooldown" end

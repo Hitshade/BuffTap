@@ -2,6 +2,14 @@
 local _,B=...
 -- Keep the ten most recent releases within a 24 KiB content ceiling.
 B.PatchNotes={
+ {version="1.24.6",title="Fixes, and clearer reminders",items={
+  "Fixed: the resurrection reminder could fail to show for a dead group member. It now appears as it should.",
+  "New option on the Cleanse page: \"Cleanse before resurrection\", for classes that can do both. It is off by default, so resurrection still comes first unless you change it.",
+  "Soulstone: choosing a player with \"Use current target\" now remembers that exact person, even if someone in your group has a similar name. If an older assignment stops working, choose the player again.",
+  "Pet summons, Healthstones and Soulstones now come before optional food and flasks. A reminder you have to act on by hand no longer hides one you can click.",
+  "Hover a food, flask or elixir row on the Consumables page to see why nothing is being offered. The food picker also tells you when a different food effect is active. BuffTap never replaces it for you.",
+  "Hover the tracking choice under Helpers to see whether it is on, off or not learned yet.",
+  "Battlegrounds: your chosen tracking can be reminded again when you are not in combat."}},
  {version="1.24.5",title="Fixes",items={
   "Fixed: a tracking choice other than Herbs, Minerals or Fish (such as Hunter tracking) was reset on every reload. It now stays.",
   "When you switch tracking in the minimap menu, BuffTap no longer briefly offers your old tracking before following the new one. Switches made in combat are followed once combat ends, and your choice is checked again after logging in.",
@@ -59,11 +67,6 @@ B.PatchNotes={
   "The animated Nearby list is now on for everyone: rows glide down to make room and newcomers fade in. You can switch it off under Customization > Nearby window.",
   "New title-bar icons: rising z's for buffing in cities and inns, and a padlock that turns gold when the window is locked.",
   "When your mana reserve stops Nearby buffing, the window now says so: \"Paused: saving mana\". Players stay listed for invites."}},
- {version="1.22.5",title="Nearby in town, and a livelier list",items={
-  "Nearby's \"Buff while resting\" now works on its own, and the new zZ button in the Nearby title bar switches it: gold buffs players in cities and inns, grey pauses there. Characters that were buffing in towns keep doing so.",
-  "In the all-players view, players who just came into range now appear near the top, under those who need a buff and your friends.",
-  "Optional \"Animated list\" (Customization > Nearby window): rows glide down to make room and newcomers fade in.",
-  "The Resurrection switches line up with the Who switches on the Cleanse & revive page."}},
 }
 function B:PatchNotesUnread()
   return self.profileDB and self.db.optionsPatchDot~=false and self.profileDB.global.patchNotesSeen~=self.version

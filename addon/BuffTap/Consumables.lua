@@ -323,6 +323,68 @@ local function familyCoverage(B,family)
   return names,ids
 end
 
+-- Informational ONLY: never an eligibility gate. An effect ID names a food category, not the exact meal
+-- or its strength, so the wording never claims more than that.
+function B:FoodPreferenceStatus(settings)
+  local family=self:ConsumableFamily("food")
+  if not family or not self.db then return "unknown",self:Text("Food status unavailable.") end
+  if A.Combat() then return "unknown",self:Text("Food buffs will be checked after combat.") end
+  if not self:ConsumableFamilyEnabled(family,settings) then return "disabled",self:Text("Food reminders are turned off.") end
+  local chosen=self:ConsumableChoiceID(family,settings)
+  if not chosen then return "auto",self:Text("First usable food is selected; BuffTap does not choose the best stats.") end
+  local preferredIDs,knownIDs,genericIDs,genericNames={},{},{},{}
+  for _,item in ipairs(family.items or {}) do
+    for _,id in ipairs(item.auraIDs or {}) do
+      if A.Number(id) then knownIDs[id]=true; if item.id==chosen then preferredIDs[id]=true end end
+    end
+  end
+  for _,id in ipairs(family.auraSpellIDs or {}) do if A.Number(id) and not knownIDs[id] then genericIDs[id]=true end end
+  for _,id in ipairs(family.localizedAuraSpellIDs or {}) do
+    if A.Number(id) and not knownIDs[id] then genericIDs[id]=true end
+  end
+  for _,name in ipairs(family.auraNames or {}) do if A.Text(name) then genericNames[norm(name)]=true end end
+  if not next(preferredIDs) then return "ambiguous",self:Text("The selected food has no verified effect identity yet.") end
+  local auras=self:GetAuras("player",false)
+  if not auras then return "unknown",self:Text("Buff information is unavailable right now; BuffTap won't guess.") end
+  local preferred,other,generic=false,false,false
+  for _,aura in ipairs(auras) do
+    local id=A.Number(aura.spellId) and aura.spellId or nil
+    if id and preferredIDs[id] then preferred=true
+    elseif id and knownIDs[id] then other=true
+    elseif (id and genericIDs[id]) or (A.Text(aura.name) and genericNames[norm(aura.name)]) then generic=true end
+  end
+  if preferred and not other and not generic then return "compatible",self:Text("A compatible food effect is active. BuffTap cannot verify the exact meal.") end
+  if other and not preferred and not generic then return "different",self:Text("A different food effect is active. BuffTap won't replace it automatically.") end
+  if preferred or other or generic then return "ambiguous",self:Text("A food buff is active, but its exact effect cannot be confirmed.") end
+  return "missing",self:Text("No recognized food buff is active.")
+end
+
+-- One short reason for a single (non-checklist) consumable family. Read when a tooltip opens, never on a timer.
+function B:ConsumableExplanation(family,settings)
+  if not self.db or not family or family.multi then return "" end
+  if A.Combat() then return self:Text("Buffs will be checked after combat.") end
+  if not self:ConsumableFamilyEnabled(family,settings) then return self:Text("This reminder is turned off.") end
+  local paused=self:CategoryRestingPause("consumables")
+  if paused then
+    return paused:find("outside",1,true) and self:Text("Consumable reminders are paused outside dungeons and raids.") or self:Text("Consumable reminders are paused while resting.")
+  end
+  if family.key=="food" then local _,text=self:FoodPreferenceStatus(settings); return text end
+  if self.effectPauses then
+    for _,item in ipairs(family.items or {}) do
+      if self.effectPauses[item.id] then return self:Text("The expected effect was not detected. Use Retry reminders on this page.") end
+    end
+  end
+  local chosen=self:ConsumableChoiceID(family,settings)
+  if chosen and self:ConsumableCount(chosen)<1 then return self:Text("Your selected item is not in your bags.") end
+  local auras=self:GetAuras("player",false)
+  if not auras then return self:Text("The game isn't sharing enough buff information right now.") end
+  local missing,state=self:ConsumableFamilyState(family,auras)
+  if missing==false then return self:Text("A matching buff is already active.") end
+  if state=="expiring" then return self:Text("The buff is nearly due for a refresh.") end
+  if not self:PreferredConsumableItem(family,settings) then return self:Text("No supported item is available in your bags.") end
+  return self:Text("Ready when the item is usable and its cooldown is clear.")
+end
+
 function B:ConsumableFamilyState(family,auras)
   if not family or type(auras)~="table" then return nil,"aura state unavailable" end
   local names,ids=familyCoverage(self,family)

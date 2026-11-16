@@ -1449,7 +1449,7 @@ function B:BuildHelperPage(parent)
   end)
   sm.clear=button(sm,"Clear",196,-356,84,function()
     if A.Combat() then return end
-    B.db.soulstoneAssigned=""
+    B.db.soulstoneAssigned=""; B.db.soulstoneAssignedGUID=""
     if B.db.soulstoneParty=="assigned" then B.db.soulstoneParty="healer" end
     if B.db.soulstoneRaid=="assigned" then B.db.soulstoneRaid="remind" end
     B.readinessPending=nil; B:RequestRefresh("Soulstone assignment",0); B:Options()
@@ -1496,7 +1496,11 @@ function B:BuildHelperPage(parent)
     return list
   end,function(id) if A.Combat() then return end; B.db.helperTracker=id; B:RequestRefresh("tracking preference",0) end,"scroll")
   f.trackerPick.icon=f.trackerPick:CreateTexture(nil,"ARTWORK"); f.trackerPick.icon:SetSize(18,18); f.trackerPick.icon:SetPoint("LEFT",5,0)
-  addHelp(f.trackerPick,L("Tracking"),L("Pick the tracking BuffTap keeps up. Ones you have not learned yet can be chosen ahead of time."))
+  f.trackerPick:SetScript("OnEnter",function(s)
+    if not GameTooltip then return end
+    T.Tooltip(s,L("Tracking"),L("Pick the tracking BuffTap keeps up. Ones you have not learned yet can be chosen ahead of time.").."\n\n"..B:TrackingStatusText())
+  end)
+  f.trackerPick:SetScript("OnLeave",function() if GameTooltip then GameTooltip:Hide() end end)
   f.trackerFollow=check(f.helperSections and f.helperSections.tracking or tr,L("Follow my minimap choice"),494,-552,function(c)
     if A.Combat() then return end
     B.db.helperTrackingFollow=c:GetChecked()==true
@@ -1815,6 +1819,14 @@ function B:UpdateConsumablePicker()
   local note=family.protectPresent and L("One elixir choice. Existing elixir buffs are preserved until expiry.") or L("One choice at a time. Your selection stays saved when out of stock.")
   if family.multi then note=L("Tick as many as you like. Each one gets its own reminder. Your choices stay saved when out of stock.")
   else for _,item in ipairs(family.items or {}) do if item.id==selected and item.note then note=note.."\n"..item.note; break end end end
+  if family.key=="food" and self.FoodPreferenceStatus then
+    -- Live aura state belongs to the setup you are in now, never to a previewed one.
+    if f.situation and f.situation~=self.situationCurrent then note=note.."\n"..L("Live food status is shown only for your current setup.")
+    else
+      local status,text=self:FoodPreferenceStatus(f.situation and self:SituationPreview(f.situation,"consumables") or nil)
+      if status~="disabled" then note=note.."\n"..L("Current food: %s",text) end
+    end
+  end
   f.hint:SetText(note)
   f.count:SetText(L("%d matching items",#list)..(f.maxOffset>0 and (" - "..L("scroll for more")) or ""))
 end
@@ -2768,7 +2780,17 @@ function B:Options()
         local preferred=self.PreferredConsumableItem and self:PreferredConsumableItem(family,self:EditorSettings("consumables"))
         local current=preferred and self:ConsumableCount(preferred.id) or 0
         row.inventory:SetText(current>0 and ("|cff88dd88"..current.." in bags|r") or "No usable stock")
-        addHelp(row,"Supported items in bags",self:ConsumableInventorySummary(family,20))
+        if not family.multi and self.ConsumableExplanation then
+          -- Built when the tooltip opens, so it never shows stale buff state and costs nothing otherwise.
+          row:SetScript("OnEnter",function(s)
+            if not GameTooltip then return end
+            local text=B:ConsumableInventorySummary(family,20)
+            if B:EditorContext("consumables")~=B.situationCurrent then text=text.."\n"..L("Current status is not shown while editing another setup.")
+            else text=text.."\n\n"..B:ConsumableExplanation(family,B:EditorSettings("consumables")) end
+            T.Tooltip(s,L("Consumable stock and status"),text)
+          end)
+          row:SetScript("OnLeave",function() if GameTooltip then GameTooltip:Hide() end end)
+        else addHelp(row,"Supported items in bags",self:ConsumableInventorySummary(family,20)) end
         local active=self:ConsumableFamilyEnabled(family,self:EditorSettings("consumables"))
         if active then row.threshold:Enable(); row.threshold:SetAlpha(1) else row.threshold:Disable(); row.threshold:SetAlpha(0.45) end
         local threshold=self:ConsumableThreshold(family,self:EditorSettings("consumables"))

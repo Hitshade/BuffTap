@@ -376,8 +376,22 @@ local function unitFullName(unit)
   end
   return name,(A.Text(realm) and realm~="" and realm or nil)
 end
+local function validSoulstoneGUID(value)
+  return A.Text(value) and #value<=128 and value:match("^Player%-")~=nil and not value:find("[%c|]")
+end
 function B:SoulstoneAssignedUnit(itemID,units)
   local wanted=self.db.soulstoneAssigned
+  local guid=self.db.soulstoneAssignedGUID
+  if validSoulstoneGUID(guid) then
+    -- Exact identity wins: never fall back to a same-named different player.
+    for _,unit in ipairs(units) do
+      if unit~="player" and A.Call(UnitGUID,unit)==guid then
+        if stoneEligible(unit,itemID) then return unit end
+        return nil,(A.Text(wanted) and wanted~="" and wanted or "assigned player").." is dead, offline or out of range"
+      end
+    end
+    return nil,(A.Text(wanted) and wanted~="" and wanted or "assigned player").." is not in your group"
+  end
   if not A.Text(wanted) or wanted=="" then return nil,"no assigned player" end
   local wantName,wantRealm=wanted:lower():match("^([^%-]+)%-?(.*)$")
   local matched
@@ -399,9 +413,21 @@ end
 function B:SetSoulstoneAssignedFromTarget()
   if A.Call(UnitExists,"target")~=true or A.Call(UnitIsPlayer,"target")~=true or A.Call(UnitCanAssist,"player","target")~=true
     or A.Call(UnitIsUnit,"target","player")==true then return false end
+  if A.Combat() then return false end
+  local guid=A.Call(UnitGUID,"target")
+  if not validSoulstoneGUID(guid) then return false end
+  -- Display text only; a GUID-backed assignment never resolves through this string.
   local name,realm=unitFullName("target")
-  if not name then return false end
-  self.db.soulstoneAssigned=realm and (name.."-"..realm) or name
+  local display
+  if name then display=realm and (name.."-"..realm) or name
+  else
+    local ok,first,surname=pcall(UnitName,"target")
+    if not ok or not A.Text(first) or first=="" then return false end
+    display=(A.Text(surname) and surname~="") and (first.." "..surname) or first
+  end
+  if #display>64 or display:find("[%c|]") then return false end
+  self.db.soulstoneAssigned=display
+  self.db.soulstoneAssignedGUID=guid
   return true
 end
 -- Party: Healer (default), Me, or Assigned player (falls back to Healer, then you).

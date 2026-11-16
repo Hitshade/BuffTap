@@ -16,7 +16,7 @@ local classKeys={"groupContextSettings","situationSettings","seconds","rebuffVer
   "blessingGroupOverrides","blessingRaidDefaults","blessingPartyMode","blessingPartyUniform","blessingPartyExcluded","groupBlessingPriorities","blessingAssignments","blessingClasses","buffGroups","buffClasses","buffGroupNeed","buffRoles","buffSelf","blessingRoleChoices","roleGuess","targetBuffs","targetBuffSeconds","targetClasses","raidGroups",
   "blessingSelf","blessingSaved","consumablesEnabled","consumableFamilies","consumableChoices","consumableSeconds","supplyCustom","supplyReminder","supplyAnywhere","pickerBagsOnly","suppliesEnabled","suppliesChat","suppliesSound","suppliesReadyCheck","supplySettings",
   "weaponReminder","weaponMainHand","weaponOffHand","weaponApply","weaponReplace","weaponSkipEmpty","helperTrackingFollow","weaponChoices","weaponCoatings","weaponSeconds","weaponsPauseResting","consumablesPauseResting","consumablesInstanceOnly","buffPets",
-  "helperTracking","helperTreasure","helperTracker","helperCoverage","helperPet","helperHealthstone","helperSoulstone","helperOath","oathAssigned","helperDemon","soulstoneParty","soulstoneRaid","soulstoneAssigned"}
+  "helperTracking","helperTreasure","helperTracker","helperCoverage","helperPet","helperHealthstone","helperSoulstone","helperOath","oathAssigned","helperDemon","soulstoneParty","soulstoneRaid","soulstoneAssigned","soulstoneAssignedGUID","cleanseFirst"}
 local function clone(value,seen,depth)
   local t=type(value)
   if t=="string" or t=="boolean" or (t=="number" and A.Number(value)) then return value end
@@ -253,7 +253,7 @@ local function decode(text)
 end
 -- private=true (Full check-up): leave out the names on your blacklist, which a public bug report shouldn't carry.
 local PRIVATE={blockedPlayers=true,blockedGuilds=true}
-local privateClassKeys={blessingSaved=true,oathAssigned=true,soulstoneAssigned=true}
+local privateClassKeys={blessingSaved=true,oathAssigned=true,soulstoneAssigned=true,soulstoneAssignedGUID=true}
 function B:ExportSettings(private)
   local data={shared={},class={}}
   for key in pairs(shared) do if not (private and PRIVATE[key]) then data.shared[key]=clone(self.db[key]) end end
@@ -269,7 +269,7 @@ local classSpellKeys={blessingSelf=true,blessingSaved=true,buffs=true,priorities
   blessingPartyMode=true,blessingPartyUniform=true,blessingPartyExcluded=true,groupBlessingPriorities=true,blessingAssignments=true,
   blessingClasses=true,buffGroups=true,buffClasses=true,buffGroupNeed=true,buffRoles=true,buffSelf=true,blessingRoleChoices=true,targetBuffs=true,
   targetBuffSeconds=true,targetClasses=true,groupContextSettings=true,situationSettings=true,weaponChoices=true,weaponCoatings=true,helperPet=true,
-  helperHealthstone=true,helperSoulstone=true,helperOath=true,oathAssigned=true,helperDemon=true,soulstoneParty=true,soulstoneRaid=true,soulstoneAssigned=true}
+  helperHealthstone=true,helperSoulstone=true,helperOath=true,oathAssigned=true,helperDemon=true,soulstoneParty=true,soulstoneRaid=true,soulstoneAssigned=true,soulstoneAssignedGUID=true,cleanseFirst=true}
 function B:ImportSettings(text)
   if A.Combat() or not self.db then return false,self:Text("Not available in combat.") end
   text=type(text)=="string" and text:gsub("[\r\n]",""):match("^%s*(.-)%s*$") or ""
@@ -291,6 +291,8 @@ function B:ImportSettings(text)
         else self.db[key]=clone(data.class[key]) end
       end
     end
+    -- An older export has the Soulstone name but no player ID: never keep a stale ID beside a new name.
+    if sameClass and data.class.soulstoneAssigned~=nil and data.class.soulstoneAssignedGUID==nil then self.db.soulstoneAssignedGUID="" end
   end
   self:FinishProfileChange()
   if sameClass then return true,self:Text("Imported settings.") end

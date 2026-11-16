@@ -281,16 +281,16 @@ end
 
 -- Cleanses come before buffs.
 local baseSelect=B.Select
-function B:Select()
-  local ok,action=pcall(self.SelectCleanse,self)
-  if ok and action then
-    -- Clear what the buff pass would have reported, so status text doesn't show stale reasons.
-    self.rangeBlocked=false; self.rangeBlockedActions={}; self.rangeBlockedKeys={}
-    self.powerBlocked=false; self.manaFloorBlocked=nil; self.manaBlocked=false; self.cooldownBlocked=false
-    self.dataPending=false; self.targetDataPending=false; self.pvpBlocked=false; self.nextWakeDelay=nil
-    return action,"cleanse"
-  end
-  return baseSelect(self)
+-- One maintenance pick (cleanse or revive). Clears what the buff pass would have reported,
+-- so status text doesn't show stale reasons.
+local function maintenancePick(self,selector,source)
+  local ok,action=pcall(selector,self)
+  if not ok or not action then return nil end
+  if source=="revive" then action.selectedAt=GetTime() end
+  self.rangeBlocked=false; self.rangeBlockedActions={}; self.rangeBlockedKeys={}
+  self.powerBlocked=false; self.manaFloorBlocked=nil; self.manaBlocked=false; self.cooldownBlocked=false
+  self.dataPending=false; self.targetDataPending=false; self.pvpBlocked=false; self.nextWakeDelay=nil
+  return action,source
 end
 -- A Nearby player's cleanse comes before their buffs in the row (rows show up to four).
 local baseNearbyActions=B.NearbyActions
@@ -368,11 +368,21 @@ end
 function B:CanRevive()
   return self:ReviveSpell(false)~=nil or (A.Class("player")=="DRUID" and self:ReviveSpell(true)~=nil)
 end
+-- True/false when the game answers; nil from a SUCCESSFUL call means no resurrection is incoming.
+-- A failed or secret read stays unknown (returns nil) and keeps blocking the offer.
+local function incomingResurrection(unit)
+  if type(UnitHasIncomingResurrection)~="function" then return false end
+  local ok,incoming=pcall(UnitHasIncomingResurrection,unit)
+  if not ok or not A.Public(incoming) then return nil end
+  if incoming==true then return true end
+  if incoming==false or incoming==nil then return false end
+  return nil
+end
 local function reviveTargetOk(self,unit)
   if A.Call(UnitExists,unit)~=true or A.Call(UnitIsPlayer,unit)~=true then return false end
   if A.Call(UnitIsDead,unit)~=true or A.Call(UnitIsGhost,unit)~=false then return false end
   if A.Call(UnitIsConnected,unit)==false then return false end
-  if type(UnitHasIncomingResurrection)=="function" and A.Call(UnitHasIncomingResurrection,unit)~=false then return false end
+  if incomingResurrection(unit)~=false then return false end
   if self.BlockReason and self:BlockReason(unit) then return false end
   return not pvpUnsafe(self,unit)
 end
@@ -416,17 +426,17 @@ function B:ValidateRevive(action)
   if not reviveTargetOk(self,action.target) or not usable(action.id) then return false end
   return self:SpellRange(action)~=false
 end
-local reviveBaseSelect=B.Select
+-- Revive first by default; "Cleanse before resurrection" swaps the two. Both come before ordinary buffs.
 function B:Select()
-  local ok,action=pcall(self.SelectRevive,self)
-  if ok and action then
-    action.selectedAt=GetTime()
-    self.rangeBlocked=false; self.rangeBlockedActions={}; self.rangeBlockedKeys={}
-    self.powerBlocked=false; self.manaFloorBlocked=nil; self.manaBlocked=false; self.cooldownBlocked=false
-    self.dataPending=false; self.targetDataPending=false; self.pvpBlocked=false; self.nextWakeDelay=nil
-    return action,"revive"
-  end
-  return reviveBaseSelect(self)
+  local cleanseFirst=self.db and self.db.cleanseFirst==true
+  local firstSelector,firstSource,secondSelector,secondSource
+  if cleanseFirst then firstSelector,firstSource,secondSelector,secondSource=self.SelectCleanse,"cleanse",self.SelectRevive,"revive"
+  else firstSelector,firstSource,secondSelector,secondSource=self.SelectRevive,"revive",self.SelectCleanse,"cleanse" end
+  local action,source=maintenancePick(self,firstSelector,firstSource)
+  if action then return action,source end
+  action,source=maintenancePick(self,secondSelector,secondSource)
+  if action then return action,source end
+  return baseSelect(self)
 end
 local reviveBaseValidate=B.Validate
 function B:Validate(action)
@@ -467,12 +477,12 @@ function B:BuildCleansePage(ui,tabs,headerSwitch,section)
   f.cleanseBorder=ui.check(p,"Border colour by type",48,-264,function(c)
     B.db.cleanseBorder=c:GetChecked()==true; B:UpdateOverlay()
   end)
-  section(ui,p,"Who",12,-310,692,84)
+  section(ui,p,"Who",12,-310,692,68)
   local who={{"cleanseSelf","You",26},{"cleanseGroup","Your group",196},{"cleanseTarget","Your target",366},{"cleanseNearby","Nearby players",536}}
   f.cleanseWho={}
   for _,entry in ipairs(who) do
     local key=entry[1]
-    f.cleanseWho[key]=ui.check(p,entry[2],entry[3],-350,function(c)
+    f.cleanseWho[key]=ui.check(p,entry[2],entry[3],-341,function(c)
       if A.Combat() then return end
       B.db[key]=c:GetChecked()==true; B:RequestRefresh("cleanse who",0)
     end)
@@ -482,19 +492,22 @@ function B:BuildCleansePage(ui,tabs,headerSwitch,section)
   -- The cleanse sound lives with the other sounds under Customization > Binding & sound.
   f.cleanseSoundShortcut=ui.button(p,"Sound settings",566,-35,138,function() f.selectTab(tabs.Appearance); B:SetAppearanceView("binding") end); f.cleanseSoundShortcut:SetHeight(20)
   -- Resurrection: one row. Works whether or not cleansing is on.
-  section(ui,p,"Resurrection",12,-408,692,84)
-  f.reviveEnable=ui.check(p,"Offer resurrection",26,-448,function(c)
+  section(ui,p,"Resurrection",12,-392,692,100)
+  f.reviveEnable=ui.check(p,"Offer resurrection",26,-432,function(c)
     if A.Combat() then return end
     B.db.reviveEnabled=c:GetChecked()==true; B:RequestRefresh("revive toggled",0); B:UpdateCleansePage()
   end)
   f.reviveEnable:HookScript("OnEnter",function(s) T.Tooltip(s,B:Text("Offer resurrection"),B:Text("Out of combat, puts your resurrection spell on the reminder for a dead group member, or a dead player you target. Never for someone who has released their spirit or already has a resurrection coming. Dead players have no nameplate, so Nearby can't offer it: target their corpse instead.")) end)
   f.reviveEnable:HookScript("OnLeave",function() if GameTooltip then GameTooltip:Hide() end end)
-  f.reviveGroup=ui.check(p,"Your group",196,-448,function(c) if A.Combat() then return end; B.db.reviveGroup=c:GetChecked()==true; B:RequestRefresh("revive who",0) end)
-  f.reviveTarget=ui.check(p,"Your target",366,-448,function(c) if A.Combat() then return end; B.db.reviveTarget=c:GetChecked()==true; B:RequestRefresh("revive who",0) end)
-  f.reviveRebirth=ui.check(p,"Also use Rebirth",536,-448,function(c) if A.Combat() then return end; B.db.reviveRebirth=c:GetChecked()==true; B:RequestRefresh("revive rebirth",0) end)
+  f.reviveGroup=ui.check(p,"Your group",196,-432,function(c) if A.Combat() then return end; B.db.reviveGroup=c:GetChecked()==true; B:RequestRefresh("revive who",0) end)
+  f.reviveTarget=ui.check(p,"Your target",366,-432,function(c) if A.Combat() then return end; B.db.reviveTarget=c:GetChecked()==true; B:RequestRefresh("revive who",0) end)
+  f.reviveRebirth=ui.check(p,"Also use Rebirth",536,-432,function(c) if A.Combat() then return end; B.db.reviveRebirth=c:GetChecked()==true; B:RequestRefresh("revive rebirth",0) end)
   f.reviveRebirth:HookScript("OnEnter",function(s) T.Tooltip(s,B:Text("Also use Rebirth"),B:Text("Rebirth has a long cooldown, so it is off unless you turn it on. When on, it is offered out of combat like any resurrection.")) end)
   f.reviveRebirth:HookScript("OnLeave",function() if GameTooltip then GameTooltip:Hide() end end)
-  f.reviveNote=ui.label(p,"",536,-455,"GameFontDisableSmall",160)
+  f.reviveNote=ui.label(p,"",536,-439,"GameFontDisableSmall",160)
+  f.cleanseFirst=ui.check(p,"Cleanse before resurrection",26,-458,function(c) if A.Combat() then return end; B.db.cleanseFirst=c:GetChecked()==true; B:RequestRefresh("cleanse/revive order",0) end)
+  f.cleanseFirst:HookScript("OnEnter",function(s) T.Tooltip(s,B:Text("Cleanse before resurrection"),B:Text("When both are needed after a fight, offer a cleanse first. Leave off to offer resurrection first.")) end)
+  f.cleanseFirst:HookScript("OnLeave",function() if GameTooltip then GameTooltip:Hide() end end)
   section(ui,p,"Never cleanse (shared by all your characters)",12,-506,692,212)
   f.cleanseInput=ui.editbox(p,26,-546,260,false); f.cleanseInput:SetMaxLetters(80)
   local function add()
@@ -555,6 +568,9 @@ function B:UpdateCleansePage()
     if not can then note=druid and self:Text("Not learned yet") or self:Text("Your class can't resurrect.")
     elseif not druid and normal then note=self:Text("Uses %s",(spellInfo(normal))) end
     f.reviveNote:SetText(note); f.reviveNote:SetShown(not druid or not can)
+    -- Only meaningful for a class that can both cleanse and resurrect; the saved choice is kept either way.
+    local canCleanse=self:CanCleanseAnything()
+    f.cleanseFirst:SetShown(canCleanse and can); f.cleanseFirst:SetChecked(d.cleanseFirst==true); f.cleanseFirst:SetEnabled(not A.Combat())
   end
   for _,row in ipairs(f.cleanseRows) do
     local classCan=self:CleanseClassSpells(row.kind)~=nil

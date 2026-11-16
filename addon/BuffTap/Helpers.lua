@@ -195,6 +195,22 @@ function B:TrackingChoices()
   end
   return out
 end
+-- One plain sentence about the chosen tracking, built when its tooltip opens (no timer, no events).
+function B:TrackingStatusText()
+  if not self.db then return self:Text("Tracking status unavailable.") end
+  if not self:HelperEnabled("helperTracking") then return self:Text("Tracking reminders are turned off.") end
+  if self.trackingFollowPending and self.db.helperTrackingFollow~=false then return self:Text("Following your latest minimap tracking choice.") end
+  local chosen=self.db.helperTracker
+  if not A.Number(chosen) or chosen==0 then return self:Text("Choose a tracking ability to maintain.") end
+  for _,entry in ipairs(self:TrackingChoices()) do
+    if entry.id==chosen then
+      if entry.learned==false then return self:Text("%s is not learned yet.",entry.name) end
+      if entry.active then return self:Text("%s is already active.",entry.name) end
+      return self:Text("%s is off; BuffTap can remind you to restore it.",entry.name)
+    end
+  end
+  return self:Text("Choose a tracking ability to maintain.")
+end
 -- Follow the minimap menu (default): a tracking the player switches on there becomes the one BuffTap keeps up.
 -- Nothing active (death, loading, switched off) never clears the choice; Find Treasure stays separate.
 function B:FollowMinimapTracking()
