@@ -227,6 +227,16 @@ local function names()
   for name in pairs(B.reportNames or {}) do
     for part in tostring(name):gmatch("[^%s%-]+") do if #part>1 then found[part]=true end end
   end
+  -- Saved remembered players (Soulstone, Oath) may be absent from the group; hide them too.
+  local function addSaved(value)
+    if type(value)~="string" or value=="" or #value>128 or value:find("[%c|]") then return end
+    found[value]=true
+    for part in value:gmatch("[^%s%-]+") do if #part>1 then found[part]=true end end
+  end
+  if B.db then
+    addSaved(B.db.soulstoneAssigned)
+    if type(B.db.oathAssigned)=="table" then addSaved(B.db.oathAssigned.name) else addSaved(B.db.oathAssigned) end
+  end
   for i=1,4 do add("party"..i) end
   for i=1,40 do add("raid"..i); add("nameplate"..i) end
   local list={}; for n in pairs(found) do list[#list+1]=n end

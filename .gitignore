@@ -3,6 +3,7 @@
 !/.gitignore
 !/README.md
 !/DEVELOPMENT.md
+!/AGENTS.md
 !/RELEASE-NOTES-*.md
 !/requirements-dev.txt
 !/addon/

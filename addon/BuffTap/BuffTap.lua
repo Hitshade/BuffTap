@@ -253,12 +253,13 @@ function B:CreateButton()
       return
     end
     if action.source=="cleanse" then
+      -- Validate the recipient and the debuff first; a macro is only armed for a verified player.
+      if not B:ValidateCleanse(action) then B:Commit(nil,"cleanse no longer needed"); B:RequestRefresh("cleanse changed",0); return end
       if action.nearby then
         if not B:PrepareNearbyCast(action) then B:Commit(nil,"nearby cleanse changed"); B:RequestRefresh("nearby cleanse changed",0); return end
         B.button:SetAttribute("macrotext",action.macroText)
       end
-      if not B:ValidateCleanse(action) then B:Commit(nil,"cleanse no longer needed"); B:RequestRefresh("cleanse changed",0)
-      elseif action.nearby and B.NoteNearbyResult then
+      if action.nearby and B.NoteNearbyResult then
         B.nearbyClickAt=GetTime(); B.nearbyClickError=nil; B:NoteNearbyResult(action)
         -- Same quiet window as a row click: the macro briefly targets this player.
         B.nearbyQuietCast={recipient=action.targetGUID,previous=A.Call(UnitGUID,"target"),untilTime=GetTime()+5}
@@ -665,14 +666,30 @@ function B:Refresh(captureDiagnostics)
   self:ProfileRecord(profileStart)
 end
 
+-- Cleanse and resurrection are independent options: they watch their own targets and group
+-- members without needing Target buffs or group buffing. Resurrection only counts for a class that can resurrect.
+function B:WatchesMaintenanceTarget()
+  local d=self.db
+  if not d or not d.enabled then return false end
+  if d.friendlyTarget==true then return true end
+  if d.cleanseEnabled==true and d.cleanseTarget~=false then return true end
+  return d.reviveEnabled~=false and d.reviveTarget~=false and self.CanRevive~=nil and self:CanRevive()==true
+end
+function B:WatchesMaintenanceGroup()
+  local d=self.db
+  if not d or not d.enabled then return false end
+  if self:GroupPreference("group") or (self.ReadinessEnabled and self:ReadinessEnabled("soulstone")) then return true end
+  if d.cleanseEnabled==true and d.cleanseGroup~=false then return true end
+  return d.reviveEnabled~=false and d.reviveGroup~=false and self.CanRevive~=nil and self:CanRevive()==true
+end
 function B:IsWatchedUnit(unit)
   if not A.Public(unit) or type(unit)~="string" then return false end
   if self.db and self.db.nearbyEnabled and self.nearbyUnits and self.nearbyUnits[unit] then return true end
   if unit=="player" then return true end
-  if self.db and (self:GroupPreference("group") or (self.ReadinessEnabled and self:ReadinessEnabled("soulstone"))) and (unit:match("^party%d+$") or unit:match("^raid%d+$")) then return true end
+  if self.db and (unit:match("^party%d+$") or unit:match("^raid%d+$")) and self:WatchesMaintenanceGroup() then return true end
   -- Pets, when pet buffing is on, so a dispelled or newly summoned pet is noticed straight away.
   if self.db and self.db.buffPets==true and (unit=="pet" or unit:match("^partypet%d$") or unit:match("^raidpet%d+$")) then return true end
-  if unit=="target" and self.db and self.db.friendlyTarget then
+  if unit=="target" and self.db and self:WatchesMaintenanceTarget() then
     return A.Call(UnitExists,"target")==true and A.Call(UnitCanAssist,"player","target")==true
   end
   return false
@@ -806,7 +823,7 @@ local events={"ADDON_LOADED","PLAYER_LOGIN","PLAYER_ENTERING_WORLD","PLAYER_REGE
   "UNIT_SPELLCAST_FAILED","UNIT_SPELLCAST_INTERRUPTED","SPELL_UPDATE_COOLDOWN","UNIT_POWER_UPDATE",
   "PLAYER_EQUIPMENT_CHANGED","WEAPON_ENCHANT_CHANGED","WEAPON_SLOT_CHANGED","PLAYER_MOUNT_DISPLAY_CHANGED","PLAYER_UPDATE_RESTING","UPDATE_STEALTH","UPDATE_SHAPESHIFT_FORM","UPDATE_BINDINGS",
   "BAG_UPDATE_DELAYED","ITEM_DATA_LOAD_RESULT","UI_ERROR_MESSAGE","MINIMAP_UPDATE_TRACKING","UNIT_CONNECTION",
-  "UNIT_FLAGS","PVP_TIMER_UPDATE","ADDON_RESTRICTION_STATE_CHANGED","UNIT_AURA_BLOCKED","UNIT_AURA_BLOCK_LIST_CLEARED"}
+  "UNIT_FLAGS","UNIT_HEALTH","PVP_TIMER_UPDATE","ADDON_RESTRICTION_STATE_CHANGED","UNIT_AURA_BLOCKED","UNIT_AURA_BLOCK_LIST_CLEARED"}
 local playerOnlyEvents={UNIT_POWER_UPDATE=true,UNIT_SPELLCAST_SUCCEEDED=true,UNIT_SPELLCAST_FAILED=true,UNIT_SPELLCAST_INTERRUPTED=true}
 for _,event in ipairs(events) do
   local registered=false
@@ -829,6 +846,25 @@ local function handleEvent(_,event,arg,castGUID,spellID)
   if event=="ADDON_LOADED" then if arg==ADDON then B:InitDB() end; if B.SyncEditMode then B:SyncEditMode() end; return end
   if not B.db then return end
   if event=="UNIT_AURA" and A.EmptyAuraUpdate(castGUID) then return end
+  if event=="UNIT_HEALTH" then
+    -- Standalone resurrection: only a change of dead/alive for a group member or the target wakes a refresh.
+    if type(arg)~="string" or not A.Public(arg) then return end
+    local groupUnit=arg:match("^party[1-4]$") or arg:match("^raid%d+$")
+    if not groupUnit and arg~="target" then return end
+    local d=B.db
+    if not d.enabled or d.reviveEnabled==false then return end
+    if groupUnit and d.reviveGroup==false then return end
+    if arg=="target" and d.reviveTarget==false then return end
+    if not (B.CanRevive and B:CanRevive()) then return end
+    if A.Call(UnitExists,arg)~=true then return end
+    local guid,dead=A.Call(UnitGUID,arg),A.Call(UnitIsDead,arg)
+    if not A.Text(guid) or type(dead)~="boolean" then return end
+    B.reviveDeathStates=B.reviveDeathStates or {}
+    local old=B.reviveDeathStates[arg]
+    B.reviveDeathStates[arg]={guid=guid,dead=dead}
+    if not old or old.guid~=guid or old.dead~=dead then B:RequestRefresh("resurrection state changed",.05) end
+    return
+  end
   if event=="UNIT_FLAGS" or event=="PVP_TIMER_UPDATE" then
     if B.db.pvpProtection and (arg=="player" or B:IsWatchedUnit(arg) or (A.Text(arg) and (arg:match("^party%d+$") or arg:match("^raid%d+$")))) then B:InvalidateRoster(); B:RequestRefresh("PvP flags changed",0) end
     if arg=="pet" and B.ReadinessEnabled and B:ReadinessEnabled("pet") then B:RequestRefresh("pet flags changed",.05) end
@@ -867,7 +903,7 @@ local itemRequested=event=="ITEM_DATA_LOAD_RESULT" and A.Number(arg) and ((B.ite
 
   if event=="PLAYER_TARGET_CHANGED" then
     B:InvalidateAura("target")
-    if not B.db.friendlyTarget then return end
+    if not B:WatchesMaintenanceTarget() then return end
     -- Clear the old target's secure action first. Then do an immediate scan for
     -- responsiveness and two tiny one-shot settling retries for beta/server lag.
     if not A.Combat() then
@@ -895,12 +931,13 @@ local itemRequested=event=="ITEM_DATA_LOAD_RESULT" and A.Number(arg) and ((B.ite
   elseif event=="UNIT_CONNECTION" then
     if A.Text(arg) then B:InvalidateAura(arg) end
   elseif event=="GROUP_ROSTER_UPDATE" then
-    B:SyncSituation()
+    B:SyncSituation(); B.reviveDeathStates=nil
     local n=A.Call(GetNumSubgroupMembers)
     if A.Call(IsInRaid)==false and A.Number(n) and n==0 then B.blessingPlayers=nil end
     B:InvalidateRoster(); B:InvalidateAura()
     if B.UpdateGroupRosterOptions then B:UpdateGroupRosterOptions() end
   elseif event=="PLAYER_ENTERING_WORLD" or event=="ZONE_CHANGED_NEW_AREA" then
+    B.reviveDeathStates=nil
     B:InvalidateRoster(); B:InvalidateAura(); if B.InvalidateConsumables then B:InvalidateConsumables() end
 
   elseif event=="PLAYER_REGEN_ENABLED" then

@@ -2,6 +2,10 @@
 local _,B=...
 -- Keep the ten most recent releases within a 24 KiB content ceiling.
 B.PatchNotes={
+ {version="1.24.8",title="Cleansing and resurrection fixes",items={
+  "Fixed: cleanse and resurrection reminders now update when you change target, or when a group member is poisoned or dies, even if Target buffs and group buffing are turned off.",
+  "Cleanse and resurrection buttons now double-check the player, the debuff and your settings at the moment you click, so they cannot act on someone who changed in the meantime.",
+  "Assigned Soulstones now wait for the player you chose, and player names stay hidden in shared reports. The Soulstone notice is now translated."}},
  {version="1.24.7",title="Soulstone fix and clearer status",items={
   "Soulstones set to an assigned player now wait for that person. If they are away, dead, offline or out of range, BuffTap shows a note and does not use the stone on someone else. It goes back to them as soon as they are available.",
   "Hover the Elixirs or Utility rows on the Consumables page to see which of your ticked effects are active, running low, missing or out of stock.",
@@ -61,13 +65,7 @@ B.PatchNotes={
   "The Supplies list now scrolls, so every tracked item fits, and it shows even with supply warnings off.",
   "New Supplies reminder icon that shows what is running low. By default it only appears while resting in a city or inn; turn on Outside towns on the Supplies page to see it everywhere. Change its look and position under Customization > Supplies.",
   "The Choose window uses BuffTap's orange check boxes.",
-  "Your current elixir and utility choices carry over."},thanks="Thanks to Drusangus for the suggestion."},
- {version="1.22.7",title="Return the favor",items={
-  "New: Return the favor. When someone buffs you, they move to the top of your Nearby list (below cleanses) if they need one of your buffs, or theirs is a quarter gone. Their row shows a small gold arrow.",
-  "It never loops: a buff that answers one of yours does not count, and each player moves up at most once per half hour. You still click or press your binding every time.",
-  "On by default. Find the switch on the Nearby page.",
-  "Friends and guild members who need a buff now come before other players in the Nearby list, and your binding buffs them first.",
-  "A Nearby cast that fails because the player is too far away now just says \"Out of range\" instead of the game's long, cut-off message."}}
+  "Your current elixir and utility choices carry over."},thanks="Thanks to Drusangus for the suggestion."}
 }
 function B:PatchNotesUnread()
   return self.profileDB and self.db.optionsPatchDot~=false and self.profileDB.global.patchNotesSeen~=self.version

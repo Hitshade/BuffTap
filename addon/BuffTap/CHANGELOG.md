@@ -1,3 +1,26 @@
+# BuffTap 1.24.8
+
+### Fixed
+- **Independent cleanse and resurrection events (`BuffTap.lua`):** `PLAYER_TARGET_CHANGED` returned early unless Target buffs (`friendlyTarget`) was on, and `IsWatchedUnit()` watched party and raid tokens only for group buffing or the Soulstone helper, so Cleanse and Resurrection (separate options) missed target changes and group aura updates. New `WatchesMaintenanceTarget()` and `WatchesMaintenanceGroup()` also count Cleanse (target, group) and Resurrection (target, group, gated on `CanRevive()` because `reviveEnabled` and `reviveTarget` default to on for every class). A class with nothing target-dependent still ignores target changes, so the idle-event and timer tests keep their meaning. `UNIT_AURA` still refreshes only for watched units.
+- **Death state for standalone resurrection (`BuffTap.lua`):** `UNIT_HEALTH` is now registered through the existing protected loop (a rejected registration lands in `unsupportedEvents`; no polling fallback). The handler does cheap token checks first, then for a group member or the target compares `UnitGUID` plus `UnitIsDead` with a one-entry-per-token cache (`reviveDeathStates`) and calls `RequestRefresh` only when the GUID or dead state changed, so ordinary health changes cause no refreshes. The cache is cleared on `GROUP_ROSTER_UPDATE`, `PLAYER_ENTERING_WORLD` and `ZONE_CHANGED_NEW_AREA`; an unreadable GUID or death state does nothing. No secure writes occur in this path.
+- **Cleanse identity and click-time checks (`Cleanse.lua`, `BuffTap.lua`):** `BuildCleanseAction()` needs one readable public GUID (also for the player) and stores it; `tryUnit()` records the scope (`self`, `group`, `target`, `nearby`). `ValidateCleanse()` now also requires a readable saved GUID (nil is never identity), the addon and cleanse enabled and no pause, `CleanseScopeAllowed()` (same scope rules as selection: group token shape, target is a non-grouped assistable player, PvP guard, block list, Nearby tracking and pause), the type still enabled and learned, and re-runs `CleanseNeed()` so the first eligible debuff must be the same one (spell ID when known; by name only when no ID was recorded) with the same spell, which also covers Never cleanse and the 3-second expiry cut-off. If the priority changed the click cancels and a refresh follows; it never casts a different cleanse. The Nearby click path validates before arming the macro, so no macro is set for an unverified recipient.
+- **Resurrection identity and scope (`Cleanse.lua`):** `BuildReviveAction()` reads one GUID (nil means no action) and stores `scope` (`group` or `target`) and `key="revive:"..guid`. `ValidateRevive()` re-checks the addon and option, pause, saved GUID, the scope's own toggle and token or target shape, that the spell is still the normal resurrection or the enabled Druid Rebirth, then `reviveTargetOk()` (connection, dead not ghost, incoming resurrection, block list, PvP). The range policy is unchanged.
+
+### Changed
+- **Shared reports hide remembered players (`Extras.lua`):** the name hider for the Full check-up and other reports now also covers the saved Soulstone and Oath players (first name, surname and punctuation parts), even when they are not in the group. Settings exports are unchanged (they already leave these out, and player IDs).
+- **Soulstone strings translated (`Readiness.lua`, `Locales/`):** the fixed notices and reasons ("not in your group", "dead, offline or out of range", ambiguous, no assigned player, the strict-assignment notice and the raid notice) now go through `B:Text()` with translations in deDE, esES, frFR and ptBR; placeholder counts are unchanged and a test renders each locale.
+
+### Tests
+- New `test_maintenance_1248.py` (27 scenarios) through the real event dispatcher and `PreClick`: target and group events for cleanse and resurrection alone, idle and gated cases, `UNIT_HEALTH` transitions with no refresh storm and ignored units, unreadable GUID at selection and at click, changed recipient, nil-ID debuffs, replaced debuff, Never cleanse after selection, type and scope off, PvP flip, resurrection scope, disconnect, incoming resurrection and Rebirth off, report redaction (name and ID), and locale rendering. Deliberately removing the event predicates or the `CleanseNeed` re-check made the matching tests fail.
+- Full suite (`BT_KEEP_GOING=1 python tests/run_release.py`): 2079 scenarios passed, 0 failed, exit 0 (mocked game API).
+
+### Known limits
+- Range is unchanged: an unknown cleanse or resurrection range still counts as usable until Forever samples exist.
+- A party Soulstone already on anyone still counts as coverage before an assigned player is chosen; this release does not change that.
+- Nothing here has been checked in the Forever client beyond the mocked game API.
+
+---
+
 # BuffTap 1.24.7
 
 ### Fixed

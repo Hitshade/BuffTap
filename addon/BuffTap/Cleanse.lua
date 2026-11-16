@@ -191,23 +191,27 @@ end
 function B:BuildCleanseAction(unit,debuff,id,abolish,nearby)
   local name,icon=spellInfo(id)
   if not name then return nil end
+  -- An external action needs one readable player ID; nil never counts as the same player.
+  local guid=A.Call(UnitGUID,unit)
+  if not A.Text(guid) then return nil end
   local action={id=id,spellName=name,icon=icon or debuff.icon,target=unit,known=true,secureType="spell",valid=true,
     source="cleanse",cleanse=true,dispelType=debuff.type,debuffName=debuff.name,debuffIcon=debuff.icon,debuffID=debuff.spellId,stacks=debuff.stacks,abolish=abolish,
     key="cleanse:"..debuff.type..":"..tostring(debuff.spellId or debuff.name)}
   action.name=L("Cleanse: %s",debuff.name)..(debuff.stacks>=2 and " ("..debuff.stacks..")" or "")
   action.targetName=A.Call(UnitName,unit) or unit
-  action.targetGUID=A.Call(UnitGUID,unit)
+  action.targetGUID=guid
   action.reason="cleanse: "..debuff.type.." on "..tostring(unit)
   if nearby then action.nearby=true; action.quickTarget=true end
   return action
 end
 
-local function tryUnit(self,unit,abilities,nearby)
+local function tryUnit(self,unit,abilities,nearby,scope)
   local debuff,id,abolish=self:CleanseNeed(unit,abilities)
   if not debuff then return nil end
   if not usable(id) then return nil end
   local action=self:BuildCleanseAction(unit,debuff,id,abolish,nearby)
   if not action then return nil end
+  action.scope=scope
   local inRange=self:SpellRange(action)
   if inRange==false then return nil end
   if nearby and not self:PrepareNearbyCast(action) then return nil end
@@ -223,21 +227,21 @@ function B:SelectCleanse()
   local abilities=self:CleanseAbilities()
   if not next(abilities) then return nil,"no cleanse spells" end
   local action
-  if d.cleanseSelf~=false then action=tryUnit(self,"player",abilities) end
+  if d.cleanseSelf~=false then action=tryUnit(self,"player",abilities,nil,"self") end
   if not action and d.cleanseGroup~=false then
     for _,unit in ipairs(groupUnits()) do
-      if not pvpUnsafe(self,unit) then action=tryUnit(self,unit,abilities); if action then break end end
+      if not pvpUnsafe(self,unit) then action=tryUnit(self,unit,abilities,nil,"group"); if action then break end end
     end
   end
   if not action and d.cleanseTarget~=false and A.Call(UnitExists,"target")==true
     and A.Call(UnitIsUnit,"target","player")~=true and A.Call(UnitIsPlayer,"target")==true
     and A.Call(UnitCanAssist,"player","target")==true and A.Call(UnitInParty,"target")~=true and not A.Number(A.Call(UnitInRaid,"target"))
     and not pvpUnsafe(self,"target") and not (self.BlockReason and d.blacklistTargets~=false and self:BlockReason("target")) then
-    action=tryUnit(self,"target",abilities)
+    action=tryUnit(self,"target",abilities,nil,"target")
   end
   if not action and d.cleanseNearby==true and d.nearbyEnabled and self.nearbyUnits then
     for unit in pairs(self.nearbyUnits) do
-      if self:NearbyCleanseAllowed(unit) then action=tryUnit(self,unit,abilities,true); if action then break end end
+      if self:NearbyCleanseAllowed(unit) then action=tryUnit(self,unit,abilities,true,"nearby"); if action then break end end
     end
   end
   if action then action.selectedAt=GetTime(); return action,"cleanse" end
@@ -260,23 +264,56 @@ function B:NearbyCleanseAction(unit)
   if not self:NearbyCleanseAllowed(unit) then return nil end
   local abilities=self:CleanseAbilities()
   if not next(abilities) then return nil end
-  local action=tryUnit(self,unit,abilities,true)
+  local action=tryUnit(self,unit,abilities,true,"nearby")
   if action then action.ready=true; action.needState="debuff"; action.selectedAt=GetTime() end
   return action
 end
 
--- Click-time check: same player, the debuff is still there, spell still usable and in range.
-function B:ValidateCleanse(action)
-  if not action or A.Combat() or self.db.cleanseEnabled~=true then return false end
-  if A.Call(UnitGUID,action.target)~=action.targetGUID then return false end
-  local abilities=self:CleanseAbilities()
-  local found=false
-  for _,d in ipairs(debuffs(action.target)) do
-    if d.type==action.dispelType and (d.spellId==action.debuffID or d.name==action.debuffName) then found=true; break end
+-- Does the recipient still fall inside the scope this action was prepared for?
+function B:CleanseScopeAllowed(action)
+  local d=self.db
+  local unit=action.target
+  if type(unit)~="string" or A.Call(UnitExists,unit)~=true or A.Call(UnitIsDeadOrGhost,unit)~=false then return false end
+  local scope=action.scope
+  if scope=="self" then
+    return d.cleanseSelf~=false and unit=="player"
+  elseif scope=="group" then
+    if d.cleanseGroup==false or not (unit:match("^party[1-4]$") or unit:match("^raid%d+$")) then return false end
+    return not pvpUnsafe(self,unit)
+  elseif scope=="target" then
+    return d.cleanseTarget~=false and unit=="target"
+      and A.Call(UnitIsPlayer,unit)==true
+      and A.Call(UnitCanAssist,"player",unit)==true
+      and A.Call(UnitIsUnit,unit,"player")~=true
+      and A.Call(UnitInParty,unit)~=true
+      and not A.Number(A.Call(UnitInRaid,unit))
+      and not pvpUnsafe(self,unit)
+      and not (self.BlockReason and d.blacklistTargets~=false and self:BlockReason(unit))
+  elseif scope=="nearby" then
+    return d.cleanseNearby==true and d.nearbyEnabled==true and action.nearby==true
+      and self:NearbyCleanseAllowed(unit) and not self:NearbyPauseReason()
   end
-  if not found or not abilities[action.dispelType] or not usable(action.id) then return false end
-  if self:SpellRange(action)==false then return false end
-  return true
+  return false
+end
+-- The same debuff as when the action was prepared. Two missing spell IDs are never proof of identity.
+local function sameDebuffAsAction(d,action)
+  if not d or d.type~=action.dispelType then return false end
+  if A.Number(action.debuffID) then return A.Number(d.spellId)~=nil and d.spellId==action.debuffID end
+  return A.Text(action.debuffName)~=nil and A.Text(d.name)~=nil and d.name==action.debuffName
+end
+-- Click-time check: same player, still in scope, the same debuff is still what would be offered
+-- (type and Never-cleanse settings included), spell usable and not out of range.
+function B:ValidateCleanse(action)
+  local d=self.db
+  if not action or not d or not d.enabled or A.Combat() or d.cleanseEnabled~=true or self:ReminderPauseReason() then return false end
+  if not A.Text(action.targetGUID) or A.Call(UnitGUID,action.target)~=action.targetGUID then return false end
+  if not self:CleanseScopeAllowed(action) then return false end
+  local abilities=self:CleanseAbilities()
+  if d.cleanseTypes[action.dispelType]==false or not abilities[action.dispelType] then return false end
+  local current,id=self:CleanseNeed(action.target,abilities)
+  if not sameDebuffAsAction(current,action) or id~=action.id then return false end
+  if not usable(action.id) then return false end
+  return self:SpellRange(action)~=false
 end
 
 -- Cleanses come before buffs.
@@ -386,18 +423,20 @@ local function reviveTargetOk(self,unit)
   if self.BlockReason and self:BlockReason(unit) then return false end
   return not pvpUnsafe(self,unit)
 end
-function B:BuildReviveAction(unit,id)
+function B:BuildReviveAction(unit,id,scope)
   local name,icon=spellInfo(id)
   if not name then return nil end
+  local guid=A.Call(UnitGUID,unit)
+  if not A.Text(guid) then return nil end
   local who=A.Call(UnitName,unit) or unit
   local action={id=id,spellName=name,icon=icon,target=unit,known=true,secureType="spell",valid=true,source="revive",
-    key="revive:"..tostring(A.Call(UnitGUID,unit) or unit),name=name,targetName=who,targetGUID=A.Call(UnitGUID,unit),
+    key="revive:"..guid,name=name,targetName=who,targetGUID=guid,scope=scope,
     reason="revive: "..tostring(unit)}
   return action
 end
-local function tryRevive(self,unit,id)
+local function tryRevive(self,unit,id,scope)
   if not reviveTargetOk(self,unit) or not usable(id) then return nil end
-  local action=self:BuildReviveAction(unit,id)
+  local action=self:BuildReviveAction(unit,id,scope)
   if not action or self:SpellRange(action)==false then return nil end
   return action
 end
@@ -412,17 +451,27 @@ function B:SelectRevive()
   if #ids==0 then return nil end
   for _,id in ipairs(ids) do
     if d.reviveGroup~=false then
-      for _,unit in ipairs(groupUnits()) do local a=tryRevive(self,unit,id); if a then return a end end
+      for _,unit in ipairs(groupUnits()) do local a=tryRevive(self,unit,id,"group"); if a then return a end end
     end
     if d.reviveTarget~=false and A.Call(UnitInParty,"target")~=true and not A.Number(A.Call(UnitInRaid,"target"))
       and A.Call(UnitIsUnit,"target","player")~=true then
-      local a=tryRevive(self,"target",id); if a then return a end
+      local a=tryRevive(self,"target",id,"target"); if a then return a end
     end
   end
 end
 function B:ValidateRevive(action)
-  if not action or A.Combat() or self.db.reviveEnabled==false then return false end
-  if A.Call(UnitGUID,action.target)~=action.targetGUID then return false end
+  local d=self.db
+  if not action or not d or not d.enabled or A.Combat() or d.reviveEnabled==false or self:ReminderPauseReason() then return false end
+  if not A.Text(action.targetGUID) or type(action.target)~="string" or A.Call(UnitGUID,action.target)~=action.targetGUID then return false end
+  if action.scope=="group" then
+    if d.reviveGroup==false or not (action.target:match("^party[1-4]$") or action.target:match("^raid%d+$")) then return false end
+  elseif action.scope=="target" then
+    if d.reviveTarget==false or action.target~="target" or A.Call(UnitIsUnit,"target","player")==true
+      or A.Call(UnitInParty,"target")==true or A.Number(A.Call(UnitInRaid,"target")) then return false end
+  else return false end
+  local normal=self:ReviveSpell(false)
+  local rebirth=(d.reviveRebirth==true and A.Class("player")=="DRUID") and self:ReviveSpell(true) or nil
+  if not A.Number(action.id) or (action.id~=normal and action.id~=rebirth) then return false end
   if not reviveTargetOk(self,action.target) or not usable(action.id) then return false end
   return self:SpellRange(action)~=false
 end

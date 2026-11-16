@@ -1,6 +1,6 @@
 # BuffTap development
 
-Current released version: **1.24.7**. Runtime files: `addon/BuffTap/`; tests: `tests/`; release harness: `tests/run_release.py`.
+Current released version: **1.24.8**. Runtime files: `addon/BuffTap/`; tests: `tests/`; release harness: `tests/run_release.py`.
 
 Install `requirements-dev.txt`, then run `python tests/run_release.py` (set `BT_KEEP_GOING=1` to see every failure) and `python tools/verify_mage_catalog.py`. The mocked Lua 5.1 suite does not establish live WoW Forever compatibility. See `AGENTS.md` for the release-notes policy and the combat and secure-action safety rules. Test counts in older release notes are historical.
 

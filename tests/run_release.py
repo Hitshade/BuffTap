@@ -67,6 +67,7 @@ import test_mana_reserve
 import test_social_alert
 import test_revive
 import test_food_status
+import test_maintenance_1248
 import test_release_1222
 import test_release_1223
 import test_release_1224

@@ -387,28 +387,28 @@ function B:SoulstoneAssignedUnit(itemID,units)
     for _,unit in ipairs(units) do
       if unit~="player" and A.Call(UnitGUID,unit)==guid then
         if stoneEligible(unit,itemID) then return unit end
-        return nil,(A.Text(wanted) and wanted~="" and wanted or "assigned player").." is dead, offline or out of range"
+        return nil,self:Text("%s is dead, offline or out of range",(A.Text(wanted) and wanted~="" and wanted or self:Text("assigned player")))
       end
     end
-    return nil,(A.Text(wanted) and wanted~="" and wanted or "assigned player").." is not in your group"
+    return nil,self:Text("%s is not in your group",(A.Text(wanted) and wanted~="" and wanted or self:Text("assigned player")))
   end
-  if not A.Text(wanted) or wanted=="" then return nil,"no assigned player" end
+  if not A.Text(wanted) or wanted=="" then return nil,self:Text("no assigned player") end
   local wantName,wantRealm=wanted:lower():match("^([^%-]+)%-?(.*)$")
   local matched
   for _,unit in ipairs(units) do
     if unit~="player" then
       local name,realm=unitFullName(unit)
       if name and name:lower()==wantName and (wantRealm=="" or (realm or ""):lower()==wantRealm) then
-        if matched then return nil,"assigned player name is ambiguous" end
+        if matched then return nil,self:Text("assigned player name is ambiguous") end
         matched=unit
       end
     end
   end
   if matched then
     if stoneEligible(matched,itemID) then return matched end
-    return nil,wanted.." is dead, offline or out of range"
+    return nil,self:Text("%s is dead, offline or out of range",wanted)
   end
-  return nil,wanted.." is not in your group"
+  return nil,self:Text("%s is not in your group",wanted)
 end
 function B:SetSoulstoneAssignedFromTarget()
   if A.Call(UnitExists,"target")~=true or A.Call(UnitIsPlayer,"target")~=true or A.Call(UnitCanAssist,"player","target")~=true
@@ -498,8 +498,8 @@ function B:SoulstoneCandidate()
     local why
     if self.db.soulstoneRaid=="assigned" then target,why=self:SoulstoneAssignedUnit(itemID,units) end
     if not target then
-      local result=action("soulstone",0,"Soulstone not placed",info.texture,
-        "Raid: place your Soulstone on your assigned target"..(why and " ("..why..")" or "")..".",true)
+      local result=action("soulstone",0,self:Text("Soulstone not placed"),info.texture,
+        why and self:Text("Raid: place your Soulstone on your assigned target (%s).",why) or self:Text("Raid: place your Soulstone on your assigned target."),true)
       result.targetName="Soulstone • raid"
       return result
     end
@@ -507,8 +507,8 @@ function B:SoulstoneCandidate()
     local why
     target,why=self:SoulstoneTarget(itemID,units)
     if not target then
-      local result=action("soulstone",0,"Soulstone not placed",info.texture,
-        "Your assigned Soulstone player is unavailable ("..tostring(why or "not eligible").."). BuffTap will not use it on someone else.",true)
+      local result=action("soulstone",0,self:Text("Soulstone not placed"),info.texture,
+        self:Text("Your assigned Soulstone player is unavailable (%s). BuffTap will not use it on someone else.",tostring(why or self:Text("not eligible"))),true)
       result.targetName="Soulstone • assigned"
       return result
     end
