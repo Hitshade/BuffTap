@@ -4,7 +4,7 @@
 
 local _, B = ...
 _G.BuffTap = B
-B.version = "1.24.0"
+B.version = "1.24.1"
 B.API = {}
 local A = B.API
 
@@ -1462,8 +1462,13 @@ function B:CopyPartyBlessingsToRaid()
   self:GroupSettings("Raid",true).blessingAssignments=self:GroupPreference("blessingAssignments","Party")
   self:InvalidateAura(); self:RequestRefresh("copy party blessings",0); return true
 end
+-- Your own exception is saved (you are always in your group); other players' stay session-only.
+local function isSelf(guid) return A.Text(guid) and guid==A.Call(UnitGUID,"player") end
 function B:GetBlessingPlayer(guid,context)
   local value=self.blessingPlayers and self.blessingPlayers[guid]
+  if isSelf(guid) and type(self.db.blessingSelf)=="table" then value=self.db.blessingSelf end
+  local saved=type(self.db.blessingSaved)=="table" and A.Text(guid) and self.db.blessingSaved[guid]
+  if not value and type(saved)=="table" then value=saved end
   if not value then return nil end
   context=context or self:BlessingContext()
   return {choice=context=="Raid" and value.raidChoice or context=="Party" and value.choice or nil}
@@ -1564,10 +1569,61 @@ function B:SetBlessingPlayer(entry,key,context)
   if not A.Text(guid) then return end
   if key=="priority" then return end
   self.blessingPlayers=self.blessingPlayers or {}
-  local value=self.blessingPlayers[guid] or {}
+  local saved=type(self.db.blessingSaved)=="table" and self.db.blessingSaved[guid]
+  local value=self.blessingPlayers[guid] or (isSelf(guid) and type(self.db.blessingSelf)=="table" and self.db.blessingSelf) or (type(saved)=="table" and {choice=saved.choice,raidChoice=saved.raidChoice}) or {}
   if (context or self:BlessingContext())=="Raid" then value.raidChoice=key else value.choice=key end
   if not value.choice and not value.raidChoice then self.blessingPlayers[guid]=nil else self.blessingPlayers[guid]=value end
+  if isSelf(guid) then self.db.blessingSelf=(value.choice or value.raidChoice) and {choice=value.choice,raidChoice=value.raidChoice} or nil end
+  if type(saved)=="table" then
+    if value.choice or value.raidChoice then saved.choice=value.choice; saved.raidChoice=value.raidChoice else self.db.blessingSaved[guid]=nil end
+  end
   self:InvalidateAura(); self:RequestRefresh("blessing player choice",0)
+end
+-- Remembered exceptions: opt-in, per character, keyed by the other player's GUID (stable in Classic).
+-- Full name with surname (A.Call keeps only the first return value).
+function B.FullUnitName(unit)
+  local ok,name,realm=pcall(UnitName,unit)
+  if not ok or not A.Text(name) then return nil end
+  return A.Text(realm) and realm~="" and name.." "..realm or name
+end
+-- Class-coloured full name. On WoW Forever UnitName's second value is the surname: "Mizi Moonweaver".
+function B.ClassColoredName(unit,class)
+  local ok,name,realm=pcall(UnitName,unit)
+  if not ok or not A.Text(name) then return nil end
+  if not A.Text(class) then local ok2,_,token=pcall(UnitClass,unit); class=ok2 and token or nil end
+  local c=RAID_CLASS_COLORS and class and RAID_CLASS_COLORS[class]
+  if A.Text(realm) and realm~="" then name=name.." "..realm end
+  return c and string.format("|cff%02x%02x%02x%s|r",math.floor(c.r*255+0.5),math.floor(c.g*255+0.5),math.floor(c.b*255+0.5),name) or name
+end
+function B:IsBlessingRemembered(guid)
+  return A.Text(guid) and type(self.db.blessingSaved)=="table" and type(self.db.blessingSaved[guid])=="table" or false
+end
+function B:SetBlessingRemember(entry,on)
+  if A.Combat() then return end
+  local guid=entry and A.Call(UnitGUID,entry.unit)
+  if not A.Text(guid) or isSelf(guid) then return end
+  local saved=type(self.db.blessingSaved)=="table" and self.db.blessingSaved or {}
+  if on then
+    local value=self.blessingPlayers and self.blessingPlayers[guid]
+    if not value or not (value.choice or value.raidChoice) then return end
+    local _,class=A.Call(UnitClass,entry.unit)
+    saved[guid]={choice=value.choice,raidChoice=value.raidChoice,name=B.FullUnitName(entry.unit),class=class or entry.class}
+  else
+    local old=saved[guid]
+    if type(old)=="table" and (old.choice or old.raidChoice) then
+      self.blessingPlayers=self.blessingPlayers or {}
+      self.blessingPlayers[guid]={choice=old.choice,raidChoice=old.raidChoice}
+    end
+    saved[guid]=nil
+  end
+  self.db.blessingSaved=next(saved) and saved or nil
+  self:InvalidateAura(); self:RequestRefresh("blessing remember",0)
+end
+function B:ForgetBlessingPlayer(guid)
+  if A.Combat() or type(self.db.blessingSaved)~="table" then return end
+  self.db.blessingSaved[guid]=nil
+  if not next(self.db.blessingSaved) then self.db.blessingSaved=nil end
+  self:InvalidateAura(); self:RequestRefresh("blessing forget",0)
 end
 function B:BlessingGreaterSafe(key,class,roster)
   for _,entry in ipairs(roster) do

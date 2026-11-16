@@ -14,7 +14,7 @@ local shared={iconStyle=true,campIconStyle=true,labelPosition=true,showSwipe=tru
 local classKeys={"groupContextSettings","situationSettings","seconds","rebuffVersion","buffs","priorities","buffSeconds","group","smartGroup","groupNeed","blessingNeed",
   "salvationVersion","salvationMigration","friendlyTarget","targetSeconds","targetClassBlessings","targetBlessingFallback","targetBlessingClasses","targetBlessingPriorities",
   "blessingGroupOverrides","blessingRaidDefaults","blessingPartyMode","blessingPartyUniform","blessingPartyExcluded","groupBlessingPriorities","blessingAssignments","blessingClasses","buffGroups","buffClasses","buffGroupNeed","buffRoles","buffSelf","blessingRoleChoices","roleGuess","targetBuffs","targetBuffSeconds","targetClasses","raidGroups",
-  "consumablesEnabled","consumableFamilies","consumableChoices","consumableSeconds","supplyCustom","supplyReminder","supplyAnywhere","pickerBagsOnly","suppliesEnabled","suppliesChat","suppliesSound","suppliesReadyCheck","supplySettings",
+  "blessingSelf","blessingSaved","consumablesEnabled","consumableFamilies","consumableChoices","consumableSeconds","supplyCustom","supplyReminder","supplyAnywhere","pickerBagsOnly","suppliesEnabled","suppliesChat","suppliesSound","suppliesReadyCheck","supplySettings",
   "weaponReminder","weaponMainHand","weaponOffHand","weaponApply","weaponReplace","weaponChoices","weaponCoatings","weaponSeconds","weaponsPauseResting","consumablesPauseResting","consumablesInstanceOnly","buffPets",
   "helperTracking","helperTreasure","helperTracker","helperCoverage","helperPet","helperHealthstone","helperSoulstone","helperOath","oathAssigned","helperDemon","soulstoneParty","soulstoneRaid","soulstoneAssigned"}
 local function clone(value,seen,depth)

@@ -1,3 +1,12 @@
+# BuffTap 1.24.1
+
+### Changes
+- Paladins: the blessing exception you set for yourself on the Groups page (for example Kings instead of Wisdom) is now saved and survives reloads and logouts.
+- Exceptions for other players still last for the current session, unless you tick Remember on their row. Remembered players keep their blessing the next time you group, and show greyed out with a Remove button while they are away.
+- Thanks to Misketadam for the report.
+
+---
+
 # BuffTap 1.24.0
 
 ### Changes

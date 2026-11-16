@@ -2,6 +2,9 @@
 local _,B=...
 -- Keep the ten most recent releases within a 24 KiB content ceiling.
 B.PatchNotes={
+ {version="1.24.1",title="Blessing exceptions you can keep",items={
+  "Paladins: the blessing exception you set for yourself on the Groups page (for example Kings instead of Wisdom) is now saved and survives reloads and logouts.",
+  "Exceptions for other players still last for the current session, unless you tick Remember on their row. Remembered players keep their blessing the next time you group, and show greyed out with a Remove button while they are away."},thanks="Thanks to Misketadam for the report."},
  {version="1.24.0",title="Special buffs",items={
   "The Utility checklist now has special buffs: Magical Awareness (Elemental Attractor or Arcane Censer), the three Zanzas, Jujus, the Blasted Lands buffs, Un'Goro crystals and the Dire Maul drinks.",
   "Magical Awareness is one buff: tick either item and BuffTap uses whichever you carry.",
@@ -50,11 +53,6 @@ B.PatchNotes={
   "While Nearby is paused (stealthed, mounted or resting), its first row says so and the players below stay listed for invites."},thanks="Thanks to bruinsfan825 and user_vvl9721yymgwdslx85417 for the reports."},
  {version="1.22.1",title="Nearby dash restored",items={
   "Players with nothing to cast show the small grey dash in the Nearby window again. It was removed by mistake in 1.22.0."}},
- {version="1.22.0",title="Resurrection, and know when friends are near",items={
-  "New: BuffTap offers your resurrection spell to dead group members and to a dead player you target, out of combat. Druids can also allow Rebirth. Find it on the Cleanse & revive page.",
-  "New, off by default: a sound and a short highlight when a friend or guild member shows up in your Nearby list. Turn it on under Customization > Binding & sound, with separate switches for friends and guild.",
-  "It plays at most once per player an hour, never in combat or instances, and stays quiet right after a loading screen. Three new sounds come with it: Happy hello, Twin bells and Playful marimba.",
-  "The cleanse sound now sits with the other sounds under Customization > Binding & sound, and cleansing alerts now use Warm bell."}},
 }
 function B:PatchNotesUnread()
   return self.profileDB and self.db.optionsPatchDot~=false and self.profileDB.global.patchNotesSeen~=self.version

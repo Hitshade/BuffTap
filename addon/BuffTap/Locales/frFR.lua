@@ -1209,3 +1209,6 @@ B.Locales.frFR["Reset supplies look"]="Réinitialiser l'apparence des fourniture
 B.Locales.frFR["What is running low"]="Ce qui vient à manquer"
 B.Locales.frFR["Tick as many as you like. Each one gets its own reminder. Your choices stay saved when out of stock."]="Cochez-en autant que vous voulez. Chacun a son propre rappel. Vos choix restent enregistrés en rupture de stock."
 B.Locales.frFR["Your item"]="Votre objet"
+B.Locales.frFR["Remember"]="Mémoriser"
+B.Locales.frFR["not in group"]="pas dans le groupe"
+B.Locales.frFR["Keeps this player's exception for your next sessions, so it is ready whenever you group with them again."]="Conserve l'exception de ce joueur pour vos prochaines sessions, afin qu'elle soit prête quand vous vous regroupez."

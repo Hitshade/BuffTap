@@ -623,6 +623,15 @@ function B:BuildBlessingOptions(parent)
         control.icon:SetTexture(first and first~="skip" and blessingIcon(first) or "Interface\\Buttons\\UI-GroupLoot-Pass-Up")
       end
     end
+    -- Remember keeps this player's exception between sessions; absent remembered players get Remove instead.
+    row.remember=check(row,"Remember",414,-1,function(c)
+      if row.entry and row.entry.unit and not A.Combat() then B:SetBlessingRemember(row.entry,c:GetChecked() and true or false) end
+      B:Options()
+    end)
+    addHelp(row.remember,"Remember","Keeps this player's exception for your next sessions, so it is ready whenever you group with them again.")
+    row.forget=button(row,L("Remove"),414,-2,80,function()
+      if row.guid then B:ForgetBlessingPlayer(row.guid) end; B:Options()
+    end)
     f.blessingPlayerRows[i]=row
   end
   -- Role choices for this class: a tank or healer of the class gets this blessing instead of the class choice.
@@ -800,15 +809,35 @@ function B:UpdateGroupRosterOptions()
 end
 
 local function updateBlessingPlayers(self,f,entries,title,editable)
+  local list,present={},{}
+  for _,entry in ipairs(entries) do list[#list+1]=entry; local g=A.Call(UnitGUID,entry.unit); if A.Text(g) then present[g]=true end end
+  if type(self.db.blessingSaved)=="table" then
+    local absent={}
+    for guid,saved in pairs(self.db.blessingSaved) do
+      if type(saved)=="table" and not present[guid] and saved.class==f.blessingDetailClass then absent[#absent+1]={absent=true,guid=guid,name=saved.name or "?",class=saved.class} end
+    end
+    table.sort(absent,function(a,b) return tostring(a.name)<tostring(b.name) end)
+    for _,e in ipairs(absent) do list[#list+1]=e end
+  end
+  entries=list
   if #entries==0 then return end
       local maxOffset=math.max(0,#entries-5); local offset=math.max(0,math.min(f.blessingPlayerOffset or 0,maxOffset)); f.blessingPlayerOffset=offset; f.blessingPlayerMaxOffset=maxOffset
       f.blessingDetail:ClearAllPoints(); f.blessingDetail:SetPoint("TOPLEFT",36,-242); f.blessingDetail:Show(); f.blessingDetailTitle:SetText(L("Player exceptions")..": "..title)
       for i,r in ipairs(f.blessingPlayerRows) do
         local entry=entries[offset+i]
-        if entry then
-          r.entry=entry; r.guid=A.Call(UnitGUID,entry.unit); r.name:SetText(A.Call(UnitName,entry.unit) or entry.unit)
-          r.pick:Show(); r.pick:Update(); r.pick:SetAvailable(editable); r:Show()
-        end
+        if entry and entry.absent then
+          r.entry=entry; r.guid=entry.guid; r.name:SetTextColor(1,1,1); r.name:SetText("|cff888888"..entry.name.." ("..L("not in group")..")|r")
+          r.pick:Show(); r.pick:Update(); r.pick:SetAvailable(false); r.remember:Hide(); r.forget:Show(); r.forget:SetEnabled(editable); r:Show()
+        elseif entry then
+          r.entry=entry; r.guid=A.Call(UnitGUID,entry.unit); r.name:SetTextColor(1,1,1); r.name:SetText(B.ClassColoredName(entry.unit,entry.class) or entry.unit)
+          r.pick:Show(); r.pick:Update(); r.pick:SetAvailable(editable); r.forget:Hide()
+          local own=r.guid and r.guid==A.Call(UnitGUID,"player")
+          local session=self.blessingPlayers and r.guid and self.blessingPlayers[r.guid]
+          local remembered=self:IsBlessingRemembered(r.guid)
+          r.remember:SetShown(not own); r.remember:SetChecked(remembered)
+          r.remember:SetEnabled(editable and (remembered or (session and (session.choice or session.raidChoice)) and true or false))
+          r:Show()
+        else r:Hide() end
       end
       f.blessingPageText:SetText("Players "..(offset+1).."-"..math.min(offset+5,#entries).." / "..#entries.." - "..L("Player exceptions take precedence."))
       f.blessingScroll.silent=true; f.blessingScroll:SetMinMaxValues(0,math.max(1,maxOffset)); f.blessingScroll:SetValue(offset); f.blessingScroll:SetShown(maxOffset>0); f.blessingScroll.silent=false
