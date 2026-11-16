@@ -333,6 +333,15 @@ function B:CreateSupplyBadge()
   f:RegisterForDrag("LeftButton"); f:RegisterForClicks("LeftButtonUp","RightButtonUp")
   f.icon=f:CreateTexture(nil,"ARTWORK"); f.art=f.icon
   f.glow=f:CreateTexture(nil,"OVERLAY"); f.glow:SetAllPoints(); f.glow:SetTexture("Interface\\Buttons\\CheckButtonHilight"); f.glow:SetBlendMode("ADD")
+  -- Same pulse as the camping reminder, so the Pulse effect animates on the live icon too.
+  if type(f.glow.CreateAnimationGroup)=="function" then
+    local ag=f.glow:CreateAnimationGroup()
+    if ag then
+      local first=ag:CreateAnimation("Alpha"); first:SetFromAlpha(1); first:SetToAlpha(.45); first:SetDuration(.7); first:SetOrder(1)
+      local second=ag:CreateAnimation("Alpha"); second:SetFromAlpha(.45); second:SetToAlpha(1); second:SetDuration(.7); second:SetOrder(2)
+      ag:SetLooping("REPEAT"); f.pulseAnimation=ag
+    end
+  end
   f.time=f:CreateFontString(nil,"OVERLAY","GameFontHighlightSmall"); f.count=f.time
   f:SetScript("OnHide",function(s) if B.StopIconEffect then B:StopIconEffect(s) end end)
   f:SetScript("OnDragStart",function(s) if not A.Combat() then s.dragged=true; s.dragging=true; s:StartMoving() end end)
@@ -458,7 +467,16 @@ function B:SuppliesEvent(event,itemID)
     if enabled(self) and self.db.suppliesReadyCheck and not self:ReminderPauseReason() then self:ReportSupplies() end
     return true
   end
-  if not enabled(self) then return false end
+  if not enabled(self) then
+    -- Warnings off: no alert work, but keep the visible Supplies list's counts fresh.
+    if event=="BAG_UPDATE_DELAYED" or event=="ITEM_DATA_LOAD_RESULT" then
+      self:InvalidateSupplies(true)
+      if not A.Combat() and self.options and self.options:IsShown() then
+        self:StartTimer("supplies-update",0.25,function() if B.options and B.options:IsShown() and not A.Combat() then B:UpdateSupplyOptions() end end)
+      end
+    end
+    return false
+  end
   if event=="ITEM_DATA_LOAD_RESULT" and not (A.Number(itemID) and self.supplyTrackedIDs and self.supplyTrackedIDs[itemID]) then return false end
   if event=="PLAYER_REGEN_DISABLED" then
     self:CancelTimer("supplies-update"); if self.supplyBadge then self.supplyBadge:Hide() end

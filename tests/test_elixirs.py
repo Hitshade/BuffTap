@@ -78,3 +78,27 @@ local p=B.optionsPreviews.supply.icon; assert(tostring(p.icon.texture):find('INV
 assert(not p.nameLabel:IsShown())
 B.db.supplyCustom={4306}; stock(4306,1); B:UpdateOptionsPreviews(); assert(tostring(p.time.text):find('Item 4306') or tostring(p.time.text):find('4306') or not tostring(p.icon.texture):find('INV_Crate_01'),'uses a tracked item')
 assert(tostring(f.supplyEffect.text):find('Soft'),'effect selector label '..tostring(f.supplyEffect.text))""")
+test('Magical Awareness is one buff that either source refreshes',"""local B=BuffTap
+stock(275730,1297774); consumables('utility'); B:ToggleElixir(281371)
+refresh(); assert(B.action and B.action.itemID==275730,'uses the Arcane Censer when only it is carried')
+assert(B:ElixirLineTicked(B:ElixirFamilyFor(275730))~=nil,'one buff, not two choices')
+aura('player',1297774,'Magical Awareness',7000,7200); B:InvalidateConsumables(); refresh(); assert(not B.action,'active')""")
+test('Zanza is one at a time; Juju and Blasted Lands tick independently',"""local B=BuffTap; consumables('utility')
+B:ToggleElixir(20079); B:ToggleElixir(20081)
+assert(B:ElixirTicked(B:ElixirFamilyFor(20081)) and not B:ElixirTicked(B:ElixirFamilyFor(20079)))
+B:ToggleElixir(12451); B:ToggleElixir(8410); B:ToggleElixir(11564)
+for _,id in ipairs({12451,8410,11564,20081}) do assert(B:ElixirTicked(B:ElixirFamilyFor(id)),'ticked '..id) end
+stock(12451,16323); stock(8410,10667); refresh(); assert(B.action,'offers one')
+aura('player',24382,'Spirit of Zanza',7000,7200); B:InvalidateConsumables(); refresh()
+assert(not (B.action and B.action.itemID==20081),'another Zanza active counts')""")
+test('Short combat items are not offered for upkeep',"""local B=BuffTap
+for _,id in ipairs({12450,12459,13506,250327,11567,281234}) do assert(not B:ElixirFamilyFor(id),'excluded '..id) end""")
+test('Supplies counts stay fresh with warnings off',"""local B=BuffTap; B.db.suppliesEnabled=false; B.db.supplyCustom={4306}; bags[4306]=1; B:Options()
+B.options:Show(); B:UpdateSupplyOptions(); assert(B.options.supplyRows[1].entry.count==1,'1')
+bags[4306]=3; B:SuppliesEvent('BAG_UPDATE_DELAYED'); advance(.3); assert(B.options.supplyRows[1].entry.count==3,'3 '..tostring(B.options.supplyRows[1].entry.count))""")
+test('Export carries tracked supplies and the Supplies reminder look',"""local B=BuffTap; B.db.supplyCustom={4306}; B.db.supplyX=123; B.db.supplyEffectStyle='pulse'; B.db.pickerBagsOnly=false
+local text=B:ExportSettings(false)
+B.db.supplyCustom={}; B.db.supplyX=0; B.db.supplyEffectStyle='soft'; B.db.pickerBagsOnly=true
+local ok,why=B:ImportSettings(text); assert(ok~=false,'import '..tostring(why))
+assert(B.db.supplyCustom[1]==4306,'tracked items'); assert(B.db.supplyX==123 and B.db.supplyEffectStyle=='pulse','look'); assert(B.db.pickerBagsOnly==false,'bags filter')""")
+test('Live Supplies icon can pulse',"""local B=BuffTap; B.db.supplyAnywhere=true; B:CreateSupplyBadge(); assert(B.supplyBadge.pulseAnimation,'pulse group')""")

@@ -6,11 +6,15 @@ local shared={iconStyle=true,campIconStyle=true,labelPosition=true,showSwipe=tru
   showBuffName=true,showTargetName=true,showTimer=true,showGroupBadge=true,labelFont=true,labelColor=true,
   sound=true,reminderSound=true,alertSoundVersion=true,campAlertSound=true,supplySound=true,soundChannel=true,soundInterval=true,
   pvpProtection=true,pauseResting=true,helperDismiss=true,helperBounce=true,helperThanks=true,helperThankEmote=true,helperThanksResting=true,nearbyRequests=true,nearbyButtonSide=true,requestMessage=true,requestBuffs=true,
-  helperQuick=true,helperDiscovery=true,minimap=true,brokerEnabled=true}
+  helperQuick=true,helperDiscovery=true,minimap=true,brokerEnabled=true,
+  -- Supplies reminder look and position (shared like the camping reminder's).
+  supplySize=true,supplyOpacity=true,supplyX=true,supplyY=true,supplyShowName=true,supplyShowCount=true,supplyTextFont=true,
+  supplyTextColor=true,supplyTextOutline=true,supplyTextSize=true,supplyTextGap=true,supplyIconStyle=true,
+  supplyEffectStyle=true,supplyEffectColor=true,supplyEffectSpeed=true}
 local classKeys={"groupContextSettings","situationSettings","seconds","rebuffVersion","buffs","priorities","buffSeconds","group","smartGroup","groupNeed","blessingNeed",
   "salvationVersion","salvationMigration","friendlyTarget","targetSeconds","targetClassBlessings","targetBlessingFallback","targetBlessingClasses","targetBlessingPriorities",
   "blessingGroupOverrides","blessingRaidDefaults","blessingPartyMode","blessingPartyUniform","blessingPartyExcluded","groupBlessingPriorities","blessingAssignments","blessingClasses","buffGroups","buffClasses","buffGroupNeed","buffRoles","buffSelf","blessingRoleChoices","roleGuess","targetBuffs","targetBuffSeconds","targetClasses","raidGroups",
-  "consumablesEnabled","consumableFamilies","consumableChoices","consumableSeconds","suppliesEnabled","suppliesChat","suppliesSound","suppliesReadyCheck","supplySettings",
+  "consumablesEnabled","consumableFamilies","consumableChoices","consumableSeconds","supplyCustom","supplyReminder","supplyAnywhere","pickerBagsOnly","suppliesEnabled","suppliesChat","suppliesSound","suppliesReadyCheck","supplySettings",
   "weaponReminder","weaponMainHand","weaponOffHand","weaponApply","weaponReplace","weaponChoices","weaponCoatings","weaponSeconds","weaponsPauseResting","consumablesPauseResting","consumablesInstanceOnly","buffPets",
   "helperTracking","helperTreasure","helperTracker","helperCoverage","helperPet","helperHealthstone","helperSoulstone","helperOath","oathAssigned","helperDemon","soulstoneParty","soulstoneRaid","soulstoneAssigned"}
 local function clone(value,seen,depth)

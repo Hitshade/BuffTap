@@ -256,7 +256,7 @@ local ELIXIR_LINES={
   arcane={247754,250342,9155,13454}}
 B.ChecklistChildren={}
 -- Turns a family into a checklist: one hidden family per item, each with its own reminder.
-function B.MakeChecklist(parent,prefix,lines)
+function B.MakeChecklist(parent,prefix,lines,sharedLines)
   local lineOf,byID={},{}
   for line,ids in pairs(lines) do for _,id in ipairs(ids) do lineOf[id]=line end end
   for _,item in ipairs(parent.items) do byID[item.id]=item; item.line=lineOf[item.id] end
@@ -266,8 +266,14 @@ function B.MakeChecklist(parent,prefix,lines)
     for _,id in ipairs(item.line and lines[item.line] or {item.id}) do
       for _,aura in ipairs(byID[id] and byID[id].auraIDs or {}) do covers[#covers+1]=aura end
     end
+    -- Shared lines (Magical Awareness): any carried source item can refresh the one buff.
+    local sources={item}
+    if item.line and sharedLines and sharedLines[item.line] then
+      sources={item}
+      for _,id in ipairs(lines[item.line]) do if id~=item.id and byID[id] then sources[#sources+1]=byID[id] end end
+    end
     local child={key=prefix..item.id,name=item.name,hidden=true,parent=parent,thresholdKey=parent.key,
-      defaultSeconds=parent.defaultSeconds,pendingSeconds=2,auraSpellIDs=covers,items={item},line=item.line}
+      defaultSeconds=parent.defaultSeconds,pendingSeconds=2,auraSpellIDs=covers,items=sources,line=item.line}
     parent.children[#parent.children+1]=child
     B.ChecklistChildren[#B.ChecklistChildren+1]=child
     B.ConsumableFamilies[#B.ConsumableFamilies+1]=child
@@ -294,6 +300,32 @@ do
   local utility=B.ConsumableFamilies[#B.ConsumableFamilies]
   if utility and utility.key=="utility" then
     utility.name="Utility"; utility.multi=true; utility.protectPresent=nil
-    B.UtilityFamilies=B.MakeChecklist(utility,"utility:",{firewater={246948,12820}})
+    -- Special buffs (Forever 1.60.1 item On Use spells). The buff is expected to match the use spell;
+    -- if it does not appear after a use, BuffTap pauses that reminder instead of trying again.
+    -- Left out on purpose: short combat items (Juju Flurry/Escape, Petrification, Predatory Senses),
+    -- Crystal Spire (can land on someone else) and zone-only Winterspring Shrouding.
+    local extra={
+      {id=281371,useSpell=1297774,name="Elemental Attractor",note="Magical Awareness for 2 hours. Either source counts."},
+      {id=275730,useSpell=1297774,name="Arcane Censer",note="Magical Awareness for 2 hours. Either source counts."},
+      {id=20079,useSpell=24382,name="Spirit of Zanza",note="+50 Stamina and Spirit for 2 hours. Only one Zanza at a time."},
+      {id=20080,useSpell=24417,name="Sheen of Zanza",note="3% spell reflect for 2 hours. Only one Zanza at a time."},
+      {id=20081,useSpell=24383,name="Swiftness of Zanza",note="+20% run speed for 2 hours. Only one Zanza at a time."},
+      {id=12451,useSpell=16323,name="Juju Power",note="+30 Strength for 30 min."},
+      {id=12460,useSpell=16329,name="Juju Might",note="+40 Attack Power for 10 min."},
+      {id=12458,useSpell=16327,name="Juju Guile",note="+30 Intellect for 30 min."},
+      {id=12455,useSpell=16326,name="Juju Ember",note="+15 Fire Resistance for 10 min."},
+      {id=12457,useSpell=16325,name="Juju Chill",note="+15 Frost Resistance for 10 min."},
+      {id=8410,useSpell=10667,name="R.O.I.D.S.",note="+25 Strength for 1 hour."},
+      {id=8411,useSpell=10668,name="Lung Juice Cocktail",note="+25 Stamina for 1 hour."},
+      {id=8412,useSpell=10669,name="Ground Scorpok Assay",note="+25 Agility for 1 hour."},
+      {id=8423,useSpell=10692,name="Cerebral Cortex Compound",note="+25 Intellect for 1 hour."},
+      {id=8424,useSpell=10693,name="Gizzard Gum",note="+25 Spirit for 1 hour."},
+      {id=11563,useSpell=15231,name="Crystal Force",note="+30 Spirit for 30 min."},
+      {id=11564,useSpell=15233,name="Crystal Ward",note="+200 Armor for 30 min."},
+      {id=18269,useSpell=22789,name="Gordok Green Grog",note="+10 Stamina for 15 min."},
+      {id=18284,useSpell=22790,name="Kreeg's Stout Beatdown",note="+25 Spirit but -5 Intellect for 15 min."},
+    }
+    for _,item in ipairs(extra) do item.auraIDs={item.useSpell}; utility.items[#utility.items+1]=item end
+    B.UtilityFamilies=B.MakeChecklist(utility,"utility:",{firewater={246948,12820},magical_awareness={281371,275730},zanza={20079,20080,20081}},{magical_awareness=true})
   end
 end

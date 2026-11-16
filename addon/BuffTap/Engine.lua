@@ -4,7 +4,7 @@
 
 local _, B = ...
 _G.BuffTap = B
-B.version = "1.23.0"
+B.version = "1.24.0"
 B.API = {}
 local A = B.API
 

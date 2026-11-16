@@ -2,6 +2,15 @@
 local _,B=...
 -- Keep the ten most recent releases within a 24 KiB content ceiling.
 B.PatchNotes={
+ {version="1.24.0",title="Special buffs",items={
+  "The Utility checklist now has special buffs: Magical Awareness (Elemental Attractor or Arcane Censer), the three Zanzas, Jujus, the Blasted Lands buffs, Un'Goro crystals and the Dire Maul drinks.",
+  "Magical Awareness is one buff: tick either item and BuffTap uses whichever you carry.",
+  "Only one Zanza can be ticked, and any active Zanza counts.",
+  "Short combat items such as Juju Flurry and Juju Escape are left out, since they are not worth keeping up.",
+  "If a new item ever does not give the buff BuffTap expects, its reminder pauses and says so instead of using more.",
+  "Supplies counts now update even with supply warnings off.",
+  "Settings export now includes your tracked supplies and the Supplies reminder's look and position.",
+  "The Supplies reminder's Pulse effect now animates in play, not just in the preview."},thanks="Thanks to Lufia_TM for the Elemental Attractor request."},
  {version="1.23.0",title="Elixirs, utility and your own supplies",items={
   "Elixirs stack on Forever, so the Elixirs row on the Consumables page is now a checklist. Click Choose and tick every elixir you want kept up.",
   "Each ticked elixir gets its own reminder, and BuffTap offers whichever one is missing or running low.",
@@ -46,9 +55,6 @@ B.PatchNotes={
   "New, off by default: a sound and a short highlight when a friend or guild member shows up in your Nearby list. Turn it on under Customization > Binding & sound, with separate switches for friends and guild.",
   "It plays at most once per player an hour, never in combat or instances, and stays quiet right after a loading screen. Three new sounds come with it: Happy hello, Twin bells and Playful marimba.",
   "The cleanse sound now sits with the other sounds under Customization > Binding & sound, and cleansing alerts now use Warm bell."}},
- {version="1.21.2",title="A mana reserve that works on Forever",items={
-  "The Nearby mana reserve now works when the game hides your exact mana, as WoW Forever does: BuffTap judges it from which of your spells you can afford, so it stops close to your reserve. Once it is saving mana it waits until you are a little above the reserve again.",
-  "Nearby cleanses respect the mana reserve too."}},
 }
 function B:PatchNotesUnread()
   return self.profileDB and self.db.optionsPatchDot~=false and self.profileDB.global.patchNotesSeen~=self.version

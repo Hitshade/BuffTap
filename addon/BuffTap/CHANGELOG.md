@@ -1,3 +1,18 @@
+# BuffTap 1.24.0
+
+### Changes
+- The Utility checklist now has special buffs: Magical Awareness (Elemental Attractor or Arcane Censer), the three Zanzas, Jujus, the Blasted Lands buffs, Un'Goro crystals and the Dire Maul drinks.
+- Magical Awareness is one buff: tick either item and BuffTap uses whichever you carry.
+- Only one Zanza can be ticked, and any active Zanza counts.
+- Short combat items such as Juju Flurry and Juju Escape are left out, since they are not worth keeping up.
+- If a new item ever does not give the buff BuffTap expects, its reminder pauses and says so instead of using more.
+- Supplies counts now update even with supply warnings off.
+- Settings export now includes your tracked supplies and the Supplies reminder's look and position.
+- The Supplies reminder's Pulse effect now animates in play, not just in the preview.
+- Thanks to Lufia_TM for the Elemental Attractor request.
+
+---
+
 # BuffTap 1.23.0
 
 ### Changes
