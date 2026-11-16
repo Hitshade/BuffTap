@@ -4,7 +4,7 @@
 
 local _, B = ...
 _G.BuffTap = B
-B.version = "1.24.2"
+B.version = "1.24.3"
 B.API = {}
 local A = B.API
 
@@ -102,7 +102,7 @@ function B:InitDB()
     pickerBagsOnly=true, supplyCustom={}, consumablesEnabled=false, consumableFamilies={}, consumableChoices={}, consumableSeconds={},
     suppliesEnabled=false, suppliesChat=false, suppliesSound=false, suppliesReadyCheck=false, supplySettings={},
     weaponReminder=true, weaponMainHand=true, weaponOffHand=true,
-    consumablesPauseResting=false, weaponsPauseResting=false,
+    consumablesPauseResting=false, weaponsPauseResting=false, weaponSkipEmpty=false, helperTrackingFollow=true,
     weaponApply=false, weaponReplace=false, weaponChoices={}, weaponCoatings={}, weaponSeconds=60,
     nearbyEnabled=false, nearbyBuffing=true, nearbyShowAll=false, nearbyInvites=true, nearbyLocked=false, nearbyOnTop=false, nearbyFont="default", nearbyFontSize=0, nearbyFontOutline="none", nearbyShowLevel=false, nearbyMarkSocial=true, nearbyHideHeader=false, nearbyKeepLine=true, nearbyWhileResting=false, nearbyHoldShort=false, nearbyCastResult=true, nearbyAnimate=true, nearbyReturnFavor=true, nearbyKeys={}, effectUrgency=false, effectOnce=false, nearbyManaFloor=0, consumablesInstanceOnly=false, buffPets=false, helperDismissMinutes=10, helperThankDelay=0, readyCheckTopUp=true, pauseNotes=true, blockIgnored=true, blacklistTargets=true, blacklistInInstances=true, blockedPlayers={}, blockedGuilds={}, nearbyX=240, nearbyY=0, pvpProtection=true, helperDismiss=true, helperBounce=false, helperTracking=false, helperTreasure=false, helperCoverage=false,
     helperDiscovery=false, helperThanks=false, helperThankEmote="THANK", helperQuick=false, helperTracker=0, helperPet=false, helperHealthstone=false, helperSoulstone=false, helperOath=false, oathAssigned={}, soulstoneParty="healer", soulstoneRaid="remind", soulstoneAssigned="", helperDemon=0,

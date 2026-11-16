@@ -146,6 +146,13 @@ end
 
 -- Only known, spell-backed gathering trackers are candidates. One explicit
 -- preference prevents Herbs and Minerals from repeatedly replacing each other.
+local gatheringIDs={[2383]=true,[2580]=true,[8388]=true,[43308]=true,[2481]=true}
+-- Druid Track Humanoids only works in Cat Form, so it is only wanted there.
+local function trackerUsable(id)
+  if id~=5225 then return true end
+  local ok,form=pcall(GetShapeshiftFormID)
+  return ok and form==1
+end
 function B:GatheringTrackers(includeTreasure)
   local out={}
   local api=C_Minimap or {}
@@ -158,20 +165,55 @@ function B:GatheringTrackers(includeTreasure)
     if ok and A.Public(info) then
       if type(info)~="table" then info={name=info,texture=texture,active=active,type=kind,spellID=spellID} end
       local id=info.spellID
-      if A.Number(id) and (id==2383 or id==2580 or id==43308 or (includeTreasure and id==2481)) and A.Text(info.name)
+      -- Any spell the game's own minimap tracking menu offers: class tracking (Hunter, Sense Undead...) and gathering.
+      if A.Number(id) and (id~=2481 or includeTreasure) and A.Text(info.name)
         and A.Public(info.active) and A.Public(info.type) and info.type=="spell" and A.Known(id) then
         out[#out+1]={id=id,name=info.name,icon=A.Number(info.texture) and info.texture or 134400,
-          active=info.active==true or info.active==1}
+          active=info.active==true or info.active==1,gathering=gatheringIDs[id]==true}
       end
     end
   end
   return out
 end
+-- Every tracking this character could pick: its class tracking and gathering from the catalog, plus
+-- anything else the game's tracking menu offers. Unlearned ones can be chosen ahead of time.
+function B:TrackingChoices()
+  local out,seen={},{}
+  for _,e in ipairs(self:GatheringTrackers()) do e.learned=true; out[#out+1]=e; seen[e.id]=true end
+  local ok,_,class=pcall(UnitClass,"player"); if not ok then class=nil end
+  for _,b in ipairs(self.Buffs or {}) do
+    if b.kind=="tracking" and (b.class==class or b.class=="ALL") then
+      local known=false
+      for _,id in ipairs(b.ranks or {}) do if seen[id] then known=true end end
+      if not known then
+        local id=b.ranks and b.ranks[#b.ranks]
+        if A.Number(id) and id~=2481 then
+          out[#out+1]={id=id,name=self:Text(b.name),icon=b.icon or 134400,active=false,learned=false,gathering=b.class=="ALL"}; seen[id]=true
+        end
+      end
+    end
+  end
+  return out
+end
+-- Follow the minimap menu (default): a tracking the player switches on there becomes the one BuffTap keeps up.
+-- Nothing active (death, loading, switched off) never clears the choice; Find Treasure stays separate.
+function B:FollowMinimapTracking()
+  if self.db.helperTrackingFollow==false or not self:HelperEnabled("helperTracking") or A.Combat() then return end
+  for _,e in ipairs(self:GatheringTrackers()) do
+    if e.active and e.id~=2481 then
+      if self.db.helperTracker~=e.id then
+        self.db.helperTracker=e.id; self:RequestRefresh("tracking followed",0)
+        if self.options and self.options:IsShown() and self.UpdateHelperOptions then self:UpdateHelperOptions() end
+      end
+      return
+    end
+  end
+end
 function B:TrackingAction()
   if not self:HelperEnabled("helperTracking") and not self:HelperEnabled("helperTreasure") then return end
   for _,entry in ipairs(self:GatheringTrackers(true)) do
     local wanted=entry.id==2481 and self:HelperEnabled("helperTreasure") or (entry.id~=2481 and self:HelperEnabled("helperTracking") and entry.id==self.db.helperTracker)
-    if wanted and not entry.active then
+    if wanted and not entry.active and trackerUsable(entry.id) then
       local action={source="tracking",id=entry.id,key="gathering-"..entry.id,name=entry.name,icon=entry.icon,
         target="player",targetGUID=A.Call(UnitGUID,"player"),targetName="Tracking",rank="",reason="selected tracker is off",secureType="spell"}
       if not self:HelperSuppressed(action) and self:Validate(action) then return action end
@@ -182,7 +224,7 @@ function B:TrackingStillNeeded(action)
   if action.id==2481 then
     if not self:HelperEnabled("helperTreasure") then return false end
   elseif not self:HelperEnabled("helperTracking") or self.db.helperTracker~=action.id then return false end
-  for _,entry in ipairs(self:GatheringTrackers(true)) do if entry.id==action.id then return not entry.active end end
+  for _,entry in ipairs(self:GatheringTrackers(true)) do if entry.id==action.id then return not entry.active and trackerUsable(entry.id) end end
   return false
 end
 

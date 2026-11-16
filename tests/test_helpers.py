@@ -23,7 +23,7 @@ BuffTap.button.scripts.PostClick(nil,'RightButton',false); advance(.1); assert(B
 ''')
 test('Dismissed consumable family does not block another family', '''
 stock(13510,17626); stock(250350,1250985); consumables('flask'); BuffTap.db.consumableFamilies.ferocity=true
-refresh(); BuffTap:DismissHelper(BuffTap.action); advance(.1); assert(BuffTap.action.familyKey=='ferocity')
+refresh(); BuffTap:DismissHelper(BuffTap.action); advance(.1); assert(BuffTap.action.familyKey=='elixir:250350')
 ''')
 test('Only recent stronger-effect errors suppress a BuffTap action', '''
 BuffTap.db.helperBounce=true; SPELL_FAILED_AURA_BOUNCED='Stronger effect'
@@ -212,7 +212,7 @@ assert(BuffTap.options.discoveryReport:GetText():find('Enable Find unrecognized'
 
 
 test('Upgrade removes only retired potion settings', "BuffTap.db.consumableFamilies['potion-stock']=true; BuffTap.db.consumableChoices['potion-stock']=118; BuffTap.db.consumableSeconds['potion-stock']=120; BuffTap.db.consumableChoices.food=6888; BuffTap.db.consumableFamilies.food=true; BuffTap.db.helperThanks=true; BuffTap:InitDB(); assert(BuffTap.db.consumableFamilies['potion-stock']==nil and BuffTap.db.consumableChoices['potion-stock']==nil and BuffTap.db.consumableSeconds['potion-stock']==nil); assert(BuffTap.db.consumableChoices.food==6888 and BuffTap.db.consumableFamilies.food and BuffTap.db.helperThanks)")
-test('Consumable options have only maintainable buff families', "BuffTap:Options(); assert(#BuffTap.ConsumableFamilies==4 and #BuffTap.options.consumableRows==4); for _,family in ipairs(BuffTap.ConsumableFamilies) do assert(not family.stockOnly and family.key~='potion-stock'); for _,item in ipairs(family.items) do assert(item.id~=118) end end")
+test('Consumable options have only maintainable buff families', "BuffTap:Options(); assert(#BuffTap.ConsumableVisibleFamilies==4 and #BuffTap.options.consumableRows==4 and #BuffTap.ElixirFamilies>40); for _,family in ipairs(BuffTap.ConsumableFamilies) do assert(not family.stockOnly and family.key~='potion-stock'); for _,item in ipairs(family.items) do assert(item.id~=118) end end")
 
 test('Bounce requires matching failure and reason in either order', """
 BuffTap.db.helperBounce=true; SPELL_FAILED_AURA_BOUNCED='Stronger effect'
@@ -268,3 +268,28 @@ test('Solo emote remains configurable while automatic thanks is off',solo+"BuffT
 test("Questionable directed emotes remain selectable",solo+"for _,token in ipairs({'FART','BURP','RUDE','RASP','MOCK','TAUNT'}) do BuffTap.db.helperThankEmote=token; assert(BuffTap:SoloThankEmote()==token) end; BuffTap.db.helperThankEmote='FART'; received(1459,'target'); assert(#emotes==1 and emotes[1][1]=='FART' and emotes[1][2]=='target')")
 
 test("Solo emote dropdown scrolls without a search box", "BuffTap:HelperOptions(); local picker=BuffTap.helperWindow.thankEmote; picker.scripts.OnClick(); assert(picker.menu.scroll and picker.menu.content and not picker.menu.search); assert(#picker.menu.rows==30)")
+test('Class tracking appears and is reminded (waggz81)',"""spell(19883,'Track Humanoids'); spell(2383,'Find Herbs'); BuffTap.db.buffs.motw=false; BuffTap.db.buffs.thorns=false
+C_Minimap={GetNumTrackingTypes=function() return 2 end,GetTrackingInfo=function(i)
+return {spellID=i==1 and 2383 or 19883,name=i==1 and 'Find Herbs' or 'Track Humanoids',type='spell',texture=1,active=false} end}
+local list=BuffTap:GatheringTrackers(); assert(#list==2,'both listed')
+BuffTap.db.helperTracking=true; BuffTap.db.helperTracker=19883; refresh()
+assert(BuffTap.action and BuffTap.action.source=='tracking' and BuffTap.action.id==19883,'reminded')
+BuffTap:HelperOptions(); local p=BuffTap.helperWindow.trackerPick; assert(p,'nil pick'); assert(p:IsShown(),'hidden'); assert(p:GetText():find('Track Humanoids',1,true),tostring(p:GetText()))""")
+test('Buffs without a timer hide the Rebuff slider',"""local by={}; for _,b in ipairs(BuffTap.Buffs) do by[b.key]=b end
+for _,k in ipairs({'aspect-hawk','aspect-monkey','aspect-wild','trueshot','devotion','retribution','shadowform','soul-link'}) do assert(by[k].noTimer and by[k].permanent,k) end
+for _,k in ipairs({'motw','fort','inner-fire','righteous-fury','demon-armor','seal-command','battle-shout'}) do assert(not by[k].permanent,k) end""")
+test('Unlearned class tracking can be chosen ahead of time',"""playerClass='HUNTER'; C_Minimap={GetNumTrackingTypes=function() return 0 end,GetTrackingInfo=function() end}
+local names={}; for _,e in ipairs(BuffTap:TrackingChoices()) do names[e.name]=e.learned end
+assert(names['Track Humanoids']==false and names['Track Beasts']==false and names['Find Herbs']==false,'listed as not learned')
+assert(names['Sense Undead']==nil,'other classes left out')
+BuffTap.db.helperTracking=true; BuffTap.db.helperTracker=19883; refresh(); assert(not BuffTap.action or BuffTap.action.source~='tracking','no reminder until learned')
+BuffTap:HelperOptions(); local p=BuffTap.helperWindow.trackerPick; assert(p:IsShown() and p:GetText():find('not learned',1,true),tostring(p:GetText()))""")
+test('Switching tracking in the minimap menu is followed, not fought',"""spell(2383,'Find Herbs'); spell(1494,'Track Beasts'); BuffTap.db.buffs.motw=false; BuffTap.db.buffs.thorns=false
+local active=1494
+C_Minimap={GetNumTrackingTypes=function() return 2 end,GetTrackingInfo=function(i) local id=i==1 and 2383 or 1494
+return {spellID=id,name=i==1 and 'Find Herbs' or 'Track Beasts',type='spell',texture=1,active=id==active} end}
+BuffTap.db.helperTracking=true; BuffTap.db.helperTracker=2383
+BuffTap:FollowMinimapTracking(); assert(BuffTap.db.helperTracker==1494,'followed')
+active=nil; BuffTap:FollowMinimapTracking(); assert(BuffTap.db.helperTracker==1494,'nothing active keeps the choice')
+refresh(); assert(BuffTap.action and BuffTap.action.id==1494,'reminds the followed one')
+BuffTap.db.helperTrackingFollow=false; active=2383; BuffTap:FollowMinimapTracking(); assert(BuffTap.db.helperTracker==1494,'keep mode ignores the menu')""")

@@ -318,7 +318,7 @@ function B:WeaponChoiceSource(choice)
   end
   if unknown then return nil,"Preferred weapon consumable inventory or usability data is unavailable." end
   if carried>0 then return nil,"Preferred weapon consumable is carried, but no carried rank is usable." end
-  return nil,"Preferred weapon consumable is out of stock."
+  return nil,"Preferred weapon consumable is out of stock.",true
 end
 
 function B:WeaponNeed(state,choice)
@@ -344,7 +344,9 @@ function B:WeaponActionFor(hand)
   local needed,need,remaining=self:WeaponNeed(state,choice)
   if not needed then return nil,state.reason end
   if choice and itemImbueClasses[choice.class] and (hand.slot~=16 or self:CoatingWeaponMatches(hand.slot,choice)~=true) then return nil,(choice.class=="MAGE" and "Mage scroll" or choice.name).." does not match the equipped main-hand weapon." end
-  local source,why=self:WeaponChoiceSource(choice)
+  local source,why,empty=self:WeaponChoiceSource(choice)
+  -- Optional: no reminder for oils, stones or poisons you have none of, like buff food (noci__).
+  if empty and self.db.weaponSkipEmpty then return nil,"out of stock; reminder skipped" end
   local action={source="weapon-reminder",valid=true,key=(hand.coating and "coating-" or "weapon-")..hand.key,slot=hand.slot,coating=hand.coating,
     target="player",targetName=hand.label or (hand.slot==16 and "Main hand" or "Off hand"),name=choice and choice.name or "Weapon buff missing",
     icon=state.icon or 136026,needState=need,remaining=remaining,preference=choice and choice.key,

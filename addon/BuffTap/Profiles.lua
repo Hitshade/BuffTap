@@ -15,7 +15,7 @@ local classKeys={"groupContextSettings","situationSettings","seconds","rebuffVer
   "salvationVersion","salvationMigration","friendlyTarget","targetSeconds","targetClassBlessings","targetBlessingFallback","targetBlessingClasses","targetBlessingPriorities",
   "blessingGroupOverrides","blessingRaidDefaults","blessingPartyMode","blessingPartyUniform","blessingPartyExcluded","groupBlessingPriorities","blessingAssignments","blessingClasses","buffGroups","buffClasses","buffGroupNeed","buffRoles","buffSelf","blessingRoleChoices","roleGuess","targetBuffs","targetBuffSeconds","targetClasses","raidGroups",
   "blessingSelf","blessingSaved","consumablesEnabled","consumableFamilies","consumableChoices","consumableSeconds","supplyCustom","supplyReminder","supplyAnywhere","pickerBagsOnly","suppliesEnabled","suppliesChat","suppliesSound","suppliesReadyCheck","supplySettings",
-  "weaponReminder","weaponMainHand","weaponOffHand","weaponApply","weaponReplace","weaponChoices","weaponCoatings","weaponSeconds","weaponsPauseResting","consumablesPauseResting","consumablesInstanceOnly","buffPets",
+  "weaponReminder","weaponMainHand","weaponOffHand","weaponApply","weaponReplace","weaponSkipEmpty","helperTrackingFollow","weaponChoices","weaponCoatings","weaponSeconds","weaponsPauseResting","consumablesPauseResting","consumablesInstanceOnly","buffPets",
   "helperTracking","helperTreasure","helperTracker","helperCoverage","helperPet","helperHealthstone","helperSoulstone","helperOath","oathAssigned","helperDemon","soulstoneParty","soulstoneRaid","soulstoneAssigned"}
 local function clone(value,seen,depth)
   local t=type(value)

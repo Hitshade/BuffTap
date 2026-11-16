@@ -87,6 +87,11 @@ B.Buffs={
   {key="find-herbs",class="ALL",kind="tracking",name="Find Herbs",ranks={2383},icon=133939,defaultOn=false,coverage="gathering"},
   {key="find-minerals",class="ALL",kind="tracking",name="Find Minerals",ranks={8388,2580},icon=136025,defaultOn=false,coverage="gathering"},
 }
+-- Buffs that last until cancelled (no timer): the Rebuff slider means nothing for them, so it is hidden.
+local untilCancelled={["trueshot"]=true,["shadowform"]=true,["soul-link"]=true}
+for _,b in ipairs(B.Buffs) do
+  if b.kind=="aspect" or b.kind=="aura" or untilCancelled[b.key] then b.noTimer=true; b.permanent=true end
+end
 for _,definition in ipairs(B.Buffs) do
   if definition.coverage then definition.covers=coverage[definition.coverage]; definition.coverage=nil end
 end

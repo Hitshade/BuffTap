@@ -2,6 +2,11 @@
 local _,B=...
 -- Keep the ten most recent releases within a 24 KiB content ceiling.
 B.PatchNotes={
+ {version="1.24.3",title="Tracking for every class",items={
+  "Tracking reminder now covers any tracking you know, not just herbs and minerals: Hunter tracking, Sense Undead and more. Pick one from the new dropdown under Helpers > Tracking, even before you learn it, and BuffTap reminds you when it is off, for example after you die. If you switch tracking in the minimap menu, BuffTap follows your new choice instead of switching you back.",
+  "New \"Skip when I have none\" switch on the Weapons page: no reminder for an oil, sharpening stone or poison you have run out of, the same way buff food works.",
+  "Buffs with no timer, such as Hunter aspects, Trueshot Aura and Paladin auras, no longer show a Rebuff slider that did nothing. They remind you when they are off.",
+  "Fixed two lines overlapping in the Resurrection box for druids who have not learned a resurrection spell yet."},thanks="Thanks to waggz81 for the tracking idea and the Rebirth report, and a big shoutout to noci__, who has been with BuffTap since the beta, for the weapon idea."},
  {version="1.24.2",title="Fixes",items={
   "Personal consumables such as Juju Power and Crystal Force are now always used on yourself, even with someone else targeted.",
   "Paladins: a blessing exception set only for raids no longer overrides your tank and healer choices in a party, and the other way around.",
@@ -53,11 +58,6 @@ B.PatchNotes={
   "New players now join the Nearby list even while your mouse is over it."}},
  {version="1.22.3",title="Buffs just for others",items={
   "New \"Also on me\" switch for each buff on the Groups page. Turn it off and, in a party or raid, BuffTap casts that buff on others but not on you. Perfect for Thorns on your tank. Solo, you still get it."},thanks="Thanks to Lufia_TM for the report."},
- {version="1.22.2",title="PvP realms and stealth",items={
-  "Nearby now follows the same PvP rule as your group and target: flagged players are only skipped while you are unflagged. On PvP realms, Nearby works again in contested zones.",
-  "The PvP protection switch is now also on the Nearby page.",
-  "BuffTap holds back while you are in Stealth, Prowl or Shadowmeld, so a buff never breaks it.",
-  "While Nearby is paused (stealthed, mounted or resting), its first row says so and the players below stay listed for invites."},thanks="Thanks to bruinsfan825 and user_vvl9721yymgwdslx85417 for the reports."},
 }
 function B:PatchNotesUnread()
   return self.profileDB and self.db.optionsPatchDot~=false and self.profileDB.global.patchNotesSeen~=self.version

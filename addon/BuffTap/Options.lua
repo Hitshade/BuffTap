@@ -111,6 +111,11 @@ local function selector(parent,text,x,y,width,choices,onSelect,searchable)
       end
       row.choice=entry.key; row:SetText((searchable and entry.source and L(entry.source)..": " or "")..L(entry.name))
       B:PreviewChoiceFont(row,entry.font)
+      -- Optional icon per choice; text always left-aligned (styling can re-centre it after SetText).
+      if entry.icon and not row.icon then row.icon=row:CreateTexture(nil,"ARTWORK"); row.icon:SetSize(18,18); row.icon:SetPoint("LEFT",6,0) end
+      if row.icon then row.icon:SetTexture(entry.icon); row.icon:SetShown(entry.icon~=nil) end
+      local fs=row:GetFontString()
+      if fs then fs:ClearAllPoints(); fs:SetPoint("LEFT",entry.icon and 30 or 8,0); fs:SetPoint("RIGHT",-6,0); fs:SetJustifyH("LEFT") end
       local selected=control:GetText()==row:GetText() or (searchable and control:GetText()==L(entry.name))
       local r,g,b=T.accent[1],T.accent[2],T.accent[3]
       if selected then row:SetBackdropColor(r*.16+.04,g*.16+.046,b*.16+.056,1); row:SetBackdropBorderColor(r,g,b,.55)
@@ -1471,13 +1476,30 @@ function B:BuildHelperPage(parent)
     if A.Combat() then return end
     B.db.helperTracking=c:GetChecked()==true; B:RequestRefresh("tracking reminder",0); B:Options()
   end)
-  addHelp(f.checks.helperTracking,L("Remind me to enable tracking"),L("Choose Herbs, Minerals or Fish below. When that tracker is off, BuffTap offers a one-tap reminder to turn it on."))
+  addHelp(f.checks.helperTracking,L("Remind me to enable tracking"),L("Choose any tracking you know below, such as Track Humanoids or Find Herbs. When it is off, for example after you die, BuffTap offers a one-tap reminder to turn it on."))
   f.treasure=check(tr,L("Keep Find Treasure active"),490,-529,function(c)
     if A.Combat() then return end
     B.db.helperTreasure=c:GetChecked()==true; B:RequestRefresh("treasure tracking",0); B:Options()
   end)
   addHelp(f.treasure,L("Keep Find Treasure active"),L("Restore Dwarf treasure tracking through your normal binding. Independent of your gathering tracker."))
-  f.emptyTracker=label(tr,L("No learned gathering tracker is available on this character."),254,-565,"GameFontDisableSmall",440)
+  f.emptyTracker=label(tr,L("No tracking is learned on this character yet."),254,-565,"GameFontDisableSmall",440)
+  -- One dropdown for every tracking the game offers this character; class tracking first, then gathering.
+  f.trackerPick=selector(f.helperSections and f.helperSections.tracking or tr,"",254,-552,230,function()
+    local list,gather={},{}
+    for _,e in ipairs(B:TrackingChoices()) do
+      local entry={key=e.id,icon=e.icon,name=e.learned and e.name or (e.name.." ("..L("not learned")..")")}
+      if e.gathering then gather[#gather+1]=entry else list[#list+1]=entry end
+    end
+    for _,e in ipairs(gather) do list[#list+1]=e end
+    return list
+  end,function(id) if A.Combat() then return end; B.db.helperTracker=id; B:RequestRefresh("tracking preference",0) end,"scroll")
+  f.trackerPick.icon=f.trackerPick:CreateTexture(nil,"ARTWORK"); f.trackerPick.icon:SetSize(18,18); f.trackerPick.icon:SetPoint("LEFT",5,0)
+  addHelp(f.trackerPick,L("Tracking"),L("Pick the tracking BuffTap keeps up. Ones you have not learned yet can be chosen ahead of time."))
+  f.trackerFollow=check(f.helperSections and f.helperSections.tracking or tr,L("Follow my minimap choice"),494,-552,function(c)
+    if A.Combat() then return end
+    B.db.helperTrackingFollow=c:GetChecked()==true; B:FollowMinimapTracking(); B:Options()
+  end)
+  addHelp(f.trackerFollow,L("Follow my minimap choice"),L("When you switch tracking in the minimap menu, BuffTap keeps up your new choice instead of switching you back. Turn off to always restore the tracking picked here."))
   -- Page actions sit in the header, beside the description, so the body never needs to scroll.
   f.restoreButton=button(f,L("Restore reminders"),402,-38,146,function() B:RestoreHelpers(); B:Options() end)
   f.reportButton=button(f,L("View discovery report"),556,-38,148,function() B:ShowDiscoveryReport() end)
@@ -1544,7 +1566,7 @@ function B:UpdateHelperOptions()
   f.thankEmote:Enable()
   for key,c in pairs(f.checks) do c:SetChecked(self:HelperEnabled(key)) end
   for _,t in ipairs(f.trackers) do t:Hide() end
-  local trackers=self:GatheringTrackers(); f.emptyTracker:SetShown(#trackers==0)
+  local trackers=self:TrackingChoices(); f.emptyTracker:SetShown(#trackers==0)
   local selected=false
   for _,entry in ipairs(trackers) do if entry.id==self.db.helperTracker then selected=true end end
   f.trackerHeading:SetText(L("Tracking")); T.SectionTitle(f.trackerHeading)
@@ -1557,23 +1579,14 @@ function B:UpdateHelperOptions()
   f.trackerHeading:ClearAllPoints(); f.trackerHeading:SetPoint("TOPLEFT",26,trackerY-4)
   f.checks.helperTracking:ClearAllPoints(); f.checks.helperTracking:SetPoint("TOPLEFT",26,trackerY-28)
   f.emptyTracker:ClearAllPoints(); f.emptyTracker:SetPoint("TOPLEFT",254,trackerY-36)
-  for i,entry in ipairs(trackers) do
-    local t=f.trackers[i]
-    if not t then
-      t=flatButton(f.helperSections.tracking,"",254+(i-1)*148,trackerY-26,140,function(control)
-        if A.Combat() then return end
-        B.db.helperTracker=control.trackerID; B:RequestRefresh("tracking preference",0); B:Options()
-      end)
-      t.icon=t:CreateTexture(nil,"ARTWORK"); t.icon:SetSize(20,20); t.icon:SetPoint("LEFT",3,0)
-      f.trackers[i]=t
-    end
-    t:ClearAllPoints(); t:SetPoint("TOPLEFT",254+(i-1)*148,trackerY-26)
-    t.trackerID=entry.id; t.icon:SetTexture(entry.icon)
-    t:SetText((self.db.helperTracker==entry.id and "    > " or "    ")..entry.name)
-    if self:HelperEnabled("helperTracking") then t:Enable(); t:SetAlpha(1) else t:Disable(); t:SetAlpha(.45) end
-    addHelp(t,entry.name,"Select this tracker as your preference. Enable the tracking reminder above to receive prompts.")
-    t:Show()
-  end
+  local current
+  for _,entry in ipairs(trackers) do if entry.id==self.db.helperTracker then current=entry end end
+  f.trackerPick:ClearAllPoints(); f.trackerPick:SetPoint("TOPLEFT",254,trackerY-26); f.trackerPick:SetShown(#trackers>0)
+  f.trackerPick:SetText(current and ("    "..current.name..(current.learned and "" or " ("..L("not learned")..")")) or L("Choose tracking"))
+  f.trackerPick.icon:SetTexture(current and current.icon or nil); f.trackerPick.icon:SetShown(current~=nil)
+  f.trackerFollow:ClearAllPoints(); f.trackerFollow:SetPoint("TOPLEFT",494,trackerY-26); f.trackerFollow:SetShown(#trackers>0)
+  f.trackerFollow:SetChecked(self.db.helperTrackingFollow~=false)
+  if self:HelperEnabled("helperTracking") then f.trackerPick:Enable(); f.trackerPick:SetAlpha(1) else f.trackerPick:Disable(); f.trackerPick:SetAlpha(.45) end
 end
 
 function B:HelperOptions()
@@ -1904,7 +1917,7 @@ function B:Options()
     self:BuildContextControls(buffsPage,"buffs",{label=label,flatButton=flatButton,button=button,addHelp=addHelp})
     local weapons=panel(f); f.pages[TAB.Weapons]=weapons
     local weaponsPage=weapons; weapons=CreateFrame("Frame",nil,weaponsPage); f.weaponContent=weapons; weapons:SetPoint("TOPLEFT",0,-60); weapons:SetPoint("BOTTOMRIGHT",0,0)
-    f.weaponClassCard=card(weapons,12,-98,698,110); f.coatingCard=card(weapons,12,-220,698,120); f.weaponTimingCard=card(weapons,12,-358,698,110)
+    f.weaponClassCard=card(weapons,12,-98,698,110); f.coatingCard=card(weapons,12,-220,698,120); f.weaponTimingCard=card(weapons,12,-358,698,124)
     f.weaponTitle=label(weapons,L("Weapon buffs"),18,-16,"GameFontNormalLarge")
     f.weaponHint=label(weapons,L("Maintain a preferred buff on each weapon using your normal BuffTap binding."),18,-42,"GameFontDisableSmall",660)
     f.weaponRetry=button(weapons,L("Retry reminders"),528,-16,154,function() B:RetryConsumableReminders(); B:Options() end)
@@ -1958,6 +1971,8 @@ function B:Options()
     f.weaponTiming:SetPoint("TOPLEFT",220,-368)
     f.weaponReplace=check(weapons,"Replace a different buff with my preference",18,-412,function(c) setAndRefresh("weaponReplace",c:GetChecked()==true) end)
     f.weaponRestPause=check(weapons,L("Pause while resting"),380,-412,function(c) if not A.Combat() then B.db.weaponsPauseResting=c:GetChecked()==true; B:RequestRefresh("weapon resting pause",0) end end)
+    f.weaponSkipEmpty=check(weapons,L("Skip when I have none"),380,-440,function(c) if not A.Combat() then B.db.weaponSkipEmpty=c:GetChecked()==true; B:RequestRefresh("weapon skip empty",0) end end)
+    addHelp(f.weaponSkipEmpty,"Skip when I have none","No reminder for an oil, sharpening stone or poison you have run out of, the same way buff food works. Class imbues are not affected.")
     addHelp(f.weaponRestPause,"Pause while resting","Skip weapon buff reminders in cities and inns. Buff reminders continue as usual.")
     addHelp(f.weaponReplace,"Replacing an existing weapon buff","Off by default. Enable only if you want your preferred buff to replace another recognized buff. Unknown coating data always uses a manual fallback.")
     f.weaponPoisonHint=label(weapons,"Poison ranks: highest carried usable rank. Preferences stay saved when out of stock.",18,-472,"GameFontDisableSmall",660)
@@ -2847,7 +2862,7 @@ function B:Options()
   place(f.weaponOff,26,weaponClass and -171 or coatingY-83)
   local timingY=weaponClass and -358 or -236
   place(f.weaponTimingCard,12,timingY); place(f.weaponTimingLabel,26,timingY-18)
-  place(f.weaponTiming,220,timingY-14); place(f.weaponReplace,26,timingY-58); place(f.weaponRestPause,400,timingY-58)
+  place(f.weaponTiming,220,timingY-14); place(f.weaponReplace,26,timingY-58); place(f.weaponRestPause,400,timingY-58); place(f.weaponSkipEmpty,400,timingY-86)
   place(f.weaponHandsHint,14,weaponClass and -500 or -376)
   place(f.weaponModeHint,14,weaponClass and -530 or -420)
   place(f.weaponStatus,14,weaponClass and -556 or -458)
@@ -2857,7 +2872,7 @@ function B:Options()
   f.weaponEnable:SetChecked(self:EditorSettings("weapons").weaponReminder==true); f.weaponApply:SetText(L(self.db.weaponApply and "Remind and apply" or "Remind only"))
   f.weaponModeHint:SetText(L(self.db.weaponApply and "Your scroll or click applies the selected weapon buff, out of combat." or "Alerts only: apply weapon buffs manually. Your preferences remain saved."))
   f.weaponMain:SetChecked(self:EditorSettings("weapons").weaponMainHand~=false); f.weaponOff:SetChecked(self:EditorSettings("weapons").weaponOffHand~=false)
-  f.weaponReplace:SetChecked(self.db.weaponReplace==true); f.weaponRestPause:SetChecked(self.db.weaponsPauseResting==true)
+  f.weaponReplace:SetChecked(self.db.weaponReplace==true); f.weaponRestPause:SetChecked(self.db.weaponsPauseResting==true); f.weaponSkipEmpty:SetChecked(self.db.weaponSkipEmpty==true)
   f.weaponOff:SetShown(weaponClass=="ROGUE" or not weaponClass)
   f.weaponTiming.silent=true; f.weaponTiming:SetValue(self:EditorSettings("weapons").weaponSeconds); f.weaponTiming.valueText:SetText(formatSeconds(self:EditorSettings("weapons").weaponSeconds)); f.weaponTiming.silent=false
   local status=self:WeaponReminderSummary()
@@ -2981,7 +2996,7 @@ function B:Options()
       row.detail:ClearAllPoints(); row.detail:SetPoint("TOPLEFT",112,-29); row.detail:SetText((groupName or "Group version").."  -  "..L("group spell"))
     else
       row.groupIcon:Hide(); row.detail:ClearAllPoints(); row.detail:SetPoint("TOPLEFT",90,-29)
-      row.detail:SetText(b.underwater and L("Reminds when underwater") or b.noTimer and L("Reminds when it wears off") or b.kind=="self" and L("Self buff") or L("Single-target buff"))
+      row.detail:SetText(b.underwater and L("Reminds when underwater") or b.permanent and L("No timer. Reminds when it is off") or b.noTimer and L("Reminds when it wears off") or b.kind=="self" and L("Self buff") or L("Single-target buff"))
     end
     if not learnedSpell(b) then
       row.groupIcon:Hide(); row.detail:ClearAllPoints(); row.detail:SetPoint("TOPLEFT",90,-29); row.detail:SetText(unlearnedText())

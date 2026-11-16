@@ -61,3 +61,4 @@ test('Weapons precedes Appearance and shortcuts select correct pages',modern+"Bu
 test('Other classes expose temporary coatings without poison controls',"BuffTap:Options(); local f=BuffTap.options; assert(not f.weaponUnavailable.shown and f.weaponTimingLabel.shown and not f.weaponPoisonHint.shown and f.weaponHandsHint.shown and not f.weaponPickers.main.shown and f.coatingPickers.main)")
 
 print(f'ALL {len(tests)} SCENARIOS PASSED')
+test('Skip when I have none hides the empty reminder (noci__)',modern+"BuffTap.db.weaponSkipEmpty=true; bags[6947]=0; bags[2892]=0; refresh(); assert(not BuffTap.action or BuffTap.action.source~='weapon-reminder','skipped'); BuffTap.db.weaponSkipEmpty=false; refresh(); assert(BuffTap.action and BuffTap.action.manual,'default still reminds')")

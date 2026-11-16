@@ -549,9 +549,10 @@ function B:UpdateCleansePage()
     f.reviveEnable:SetChecked(can and d.reviveEnabled~=false); f.reviveEnable:SetEnabled(can)
     f.reviveGroup:SetChecked(d.reviveGroup~=false); f.reviveGroup:SetEnabled(can and d.reviveEnabled~=false)
     f.reviveTarget:SetChecked(d.reviveTarget~=false); f.reviveTarget:SetEnabled(can and d.reviveEnabled~=false)
-    f.reviveRebirth:SetShown(druid); f.reviveRebirth:SetChecked(d.reviveRebirth==true); f.reviveRebirth:SetEnabled(druid and d.reviveEnabled~=false and self:ReviveSpell(true)~=nil)
+    -- One line only: the Rebirth switch and the note share a spot (GitHub issue #4).
+    f.reviveRebirth:SetShown(druid and can); f.reviveRebirth:SetChecked(d.reviveRebirth==true); f.reviveRebirth:SetEnabled(druid and d.reviveEnabled~=false and self:ReviveSpell(true)~=nil)
     local note=""
-    if not can then note=self:Text("Your class can't resurrect.")
+    if not can then note=druid and self:Text("Not learned yet") or self:Text("Your class can't resurrect.")
     elseif not druid and normal then note=self:Text("Uses %s",(spellInfo(normal))) end
     f.reviveNote:SetText(note); f.reviveNote:SetShown(not druid or not can)
   end

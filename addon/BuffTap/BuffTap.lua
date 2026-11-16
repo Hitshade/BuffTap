@@ -858,6 +858,7 @@ local itemRequested=event=="ITEM_DATA_LOAD_RESULT" and A.Number(arg) and ((B.ite
   if B.HelperEvent then B:HelperEvent(event,arg,castGUID,spellID) end
   if event=="UI_ERROR_MESSAGE" then return end
   if event=="MINIMAP_UPDATE_TRACKING" and not B:HelperEnabled("helperTracking") and not B:HelperEnabled("helperTreasure") then return end
+  if event=="MINIMAP_UPDATE_TRACKING" and B.FollowMinimapTracking then B:StartTimer("tracking-follow",.3,function() B:FollowMinimapTracking() end) end
 
   if event=="PLAYER_TARGET_CHANGED" then
     B:InvalidateAura("target")

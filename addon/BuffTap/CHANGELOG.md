@@ -1,3 +1,14 @@
+# BuffTap 1.24.3
+
+### Changes
+- Tracking reminder now covers any tracking you know, not just herbs and minerals: Hunter tracking, Sense Undead and more. Pick one from the new dropdown under Helpers > Tracking, even before you learn it, and BuffTap reminds you when it is off, for example after you die. If you switch tracking in the minimap menu, BuffTap follows your new choice instead of switching you back.
+- New "Skip when I have none" switch on the Weapons page: no reminder for an oil, sharpening stone or poison you have run out of, the same way buff food works.
+- Buffs with no timer, such as Hunter aspects, Trueshot Aura and Paladin auras, no longer show a Rebuff slider that did nothing. They remind you when they are off.
+- Fixed two lines overlapping in the Resurrection box for druids who have not learned a resurrection spell yet.
+- Thanks to waggz81 for the tracking idea and the Rebirth report, and a big shoutout to noci__, who has been with BuffTap since the beta, for the weapon idea.
+
+---
+
 # BuffTap 1.24.2
 
 ### Fixes
