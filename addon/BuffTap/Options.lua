@@ -1542,7 +1542,7 @@ function B:UpdateHelperOptions()
   for key,c in pairs(sm.raid) do c:SetChecked(self.db.soulstoneRaid==key) end
   sm.assignedLabel:SetText(L("Assigned player: ")..(self.db.soulstoneAssigned~="" and self.db.soulstoneAssigned or L("none")))
   sm.assignedLabel:SetTextColor(self.db.soulstoneAssigned~="" and .4 or 1,self.db.soulstoneAssigned~="" and 1 or .65,self.db.soulstoneAssigned~="" and .6 or .35)
-  addHelp(f.soulTarget,L("Soulstone target"),L("Party: the member with the Healer group role, yourself, or an assigned player (falls back to the Healer role, then you). Raid: remind only, or place it on your assigned player. Target a friendly player and press Use current target to assign them."))
+  addHelp(f.soulTarget,L("Soulstone target"),L("Party: the member with the Healer group role (or you if there is none), yourself, or an assigned player, who is never replaced if unavailable. Raid: remind only, or place it on your assigned player. Target a friendly player and press Use current target to assign them."))
   f.stoneCheck:SetShown(warlock); f.stoneDescription:SetShown(warlock); f.soulCheck:SetShown(warlock); f.demonChoice:SetShown(warlock)
   f.petDescription:SetText(warlock and L("Summons your chosen demon when no pet is alive. Respects Demonic Sacrifice.")
     or L("Revives a dead pet, or reminds you to call an absent pet manually."))
@@ -2780,13 +2780,17 @@ function B:Options()
         local preferred=self.PreferredConsumableItem and self:PreferredConsumableItem(family,self:EditorSettings("consumables"))
         local current=preferred and self:ConsumableCount(preferred.id) or 0
         row.inventory:SetText(current>0 and ("|cff88dd88"..current.." in bags|r") or "No usable stock")
-        if not family.multi and self.ConsumableExplanation then
+        if self.ConsumableExplanation then
           -- Built when the tooltip opens, so it never shows stale buff state and costs nothing otherwise.
+          local rowFamily=family
           row:SetScript("OnEnter",function(s)
             if not GameTooltip then return end
-            local text=B:ConsumableInventorySummary(family,20)
+            local text=B:ConsumableInventorySummary(rowFamily,20)
             if B:EditorContext("consumables")~=B.situationCurrent then text=text.."\n"..L("Current status is not shown while editing another setup.")
-            else text=text.."\n\n"..B:ConsumableExplanation(family,B:EditorSettings("consumables")) end
+            else
+              local explain=rowFamily.multi and B:ConsumableChecklistExplanation(rowFamily,B:EditorSettings("consumables")) or B:ConsumableExplanation(rowFamily,B:EditorSettings("consumables"))
+              if A.Text(explain) and explain~="" then text=text.."\n\n"..explain end
+            end
             T.Tooltip(s,L("Consumable stock and status"),text)
           end)
           row:SetScript("OnLeave",function() if GameTooltip then GameTooltip:Hide() end end)

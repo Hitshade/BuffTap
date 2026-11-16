@@ -381,7 +381,7 @@ end
 local function reviveTargetOk(self,unit)
   if A.Call(UnitExists,unit)~=true or A.Call(UnitIsPlayer,unit)~=true then return false end
   if A.Call(UnitIsDead,unit)~=true or A.Call(UnitIsGhost,unit)~=false then return false end
-  if A.Call(UnitIsConnected,unit)==false then return false end
+  if A.Call(UnitIsConnected,unit)~=true then return false end
   if incomingResurrection(unit)~=false then return false end
   if self.BlockReason and self:BlockReason(unit) then return false end
   return not pvpUnsafe(self,unit)

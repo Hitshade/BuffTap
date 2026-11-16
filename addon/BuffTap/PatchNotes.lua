@@ -2,6 +2,11 @@
 local _,B=...
 -- Keep the ten most recent releases within a 24 KiB content ceiling.
 B.PatchNotes={
+ {version="1.24.7",title="Soulstone fix and clearer status",items={
+  "Soulstones set to an assigned player now wait for that person. If they are away, dead, offline or out of range, BuffTap shows a note and does not use the stone on someone else. It goes back to them as soon as they are available.",
+  "Hover the Elixirs or Utility rows on the Consumables page to see which of your ticked effects are active, running low, missing or out of stock.",
+  "A pet notice now shows before a weapon-coating notice, so one no longer hides the other.",
+  "Fixed: the resurrection reminder could be offered for a player whose connection status the game would not confirm."}},
  {version="1.24.6",title="Fixes, and clearer reminders",items={
   "Fixed: the resurrection reminder could fail to show for a dead group member. It now appears as it should.",
   "New option on the Cleanse page: \"Cleanse before resurrection\", for classes that can do both. It is off by default, so resurrection still comes first unless you change it.",
@@ -62,11 +67,7 @@ B.PatchNotes={
   "It never loops: a buff that answers one of yours does not count, and each player moves up at most once per half hour. You still click or press your binding every time.",
   "On by default. Find the switch on the Nearby page.",
   "Friends and guild members who need a buff now come before other players in the Nearby list, and your binding buffs them first.",
-  "A Nearby cast that fails because the player is too far away now just says \"Out of range\" instead of the game's long, cut-off message."}},
- {version="1.22.6",title="A livelier Nearby window",items={
-  "The animated Nearby list is now on for everyone: rows glide down to make room and newcomers fade in. You can switch it off under Customization > Nearby window.",
-  "New title-bar icons: rising z's for buffing in cities and inns, and a padlock that turns gold when the window is locked.",
-  "When your mana reserve stops Nearby buffing, the window now says so: \"Paused: saving mana\". Players stay listed for invites."}},
+  "A Nearby cast that fails because the player is too far away now just says \"Out of range\" instead of the game's long, cut-off message."}}
 }
 function B:PatchNotesUnread()
   return self.profileDB and self.db.optionsPatchDot~=false and self.profileDB.global.patchNotesSeen~=self.version

@@ -4,7 +4,7 @@
 
 local _, B = ...
 _G.BuffTap = B
-B.version = "1.24.6"
+B.version = "1.24.7"
 B.API = {}
 local A = B.API
 
@@ -2150,10 +2150,15 @@ function B:Select()
 
   -- Weapon applications and manual coating reminders follow ordinary buffs
   -- and consumables, so an informational alert cannot block a castable buff.
+  local deferredWeapon
   if type(self.SelectWeaponReminder)=="function" then
     local ok,action,why=pcall(self.SelectWeaponReminder,self)
     if not ok then self.lastError="weapon reminder provider failed"; return nil,"weapon reminder unavailable" end
-    if action and not (self.HelperSuppressed and self:HelperSuppressed(action)) then action.selectedAt=GetTime(); return action,action.manual and "manual application required" or "weapon application ready" end
+    if action and not (self.HelperSuppressed and self:HelperSuppressed(action)) then
+      action.selectedAt=GetTime()
+      if not action.manual then return action,"weapon application ready" end
+      deferredWeapon=action
+    end
     if self:Preference("weaponReminder") and why and why~="weapon coatings present" and why~="no learned coating ability" then
       self:AddDiag("weapon reminder: "..tostring(why))
     end
@@ -2163,6 +2168,7 @@ function B:Select()
     if nearby then return nearby,"nearby player" end
   end
   if deferredReadiness then return deferredReadiness,"manual pet recovery" end
+  if deferredWeapon then return deferredWeapon,"manual application required" end
   if self.manaBlocked then return nil,"not enough mana" end
   if self.powerBlocked then return nil,"spell unavailable: form, reagents or requirements" end
   if self.cooldownBlocked then return nil,"waiting for cooldown" end

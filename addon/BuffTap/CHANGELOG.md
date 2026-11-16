@@ -1,3 +1,24 @@
+# BuffTap 1.24.7
+
+### Fixed
+- **Soulstone assignment is strict in a party (`Readiness.lua`, `SoulstoneTarget`, `SoulstoneCandidate`):** with `soulstoneParty="assigned"`, `SoulstoneAssignedUnit()` returning no unit used to fall through to the Healer pick and then to the player. It now returns no target together with the reason, and `SoulstoneCandidate()` produces the existing manual-notice action ("Soulstone not placed", `manual=true`, no `secureType`, no item, unit or binding installed). Healer mode still falls back to self, Me mode stays self, and raids were already strict. The saved mode and GUID are never rewritten; when the assigned GUID is eligible again the next action targets it. `SoulstoneCoverage()` and the click-time GUID check in `PreClick` are unchanged. The Soulstone target tooltip (and its four translations) no longer promises a fallback.
+- **Resurrection needs a confirmed connection (`Cleanse.lua`, `reviveTargetOk`):** `UnitIsConnected(unit)==false` became `~=true`, so an unreadable or `nil` result no longer counts as connected. This matches `stoneEligible()` and `TargetEligible()`.
+- **Competing manual notices (`Engine.lua`, `Select`):** a manual weapon-coating notice is now held like the manual class-readiness notice instead of being returned immediately. Order: castable actions first (buffs, cleanse and revive, castable readiness, consumables, tracking, castable weapon work, Nearby), then the manual pet or readiness notice, then the manual weapon notice. Dismissed and disabled reminders are filtered as before.
+
+### Changed
+- **Checklist status (`Consumables.lua`, `Options.lua`):** new read-only `ConsumableChecklistExplanation()` for the Elixirs and Utility rows, shown in the row tooltip when it opens (no timers, events or combat reads). It reports selected, active, expiring, missing, out of stock, paused and unknown counts and one line per selected effect (up to seven), using `ConsumableFamilyState()` and the cached item counts. Sources that share one effect count together, an unreadable bag count is reported as unknown rather than out of stock, and a failed effect is shown as paused with the Retry reminders hint. The tooltip for another setup being edited still says live status is not shown. Selection, thresholds, aura matching and item use are unchanged. New strings are in all four translated locales.
+
+### Tests
+- New and replaced coverage: `test_warlock_stones.py` and `test_warlock_review.py` (the three party fallback assertions were replaced by strict manual-notice assertions; GUID absent, GUID on another unit token, Healer and Me modes), `test_food_status.py` (checklist states, combat, unreadable auras, other-setup tooltip, no state change from opening it), `test_revive.py` (connection state `nil`, `false`, `true`; range characterization), `test_readiness.py` (manual pet over manual weapon, castable work over manual notices).
+- The 1.24.6 test changes, including `test_food_status.py`, were not in the 1.24.6 commit; they are committed with this release. The 2035 figure quoted for 1.24.6 came from a local run of the uncommitted tree.
+- Full suite (`BT_KEEP_GOING=1 python tests/run_release.py`): 2052 scenarios passed, 0 failed (mocked game API). `tools/verify_mage_catalog.py` was not run in this session.
+
+### Known limits
+- Range: `SpellRange()` can return `nil` (unknown) and cleanse and revive still treat that as usable. Changing it to require a confirmed `true` needs Forever client checks (Priest, Paladin, Shaman and Druid resurrection, each cleanse type, near and far) before it can ship; a test now documents the current behaviour.
+- Nothing here has been checked in the Forever client beyond the mocked game API.
+
+---
+
 # BuffTap 1.24.6
 
 ### Fixed
@@ -20,7 +41,7 @@
 - `test_warlock_stones.py`, `test_warlock_review.py`: saving without the separator constant, same-named players, player leaving, roster token change, invalid and name-less GUIDs.
 - `test_readiness.py`: castable readiness ahead of food, manual notice not blocking castable food, manual notice when nothing else remains.
 - `test_food_status.py` (new): food status states and explanation texts.
-- Full suite: 2035 scenarios passed, 0 failed (mocked game API).
+- Full suite: 2035 scenarios passed, 0 failed (mocked game API). The test changes listed here were not committed with this release; they were added to the repository in 1.24.7.
 
 ### Known limits
 - Cleanse and resurrection range checks still treat an unknown range result as usable. Whether Forever reports range for these spells has not been probed in game, so this is unchanged.

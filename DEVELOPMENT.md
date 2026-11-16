@@ -1,8 +1,8 @@
 # BuffTap development
 
-Current version: **1.16.0**. Runtime: `addon/BuffTap`. Nearby player buffing is optional and starts disabled.
+Current released version: **1.24.7**. Runtime files: `addon/BuffTap/`; tests: `tests/`; release harness: `tests/run_release.py`.
 
-Install `requirements-dev.txt`, then run `python tests/test_warlock_review.py` for all 825 isolated mocked Lua 5.1 scenarios. This entry point imports all earlier suites. Run `python tools/verify_mage_catalog.py` to cross-check Mage scroll evidence.
+Install `requirements-dev.txt`, then run `python tests/run_release.py` (set `BT_KEEP_GOING=1` to see every failure) and `python tools/verify_mage_catalog.py`. The mocked Lua 5.1 suite does not establish live WoW Forever compatibility. See `AGENTS.md` for the release-notes policy and the combat and secure-action safety rules. Test counts in older release notes are historical.
 
 Options support arrow ordering for class buff lists and independent Paladin Target/Groups priority lists. Group custom priorities are opt-in; explicit player choices remain authoritative. Unknown ownership fails closed. Tactical blessing IDs from the reviewed Forever spell-name export are ownership-only guards, never castable maintenance entries. Two-Paladin cases still need live-client testing.
 

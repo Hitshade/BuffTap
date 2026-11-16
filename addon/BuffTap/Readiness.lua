@@ -430,14 +430,12 @@ function B:SetSoulstoneAssignedFromTarget()
   self.db.soulstoneAssignedGUID=guid
   return true
 end
--- Party: Healer (default), Me, or Assigned player (falls back to Healer, then you).
+-- Party: Healer (default; falls back to you), Me, or Assigned player. An assigned
+-- player never falls back: when they are unavailable no target is returned, with the reason.
 function B:SoulstoneTarget(itemID,units)
   local mode=self.db.soulstoneParty
   if mode=="self" then return "player" end
-  if mode=="assigned" then
-    local unit=self:SoulstoneAssignedUnit(itemID,units)
-    if unit then return unit end
-  end
+  if mode=="assigned" then return self:SoulstoneAssignedUnit(itemID,units) end
   return self:SoulstoneHealer(itemID,units) or "player"
 end
 -- mineOnly (raids): only a Soulstone you cast counts; other Warlocks keep their own.
@@ -505,7 +503,16 @@ function B:SoulstoneCandidate()
       result.targetName="Soulstone • raid"
       return result
     end
-  else target=self:SoulstoneTarget(itemID,units) end
+  else
+    local why
+    target,why=self:SoulstoneTarget(itemID,units)
+    if not target then
+      local result=action("soulstone",0,"Soulstone not placed",info.texture,
+        "Your assigned Soulstone player is unavailable ("..tostring(why or "not eligible").."). BuffTap will not use it on someone else.",true)
+      result.targetName="Soulstone • assigned"
+      return result
+    end
+  end
   local name=A.Call(UnitName,target) or target
   local result=action("soulstone",soulstones[itemID],info.name,info.texture,"place a Soulstone on "..(target=="player" and "yourself" or name))
   result.secureType="item"; result.itemID=itemID; result.itemToken="item:"..itemID

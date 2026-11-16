@@ -385,6 +385,56 @@ function B:ConsumableExplanation(family,settings)
   return self:Text("Ready when the item is usable and its cooldown is clear.")
 end
 
+-- On-demand explanation for the multi-item Elixirs / Utility rows. Read-only: it
+-- never changes reminders, selection, item actions or aura eligibility.
+function B:ConsumableChecklistExplanation(parent,settings)
+  if not self.db or not parent or not parent.multi then return "" end
+  if A.Combat() then return self:Text("Buffs will be checked after combat.") end
+  if not self:ConsumableFamilyEnabled(parent,settings) then return self:Text("This reminder is turned off.") end
+  local paused=self:CategoryRestingPause("consumables")
+  if paused then
+    return paused:find("outside",1,true) and self:Text("Consumable reminders are paused outside dungeons and raids.") or self:Text("Consumable reminders are paused while resting.")
+  end
+  local selected={}
+  for _,child in ipairs(parent.children or {}) do
+    if self:ConsumableFamilySelected(child,settings) then selected[#selected+1]=child end
+  end
+  if #selected==0 then return self:Text("No effects selected.") end
+  local auras=self:GetAuras("player",false)
+  if not auras then return self:Text("The game isn't sharing enough buff information right now.") end
+  local counts={active=0,expiring=0,missing=0,empty=0,paused=0,unknown=0}
+  local details={}
+  for _,child in ipairs(selected) do
+    local stock,unknownStock,effectPaused=false,false,false
+    for _,item in ipairs(child.items or {}) do
+      local n,err=self:ConsumableCount(item.id)
+      if n>0 then stock=true end
+      if err then unknownStock=true end
+      if self.effectPauses and self.effectPauses[item.id] then effectPaused=true end
+    end
+    local missing,state=self:ConsumableFamilyState(child,auras)
+    local category,label
+    if missing==nil then category,label="unknown",self:Text("buff state unknown")
+    elseif missing==false then category,label="active",self:Text("active")
+    elseif effectPaused then category,label="paused",self:Text("effect not detected; use Retry reminders")
+    elseif not stock and unknownStock then category,label="unknown",self:Text("bag count unavailable")
+    elseif not stock then category,label="empty",self:Text("out of stock")
+    elseif state=="expiring" then category,label="expiring",self:Text("expiring; refresh due")
+    else category,label="missing",self:Text("missing; item available") end
+    counts[category]=counts[category]+1
+    if #details<7 then
+      local info=child.items and child.items[1] and self:ConsumableItemInfo(child.items[1].id,child.items[1])
+      details[#details+1]=tostring((info and info.name) or child.name or child.key)..": "..label
+    end
+  end
+  local summary=self:Text("Selected: %d · Active: %d · Expiring: %d · Missing: %d",#selected,counts.active,counts.expiring,counts.missing)
+  if counts.empty>0 then summary=summary.." · "..self:Text("Out of stock: %d",counts.empty) end
+  if counts.paused>0 then summary=summary.." · "..self:Text("Paused: %d",counts.paused) end
+  if counts.unknown>0 then summary=summary.." · "..self:Text("Unknown: %d",counts.unknown) end
+  if #selected>#details then details[#details+1]=self:Text("+%d more selected",#selected-#details) end
+  return summary.."\n"..table.concat(details,"\n")
+end
+
 function B:ConsumableFamilyState(family,auras)
   if not family or type(auras)~="table" then return nil,"aura state unavailable" end
   local names,ids=familyCoverage(self,family)

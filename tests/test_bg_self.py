@@ -41,3 +41,11 @@ test('BG Soul Link recognises pet aura without offering another cast',warlock+"p
 test('BG Soul Link casts only original spell when both identities absent',warlock+"refresh(); assert(BuffTap.action and BuffTap.action.id==19028); assert(#BuffTap:Candidates(BuffTap:FindBuff('soul-link'))==1)")
 test('BG hidden Soul Link pet aura is unknown rather than missing',warlock+"C_Secrets.ShouldSpellAuraBeSecret=function(id) return id==25228 end; refresh(); assert(not BuffTap.action and BuffTap.buffDataUnavailable)")
 test('Normal Soul Link recognises separate aura id despite different name',warlock+"IsInInstance=function() return false,'none' end; C_Secrets=nil; C_UnitAuras.GetAuraDataByIndex=function(u,i) if u=='player' and i==1 then return {spellId=25228,name='Localized aura',duration=0,expirationTime=0} end end; refresh(); assert(not BuffTap.action)")
+trk="""
+spell(2383,'Find Herbs'); BuffTap.db.buffs.motw=false; BuffTap.db.buffs.thorns=false
+C_Minimap={GetNumTrackingTypes=function() return 1 end,GetTrackingInfo=function() return {spellID=2383,name='Find Herbs',type='spell',texture=123,active=false} end}
+BuffTap.db.helperTracking=true; BuffTap.db.helperTracker=2383
+"""
+test('BG offers a chosen tracking that is off',setup+trk+"refresh(); assert(BuffTap.action and BuffTap.action.source=='tracking' and BuffTap.action.id==2383)")
+test('BG tracking already active offers nothing',setup+trk+"C_Minimap.GetTrackingInfo=function() return {spellID=2383,name='Find Herbs',type='spell',active=true} end; refresh(); assert(not BuffTap.action)")
+test('BG unreadable tracking offers nothing',setup+trk+"C_Minimap.GetTrackingInfo=function() return {secret=true} end; refresh(); assert(not BuffTap.action)")

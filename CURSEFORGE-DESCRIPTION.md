@@ -21,7 +21,7 @@ Share buffs with nearby players from a **compact, movable window**, with class-c
 
 ![The Nearby window, explained: invite with +, ask to join with the blue arrow, or ask for a buff you are missing.](https://media.forgecdn.net/attachments/2192/525/bufftap-nearby-guide-png.png)
 
-*   **Stable, fixed-size list** with five visible rows, a scrollbar and support for up to 40 detected players.
+*   **Stable, fixed-size list** with a configurable number of visible rows, a scrollbar and support for up to 40 detected players.
 *   **Optional all-players view** keeps nearby strangers listed after buffing, with a small header icon to switch views.
 *   **One-click social buttons** beside player names: invite, suggest an invite to your leader, or ask to join their group, whichever the game offers.
 *   **Ask for a buff** you are missing with a polite whisper to a nearby Mage, Priest, Druid or Paladin.
@@ -41,7 +41,7 @@ Weapon application is optional and starts disabled.
 
 ## 🧪 Consumables without the bag search
 
-Select supported **food buffs, flasks, elixirs and selected utility consumables** using a searchable picker with an in-bags filter. Keep a preferred item selected or use supported automatic choices.
+Select supported **food buffs, flasks, elixirs and selected utility consumables** using a searchable picker with an in-bags filter. Keep a preferred item selected or use supported automatic choices. Elixirs and utility items are ticked as a checklist, each with its own reminder, and hovering a row explains what is active, running low, missing or out of stock. A dedicated **Supplies** page tracks your own items. BuffTap never picks or replaces a consumable for you.
 
 Optional **low-stock warnings** cover selected buff and weapon consumables, with configurable thresholds, private alerts, sounds, and ready-check summaries. Consumable management and stock warnings start disabled.
 
@@ -53,7 +53,7 @@ Keep Camp Benefits and your sleeping bag's Well-Rested bonus in view with an opt
 
 Enable **Hunter/Warlock pet readiness, personal Healthstone creation, Soulstone upkeep for you or your group's healer, gathering-tracker reminders, or party buff-coverage information**. Dismiss unwanted reminders, reduce repeated stronger-effect errors, or optionally thank players who buff you while questing solo.
 
-Helpers are opt-in, so you choose how much assistance you want.
+Helpers are opt-in, so you choose how much assistance you want. Paladin blessing exceptions for named players are remembered, tracking reminders follow your class, and cleansing and resurrection reminders are optional. A Soulstone assigned to a player is never used on anyone else.
 
 ## 🎨 Make it your own
 
