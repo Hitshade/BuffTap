@@ -172,9 +172,9 @@ assert(BuffTap.db.supplySettings['poison:instant-poison'].minimum==999 and BuffT
 ''')
 test('Supplies view is integrated and preserves all eight main tabs', flask+'''
 BuffTap:ShowSuppliesOptions(); local f=BuffTap.options
-assert(#f.pages==14 and f.activeTab==5 and f.supplyBody.shown and not f.consumableBody.shown)
+assert(#f.pages==15 and f.activeTab==15 and f.pages[15].shown and f.supplyBody.shown and not f.pages[5].shown)
 assert(f.supplyRows[1].shown and not f.supplyRows[2].shown and f.supplyRows[1].icon.texture==12345)
-f.selectConsumableView(false); assert(f.consumableBody.shown and not f.supplyBody.shown)
+f.selectTab(5); assert(f.pages[5].shown and f.consumableBody.shown and not f.pages[15].shown)
 ''')
 test('Supply threshold edits save clamped values without changing cast choices', flask+'''
 BuffTap:ShowSuppliesOptions(); local row=BuffTap.options.supplyRows[1]
@@ -185,7 +185,7 @@ assert(BuffTap.db.supplySettings['consumable:flask'].target==999 and BuffTap.db.
 ''')
 test('Supply badge clicks open integrated options or snooze', flask+'''
 bags[13510]=0; bagEvent(); local badge=BuffTap.supplyBadge
-badge.scripts.OnClick(badge,'LeftButton'); assert(BuffTap.options.activeTab==5 and BuffTap.options.supplyBody.shown)
+badge.scripts.OnClick(badge,'LeftButton'); assert(BuffTap.options.activeTab==15 and BuffTap.options.supplyBody.shown)
 badge.scripts.OnClick(badge,'RightButton'); assert(BuffTap:SupplySnoozed())
 ''')
 test('Supply view makes no configuration changes while in combat', flask+'''
@@ -343,3 +343,9 @@ assert(#BuffTap.supplyEntries==1 and BuffTap.supplyEntries[1].key=='poison:insta
 print(f'ALL {len(tests)} SCENARIOS PASSED')
 (ROOT/'tests/last-run-1.3.0.txt').write_text('\n'.join('PASS '+name for name in tests)+
     f'\n\n{len(tests)} scenarios passed under Lua 5.1. Mocked APIs; no in-client cast or visual verification.\n')
+test('Supplies page has its own header and light (1.24.4)',"""local B=BuffTap; B:Options(); local f=B.options
+local p=f.pages[15]; assert(p.headerIcon,'header icon')
+B.db.consumablesEnabled=false; B.db.suppliesEnabled=true; assert(B:NavStatus(5)==false and B:NavStatus(15)==true)
+assert(f.supplyEnable:GetParent()~=f.pages[5],'supply switch not on Consumables')""")
+test('Supplies page Customize look opens the Supplies look',"""local B=BuffTap; B:Options(); local f=B.options; local b=f.pages[15].customizeLook
+assert(b,'button'); b.scripts.OnClick(b); assert(f.activeTab==8 and f.appearanceView=='supply',tostring(f.appearanceView))""")

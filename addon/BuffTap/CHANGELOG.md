@@ -1,3 +1,13 @@
+# BuffTap 1.24.4
+
+### Changes
+- Supplies now has its own page in the sidebar, right under Consumables, with its own status light and a Customize look button. Your tracked items and settings are unchanged.
+- A reminder that Supplies can track anything you carry: class reagents, ammo, seeds, profession materials, whatever you like. Drag an item from your bags onto the list, or add it by name, and BuffTap warns you when you run low.
+- The Consumables light now follows only "Enable consumable reminders", so it no longer shows green when only supply warnings are on.
+- The switches on the Supplies page now line up in neat columns.
+
+---
+
 # BuffTap 1.24.3
 
 ### Changes

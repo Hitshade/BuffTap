@@ -1221,3 +1221,6 @@ B.Locales.frFR["No timer. Reminds when it is off"]="Sans minuteur. Rappel quand 
 B.Locales.frFR["Follow my minimap choice"]="Suivre mon choix de la minicarte"
 B.Locales.frFR["Pick the tracking BuffTap keeps up. Ones you have not learned yet can be chosen ahead of time."]="Choisissez le pistage que BuffTap maintient. Ceux pas encore appris peuvent être choisis à l'avance."
 B.Locales.frFR["When you switch tracking in the minimap menu, BuffTap keeps up your new choice instead of switching you back. Turn off to always restore the tracking picked here."]="Quand vous changez de pistage dans le menu de la minicarte, BuffTap garde votre nouveau choix au lieu de revenir en arrière. Désactivez pour toujours rétablir le pistage choisi ici."
+B.Locales.frFR["Maintain your chosen food, flask, elixirs and special buffs."]="Entretenez la nourriture, le flacon, les élixirs et les bonus spéciaux choisis."
+B.Locales.frFR["Track reagents, ammo and anything else you carry, and get a warning when you run low."]="Suivez composants, munitions et tout ce que vous transportez, avec une alerte quand il en reste peu."
+B.Locales.frFR["Track anything you carry and get a warning when you run low."]="Suivez ce que vous transportez, avec une alerte quand il en reste peu."

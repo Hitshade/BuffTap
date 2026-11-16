@@ -504,8 +504,8 @@ function B:BuildPatchNotesPage(ui,tabs)
 end
 function B:StandardizeOptionsPages(ui,tabs)
   local f=self.options; f.pageHeaders={}
-  local titles={"My buffs","Party & raid buffing","Friendly target buffing","Nearby buffing & players","Consumables & supplies","Camping & sleeping bag","Weapon buffs","Customization","Helpers","Profiles","Diagnostics & performance","Patch notes","Blacklist","Cleanse & revive"}
-  local descriptions={"Your class buffs: what to cast, when to refresh, and in what order.","Independent preferences for your five-player party and raid.","Offer selected single-target buffs to the friendly player you target.","Buff players around you, invite someone new, or browse the list.","Maintain your chosen consumables and keep an eye on supplies.","Separate camp and sleeping-bag reminders, without blocking buffing.","Maintain your preferred weapon buffs with your normal binding.","Make your reminders and interface feel right for you.","Optional conveniences. Enable only the ones you find useful.","Save, switch and copy named setups between your characters.","Check what BuffTap is doing and collect information for a report.","A short, plain-language history of recent changes.","Players and guilds that BuffTap never offers buffs or invites to.","Remove poisons, curses, diseases and magic, and bring fallen players back, out of combat."}
+  local titles={"My buffs","Party & raid buffing","Friendly target buffing","Nearby buffing & players","Consumables","Camping & sleeping bag","Weapon buffs","Customization","Helpers","Profiles","Diagnostics & performance","Patch notes","Blacklist","Cleanse & revive","Supplies"}
+  local descriptions={"Your class buffs: what to cast, when to refresh, and in what order.","Independent preferences for your five-player party and raid.","Offer selected single-target buffs to the friendly player you target.","Buff players around you, invite someone new, or browse the list.","Maintain your chosen food, flask, elixirs and special buffs.","Separate camp and sleeping-bag reminders, without blocking buffing.","Maintain your preferred weapon buffs with your normal binding.","Make your reminders and interface feel right for you.","Optional conveniences. Enable only the ones you find useful.","Save, switch and copy named setups between your characters.","Check what BuffTap is doing and collect information for a report.","A short, plain-language history of recent changes.","Players and guilds that BuffTap never offers buffs or invites to.","Remove poisons, curses, diseases and magic, and bring fallen players back, out of combat.","Track anything you carry and get a warning when you run low."}
   local contextPages={[1]=true,[2]=true,[5]=true,[7]=true}
   for index,page in ipairs(f.pages) do
     local function hideHead(container)
@@ -533,7 +533,8 @@ function B:StandardizeOptionsPages(ui,tabs)
           for _,control in pairs(group.buttons) do reparent(control,canvas) end
           reparent(group.active,canvas); reparent(group.reset,canvas); reparent(group.status,canvas)
         end end
-        f.consumableBody:ClearAllPoints(); f.consumableBody:SetPoint("TOPLEFT",0,-72); f.consumableBody:SetPoint("BOTTOMRIGHT",0,0)
+        -- 1.24.4: the Buff items / Supplies tabs are gone, so the content moves up into their row.
+        f.consumableBody:ClearAllPoints(); f.consumableBody:SetPoint("TOPLEFT",0,-36); f.consumableBody:SetPoint("BOTTOMRIGHT",0,0)
         for _,child in ipairs({f.consumableBody:GetChildren()}) do child:ClearAllPoints(); child:SetPoint("TOPLEFT",0,0); child:SetPoint("BOTTOMRIGHT",0,0); hideHead(child) end
         f.supplyBody:ClearAllPoints(); f.supplyBody:SetPoint("TOPLEFT",0,-72); f.supplyBody:SetPoint("BOTTOMRIGHT",0,0); hideHead(f.supplyBody)
         for _,child in ipairs(children) do if child~=f.consumableBody and child~=f.supplyBody and child:GetObjectType()=="Button" then local _,_,_,x=child:GetPoint(); place(child,canvas,x or 18,-68,104,26) end end
@@ -549,11 +550,11 @@ function B:StandardizeOptionsPages(ui,tabs)
     local description=ui.label(page,descriptions[index],46,-41,"GameFontDisableSmall",(index==tabs.PatchNotes or index==tabs.Profiles) and 640 or 420)
     -- Shortcut to the reminder's look from pages whose reminders use it (Camping has its own).
     if index==tabs.Helpers then description:SetWidth(346) end
-    if index==1 or index==5 or index==6 or index==7 then
+    if index==1 or index==5 or index==6 or index==7 or index==15 then
       -- Header line, top right. Consumables and Weapons keep their switch at the right edge, so the button sits just left of it.
       -- (The Solo / Party / Raid row needs its right end for "Use Solo settings".)
       title:SetWordWrap(false)
-      page.customizeLook=ui.button(page,"Customize look",566,-35,138,function() f.selectTab(tabs.Appearance); B:SetAppearanceView(index==6 and "camp" or "buff") end); page.customizeLook:SetHeight(20)
+      page.customizeLook=ui.button(page,"Customize look",566,-35,138,function() f.selectTab(tabs.Appearance); B:SetAppearanceView(index==6 and "camp" or index==15 and "supply" or "buff") end); page.customizeLook:SetHeight(20)
     end
     if index==tabs.Nearby then
       -- Buff requests live on Helpers but are offered from the Nearby window, so link them here.
@@ -579,20 +580,9 @@ function B:StandardizeOptionsPages(ui,tabs)
   place(f.weaponApply,f.weaponApply:GetParent(),180,-64,502,26)
   ui.label(f.weaponApply:GetParent(),"Application mode",26,-70,"GameFontHighlightSmall",150)
   headerSwitch(f.consumablesEnable,f.pages[5])
-  headerSwitch(f.supplyEnable,f.pages[5])
-  local selectView=f.selectConsumableView
-  f.selectConsumableView=function(supplies)
-    selectView(supplies); f.consumablesEnable:SetShown(not supplies); f.supplyEnable:SetShown(supplies)
-    local group=B.contextControls.consumables
-    for _,control in pairs(group.buttons) do control:SetShown(not supplies) end
-    group.active:SetShown(not supplies); group.reset:SetShown(not supplies and B:EditorContext("consumables")~="solo"); group.status:SetShown(not supplies)
-    -- Supplies has no Solo / Party / Raid row, so its view tabs and body move up into that space.
-    for i,button in ipairs(f.consumableViewButtons or {}) do
-      local parent=button:GetParent(); button:ClearAllPoints(); button:SetPoint("TOPLEFT",parent,"TOPLEFT",18+(i-1)*114,supplies and -4 or -68)
-    end
-    f.supplyBody:ClearAllPoints(); f.supplyBody:SetPoint("TOPLEFT",0,supplies and -8 or -72); f.supplyBody:SetPoint("BOTTOMRIGHT",0,0)
-  end
-  f.selectConsumableView(false)
+  headerSwitch(f.supplyEnable,f.pages[15])
+  -- Supplies has no Solo / Party / Raid row, so its body starts right under the page header.
+  f.supplyBody:ClearAllPoints(); f.supplyBody:SetPoint("TOPLEFT",0,-8); f.supplyBody:SetPoint("BOTTOMRIGHT",0,0)
   -- Keep exact coordinates available without crowding the appearance editors.
   local binding=f.appearancePanes.binding
   ui.label(binding,"Buff reminder position",26,-588,"GameFontHighlightSmall",150)
@@ -619,7 +609,8 @@ function B:NavStatus(index)
   elseif index==2 then local c=f.blessingGroupEnable or f.groupEnable; if c then return c:GetChecked()==true end; return d.group==true
   elseif index==3 then return d.friendlyTarget==true
   elseif index==4 then return d.nearbyEnabled==true
-  elseif index==5 then return d.consumablesEnabled==true or d.suppliesEnabled==true
+  elseif index==5 then return d.consumablesEnabled==true
+  elseif index==15 then return d.suppliesEnabled==true
   elseif index==6 then return d.campReminder==true
   elseif index==7 then return d.weaponReminder==true end
 end

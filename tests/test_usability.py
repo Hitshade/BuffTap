@@ -7,7 +7,7 @@ local oldAction=BuffTap.action
 assert(BuffTap:Text('Close')=='{close}')
 BuffTap:Options(); local f=BuffTap.options
 f.closeButton.scripts.OnEnter(f.closeButton) -- 1.18: glyph button, localized name in its tooltip
-assert(GameTooltip.text=='{close}' and #f.tabs==14 and BuffTap.action==oldAction)
+assert(GameTooltip.text=='{close}' and #f.tabs==15 and BuffTap.action==oldAction)
 assert(not f.languageSelector)
 f.channelButton.scripts.OnClick(); local c=f.channelButton.menu.rows[2]; c.scripts.OnClick(c); assert(BuffTap.db.soundChannel=='SFX')
 f.channelButton.scripts.OnClick(); local c=f.channelButton.menu.rows[1]; c.scripts.OnClick(c); assert(BuffTap.db.soundChannel=='Master')

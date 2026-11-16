@@ -6,8 +6,8 @@ local ADDON,B=...
 local A=B.API
 local T=B.OptionsTheme
 local function L(key,...) return B:Text(key,...) end
-local TAB={Buffs=1,Groups=2,Target=3,Nearby=4,Consumables=5,Camping=6,Weapons=7,Appearance=8,Helpers=9,Profiles=10,Diagnostics=11,PatchNotes=12,Blacklist=13,Cleanse=14}
-local TAB_NAMES={L("My buffs"),L("Groups"),L("Target"),L("Nearby"),L("Consumables"),L("Camping"),L("Weapons"),L("Customization"),L("Helpers"),L("Profiles"),L("Diagnostics"),L("Patch notes"),L("Blacklist"),L("Cleanse")}
+local TAB={Buffs=1,Groups=2,Target=3,Nearby=4,Consumables=5,Camping=6,Weapons=7,Appearance=8,Helpers=9,Profiles=10,Diagnostics=11,PatchNotes=12,Blacklist=13,Cleanse=14,Supplies=15}
+local TAB_NAMES={L("My buffs"),L("Groups"),L("Target"),L("Nearby"),L("Consumables"),L("Camping"),L("Weapons"),L("Customization"),L("Helpers"),L("Profiles"),L("Diagnostics"),L("Patch notes"),L("Blacklist"),L("Cleanse"),L("Supplies")}
 local OPTIONS_WIDTH,OPTIONS_HEIGHT=932,900
 -- Page area inside the window: right of the 196 px sidebar, below the 120 px header, above the footer.
 B.OptionsPageLeft,B.OptionsPageTop,B.OptionsPageRight,B.OptionsPageBottom=208,-132,-12,40
@@ -970,11 +970,11 @@ function B:BuildSupplyOptions(parent)
   -- Track any item: shift-click or drag it into the box, or type its name, then press Enter or Add.
   -- Supplies reminder icon (look and position under Customization > Supplies).
   f.supplyShowIcon=check(p,L("Reminder icon"),18,-70,function(c) if not A.Combat() then B.db.supplyReminder=c:GetChecked()==true; B:UpdateSupplyBadge() end end)
-  f.supplyAnywhereCheck=check(p,L("Outside towns"),190,-70,function(c) if not A.Combat() then B.db.supplyAnywhere=c:GetChecked()==true; B:UpdateSupplyBadge() end end)
+  f.supplyAnywhereCheck=check(p,L("Outside towns"),230,-70,function(c) if not A.Combat() then B.db.supplyAnywhere=c:GetChecked()==true; B:UpdateSupplyBadge() end end)
   addHelp(f.supplyShowIcon,"Reminder icon","An icon that appears when something you track runs low. Left-click opens Supplies, right-click snoozes it, drag to move. Change its look under Customization > Supplies.")
   addHelp(f.supplyAnywhereCheck,"Outside towns","Off: the icon only shows while resting in a city or inn, where you can restock. On: it shows everywhere out of combat.")
-  label(p,L("Add by name"),378,-75,"GameFontHighlightSmall",90)
-  f.supplyAddBox=editbox(p,470,-70,150,false); f.supplyAddBox:SetJustifyH("LEFT")
+  label(p,L("Add by name"),410,-75,"GameFontHighlightSmall",78)
+  f.supplyAddBox=editbox(p,502,-70,118,false); f.supplyAddBox:SetJustifyH("LEFT")
   local function addItem()
     if A.Combat() then return end
     local text=f.supplyAddBox:GetText()
@@ -1137,7 +1137,7 @@ end
 
 function B:ShowSuppliesOptions()
   if A.Combat() then return end
-  self:Options(); self.options.selectTab(TAB.Consumables); self.options.selectConsumableView(true)
+  self:Options(); self.options.selectTab(TAB.Supplies)
 end
 
 function B:CaptureBinding(target)
@@ -1870,14 +1870,16 @@ function B:Options()
       if index==TAB.Profiles and f.profiles then B:SaveClassSetup(); B:UpdateProfileOptions() end
       if index==TAB.Blacklist then B:UpdateBlacklistPage() end
       if index==TAB.Cleanse then B:UpdateCleansePage() end
+      if index==TAB.Supplies then B:UpdateSupplyOptions() end
+      if B.itemPicker and index~=TAB.Consumables then B.itemPicker:Hide() end
     end
     f.selectTab=setTab
     f.navBackground=f.sidebarFill
-    local navIcons={"Buffs","Groups","Target","Nearby","Consumables","Camping","Weapons","Customization","Helpers","Profiles","Diagnostics","PatchNotes","Blacklist","Cleanse"}
+    local navIcons={"Buffs","Groups","Target","Nearby","Consumables","Camping","Weapons","Customization","Helpers","Profiles","Diagnostics","PatchNotes","Blacklist","Cleanse","Supplies"}
     f.navIcons=navIcons
     -- Sidebar order: pages you switch on (with a status light) first, then settings-only pages.
     -- Cleanse (14) follows My buffs and is left out for classes that cannot remove anything.
-    local order={TAB.Buffs,TAB.Cleanse,TAB.Groups,TAB.Target,TAB.Nearby,TAB.Consumables,TAB.Camping,TAB.Weapons,TAB.Blacklist,TAB.Appearance,TAB.Helpers,TAB.Profiles,TAB.Diagnostics,TAB.PatchNotes}
+    local order={TAB.Buffs,TAB.Cleanse,TAB.Groups,TAB.Target,TAB.Nearby,TAB.Consumables,TAB.Supplies,TAB.Camping,TAB.Weapons,TAB.Blacklist,TAB.Appearance,TAB.Helpers,TAB.Profiles,TAB.Diagnostics,TAB.PatchNotes}
     local slots={}; local nextSlot=1
     for _,index in ipairs(order) do
       if index~=TAB.Cleanse or B:CanCleanseAnything() then slots[index]=nextSlot; nextSlot=nextSlot+1 end
@@ -2151,17 +2153,11 @@ function B:Options()
     local consume=CreateFrame("Frame",nil,consumePanel); consume:SetPoint("TOPLEFT",0,-36); consume:SetPoint("BOTTOMRIGHT",0,0)
     f.consumableBody=consume
     local consumePage=consume; consume=CreateFrame("Frame",nil,consumePage); consume:SetPoint("TOPLEFT",0,-60); consume:SetPoint("BOTTOMRIGHT",0,0)
-    self:BuildSupplyOptions(consumePanel)
-    local buffView=flatButton(consumePanel,"Buff items",18,-8,104,function() f.selectConsumableView(false) end)
-    local supplyView=flatButton(consumePanel,L("Supplies"),132,-8,104,function() f.selectConsumableView(true) end)
-    f.consumableViewButtons={buffView,supplyView}
-    f.selectConsumableView=function(supplies)
-      f.consumableBody:SetShown(not supplies); f.supplyBody:SetShown(supplies)
-      T.Navigation(buffView,not supplies); T.Navigation(supplyView,supplies)
-      if supplies then B:UpdateSupplyOptions() end
-      if B.itemPicker then B.itemPicker:Hide() end
-    end
-    f.selectConsumableView(false)
+    -- Supplies has its own sidebar page (1.24.4); its body is built there.
+    local supplyPanel=panel(f); f.pages[TAB.Supplies]=supplyPanel
+    self:BuildSupplyOptions(supplyPanel)
+    f.selectConsumableView=function() f.consumableBody:Show(); f.supplyBody:Show() end
+    f.selectConsumableView()
     label(consume,L("Consumables"),18,-16,"GameFontNormalLarge")
     label(consume,"Choose food, a flask, elixirs and an optional utility consumable.",18,-42,"GameFontDisableSmall",680)
     f.consumablesEnable=check(consume,"Enable consumable reminders",18,-72,function(c)

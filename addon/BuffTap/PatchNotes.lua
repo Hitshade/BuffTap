@@ -2,6 +2,11 @@
 local _,B=...
 -- Keep the ten most recent releases within a 24 KiB content ceiling.
 B.PatchNotes={
+ {version="1.24.4",title="Supplies gets its own page",items={
+  "Supplies now has its own page in the sidebar, right under Consumables, with its own status light and a Customize look button. Your tracked items and settings are unchanged.",
+  "A reminder that Supplies can track anything you carry: class reagents, ammo, seeds, profession materials, whatever you like. Drag an item from your bags onto the list, or add it by name, and BuffTap warns you when you run low.",
+  "The Consumables light now follows only \"Enable consumable reminders\", so it no longer shows green when only supply warnings are on.",
+  "The switches on the Supplies page now line up in neat columns."}},
  {version="1.24.3",title="Tracking for every class",items={
   "Tracking reminder now covers any tracking you know, not just herbs and minerals: Hunter tracking, Sense Undead and more. Pick one from the new dropdown under Helpers > Tracking, even before you learn it, and BuffTap reminds you when it is off, for example after you die. If you switch tracking in the minimap menu, BuffTap follows your new choice instead of switching you back.",
   "New \"Skip when I have none\" switch on the Weapons page: no reminder for an oil, sharpening stone or poison you have run out of, the same way buff food works.",
@@ -56,8 +61,6 @@ B.PatchNotes={
   "Nearby \"Buff while resting\" now works when \"Pause reminders while resting\" is also on. Before, it only worked once that pause was turned off. Your own buffs still pause in cities and inns.",
   "The friend and guildmate alert now plays when their row actually appears, with a brighter, pulsing glow. It also works while you are mounted, stealthed or resting.",
   "New players now join the Nearby list even while your mouse is over it."}},
- {version="1.22.3",title="Buffs just for others",items={
-  "New \"Also on me\" switch for each buff on the Groups page. Turn it off and, in a party or raid, BuffTap casts that buff on others but not on you. Perfect for Thorns on your tank. Solo, you still get it."},thanks="Thanks to Lufia_TM for the report."},
 }
 function B:PatchNotesUnread()
   return self.profileDB and self.db.optionsPatchDot~=false and self.profileDB.global.patchNotesSeen~=self.version

@@ -1221,3 +1221,6 @@ B.Locales.ptBR["No timer. Reminds when it is off"]="Sem temporizador. Lembra qua
 B.Locales.ptBR["Follow my minimap choice"]="Seguir minha escolha do minimapa"
 B.Locales.ptBR["Pick the tracking BuffTap keeps up. Ones you have not learned yet can be chosen ahead of time."]="Escolha o rastreamento que o BuffTap mantém. Os ainda não aprendidos podem ser escolhidos antes."
 B.Locales.ptBR["When you switch tracking in the minimap menu, BuffTap keeps up your new choice instead of switching you back. Turn off to always restore the tracking picked here."]="Quando você troca o rastreamento no menu do minimapa, o BuffTap mantém sua nova escolha em vez de voltar. Desligue para sempre restaurar o rastreamento escolhido aqui."
+B.Locales.ptBR["Maintain your chosen food, flask, elixirs and special buffs."]="Mantenha a comida, o frasco, os elixires e os bônus especiais escolhidos."
+B.Locales.ptBR["Track reagents, ammo and anything else you carry, and get a warning when you run low."]="Acompanhe reagentes, munição e tudo o que você carrega, com aviso quando estiver acabando."
+B.Locales.ptBR["Track anything you carry and get a warning when you run low."]="Acompanhe o que você carrega e receba um aviso quando estiver acabando."

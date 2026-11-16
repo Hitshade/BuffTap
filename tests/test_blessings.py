@@ -91,7 +91,7 @@ CreateFrame=function(...)
 end
 BuffTap:Options(); local f=BuffTap.options
 local previousBottom=132
-local slots={1,3,4,5,6,7,8,10,11,12,13,14,9,2}; local ordered={}; for i,tab in ipairs(f.tabs) do ordered[slots[i]]=tab end
+local slots={1,3,4,5,6,8,9,11,12,13,14,15,10,2,7}; local ordered={}; for i,tab in ipairs(f.tabs) do ordered[slots[i]]=tab end
 for _,tab in ipairs(ordered) do
  local x,y=tab.points[2],tab.points[3]
  -- 1.18 sidebar: full-width nav items under the banner header, left of the page area.
@@ -99,7 +99,7 @@ for _,tab in ipairs(ordered) do
  assert(-y>=previousBottom+4 and -y+tab.height<=f.height-40)
  previousBottom=-y+tab.height
 end
-assert(f.width==932 and #f.tabs==14)
+assert(f.width==932 and #f.tabs==15)
 assert(f.height-132-40==728) -- 1.18 page area below the banner header and above the footer.
 """)
 test('Header Close hides options and all tabs still select their own page',setup+"""

@@ -1221,3 +1221,6 @@ B.Locales.deDE["No timer. Reminds when it is off"]="Kein Timer. Erinnert, wenn e
 B.Locales.deDE["Follow my minimap choice"]="Meiner Minikarten-Wahl folgen"
 B.Locales.deDE["Pick the tracking BuffTap keeps up. Ones you have not learned yet can be chosen ahead of time."]="Wähle das Aufspüren, das BuffTap aufrechterhält. Noch nicht erlerntes kann vorab gewählt werden."
 B.Locales.deDE["When you switch tracking in the minimap menu, BuffTap keeps up your new choice instead of switching you back. Turn off to always restore the tracking picked here."]="Wenn du das Aufspüren im Minikartenmenü wechselst, hält BuffTap deine neue Wahl aufrecht, statt zurückzuwechseln. Ausschalten, um immer das hier gewählte wiederherzustellen."
+B.Locales.deDE["Maintain your chosen food, flask, elixirs and special buffs."]="Halte dein gewähltes Essen, Fläschchen, Elixiere und Spezialbuffs aufrecht."
+B.Locales.deDE["Track reagents, ammo and anything else you carry, and get a warning when you run low."]="Verfolge Reagenzien, Munition und alles andere, was du trägst, und erhalte eine Warnung, wenn es knapp wird."
+B.Locales.deDE["Track anything you carry and get a warning when you run low."]="Verfolge alles, was du trägst, mit Warnung, wenn es knapp wird."
