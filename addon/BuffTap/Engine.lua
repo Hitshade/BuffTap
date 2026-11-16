@@ -4,7 +4,7 @@
 
 local _, B = ...
 _G.BuffTap = B
-B.version = "1.24.4"
+B.version = "1.24.5"
 B.API = {}
 local A = B.API
 
@@ -130,7 +130,10 @@ function B:InitDB()
     if type(root)=="table" then for _,context in ipairs({"Party","Raid"}) do if type(root[context])=="table" then root[context].group=true end end end
     self.db.groupDefaultVersion=1
   end
-  if not A.Number(self.db.helperTracker) or (self.db.helperTracker~=2383 and self.db.helperTracker~=2580 and self.db.helperTracker~=43308) then self.db.helperTracker=0 end
+  -- 1.24.5: any tracking spell can be chosen (class tracking too, even before it is learned).
+  -- Keep a sane spell ID; whether it can be offered is decided at runtime.
+  local tracker=self.db.helperTracker
+  if not A.Number(tracker) or tracker~=tracker or tracker<0 or tracker>2000000 or tracker%1~=0 then self.db.helperTracker=0 end
   if self.db.soulstoneParty~="healer" and self.db.soulstoneParty~="self" and self.db.soulstoneParty~="assigned" then self.db.soulstoneParty="healer" end
   if self.db.soulstoneRaid~="remind" and self.db.soulstoneRaid~="assigned" then self.db.soulstoneRaid="remind" end
   if #self.db.soulstoneAssigned>64 then self.db.soulstoneAssigned="" end
@@ -1513,6 +1516,28 @@ function B:NormalizeBlessingAssignments()
       elseif not classes[class] or type(key)~="string" or not valid[key] then map[class]=nil end
     end
   end
+  -- Remembered exceptions may arrive from an imported string: keep valid ones, cap the count,
+  -- and never let a malformed or markup-bearing name reach the Groups editor.
+  local saved=self.db.blessingSaved
+  if type(saved)=="table" then
+    local allowed={skip=true}; for key in pairs(families) do allowed[key]=true end
+    local guids={}; for guid in pairs(saved) do if type(guid)=="string" then guids[#guids+1]=guid end end
+    table.sort(guids)
+    local cleaned,n={},0
+    for _,guid in ipairs(guids) do
+      local row=saved[guid]
+      if n<200 and #guid<=128 and guid:match("^Player%-") and not guid:find("[%c|]") and type(row)=="table" and classes[row.class] then
+        local choice=type(row.choice)=="string" and allowed[row.choice] and row.choice or nil
+        local raidChoice=type(row.raidChoice)=="string" and allowed[row.raidChoice] and row.raidChoice or nil
+        if choice or raidChoice then
+          local name=row.name
+          if not A.Text(name) or #name>128 or name:find("[%c|]") then name="?" end
+          cleaned[guid]={choice=choice,raidChoice=raidChoice,name=name,class=row.class}; n=n+1
+        end
+      end
+    end
+    self.db.blessingSaved=next(cleaned) and cleaned or nil
+  elseif saved~=nil then self.db.blessingSaved=nil end
 end
 function B:BlessingGroupNeed(def)
   if def and def.kind=="blessing" and self:BlessingAssignmentsActive() then return self:GroupPreference("blessingNeed") end

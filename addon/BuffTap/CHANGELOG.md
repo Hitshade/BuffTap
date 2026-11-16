@@ -1,3 +1,15 @@
+# BuffTap 1.24.5
+
+### Fixes
+- Fixed: a tracking choice other than Herbs, Minerals or Fish (such as Hunter tracking) was reset on every reload. It now stays.
+- When you switch tracking in the minimap menu, BuffTap no longer briefly offers your old tracking before following the new one. Switches made in combat are followed once combat ends, and your choice is checked again after logging in.
+- "Skip when I have none" now only covers oils, sharpening stones and Rogue poisons, as its help says. Mage scrolls and Warlock stones still remind you when you run out.
+- Full check-up reports now also leave out your Oath of Light and Soulstone targets. Your own settings export still keeps them.
+- Remembered players from an imported settings string are checked, so a damaged string cannot break the Groups page.
+- Full check-up now shows the correct instance type in dungeons and raids.
+
+---
+
 # BuffTap 1.24.4
 
 ### Changes

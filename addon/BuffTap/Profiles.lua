@@ -253,11 +253,13 @@ local function decode(text)
 end
 -- private=true (Full check-up): leave out the names on your blacklist, which a public bug report shouldn't carry.
 local PRIVATE={blockedPlayers=true,blockedGuilds=true}
+local privateClassKeys={blessingSaved=true,oathAssigned=true,soulstoneAssigned=true}
 function B:ExportSettings(private)
   local data={shared={},class={}}
   for key in pairs(shared) do if not (private and PRIVATE[key]) then data.shared[key]=clone(self.db[key]) end end
   -- Remembered blessing exceptions name other players: kept in full exports, left out of shared reports.
-  for _,key in ipairs(classKeys) do if not (private and key=="blessingSaved") then data.class[key]=clone(self.db[key]) end end
+  -- Settings that name other players stay in full exports but are left out of shared reports.
+  for _,key in ipairs(classKeys) do if not (private and privateClassKeys[key]) then data.class[key]=clone(self.db[key]) end end
   local out={}; encode(data,out,0)
   return "BuffTap1:"..tostring(token() or "NONE")..":"..table.concat(out)
 end

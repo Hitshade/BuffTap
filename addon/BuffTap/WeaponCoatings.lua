@@ -346,7 +346,8 @@ function B:WeaponActionFor(hand)
   if choice and itemImbueClasses[choice.class] and (hand.slot~=16 or self:CoatingWeaponMatches(hand.slot,choice)~=true) then return nil,(choice.class=="MAGE" and "Mage scroll" or choice.name).." does not match the equipped main-hand weapon." end
   local source,why,empty=self:WeaponChoiceSource(choice)
   -- Optional: no reminder for oils, stones or poisons you have none of, like buff food (noci__).
-  if empty and self.db.weaponSkipEmpty then return nil,"out of stock; reminder skipped" end
+  -- Oils, stones and Rogue poisons only; Mage scrolls and Warlock stones keep their out-of-stock reminder.
+  if empty and self.db.weaponSkipEmpty and (hand.coating or (choice and choice.class=="ROGUE")) then return nil,"out of stock; reminder skipped" end
   local action={source="weapon-reminder",valid=true,key=(hand.coating and "coating-" or "weapon-")..hand.key,slot=hand.slot,coating=hand.coating,
     target="player",targetName=hand.label or (hand.slot==16 and "Main hand" or "Off hand"),name=choice and choice.name or "Weapon buff missing",
     icon=state.icon or 136026,needState=need,remaining=remaining,preference=choice and choice.key,

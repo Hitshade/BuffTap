@@ -857,8 +857,11 @@ local itemRequested=event=="ITEM_DATA_LOAD_RESULT" and A.Number(arg) and ((B.ite
   end
   if B.HelperEvent then B:HelperEvent(event,arg,castGUID,spellID) end
   if event=="UI_ERROR_MESSAGE" then return end
-  if event=="MINIMAP_UPDATE_TRACKING" and not B:HelperEnabled("helperTracking") and not B:HelperEnabled("helperTreasure") then return end
-  if event=="MINIMAP_UPDATE_TRACKING" and B.FollowMinimapTracking then B:StartTimer("tracking-follow",.3,function() B:FollowMinimapTracking() end) end
+  if event=="MINIMAP_UPDATE_TRACKING" then
+    if not B:HelperEnabled("helperTracking") and not B:HelperEnabled("helperTreasure") then return end
+    -- Follow mode: adopt the new choice first; its timer refreshes afterwards (no stale refresh before it).
+    if B.QueueTrackingReconcile and B:QueueTrackingReconcile(.3) then return end
+  end
 
   if event=="PLAYER_TARGET_CHANGED" then
     B:InvalidateAura("target")
@@ -936,7 +939,7 @@ local itemRequested=event=="ITEM_DATA_LOAD_RESULT" and A.Number(arg) and ((B.ite
     -- After login or a loading screen the client can briefly report no auras before the real
     -- list arrives. Stay quiet for a few seconds, then check once with settled data.
     B.loadingUntil=GetTime()+4
-    B:StartTimer("loading-settle",4.05,function() B.loadingUntil=nil; B:InvalidateAura(); B:RequestRefresh("loading settled",0) end)
+    B:StartTimer("loading-settle",4.05,function() B.loadingUntil=nil; B:InvalidateAura(); if B.QueueTrackingReconcile then B:QueueTrackingReconcile(.05) end; B:RequestRefresh("loading settled",0) end)
     if B.RegisterOptionsCategory then B:RegisterOptionsCategory() end
     -- SharedMedia may load after BuffTap; register our sounds once it exists.
     if B.RegisterSharedSounds then B:RegisterSharedSounds() end
@@ -945,7 +948,10 @@ local itemRequested=event=="ITEM_DATA_LOAD_RESULT" and A.Number(arg) and ((B.ite
     if B.ScheduleWelcome then B:ScheduleWelcome() end
     return
   end
-  if event=="PLAYER_REGEN_ENABLED" then B:Refresh(false); if B.ScheduleWelcome then B:ScheduleWelcome() end; return end
+  if event=="PLAYER_REGEN_ENABLED" then
+    if B.trackingFollowPending and B.FollowMinimapTracking then B:CancelTimer("tracking-follow"); B:FollowMinimapTracking(); B.trackingFollowPending=nil end
+    B:Refresh(false); if B.ScheduleWelcome then B:ScheduleWelcome() end; return
+  end
   B.dirty=true
   B:RequestRefresh(event,0.05)
 end

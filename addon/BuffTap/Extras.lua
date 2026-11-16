@@ -250,7 +250,8 @@ function B:CheckupLines()
   local okBuild,build,_,_,interface=pcall(GetBuildInfo)
   if not okBuild then build,interface=nil,nil end
   local class=A.Class("player")
-  local inInstance,instanceType=A.Call(IsInInstance)
+  local okInstance,inInstance,instanceType=pcall(IsInInstance)
+  if not okInstance or not A.Public(inInstance) or not A.Public(instanceType) then inInstance,instanceType=nil,nil end
   local group=A.Call(IsInRaid)==true and "raid" or A.Call(IsInGroup)==true and "party" or "solo"
   add("Game",{"Client "..tostring(build).." ("..tostring(interface)..") | locale "..tostring(A.Call(GetLocale)),
     "Class "..tostring(class).." | level "..tostring(A.Call(UnitLevel,"player")).." | "..group

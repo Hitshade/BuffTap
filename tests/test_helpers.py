@@ -244,7 +244,8 @@ BuffTap:HandleHelperError(SPELL_FAILED_AURA_BOUNCED); assert(BuffTap:HelperSuppr
 test('Tracker selection is explicit and invalid preferences reset', tracking+"""
 BuffTap.db.helperTracker=nil; BuffTap:InitDB(); assert(BuffTap.db.helperTracker==0)
 refresh(); assert(not BuffTap.action)
-for _,value in ipairs({999,'2580',0/0,{}}) do BuffTap.db.helperTracker=value; BuffTap:InitDB(); assert(BuffTap.db.helperTracker==0) end
+for _,value in ipairs({-1,2000001,1.5,'2580',0/0,{}}) do BuffTap.db.helperTracker=value; BuffTap:InitDB(); assert(BuffTap.db.helperTracker==0) end
+for _,id in ipairs({1494,19883,5502,5225,2383,43308}) do BuffTap.db.helperTracker=id; BuffTap:InitDB(); assert(BuffTap.db.helperTracker==id,'reset '..id) end
 BuffTap.db.helperTracker=2580; BuffTap:InitDB(); assert(BuffTap.db.helperTracker==2580)
 """)
 test('Party coverage includes Shadow Protection', """
@@ -293,3 +294,25 @@ BuffTap:FollowMinimapTracking(); assert(BuffTap.db.helperTracker==1494,'followed
 active=nil; BuffTap:FollowMinimapTracking(); assert(BuffTap.db.helperTracker==1494,'nothing active keeps the choice')
 refresh(); assert(BuffTap.action and BuffTap.action.id==1494,'reminds the followed one')
 BuffTap.db.helperTrackingFollow=false; active=2383; BuffTap:FollowMinimapTracking(); assert(BuffTap.db.helperTracker==1494,'keep mode ignores the menu')""")
+test('Minimap switch never offers the old tracking before adopting the new one (audit 1.24.4)',"""spell(2383,'Find Herbs'); spell(1494,'Track Beasts'); BuffTap.db.buffs.motw=false; BuffTap.db.buffs.thorns=false
+local current=nil
+C_Minimap={GetNumTrackingTypes=function() return 2 end,GetTrackingInfo=function(i) local id=i==1 and 2383 or 1494
+return {spellID=id,name=id==2383 and 'Find Herbs' or 'Track Beasts',type='spell',texture=1,active=id==current} end}
+BuffTap.db.helperTracking=true; BuffTap.db.helperTrackingFollow=true; BuffTap.db.helperTracker=2383
+refresh(); assert(BuffTap.action and BuffTap.action.id==2383,'herbs offered while nothing is on')
+current=1494; BuffTap.events.scripts.OnEvent(nil,'MINIMAP_UPDATE_TRACKING')
+assert(not BuffTap.action or BuffTap.action.source~='tracking','old herbs action cleared at once')
+refresh(); assert(not BuffTap.action or BuffTap.action.id~=2383,'no stale herbs while settling')
+BuffTap:FollowMinimapTracking(); BuffTap.trackingFollowPending=nil
+assert(BuffTap.db.helperTracker==1494,'adopted beasts')
+current=nil; refresh(); assert(BuffTap.action and BuffTap.action.id==1494,'reminds the new choice')""")
+test('Private diagnostics leave out Oath and Soulstone targets (audit 1.24.4)',"""local B=BuffTap; B.db.oathAssigned={guid='Player-1-ABCDEF',name='Oathname'}; B.db.soulstoneAssigned='Stonename'
+local private,full=B:ExportSettings(true),B:ExportSettings(false)
+for _,s in ipairs({'Player-1-ABCDEF','Oathname','Stonename'}) do assert(not private:find(s,1,true),'leak '..s); assert(full:find(s,1,true),'lost '..s) end""")
+test('Imported remembered players are cleaned (audit 1.24.4)',"""local B=BuffTap
+B.db.blessingSaved={['Player-1-A']={choice='bok',name='Good',class='WARRIOR'},['Player-1-B']={choice='bok',name={},class='MAGE'},
+['Player-1-C']={choice='bok',name='|cffff0000x|r',class='MAGE'},['bad']={choice='bok',name='X',class='MAGE'},['Player-1-D']={choice=5,class='MAGE'},['Player-1-E']={raidChoice='bow',name='R',class='NOPE'}}
+B:NormalizeBlessingAssignments(); local s=B.db.blessingSaved
+assert(s['Player-1-A'].name=='Good' and s['Player-1-B'].name=='?' and s['Player-1-C'].name=='?','names')
+assert(not s.bad and not s['Player-1-D'] and not s['Player-1-E'],'invalid dropped')
+B.db.blessingSaved='junk'; B:NormalizeBlessingAssignments(); assert(B.db.blessingSaved==nil)""")

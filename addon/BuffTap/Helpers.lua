@@ -209,10 +209,24 @@ function B:FollowMinimapTracking()
     end
   end
 end
+-- While the minimap tracking settles, offer no main tracking action (a stale one could switch the player back).
+-- Nothing is ever cast automatically; this only decides what the next click may do.
+function B:QueueTrackingReconcile(delay)
+  if not self.db or not self:HelperEnabled("helperTracking") or self.db.helperTrackingFollow==false then return false end
+  self.trackingFollowPending=true
+  if not A.Combat() and self.action and self.action.source=="tracking" and self.action.id~=2481 then self:Commit(nil,"tracking choice changing") end
+  self:StartTimer("tracking-follow",delay or .3,function()
+    if A.Combat() then return end -- finished on PLAYER_REGEN_ENABLED
+    B:FollowMinimapTracking(); B.trackingFollowPending=nil
+    B:RequestRefresh("tracking reconciled",0)
+  end)
+  return true
+end
 function B:TrackingAction()
   if not self:HelperEnabled("helperTracking") and not self:HelperEnabled("helperTreasure") then return end
   for _,entry in ipairs(self:GatheringTrackers(true)) do
     local wanted=entry.id==2481 and self:HelperEnabled("helperTreasure") or (entry.id~=2481 and self:HelperEnabled("helperTracking") and entry.id==self.db.helperTracker)
+    if wanted and entry.id~=2481 and self.trackingFollowPending and self.db.helperTrackingFollow~=false then wanted=false end
     if wanted and not entry.active and trackerUsable(entry.id) then
       local action={source="tracking",id=entry.id,key="gathering-"..entry.id,name=entry.name,icon=entry.icon,
         target="player",targetGUID=A.Call(UnitGUID,"player"),targetName="Tracking",rank="",reason="selected tracker is off",secureType="spell"}
@@ -221,6 +235,7 @@ function B:TrackingAction()
   end
 end
 function B:TrackingStillNeeded(action)
+  if action.id~=2481 and self.trackingFollowPending and self.db.helperTrackingFollow~=false then return false end
   if action.id==2481 then
     if not self:HelperEnabled("helperTreasure") then return false end
   elseif not self:HelperEnabled("helperTracking") or self.db.helperTracker~=action.id then return false end

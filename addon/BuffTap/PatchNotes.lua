@@ -2,6 +2,13 @@
 local _,B=...
 -- Keep the ten most recent releases within a 24 KiB content ceiling.
 B.PatchNotes={
+ {version="1.24.5",title="Fixes",items={
+  "Fixed: a tracking choice other than Herbs, Minerals or Fish (such as Hunter tracking) was reset on every reload. It now stays.",
+  "When you switch tracking in the minimap menu, BuffTap no longer briefly offers your old tracking before following the new one. Switches made in combat are followed once combat ends, and your choice is checked again after logging in.",
+  "\"Skip when I have none\" now only covers oils, sharpening stones and Rogue poisons, as its help says. Mage scrolls and Warlock stones still remind you when you run out.",
+  "Full check-up reports now also leave out your Oath of Light and Soulstone targets. Your own settings export still keeps them.",
+  "Remembered players from an imported settings string are checked, so a damaged string cannot break the Groups page.",
+  "Full check-up now shows the correct instance type in dungeons and raids."}},
  {version="1.24.4",title="Supplies gets its own page",items={
   "Supplies now has its own page in the sidebar, right under Consumables, with its own status light and a Customize look button. Your tracked items and settings are unchanged.",
   "A reminder that Supplies can track anything you carry: class reagents, ammo, seeds, profession materials, whatever you like. Drag an item from your bags onto the list, or add it by name, and BuffTap warns you when you run low.",
@@ -57,10 +64,6 @@ B.PatchNotes={
   "In the all-players view, players who just came into range now appear near the top, under those who need a buff and your friends.",
   "Optional \"Animated list\" (Customization > Nearby window): rows glide down to make room and newcomers fade in.",
   "The Resurrection switches line up with the Who switches on the Cleanse & revive page."}},
- {version="1.22.4",title="Buff while resting fixed",items={
-  "Nearby \"Buff while resting\" now works when \"Pause reminders while resting\" is also on. Before, it only worked once that pause was turned off. Your own buffs still pause in cities and inns.",
-  "The friend and guildmate alert now plays when their row actually appears, with a brighter, pulsing glow. It also works while you are mounted, stealthed or resting.",
-  "New players now join the Nearby list even while your mouse is over it."}},
 }
 function B:PatchNotesUnread()
   return self.profileDB and self.db.optionsPatchDot~=false and self.profileDB.global.patchNotesSeen~=self.version

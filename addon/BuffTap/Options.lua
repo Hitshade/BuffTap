@@ -1474,7 +1474,9 @@ function B:BuildHelperPage(parent)
   f.trackerHeading=label(tr,L("Tracking"),18,-529,T.fonts.Section)
   f.checks.helperTracking=check(tr,L("Remind me to enable tracking"),18,-557,function(c)
     if A.Combat() then return end
-    B.db.helperTracking=c:GetChecked()==true; B:RequestRefresh("tracking reminder",0); B:Options()
+    B.db.helperTracking=c:GetChecked()==true
+    if B.db.helperTracking and B.QueueTrackingReconcile then B:QueueTrackingReconcile(.05) end
+    B:RequestRefresh("tracking reminder",0); B:Options()
   end)
   addHelp(f.checks.helperTracking,L("Remind me to enable tracking"),L("Choose any tracking you know below, such as Track Humanoids or Find Herbs. When it is off, for example after you die, BuffTap offers a one-tap reminder to turn it on."))
   f.treasure=check(tr,L("Keep Find Treasure active"),490,-529,function(c)
@@ -1497,7 +1499,10 @@ function B:BuildHelperPage(parent)
   addHelp(f.trackerPick,L("Tracking"),L("Pick the tracking BuffTap keeps up. Ones you have not learned yet can be chosen ahead of time."))
   f.trackerFollow=check(f.helperSections and f.helperSections.tracking or tr,L("Follow my minimap choice"),494,-552,function(c)
     if A.Combat() then return end
-    B.db.helperTrackingFollow=c:GetChecked()==true; B:FollowMinimapTracking(); B:Options()
+    B.db.helperTrackingFollow=c:GetChecked()==true
+    if B.db.helperTrackingFollow and B.QueueTrackingReconcile then B:QueueTrackingReconcile(.05)
+    else B.trackingFollowPending=nil; B:CancelTimer("tracking-follow") end
+    B:Options()
   end)
   addHelp(f.trackerFollow,L("Follow my minimap choice"),L("When you switch tracking in the minimap menu, BuffTap keeps up your new choice instead of switching you back. Turn off to always restore the tracking picked here."))
   -- Page actions sit in the header, beside the description, so the body never needs to scroll.
