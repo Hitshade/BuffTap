@@ -1,5 +1,27 @@
 from test_bufftap import test
 
+test('Review: timing panel explains one time without changing existing preferences', """
+local B=BuffTap; B.db.seconds=75; B.db.buffSeconds.thorns=90; B:Options()
+assert(not B.options.rebuffSlider and B.options.timingHint.text:find('one refresh time',1,true))
+assert(B.db.seconds==75 and B.db.buffSeconds.thorns==90)
+""")
+
+test('Review: timing reset preserves buff toggles and priorities', """
+local B=BuffTap; B.db.seconds=90; B.db.buffSeconds.thorns=120; B.db.buffs.thorns=false; B.db.priorities.thorns=7
+B:Options(); local r=B.options.resetBuffsButton; r.scripts.OnClick(r); assert(B.db.seconds==90)
+r.scripts.OnClick(r)
+assert(B.db.seconds==45 and next(B.db.buffSeconds)==nil and B.db.buffs.thorns==false and B.db.priorities.thorns==7)
+""")
+
+test('Review: timing reset edits only the selected Party setup', """
+local B=BuffTap; B.db.seconds=75; B.db.buffSeconds.thorns=90; B:Options()
+B.contextControls.buffs.buttons.party.scripts.OnClick()
+local r=B.options.resetBuffsButton; r.scripts.OnClick(r); r.scripts.OnClick(r)
+local settings=B:SituationPreview('party','buffs')
+assert(settings.seconds==45 and B:RebuffSeconds(B:FindBuff('thorns'),settings)==45)
+assert(B.db.seconds==75 and B.db.buffSeconds.thorns==90)
+""")
+
 test('Review: disabling BuffTap revokes an ordinary prepared click immediately', """
 local B=BuffTap; assert(B.action and B.button.attrs.type1=='spell')
 B.db.enabled=false; B.button.scripts.PreClick(nil,'LeftButton',false)

@@ -33,6 +33,8 @@ Late layout finding: the owner screenshot and source geometry confirmed selected
 
 ## Executed validation
 
+- Final timing-panel follow-up: **229 passed, zero failed** across pre-ship review, appearance and situation modules. Three new cases prove that opening the panel preserves legacy values, reset preserves buff toggles/priorities, and Party timing reset leaves Solo timings unchanged. The superseded global-slider UI test now exercises a per-buff Party timing edit.
+
 - Late Consumables layout follow-up: **171 passed, zero failed** across pre-ship review, appearance and Manual consumable modules, including the new footer separation check. This followed the full run below.
 
 - Baseline full suite before review fixes: **2,145 passed, zero failed**.

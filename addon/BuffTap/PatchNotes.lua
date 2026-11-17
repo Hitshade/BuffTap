@@ -9,6 +9,7 @@ B.PatchNotes={
   "Customization > Buff reminder: Detach consumables lets you position the group separately with Move reminders or Edit Mode. Switch it off to reattach. Cancel restores the move session's starting positions; Reset look & position restores defaults.",
   "Up to eight effects can be clicked here. Hover +N to see additional effects to use from your bags. Manual icons hide in combat and while you cannot safely use them.",
   "Review fixes: disabling BuffTap blocks prepared clicks immediately. SmartShift respects pauses and form cooldowns. Manual icons return on time at refresh thresholds. Appearance reset now restores all its visual choices.",
+  "My buffs: the bottom panel explains default timings instead of showing another slider. Set each buff's timing in its row. Reset default timings restores timings for the selected setup without changing buff choices or priorities.",
   "Customization groups label visibility and position before text styling. Camping and Supplies have fuller layouts. Modern glow is rounded inside and square outside; timers are centered and group counts sit at the top right. This is a beta; please test in game."},thanks="Thanks to Xprit44 for suggesting reminders without accidental mouse-wheel consumption."},
  {version="1.25.0",title="Smarter class setup, SmartShift and item choices",items={
   "Druids and Shamans: turn on SmartShift under My buffs to offer your previous form after refreshing your own buffs. Returning takes another click and is always silent.",

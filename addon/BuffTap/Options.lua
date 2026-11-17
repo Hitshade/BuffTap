@@ -200,25 +200,6 @@ local function setAndRefresh(key,value)
   if B.UpdateOptionsPreviews then B:UpdateOptionsPreviews() end
 end
 
-local function rebuffSlider(parent)
-  local s=CreateFrame("Slider",nil,parent,"OptionsSliderTemplate")
-  s:SetSize(320,18); s:SetMinMaxValues(15,180); s:SetValueStep(5)
-  if s.SetObeyStepOnDrag then s:SetObeyStepOnDrag(true) end
-  if s.Low then s.Low:Hide() end
-  if s.High then s.High:Hide() end
-  if s.Text then s.Text:Hide() end
-
-  s.valueText=parent:CreateFontString(nil,"OVERLAY","GameFontHighlight")
-  s.valueText:SetPoint("LEFT",s,"RIGHT",18,0); s.valueText:SetText(L("%d sec",45))
-  s:SetScript("OnValueChanged",function(self,value)
-    value=math.floor(value/5+0.5)*5
-    self.valueText:SetText(formatSeconds(value))
-    if self.silent or A.Combat() then return end
-    B:EditorSettings("buffs").seconds=value; B:InitDB(); B:RequestRefresh("global rebuff threshold",0.08)
-  end)
-  s.visualFormatter=formatSeconds; T.StyleSlider(s,15,180,5,function(_,v) B:EditorSettings("buffs").seconds=v; B:InitDB(); B:RequestRefresh("global rebuff threshold",.08) end); s:SetUnit("sec"); return s
-end
-
 local function compactSlider(parent,minValue,maxValue,step,width,formatter,onChange)
   local s=CreateFrame("Slider",nil,parent,"OptionsSliderTemplate")
   s:SetSize(width or 110,16); s:SetMinMaxValues(minValue,maxValue); s:SetValueStep(step)
@@ -2017,10 +1998,9 @@ function B:Options()
     f.weaponUnavailable=label(weapons,"Class imbues are available to Rogues, Shamans and Mages.",18,-72,"GameFontDisableSmall",660)
     self:BuildContextControls(weaponsPage,"weapons",{label=label,flatButton=flatButton,button=button,addHelp=addHelp})
     local timingLabel=buffs:CreateFontString(nil,"OVERLAY","GameFontNormal")
-    timingLabel:SetPoint("BOTTOMLEFT",28,88); timingLabel:SetText(L("Default rebuff threshold"))
+    timingLabel:SetPoint("BOTTOMLEFT",28,88); timingLabel:SetText(L("Default refresh timings")); f.timingLabel=timingLabel
     local timingHint=buffs:CreateFontString(nil,"OVERLAY","GameFontDisableSmall")
-    timingHint:SetPoint("LEFT",timingLabel,"RIGHT",12,0); timingHint:SetText(L("Used until a buff is customized. Hour-long buffs refresh 5 minutes early; buffs under 2 minutes remind when they wear off.")); timingHint:SetWidth(470); timingHint:SetJustifyH("LEFT")
-    f.rebuffSlider=rebuffSlider(buffs); f.rebuffSlider:SetPoint("BOTTOMLEFT",28,54)
+    timingHint:SetPoint("LEFT",timingLabel,"RIGHT",12,0); timingHint:SetText(L("Each buff uses one refresh time, shown above. Defaults: 45 sec before expiry, or 5 min for buffs lasting 45+ min. Buffs under 2 min and untimed abilities remind only when missing. Change a row to customize it.")); timingHint:SetWidth(460); timingHint:SetJustifyH("LEFT"); timingHint:SetWordWrap(true); f.timingHint=timingHint
     f.smartShift=check(buffs,L("SmartShift: restore previous form"),320,-492,function(c)
       if A.Combat() then return end
       B.db.smartShift=c:GetChecked()==true
@@ -2031,10 +2011,13 @@ function B:Options()
     addHelp(f.smartShift,"SmartShift: restore previous form","For Druids and Shamans. After BuffTap helps refresh your own buffs, it silently offers your previous form on the next click. Off by default; never shifts automatically.")
     f.classSetup=button(buffs,L("Review class setup"),0,0,150,function() B:ShowOnboarding(true) end)
     f.classSetup:ClearAllPoints(); f.classSetup:SetPoint("BOTTOMLEFT",500,146)
-    local resetBuffs=button(buffs,L("Reset buffs"),0,0,100,function()
-      if not A.Combat() then B:EditorSettings("buffs").buffs={}; B:EditorSettings("buffs").priorities={}; B:EditorSettings("buffs").buffSeconds={}; B:Refresh(); B:Options() end
+    local resetBuffs=button(buffs,L("Reset default timings"),0,0,184,function()
+      if not A.Combat() then
+        local settings=B:EditorSettings("buffs"); settings.seconds=45; settings.buffSeconds={}
+        B:InvalidateAura(); B:Refresh(); B:Options()
+      end
     end)
-    f.resetBuffsButton=resetBuffs; T.Variant(resetBuffs,"danger"); T.Confirm(resetBuffs); resetBuffs:ClearAllPoints(); resetBuffs:SetPoint("BOTTOMRIGHT",-34,26)
+    f.resetBuffsButton=resetBuffs; T.Confirm(resetBuffs); resetBuffs:ClearAllPoints(); resetBuffs:SetPoint("BOTTOMRIGHT",-34,26)
 
     -- GROUPS PAGE
     local groupPage=panel(f); f.pages[TAB.Groups]=groupPage
@@ -2909,7 +2892,6 @@ function B:Options()
   f.profileCheck:SetChecked(self.profileEnabled==true)
   local playerClass=A.Class("player")
   if f.smartShift then f.smartShift:SetShown(playerClass=="DRUID" or playerClass=="SHAMAN"); f.smartShift:SetChecked(self.db.smartShift==true) end
-  f.rebuffSlider.silent=true; f.rebuffSlider:SetValue(self:EditorSettings("buffs").seconds); f.rebuffSlider.valueText:SetText(formatSeconds(self:EditorSettings("buffs").seconds)); f.rebuffSlider.silent=false
 
   local weaponClass=self.WeaponReminderClass and self:WeaponReminderClass()
   f.weaponUnavailable:Hide()
@@ -3033,7 +3015,7 @@ function B:Options()
         local def=btn:GetParent().def
         if def and not A.Combat() then B:EditorSettings("buffs").buffSeconds[def.key]=nil; B:RequestRefresh("rebuff default",0); B:Options() end
       end)
-      addHelp(row.default,"Use default timing","Remove this buff's custom refresh timing and use the default rebuff threshold below. This does not reset its priority or enable setting.")
+      addHelp(row.default,"Use default timing","Remove this buff's custom refresh time and use its automatic timing. Buff choices and priorities stay unchanged.")
       for _,direction in ipairs({-1,1}) do
         local delta=direction
         local arrow=arrowButton(row,"",delta<0 and 556 or 582,-15,24,function(btn)

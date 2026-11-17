@@ -7,6 +7,8 @@ The strip stays visible when the main reminder is hidden or idle. Under Customiz
 
 Appearance settings put Visible labels before Text, including label position. Camping and Supplies have larger previews and fuller layouts. Timers are centered, group counts sit at the top right, and Modern Soft glow/Pulse has a rounded inside and square outer halo.
 
+My buffs now explains default refresh timings in an information panel instead of showing a second slider. Adjust each buff's row, or use Reset default timings for the selected Solo, Party or Raid setup. Resetting timings leaves buff choices and priorities alone.
+
 ### Fixed
 The release review corrected prepared clicks after disabling BuffTap, SmartShift ignoring pauses or waiting too long after cooldowns, Manual icons returning late at refresh thresholds, and appearance reset leaving some choices unchanged.
 
