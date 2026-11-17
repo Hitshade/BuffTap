@@ -9,12 +9,14 @@
 - Thanks to **Xprit44** for suggesting manual reminders without accidental mouse-wheel consumption.
 
 ### Fixed in the pre-ship review
+- **Consumables row overlap (`Options.lua`):** selected checklist thumbnails and overflow now occupy the bottom-left footer, separate from the Manual/ticked summary; timing label/slider move to the bottom-right. Native row heights and saved settings are unchanged. Added a geometry regression for the full twelve-icon strip.
 - **Master-off click gap (`Engine.lua`):** `ActionPauseReason` now checks the master switch at the shared click boundary, preventing a prepared action from firing before a queued settings refresh revokes it.
 - **SmartShift fallback (`SmartShift.lua`):** return actions now respect master disable, loading/session/resting/edit pauses, current situation and readable self identity. A raw form index must confirm caster form; unreadable metadata or another active form cannot authorize a return. Casting/channeling and unconfirmed/active cooldowns block it. A bounded wake schedules the cooldown end. Druid and Shaman cases are tested.
 - **Manual threshold scheduling (`ManualConsumables.lua`):** the read-only projection returns the earliest future threshold even when all effects are active and no icon is shown. The update path retains that wake without adding polling or display-time use confirmation.
 - **Incomplete appearance reset (`Options.lua`, `OptionsRefinement.lua`):** reset also restores Classic icon style, split placement, swipe/range and urgency/flash options; Camping resets its icon style too.
 
 ### Validation and limits
+- Late Consumables footer correction: 171 focused scenarios passed, zero failed across review/appearance/Manual modules, after the full run below.
 - Full mocked Lua 5.1 release suite: **2,162 passed, zero failed**, including 17 new pre-ship review scenarios. All 15 Mage item/use/enchant/weapon mappings match reviewed offline evidence. See `RELEASE-REVIEW-1.26.0-beta2.md`.
 - The owner visually tested earlier beta layouts and glow revisions. Native secure execution across every class, raid and item combination has not been established by these mocked checks. Final SmartShift, timing and edit-mode smoke tests remain recommended.
 - Eight Manual effects are clickable; overflow is a named informational list for bag use. Buffs unavailable under Forever combat restrictions are never inferred missing. Manual food does not add Auto food's global eating gate to class readiness. Supplies tracking/alert behavior is unchanged; appearance is updated.

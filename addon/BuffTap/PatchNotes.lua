@@ -5,6 +5,7 @@ B.PatchNotes={
  {version="1.26.0-beta2",title="Manual consumables and release review fixes",items={
   "Consumables: choose Auto or Manual for Food, Flask, Elixirs and Utility. Manual shows separate clickable item icons; your normal binding and mouse wheel skip them.",
   "Labeled icons and stock counts stay centered, even with the main reminder hidden. Active effects disappear until they need refreshing; unavailable items stay dimmed.",
+  "On Consumables, selected-item thumbnails sit below the labels, with Rebuff at on the right, so the icons no longer cover the selection text.",
   "Customization > Buff reminder: Detach consumables lets you position the group separately with Move reminders or Edit Mode. Switch it off to reattach. Cancel restores the move session's starting positions; Reset look & position restores defaults.",
   "Up to eight effects can be clicked here. Hover +N to see additional effects to use from your bags. Manual icons hide in combat and while you cannot safely use them.",
   "Review fixes: disabling BuffTap blocks prepared clicks immediately. SmartShift respects pauses and form cooldowns. Manual icons return on time at refresh thresholds. Appearance reset now restores all its visual choices.",

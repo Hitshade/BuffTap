@@ -14,6 +14,8 @@ Reviewed 2026-11-17 against the local work branch, with 1.25.0 as the published 
 
 All findings above are fixed locally. Their failure scenarios were reproduced before the corresponding corrections. The 17 new review scenarios are in `tests/test_pre_ship_review.py`, imported by the release runner.
 
+Late layout finding: the owner screenshot and source geometry confirmed selected-item thumbnails overlapping Manual/ticked labels. Thumbnails and overflow now use the bottom-left footer, with timing on the bottom-right. A twelve-icon-strip geometry regression was added to `tests/test_options1170.py`. The full-suite count below predates this layout-only change; the focused follow-up result is recorded separately.
+
 ## Scope and evidence
 
 | Area | Review focus | Result or remaining limit |
@@ -30,6 +32,8 @@ All findings above are fixed locally. Their failure scenarios were reproduced be
 | Release preparation | Three independently written note audiences, exact ten in-game versions, Xprit44 credit, matching beta identity and archive contents. | Beta 2 prepared locally; no public publishing performed. Prior 1.25.0 history preserved. |
 
 ## Executed validation
+
+- Late Consumables layout follow-up: **171 passed, zero failed** across pre-ship review, appearance and Manual consumable modules, including the new footer separation check. This followed the full run below.
 
 - Baseline full suite before review fixes: **2,145 passed, zero failed**.
 - Full release runner after fixes: **2,162 passed, zero failed**, using Python/lupa 2.8 with Lua 5.1, `BT_KEEP_GOING=1`, and final counts from `test_bufftap.tests`/`failures`.

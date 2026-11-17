@@ -2239,24 +2239,24 @@ function B:Options()
       row.choice=label(row,"Auto",82,-29,"GameFontHighlightSmall",420)
       row.prev=button(row,L("Choose"),584,-8,86,function(btn) B:ChooseConsumable(btn:GetParent().family,btn,B:EditorContext("consumables")) end)
       row.inventory=label(row,"",450,-11,"GameFontHighlightSmall",120)
-      label(row,family.protectPresent and (family.key=="utility" and "Preserve active utility; remind after expiry" or "Preserve active elixirs; remind after expiry") or "Rebuff at",42,-52,"GameFontDisableSmall",family.protectPresent and 390 or 62)
+      label(row,family.protectPresent and (family.key=="utility" and "Preserve active utility; remind after expiry" or "Preserve active elixirs; remind after expiry") or "Rebuff at",350,-52,"GameFontDisableSmall",family.protectPresent and 320 or 62)
       addHelp(row.enable,"Maintain this consumable buff","Enable this family to monitor its selected effects. Auto offers items on your normal binding; Manual uses separate click-only icons. Enable consumable reminders above too. Preferences stay saved when supplies run out.")
       row.threshold=compactSlider(row,30,1800,30,230,formatSeconds,function(slider,value)
         local fam=slider:GetParent().family
         if fam then B:SetSituationValue(B:EditorContext("consumables"),"consumables","consumableSeconds",value,fam.key); B:InvalidateAura("player"); B:RequestRefresh("consumable threshold",0.08) end
       end)
-      row.threshold:SetPoint("TOPLEFT",108,-54)
+      row.threshold:SetPoint("TOPLEFT",420,-50)
       if family.multi then
         -- Ticked items: a row of icons (hover for the name and stock).
         row.strip={}
         for j=1,12 do
-          local b=CreateFrame("Frame",nil,row); b:SetSize(18,18); b:SetPoint("TOPLEFT",150+(j-1)*21,-32); b:EnableMouse(true)
+          local b=CreateFrame("Frame",nil,row); b:SetSize(18,18); b:SetPoint("TOPLEFT",42+(j-1)*21,-50); b:EnableMouse(true)
           b.tex=b:CreateTexture(nil,"ARTWORK"); b.tex:SetAllPoints(); b:Hide()
           b:SetScript("OnEnter",function(s) if s.title then T.Tooltip(s,s.title,s.body) end end)
           b:SetScript("OnLeave",function() if GameTooltip then GameTooltip:Hide() end end)
           row.strip[j]=b
         end
-        row.more=label(row,"",150+12*21,-34,"GameFontDisableSmall",40)
+        row.more=label(row,"",42+12*21,-52,"GameFontDisableSmall",40)
       end
       f.consumableRows[index]=row
     end

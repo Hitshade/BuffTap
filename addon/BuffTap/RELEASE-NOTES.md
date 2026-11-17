@@ -10,6 +10,8 @@ Appearance settings put Visible labels before Text, including label position. Ca
 ### Fixed
 The release review corrected prepared clicks after disabling BuffTap, SmartShift ignoring pauses or waiting too long after cooldowns, Manual icons returning late at refresh thresholds, and appearance reset leaving some choices unchanged.
 
+Selected elixir and utility thumbnails now have their own space along the bottom-left of each row, with refresh timing on the right, so they no longer overlap the selection text.
+
 ### Limits
 Up to eight Manual effects are clickable. Hover +N for remaining effects to use from your bags. Unknown stock shows a question mark. Unsafe player states hide the icons; changed items cancel the click. Manual food leaves class reminders available while eating.
 

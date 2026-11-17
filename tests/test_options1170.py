@@ -14,6 +14,19 @@ CreateFrame=function(...)
  return f
 end
 '''
+
+test('Selected consumable icons have a footer clear of choice labels and timing controls',probe+'''
+local B=BuffTap; B:Options()
+for _,row in ipairs(B.options.consumableRows) do
+ assert(row.threshold.position[2]>400)
+ if row.strip then
+  for _,item in ipairs(row.strip) do
+   assert(item.position[3]<=-48 and item.position[3]-item.h>=-76)
+   assert(item.position[2]+item.w<350)
+  end
+ end
+end
+''')
 for cls in ['DRUID','PALADIN','MAGE','PRIEST','HUNTER','WARLOCK','SHAMAN','ROGUE','WARRIOR']:
  test('Sidebar and weapon layout stay aligned for '+cls,probe+"playerClass='"+cls+"'; "+'''
  BuffTap:Options(); local f=BuffTap.options
