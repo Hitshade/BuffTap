@@ -135,6 +135,7 @@ function B:SelfBuffAwaitingAura(action)
 end
 
 function B:BeginHelperAttempt(action)
+  if action and not action.manual and (not action.source or action.source=='spell') then self.buffQueueQuietUntil=GetTime()+4 end
   self:RememberSelfBuffAttempt(action)
   if self.SmartShiftBegin then self:SmartShiftBegin(action) end
   local key=retryKey(action)
@@ -688,6 +689,7 @@ function B:HelperEvent(event,arg,arg2,spellID)
   if event=="UNIT_AURA" and A.Text(arg) and arg=="player" and self:HelperEnabled("helperThanks") then
     self:ObserveSoloThanks()
   elseif event=="PLAYER_REGEN_DISABLED" then
+    self.buffQueueQuietUntil=nil
     self.selfBuffAttempts=nil; self.selfBuffSettling=nil
     self.helperThankQueue={}; self:CancelTimer("thanks-send")
     self.helperAttempt=nil; self.castRetryAttempt=nil; self.helperThankSeen=nil
@@ -696,6 +698,7 @@ function B:HelperEvent(event,arg,arg2,spellID)
     if self.quickChoices then self.quickChoices:Hide() end
     if self.coverageFrame then self.coverageFrame:Hide() end
   elseif event=="PLAYER_ENTERING_WORLD" or event=="ZONE_CHANGED_NEW_AREA" then
+    self.buffQueueQuietUntil=nil
     self.helperThankQueue={}; self:CancelTimer("thanks-send")
     self.helperThankBaseline=nil; self.helperThankPending=nil; self.helperThankRetries=0; self.helperThankRetryPending=nil; self:CancelTimer("thanks-settle")
     self.helperDismissed={}; self.helperAttempt=nil; self.castRetry={}; self.castRetryAttempt=nil; self.helperThankSeen=nil; self.helperDiscoverDirty=true

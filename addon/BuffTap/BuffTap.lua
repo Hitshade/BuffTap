@@ -68,6 +68,14 @@ function B:UpdatePulse()
   if self.ApplyIconEffect then self:ApplyIconEffect(self.button,self.action~=nil and self.db.showReminder~=false and not self.nearbyQuietAction) end
 end
 
+-- One initial reminder can alert; explicit presses keep an ordinary class-buff
+-- sequence quiet across action changes, GCDs and brief aura-settling gaps.
+-- A pause restores normal alerts. Independent helpers retain their sounds.
+function B:BuffQueueSoundAllowed(action)
+  local ordinary=action and not action.manual and (not action.source or action.source=='spell')
+  return not (ordinary and self.buffQueueQuietUntil and GetTime()<self.buffQueueQuietUntil)
+end
+
 function B:CancelOverlayTimer()
   self:CancelTimer("overlay")
   self.overlayToken=(self.overlayToken or 0)+1
@@ -485,7 +493,7 @@ function B:Commit(action,reason)
   self.action=action
   b:Show()
   self:UpdateOverlay(); self:UpdatePulse()
-  if self.db.sound and action.source~="smartshift" and not action.nearby and (not self.ReminderSoundAllowed or self:ReminderSoundAllowed(action)) and (not previous or previous.key~=action.key or previous.target~=action.target)
+  if self.db.sound and action.source~="smartshift" and not action.nearby and self:BuffQueueSoundAllowed(action) and (not self.ReminderSoundAllowed or self:ReminderSoundAllowed(action)) and (not previous or previous.key~=action.key or previous.target~=action.target)
     and GetTime()-(self.lastSound or -100)>=(self.db.soundInterval or 5) then
     self:PlayAlert("reminder")
     self.lastSound=GetTime()
