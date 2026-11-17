@@ -225,7 +225,7 @@ function B:BuildReminderEditor(parent,kind,ui)
     place(f.timerCheck,parent,26,-192); place(f.groupBadgeCheck,parent,208,-192)
     place(f.showReminderCheck,parent,458,-46,184,24); f.showReminderCheck.Text:SetText(self:Text("Show icon"))
   end
-  local actionY=camp and -506 or -544
+  local actionY=camp and -506 or -592
   local move=ui.button(parent,"Move reminders",26,actionY,184,function() B:MoveAllFrames(sup and "supply" or camp and "camp" or "buff") end)
   if not camp then f.moveReminders=move; place(f.resetLookButton,parent,230,actionY,184,26); f.resetLookButton:SetText(self:Text("Reset look & position")) end
   if sup then T.Confirm(ui.button(parent,"Reset look & position",230,actionY,184,function()
@@ -238,7 +238,7 @@ function B:BuildReminderEditor(parent,kind,ui)
   end)) end
   if camp then ui.label(parent,"The preview does not move or activate your live reminder.",26,-550,"GameFontDisableSmall",404) end
   if not camp then
-    f.detachConsumables=ui.check(parent,"Detach consumables",26,-506,function(c)
+    f.detachConsumables=ui.check(parent,"Detach consumables",26,-554,function(c)
       if B:SetManualConsumablesDetached(c:GetChecked()==true) then B:UpdateRefinedOptions() end
     end)
     f.detachConsumables:HookScript("OnEnter",function(s)

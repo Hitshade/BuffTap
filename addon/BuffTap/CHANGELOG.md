@@ -1,6 +1,7 @@
 # BuffTap 1.26.0-beta1
 
 ### Added
+- Buff appearance footer now anchors its action buttons at the Effect card's bottom edge, with the detachment switch above them.
 - Buff, Camping and Supplies appearance pages now order the left-column cards as Layout, Visible labels, then Text. Card spacing and footer positions remain consistent; settings and callbacks are unchanged.
 - Optional detached Manual strip anchor, persisted as shared visual settings and included in profile transfer. A standalone Detach consumables switch controls attachment; one Move reminders action opens all movers. Removed the redundant consumable Move button and card. Detaching seeds the first-row center without a jump and does not enter move mode. Detached strips participate in native Edit Mode even without active items; switching off resumes following the current main reminder. Edit mode disarms the live item buttons. Combat interrupts dragging without protected writes or saving an interrupted position. Sparse mover cleanup now handles absent Nearby/Camping movers.
 - Consistent two-button appearance footers replace Center with Reset look & position. Main reset already restored its default coordinates and now also resets the Manual anchor and reattaches it without changing consumable modes. Camping reset restores its default coordinates; Supplies reset recalculates its default position next to the main reminder. Existing reset confirmation remains.
