@@ -2,9 +2,7 @@
 local _,B=...
 -- Keep the ten most recent releases within a 24 KiB content ceiling.
 B.PatchNotes={
- {version="1.25.0",title="Beta: smarter class setup, SmartShift and item choices",items={
-  "This is a test build of 1.25.0. Please report anything that looks wrong or does not work as expected.",
-  "Setup now keeps your ticked choices when moving between pages. Reviewing recommendations asks for confirmation and offers a profile backup before applying them. Hover a recommendation to compare the saved setting with its proposal.",
+ {version="1.25.0",title="Smarter class setup, SmartShift and item choices",items={
   "Druids and Shamans: turn on SmartShift under My buffs to offer your previous form after refreshing your own buffs. Returning takes another click and is always silent.",
   "Food and Elixirs: open the Category list in Choose to find items by their benefits. Your chosen items stay selected as you browse.",
   "Smarter class setup: open My buffs > Review class setup to see recommendations for your class. Opening the review changes nothing. Tick only the recommendations you want; your existing choices stay saved unless you choose to replace them.",

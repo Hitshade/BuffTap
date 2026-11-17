@@ -1,12 +1,12 @@
-# BuffTap 1.25.0 beta
+# BuffTap 1.25.0
 
 Class settings can be prepared ahead of learning spells, including cleansing types, resurrection, Druid Rebirth and cleansing order. BuffTap still requires a learned, usable spell before offering a cast. Prefer Abolish appears only for Druids and Priests.
 
-Open My buffs > Review class setup to choose recommendations. Review starts unchecked, keeps selections while paging, and asks for confirmation. You can create a profile backup first. Paladin recommendations use blessing priorities that adapt as spells are learned. Shaman recommendations set the main-hand preference, while weapon application remains a separate choice. Manual fixed preferences stay fixed.
+Open My buffs > Review class setup to choose recommendations. Review starts unchecked and asks for confirmation. You can create a profile backup first. Paladin recommendations use blessing priorities that adapt as spells are learned. Shaman recommendations set the main-hand preference, while weapon application remains a separate choice. Manual fixed preferences stay fixed.
 
 Druids and Shamans can enable SmartShift to offer their previous form after BuffTap self-buffing. Each buff and the return require your input. Return reminders are silent. Food and Elixirs have category dropdowns and benefit descriptions; filtering never changes saved selections or automatic item choice. Rogue choices now include Atrophic, Numbing, Sebacious and Occult Poison.
 
-This is a beta for owner testing. Automated checks use a simulated game API; they do not replace the short live checks of layout, setup review and Cat/Travel Form restoration. Existing contributor acknowledgments remain in the release history below.
+Your existing settings are preserved. Cleansing and resurrection start off for fresh profiles, and can be enabled whenever you choose. SmartShift is optional and never changes form without your click or binding. Existing contributor acknowledgments remain in the release history below.
 
 # BuffTap 1.18.0
 

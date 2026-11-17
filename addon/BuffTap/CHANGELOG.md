@@ -1,4 +1,4 @@
-# BuffTap 1.25.0 beta
+# BuffTap 1.25.0
 
 ### Added
 - `SmartShift.lua`: opt-in Druid and Ghost Wolf restoration through the existing secure button. Captures the form on a BuffTap self-buff attempt, requires correlated success and form exit, defers restoration until ordinary work is complete, and revalidates before use. Restoration is silent; active forms, combat, mounting and stale state cannot trigger a toggle.
@@ -13,8 +13,8 @@
 
 ### Compatibility and known limits
 - Fresh resurrection defaults to off; saved true/false values are preserved. New class fields participate in profile copy/export/import. No game SavedVariables files are edited by installation.
-- Beta installation has been exercised by the owner. This is not a claim of full live-client class, raid or SmartShift validation. High-level behavior is covered through mocked APIs; final live layout and form-flow checks remain necessary.
-- See the release verification record for exact executed test results. No publication is authorized by preparing this build.
+- Installation and settings have been exercised by the owner. This is not a claim of full live-client class, raid or SmartShift validation. High-level behavior is covered through mocked APIs.
+- Executed mocked regression suite: 2,092 passed, zero failed. The final focused run after setup preview/localization additions passed 107 scenarios, zero failed. See VERIFICATION-1.25.0.md for commands and live-test limits. Publication approved by the owner on 2026-11-16.
 
 # BuffTap 1.24.8
 

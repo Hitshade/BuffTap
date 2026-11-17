@@ -8,7 +8,11 @@ For every user-visible release, including betas, write THREE independently autho
 2. `addon/BuffTap/CHANGELOG.md`: technical release notes for GitHub. State additions, fixes, root causes, affected modules, API limits, saved-variable migrations, backwards compatibility and the test results actually obtained.
 3. `addon/BuffTap/RELEASE-NOTES.md`: understandable, moderately detailed CurseForge notes. Explain setup, opt-in behavior and known limits independently of the other records.
 
-Never copy the in-game `items` strings into `CHANGELOG.md` or into a GitHub or CurseForge release, and never generate the technical notes from `PatchNotes.lua`. Check every claim against the merged source and the tests. Separate "added", "fixed" and "known limits". Keep contributor thanks in both records. Never claim a test passed, or that something was verified in the Forever client, unless it was.
+Never copy the in-game `items` strings into `CHANGELOG.md` or into a GitHub or CurseForge release, and never generate the technical notes from `PatchNotes.lua`. Check every claim against the merged source and the tests. Separate "added", "fixed" and "known limits". Preserve contributor thanks in all applicable records. Never claim a test passed, or that something was verified in the Forever client, unless it was.
+
+In-game notes describe worthwhile player-visible features and fixes, not routine implementation details such as retaining checkbox selections. CurseForge notes explain affected classes, practical behavior, opt-in steps and meaningful limitations without function names, raw IDs or test internals. GitHub retains the full technical history.
+
+After owner-approved publication of 1.25.0 on both platforms, revise existing CurseForge file changelogs to the intermediate style. Keep each file attached to its original version, preserve credits and historical scope, and do not copy current-version features into older releases. Do not change the historical GitHub technical changelogs or re-upload addon archives merely to revise changelog text.
 
 Before publishing: read all three records and confirm their versions agree with `BuffTap.toc` and `Engine.lua`. Do not publish without owner approval.
 
