@@ -6,6 +6,16 @@ B.db.campReminder=true; B.db.campAnywhere=false; B.db.campTrackBag=false
 C_UnitAuras.GetPlayerAuraBySpellID=function(id) return playerAuras[id] end
 function campAura(id,remaining,duration) playerAuras[id]={spellId=id,expirationTime=remaining and now+remaining or 0,duration=duration or 0} end
 """
+
+test('Camping applies the selected glow shape on its first display and every style switch', """
+local B=BuffTap; B.db.campIconStyle='modern'; B.db.campEffectStyle='soft'; B:PreviewCampReminder()
+local f=B.campReminderIcon
+assert(f.glow.texture=='Interface\\\\AddOns\\\\BuffTap\\\\Media\\\\ModernRoundedInnerGlow' and f.glow.shown)
+B.db.campIconStyle='classic'; B:UpdateCamping()
+assert(not f.glow.texture:find('Modern',1,true))
+B.db.campIconStyle='modern'; B:UpdateCamping()
+assert(f.glow.texture:find('ModernRoundedInnerGlow',1,true))
+""")
 bagsetup=setup+"""
 items[279981]={name='Basic Campfire Kit',icon=135805,usable=true,spell=1307227}; bags[279981]=2
 slotItem=279981

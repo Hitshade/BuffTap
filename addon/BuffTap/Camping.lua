@@ -515,8 +515,8 @@ function B:UpdateCamping()
     icon:SetSize(self.db.campSize,self.db.campSize); icon:SetAlpha(self.db.campOpacity)
     self.campEffectSettings=self.campEffectSettings or {}
     local effect=self.campEffectSettings; effect.effectStyle=self.db.campEffectStyle; effect.effectColor=self.db.campEffectColor; effect.effectSpeed=self.db.campEffectSpeed
-    self:ApplyIconEffect(icon,needed,effect)
     self:UpdateCampLabel(icon,state,preview)
+    self:ApplyIconEffect(icon,needed,effect)
     icon:SetShown(needed)
     self:ScheduleCampLabel(state,preview)
   end

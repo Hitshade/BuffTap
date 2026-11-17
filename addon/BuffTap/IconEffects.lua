@@ -134,7 +134,7 @@ function B:ApplyIconEffect(frame,enabled,settings)
   if modern then
     -- The texture's square ridge is at 7/8 of its width. Expand so that ridge
     -- follows the modern frame at every icon size, with soft light outside it.
-    frame.glow:SetTexture(MEDIA.."ModernSquareGlowSoft")
+    frame.glow:SetTexture(MEDIA.."ModernRoundedInnerGlow")
     local x,y=frame:GetWidth()/14,frame:GetHeight()/14
     frame.glow:SetPoint("TOPLEFT",frame,"TOPLEFT",-x,y)
     frame.glow:SetPoint("BOTTOMRIGHT",frame,"BOTTOMRIGHT",x,-y)
