@@ -1,3 +1,15 @@
+# BuffTap 1.26.1-beta1
+
+### Changed
+- Ordinary spell validation may retain a secure action during a confirmed GCD. Previously any active spell cooldown removed the action and override binding until the cooldown-end refresh.
+- `SPELL_UPDATE_COOLDOWN` performs an event-scoped refresh because Forever's `isOnGCD` documentation limits its trust to that event. Evidence is keyed by spell and exact public start/duration, replaced on every cooldown event, cleared on combat/error, and expires with the cooldown.
+- Every reuse, including PreClick, requires a fresh `GetSpellCooldownDuration(id,true):GetRemainingDuration()` equal to public zero, so an independent cooldown cannot inherit GCD permission. Missing APIs, restricted values and exceptions fail closed. Existing learned/usability, situation, identity, range, reagent and fresh aura checks remain in place. No automatic casts, polling or SavedVariables migration. Helpers and items do not receive this exception.
+- Thanks to **Mechrite** for the responsiveness suggestion.
+
+### Validation and limits
+- Full mocked Lua 5.1 release run: **2,186 passed, 0 failed**, including 20 new GCD regressions in `test_gcd_queue.py`. Tests exercise the real dispatcher and PreClick, delayed aura delivery, real cooldowns, missing/restricted APIs, changed timing/identity, combat, master disable and exception cleanup.
+- `probe_gcd_timing.py` compares tag `v1.26.0` with the working tree: next Thorns action and binding ready at 1.56s versus 0.00s in a simulated 1.50s GCD with immediately confirmed aura coverage. This measures preparation, not actual casting throughput. No live Forever casting or spell-queue timing has been verified for this beta.
+
 # BuffTap 1.26.0
 
 ### Added

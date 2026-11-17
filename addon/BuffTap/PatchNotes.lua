@@ -2,6 +2,9 @@
 local _,B=...
 -- Keep the ten most recent releases within a 24 KiB content ceiling.
 B.PatchNotes={
+ {version="1.26.1-beta1",title="Testing smoother buffing",items={
+  "BuffTap can keep your next class buff ready while the global cooldown finishes, so repeated clicks or key presses can feel smoother.",
+  "This beta needs in-game testing. Your clicks still cast each buff, and spells with their own cooldown still wait."},thanks="Thanks to Mechrite for suggesting smoother buffing."},
  {version="1.26.0",title="Manual consumables and clearer customization",items={
   "Consumables: choose Auto or Manual for Food, Flask, Elixirs and Utility. Manual shows separate clickable item icons; your normal binding and mouse wheel skip them.",
   "Labeled icons and stock counts stay centered, even with the main reminder hidden. Active effects disappear until they need refreshing; unavailable items stay dimmed.",
@@ -61,9 +64,6 @@ B.PatchNotes={
   "Full check-up reports leave out remembered players. Your own settings export still keeps them.",
   "Blessing exceptions are no longer copied when you import settings onto a character of another class.",
   "Remember now reads a player's class directly, so it works even when the group list has not caught up yet."}},
- {version="1.24.1",title="Blessing exceptions you can keep",items={
-  "Paladins: the blessing exception you set for yourself on the Groups page (for example Kings instead of Wisdom) is now saved and survives reloads and logouts.",
-  "Exceptions for other players still last for the current session, unless you tick Remember on their row. Remembered players keep their blessing the next time you group, and show greyed out with a Remove button while they are away."},thanks="Thanks to Misketadam for the report."},
 }
 function B:PatchNotesUnread()
   return self.profileDB and self.db.optionsPatchDot~=false and self.profileDB.global.patchNotesSeen~=self.version

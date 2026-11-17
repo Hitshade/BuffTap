@@ -1,3 +1,13 @@
+# BuffTap 1.26.1-beta1
+
+### Changed
+This test build prepares an eligible next class buff during the global cooldown, instead of temporarily removing the buff binding. Repeated clicks or key presses can then reach the game's normal spell queue. No setup changes are needed, and your existing choices are preserved.
+
+### Limits
+Each cast still needs your input. The improvement depends on clear cooldown information from the Forever client; spells with a separate cooldown and uncertain information retain the previous waiting behavior. Consumable and helper cooldown rules are unchanged. This has automated coverage but still needs in-game testing for how smooth it feels.
+
+Thanks to **Mechrite** for raising the delay between buffs.
+
 # BuffTap 1.26.0
 
 ### Added

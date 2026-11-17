@@ -971,12 +971,24 @@ local itemRequested=event=="ITEM_DATA_LOAD_RESULT" and A.Number(arg) and ((B.ite
     if below~=B.manaFloorState then B.manaFloorState=below; B.nearbySnapshot=nil; B:RequestRefresh("mana reserve",.05); if B.nearbyFrame and B.UpdateNearbyWindow and not A.Combat() then B:UpdateNearbyWindow() end; return end
   end
   if event=="UNIT_POWER_UPDATE" and (arg~="player" or not B.powerBlocked) then return end
-  if event=="SPELL_UPDATE_COOLDOWN" and not B.cooldownBlocked then return end
+  if event=="SPELL_UPDATE_COOLDOWN" then
+    local hadEvidence=B.gcdEvidence and next(B.gcdEvidence)
+    B.gcdEvidence=nil
+    if A.Combat() or not (B.cooldownBlocked or B.action or hadEvidence) then return end
+    -- Run within the event: the client's isOnGCD classification is explicitly
+    -- event-scoped. Always clear the scope, including when refresh fails.
+    B.inCooldownEvent=true
+    local ok,err=pcall(function() B:ObserveGlobalCooldown(); B:Refresh(false) end)
+    B.inCooldownEvent=nil
+    if not ok then B.gcdEvidence=nil; error(err) end
+    return
+  end
   if castEvents[event] and arg~="player" then return end
   if event=="UNIT_SPELLCAST_SUCCEEDED" then B:BuffCastSucceeded(arg,spellID) end
   if event=="UNIT_SPELLCAST_SUCCEEDED" and B.ObserveConsumableUse then B:ObserveConsumableUse(spellID) end
 
   if event=="PLAYER_REGEN_DISABLED" then
+    B.gcdEvidence=nil
     B.buffCastAttempt=nil; B.buffAuraFresh=nil
     for _,slot in ipairs({"buff-aura-early","buff-aura-settle","buff-aura-late"}) do B:CancelTimer(slot) end
     B.dirty=true; B.pendingReason="combat"

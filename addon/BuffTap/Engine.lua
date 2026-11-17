@@ -4,7 +4,7 @@
 
 local _, B = ...
 _G.BuffTap = B
-B.version = "1.26.0"
+B.version = "1.26.1-beta1"
 B.API = {}
 local A = B.API
 
@@ -1189,6 +1189,43 @@ function B:AddRangeBlocked(action)
   end
 end
 
+-- isOnGCD is trustworthy only inside SPELL_UPDATE_COOLDOWN. Remember exact
+-- public timing there, then require matching timing AND a fresh independent
+-- cooldown check at every later validation (including PreClick).
+function B:ObserveGlobalCooldown()
+  self.gcdEvidence={}
+  if not self.inCooldownEvent then return end
+  local class=A.Class('player')
+  -- The aura event may arrive after the cooldown event. Snapshot all known
+  -- class ranks now so the newly uncovered next candidate has event evidence.
+  for _,def in ipairs(self.Buffs) do
+    if def.class==class and self:Supported(def) then
+      for _,id in ipairs(def.ranks or {}) do
+        if A.Known(id) then
+          local cd=A.Call(C_Spell and C_Spell.GetSpellCooldown,id)
+          if type(cd)=="table" and A.Public(cd.isOnGCD) and cd.isOnGCD==true
+            and A.Public(cd.isEnabled) and cd.isEnabled==true
+            and A.Number(cd.startTime) and A.Number(cd.duration) and cd.duration>0
+            and cd.startTime+cd.duration>GetTime() then
+            self.gcdEvidence[id]={start=cd.startTime,duration=cd.duration}
+          end
+        end
+      end
+    end
+  end
+end
+
+function B:OnlyGlobalCooldown(action,cd)
+  if not action or (action.source~=nil and action.source~="spell") then return false end
+  if not A.Number(cd.startTime) or not A.Number(cd.duration) or cd.duration<=0 or cd.startTime+cd.duration<=GetTime() then return false end
+  local evidence=self.gcdEvidence and self.gcdEvidence[action.id]
+  if not evidence or evidence.start~=cd.startTime or evidence.duration~=cd.duration then return false end
+  local duration=A.Call(C_Spell and C_Spell.GetSpellCooldownDuration,action.id,true)
+  if not duration then return false end
+  local ok,remaining=pcall(function() return duration:GetRemainingDuration() end)
+  return ok and A.Number(remaining) and remaining==0
+end
+
 function B:Validate(action)
   if not self:SituationActionCurrent(action) then return false,"setup changed before validation" end
   if self.CastRetryBlocked and self:CastRetryBlocked(action) then return false,"recipient temporarily skipped after cast failure" end
@@ -1235,14 +1272,14 @@ function B:Validate(action)
   end
   local timing=A.Number(cd.startTime) and A.Number(cd.duration)
   if A.Public(cd.isActive) and type(cd.isActive)=="boolean" then
-    if cd.isActive then
+    if cd.isActive and not self:OnlyGlobalCooldown(action,cd) then
       self.cooldownBlocked=true
       if timing then self:ConsiderWake(cd.startTime+cd.duration-GetTime()+0.03) end
       return false,"cooldown / global cooldown"
     end
   elseif not timing then
     self.cooldownBlocked=true; return false,"restricted cooldown"
-  elseif cd.duration>0 and cd.startTime+cd.duration>GetTime() then
+  elseif cd.duration>0 and cd.startTime+cd.duration>GetTime() and not self:OnlyGlobalCooldown(action,cd) then
     self.cooldownBlocked=true
     self:ConsiderWake(cd.startTime+cd.duration-GetTime()+0.03)
     return false,"cooldown / global cooldown"

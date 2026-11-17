@@ -80,4 +80,5 @@ import test_user_reload
 import test_release_125
 import test_manual_consumables
 import test_pre_ship_review
+import test_gcd_queue
 print('FINAL_TOTAL',len(__import__('test_bufftap').tests))
