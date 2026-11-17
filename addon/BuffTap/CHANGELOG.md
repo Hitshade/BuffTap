@@ -1,7 +1,7 @@
 # BuffTap 1.26.2-beta1
 
 ### Fixed
-- Reproduced extra sounds when ordinary class-buff selection changes and when the 0.75s self-buff aura grace temporarily clears the action before it returns. Existing sound eligibility treated these as new reminders whenever `soundInterval` allowed.
+- Fixed a sound-notification edge case introduced by 1.26.1's smooth-buffing changes. Reproduced extra sounds when ordinary class-buff selection changes and when the 0.75s self-buff aura grace temporarily clears the action before it returns. Existing sound eligibility treated these as new reminders whenever `soundInterval` allowed.
 - Validated ordinary buff input starts/renews a four-second in-memory quiet window. `Commit` suppresses ordinary class-buff reminder sounds during that active sequence, including nil-action gaps. No input means original alert behavior; inactivity expiry and combat/zone boundaries restore normal alerts. SmartShift stays silent, and cleanse/revive/items/manual reminders retain their existing sound rules. No settings migration, timers, polling or secure-action eligibility changes.
 
 ### Validation

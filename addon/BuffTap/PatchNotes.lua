@@ -2,8 +2,8 @@
 local _,B=...
 -- Keep the ten most recent releases within a 24 KiB content ceiling.
 B.PatchNotes={
- {version="1.26.2-beta1",title="Quieter buffing",items={
-  "After you start buffing, moving through your class buffs stays quiet, including brief waits for the game to update your buffs.",
+ {version="1.26.2-beta1",title="Smooth buffing reminder fix",items={
+  "Fixed an edge case introduced with smooth buffing that let repeated reminder sounds slip through while moving between class buffs or briefly waiting for buff updates.",
   "New reminders after a pause can still alert you. Cleansing and resurrection keep their normal sounds."}},
  {version="1.26.1",title="Faster, smoother buffing",items={
   "Buffing several spells in a row is faster and smoother. Your next class buff stays ready during the global cooldown, so keep pressing your usual binding.",
