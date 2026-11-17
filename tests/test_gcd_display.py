@@ -60,6 +60,27 @@ spell(768,'Cat Form'); GetShapeshiftForm=function() return 0 end
 B.smartShiftIntent={spellID=768,buffID=5232,started=GetTime(),verified=true,exited=true}
 """
 
+test('GCD display: form cooldown event before cast confirmation still queues prompt return', SETUP+SWIPE+"""
+B.db.smartShift=true; B.db.buffs.thorns=false; spell(768,'Cat Form')
+local form=1; GetShapeshiftForm=function() return form end
+GetShapeshiftFormInfo=function() return 132115,form==1,true,768 end
+-- The original buff was prepared before the global cooldown started.
+local cooling=C_Spell.GetSpellCooldown
+C_Spell.GetSpellCooldown=function() return {startTime=0,duration=0,isEnabled=true,isActive=false} end
+B:Refresh()
+B.button.scripts.PreClick(nil,'LeftButton',true)
+assert(B.smartShiftIntent and not B.smartShiftIntent.verified)
+C_Spell.GetSpellCooldown=cooling
+cooldown()
+assert(not B.action or B.action.source~='smartshift','unconfirmed buff must not offer return')
+form=0; B.events.scripts.OnEvent(nil,'UPDATE_SHAPESHIFT_FORM')
+aura('player',5232,'Mark of the Wild')
+B.events.scripts.OnEvent(nil,'UNIT_SPELLCAST_SUCCEEDED','player','cast',5232)
+B.events.scripts.OnEvent(nil,'UNIT_AURA','player'); advance(.1)
+assert(B.action and B.action.source=='smartshift','return delayed until GCD end')
+assert(swipe.shown and GetTime()<start+1.5)
+""")
+
 test('GCD display: SmartShift return form queues silently and shows GCD', SETUP+SWIPE+SHIFT+"""
 cooldown(); assert(B.action and B.action.source=='smartshift' and B.action.id==768)
 assert(swipe.shown and B.button.attrs.spell==768 and bindings.MOUSEWHEELDOWN)

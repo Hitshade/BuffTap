@@ -4,7 +4,7 @@
 
 local _, B = ...
 _G.BuffTap = B
-B.version = "1.26.1-beta2"
+B.version = "1.26.1-beta3"
 B.API = {}
 local A = B.API
 
@@ -1216,7 +1216,10 @@ function B:ObserveGlobalCooldown()
     end
   end
   local intent=self.smartShiftIntent
-  if intent and intent.verified and intent.exited and A.Number(intent.spellID) then observe(intent.spellID) end
+  -- The GCD event can precede both success confirmation and the form-exit
+  -- event. Collect timing now; ValidateSmartShift still requires both before
+  -- it can offer a return. Do not wait for another cooldown event to learn it.
+  if intent and A.Number(intent.spellID) then observe(intent.spellID) end
 end
 
 function B:OnlyGlobalCooldown(action,cd)

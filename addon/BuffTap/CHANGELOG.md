@@ -1,3 +1,12 @@
+# BuffTap 1.26.1-beta3
+
+### Fixed
+- Reproduced SmartShift latency with `SPELL_UPDATE_COOLDOWN` arriving before `UNIT_SPELLCAST_SUCCEEDED` and `UPDATE_SHAPESHIFT_FORM`. Beta2 observed the form only once its intent was verified and exited, so the first GCD evidence was lost and the return waited until cooldown expiry or another event.
+- Observe the known intent form's public cooldown tuple during the event even while confirmation is pending. This grants no cast permission: `ValidateSmartShift` still requires verified success, confirmed exit and all existing current-state/independent cooldown checks. Ordinary queue and sweep behavior remain unchanged; no settings changes or migration.
+
+### Validation
+- **163 focused mocked Lua 5.1 checks passed, 0 failed** across core, 1.25 setup/SmartShift, pre-ship safety and GCD queue/display modules. The new real-dispatcher test fails on beta2 with "return delayed until GCD end", passes on beta3 within 0.1s of confirmation, and asserts that the earlier, unconfirmed state cannot offer a return. Full suite was not repeated for this narrow event-observation correction; no live beta3 verification claimed.
+
 # BuffTap 1.26.1-beta2
 
 ### Added

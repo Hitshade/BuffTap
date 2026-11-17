@@ -2,7 +2,8 @@
 local _,B=...
 -- Keep the ten most recent releases within a 24 KiB content ceiling.
 B.PatchNotes={
- {version="1.26.1-beta2",title="See when your queued buff is ready",items={
+ {version="1.26.1-beta3",title="Queued buff sweep and prompt SmartShift return",items={
+  "Fixed SmartShift showing the return form late after buffing. It can now prepare the return as soon as your buff and form exit are confirmed.",
   "Queued class buffs now show a cooldown sweep while waiting for the global cooldown. The icon stays ready for your next press, without another alert when the wait ends.",
   "SmartShift can also keep your return form ready during the global cooldown. Each cast still needs your click or binding."},thanks="Thanks to Mechrite for the smoother buffing suggestion."},
  {version="1.26.1-beta1",title="Testing smoother buffing",items={

@@ -1,3 +1,10 @@
+# BuffTap 1.26.1-beta3
+
+### Fixed
+SmartShift could miss the cooldown information it needed when the game reported the global cooldown before confirming the buff and form exit. The return form now uses that earlier information as soon as both confirmations arrive, rather than waiting for another cooldown update.
+
+The ordinary buff queue and GCD sweep are retained. Returning still requires your input, and an unconfirmed or failed buff never permits a return. This timing correction has automated event-order coverage and needs a fresh in-game check.
+
 # BuffTap 1.26.1-beta2
 
 ### Added
