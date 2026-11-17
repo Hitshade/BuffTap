@@ -106,6 +106,7 @@ local function hairlines(owner,anchor,inset,layer,sub)
 end
 function B:ApplyIconStyle(frame,texture,style)
   if not frame or not texture then return end
+  frame.buffTapIconStyle=style
   local modern=style=="modern"
   if modern then texture:SetTexCoord(.08,.92,.08,.92) else texture:SetTexCoord(0,1,0,1) end
   if modern and not frame.modernFrame then

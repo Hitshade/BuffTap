@@ -126,6 +126,21 @@ end
 
 function B:ApplyIconEffect(frame,enabled,settings)
   if not frame or not frame.glow or B.API.Combat() then return end
+  if frame.buffTapClassicGlowTexture==nil then
+    frame.buffTapClassicGlowTexture=frame.glow:GetTexture() or "Interface\\Buttons\\CheckButtonHilight-Square"
+  end
+  local modern=frame.buffTapIconStyle=="modern"
+  frame.glow:ClearAllPoints(); frame.glow:SetTexCoord(0,1,0,1)
+  if modern then
+    -- The texture's square ridge is at 7/8 of its width. Expand so that ridge
+    -- follows the modern frame at every icon size, with soft light outside it.
+    frame.glow:SetTexture(MEDIA.."ModernSquareGlow")
+    local x,y=frame:GetWidth()/14,frame:GetHeight()/14
+    frame.glow:SetPoint("TOPLEFT",frame,"TOPLEFT",-x,y)
+    frame.glow:SetPoint("BOTTOMRIGHT",frame,"BOTTOMRIGHT",x,-y)
+  else
+    frame.glow:SetTexture(frame.buffTapClassicGlowTexture); frame.glow:SetAllPoints(frame)
+  end
   local d=settings or self.db or {}; local style=enabled and self:IconEffectStyle(d) or "none"
   if self.db and self.db.optionsReduceMotion and style~="none" then style="soft" end
   local color=colors[d.effectColor] or colors.gold
@@ -135,7 +150,7 @@ function B:ApplyIconEffect(frame,enabled,settings)
   -- Flash once replays for each new reminder, so the reminder's identity is part of the key.
   local once=frame==self.button and d.effectOnce==true and style~="none" and style~="soft"
   local token=once and self.action and (tostring(self.action.id)..":"..tostring(self.action.target)) or ""
-  local key=style..":"..tostring(d.effectColor)..":"..tostring(d.effectSpeed)..":"..tostring(urgency)..":"..token
+  local key=style..":"..tostring(modern)..":"..tostring(d.effectColor)..":"..tostring(d.effectSpeed)..":"..tostring(urgency)..":"..token
   if frame.buffTapEffectKey==key then return end
   self:StopIconEffect(frame)
   frame.buffTapEffectKey=key

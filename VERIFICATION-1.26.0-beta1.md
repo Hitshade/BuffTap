@@ -1,5 +1,7 @@
 # BuffTap 1.26.0-beta1 verification
 
+Modern-glow follow-up: **270 passed, zero failed** across Manual consumables, appearance and Camping modules. After preserving each frame's original Classic texture, the focused Manual/base module passed **137 scenarios, zero failures**, including immediate Modern-to-Classic glow switching. Final square-glow appearance still requires owner review in Forever.
+
 Latest appearance-layout follow-up: **269 passed, zero failed** across Manual consumables, appearance and Camping modules after relocating label placement and expanding Camping/Supplies card layouts. Updated preview-height assertions reflect the requested taller previews. No live screenshot verification of this final arrangement is claimed.
 
 Simplified-footer follow-up: Manual consumables, appearance and Camping regression modules passed **269 scenarios, zero failures**. The switch uses the single Move reminders action, with the duplicate button/card and Center actions removed. A new reset scenario confirms default main placement, consumable reattachment and preservation of Auto/Manual choices. Final spacing remains subject to owner visual review.

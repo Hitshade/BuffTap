@@ -1,6 +1,7 @@
 # BuffTap 1.26.0-beta1
 
 ### Added
+Modern square icons now have a matching square Soft glow and Pulse outline in both live reminders and previews. Classic keeps its original outline, and changing icon style updates the glow immediately.
 Appearance settings put Visible labels before Text, so you choose what to display before styling it. Buff label position (Split, Above icon or Below icon) now lives there too. Camping and Supplies have taller previews, more generous text-control spacing and bottom-aligned action buttons to make fuller use of the pane.
 Want the consumable icons closer to your action bars? In Customization > Buff reminder, turn on Detach consumables, then use the single Move reminders button. Detached consumables have their own drag handle in Edit Mode, even if no items currently need reminding. Every row stays centered around that position. Turn the switch off to restore the original arrangement. The preview balances the main reminder and consumable samples together within its box.
 

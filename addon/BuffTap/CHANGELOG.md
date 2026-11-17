@@ -1,6 +1,7 @@
 # BuffTap 1.26.0-beta1
 
 ### Added
+- Added an original generated RGBA square-glow texture and reproducible `tools/build_square_glow.py`. Shared Soft/Pulse glow geometry now follows Modern square bounds at every size rather than reusing the rounded game highlight. Icon style participates in the effect cache key; switching to Classic restores that frame's original highlight texture. The shared path covers Buff, Camping, Supplies and previews; motion-effect designs and library effects remain unchanged.
 - Moved `labelPositionButton` from Icon to the Buff Visible labels card, retaining its setting and callback. Expanded that card and shifted Text below it; the smaller Icon card releases space for a taller Buff preview. Camping/Supplies now use 328px previews, taller Text cards and the same Effect/footer bottom boundary as Buff, without changing saved values or live reminder behavior. Existing preview geometry checks were updated; 269 scenarios passed across Manual consumables, appearance and Camping modules.
 - Buff appearance footer now anchors its action buttons at the Effect card's bottom edge, with the detachment switch above them.
 - Buff, Camping and Supplies appearance pages now order the left-column cards as Layout, Visible labels, then Text. Card spacing and footer positions remain consistent; settings and callbacks are unchanged.
@@ -21,6 +22,7 @@
 - Item-use observation tracks attempts by item so rapid clicks on different families do not overwrite confirmation evidence. Shared use-spell evidence cannot confirm ambiguous attempts; inventory loss remains exact-item evidence.
 
 ### Validation and known limits
+- Modern-glow follow-up: 270 scenarios passed across Manual/appearance/Camping checks; after original-Classic-texture preservation, the focused Manual/base module passed 137, zero failed. Added coverage for immediate glow-shape updates when changing icon style. Native square-glow appearance awaits owner review.
 - Simplified-footer follow-up: 269 mocked scenarios passed, zero failed across Manual consumables, appearance and Camping modules. The new reset scenario verifies default main coordinates, consumable reattachment and preservation of family modes. Earlier suite counts below precede this footer revision.
 - Cancel/switch follow-up: 738 mocked scenarios passed, zero failed across Manual consumables, appearance and convenience modules, including actual switch/Move/Done/Cancel callbacks and multi-frame rollback during an unfinished drag. The full-suite count below predates this follow-up. Cancel applies to BuffTap's own move screen; native Edit Mode retains its existing controls.
 - Executed mocked regression suite after detached positioning and preview refinements: 2,139 passed, zero failed. Focused Manual consumable and appearance modules: 148 passed, zero failed. New scenarios cover detaching without a jump, independent edit movers without active items, reattaching, disarming while editing, combat interruption and export/import. See `VERIFICATION-1.26.0-beta1.md`.

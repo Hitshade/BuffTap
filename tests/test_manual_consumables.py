@@ -14,6 +14,15 @@ local function icon(key)
 end
 """
 
+test('Modern glow switches shape immediately and Classic restores its original texture', """
+local B=BuffTap; local b=B.button
+B:ApplyIconStyle(b,b.icon,'modern'); B:ApplyIconEffect(b,true,{effectStyle='pulse'})
+assert(b.glow.texture=='Interface\\\\AddOns\\\\BuffTap\\\\Media\\\\ModernSquareGlow' and b.glow.shown)
+local key=b.buffTapEffectKey
+B:ApplyIconStyle(b,b.icon,'classic'); B:ApplyIconEffect(b,true,{effectStyle='pulse'})
+assert(b.glow.texture=='Interface\\\\Buttons\\\\CheckButtonHilight-Square' and b.glow.shown and b.buffTapEffectKey~=key)
+""")
+
 test('Manual modes default to legacy Auto without inventory work',
      "local B=BuffTap; assert(B:ConsumableMode(B:ConsumableFamily('food'))=='auto'); assert(not B.manualConsumableButtons and countCalls==0)")
 
