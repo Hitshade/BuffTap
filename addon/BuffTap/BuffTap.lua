@@ -139,7 +139,7 @@ function B:CreateButton()
   if not okCreate or not b then self.setupError="secure action button creation failed"; return end
   self.button=b
   b:Hide()
-  b:SetFrameStrata("HIGH")
+  b:SetFrameStrata("MEDIUM")
   b:SetClampedToScreen(true)
   b:RegisterForClicks("AnyDown","AnyUp")
   b:SetAttribute("useOnKeyDown",true)

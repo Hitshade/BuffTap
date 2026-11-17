@@ -101,4 +101,5 @@ import test_shields_inspector
 import test_layout_setup_beta4
 import test_combat_expiry
 import test_buff_queue
+import test_button_strata
 print('FINAL_TOTAL',len(__import__('test_bufftap').tests))

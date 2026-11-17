@@ -179,7 +179,7 @@ function B:UpdateManualConsumables()
   self.manualConsumableEntries=entries
   if #entries==0 then self:DisarmManualConsumables(); return end
   if not self.manualConsumableHolder then
-    local holder=CreateFrame("Frame",nil,UIParent); holder:SetFrameStrata("HIGH"); holder:SetClampedToScreen(true)
+    local holder=CreateFrame("Frame",nil,UIParent); holder:SetFrameStrata("MEDIUM"); holder:SetClampedToScreen(true)
     holder:EnableMouse(false); self.manualConsumableHolder=holder; self.manualConsumableButtons={}
     local caption=CreateFrame("Frame",nil,holder,"SecureHandlerStateTemplate")
     caption:SetSize(160,12); caption:SetPoint("BOTTOM",holder,"TOP",0,4); caption:EnableMouse(false); caption:Hide()
