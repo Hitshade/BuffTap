@@ -1,9 +1,9 @@
-# BuffTap 1.26.2-beta1
+# BuffTap 1.26.2
 
 ### Fixed
 Corrected an edge case introduced by 1.26.1's smooth buffing update: repeated reminder sounds could slip through when the next class buff changed or briefly disappeared while the game updated its buffs. Active buffing sequences now remain quiet through those transitions. The initial reminder and new needs after a pause can still alert normally; cleansing, resurrection and other independent reminders retain their sound behavior.
 
-No settings change is needed. This beta changes reminder sound eligibility only; spell priorities, cooldowns and the repeat-cast safeguard are retained. Automated coverage is included; in-game confirmation is still needed.
+No settings change is needed. This update changes reminder sound eligibility only; spell priorities, cooldowns and the repeat-cast safeguard are retained.
 
 # BuffTap 1.26.1
 

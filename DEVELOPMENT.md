@@ -1,6 +1,8 @@
 # BuffTap development
 
-Current release: **1.26.1**. Keep class-applicable preferences available regardless of character level or learned spell. Enforce spell eligibility at selection and click time. The UI mock must reject frame parents that are textures. Release documentation has three audiences: in-game PatchNotes.lua, CurseForge RELEASE-NOTES.md, and GitHub CHANGELOG.md.
+Current release: **1.26.2**. Keep class-applicable preferences available regardless of character level or learned spell. Enforce spell eligibility at selection and click time. The UI mock must reject frame parents that are textures. Release documentation has three audiences: in-game PatchNotes.lua, CurseForge RELEASE-NOTES.md, and GitHub CHANGELOG.md.
+
+1.26.2 fixes repeated reminder sounds during active smooth-buffing sequences. No casting or saved-setting changes. Publication approved by the owner on 2026-11-17.
 
 1.26.1 adds confirmed-GCD preparation and swipe, passive mana-wait status, SmartShift event/priority/resource recovery fixes and bounded successful self-buff aura settling. New regression modules cover the real dispatcher and PreClick. Publication approved by the owner on 2026-11-17, conditional on release checks; owner confirmed the beta6 live smoke test including settings after reload.
 
