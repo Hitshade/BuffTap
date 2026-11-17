@@ -1,6 +1,7 @@
 # BuffTap 1.26.0-beta1
 
 ### Added
+Appearance settings now put Visible labels before Text, so you choose what to display before styling it. This order is shared by Buff, Camping and Supplies.
 Want the consumable icons closer to your action bars? In Customization > Buff reminder, turn on Detach consumables, then use the single Move reminders button. Detached consumables have their own drag handle in Edit Mode, even if no items currently need reminding. Every row stays centered around that position. Turn the switch off to restore the original arrangement. The preview balances the main reminder and consumable samples together within its box.
 
 Appearance pages now have two aligned actions: Move reminders and Reset look & position. Reset restores the selected reminder's default appearance and placement, so a separate Center button is unnecessary. Resetting the main reminder also reattaches its consumable icons; your Auto/Manual item choices remain unchanged.

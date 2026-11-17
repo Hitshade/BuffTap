@@ -184,7 +184,8 @@ function B:BuildReminderEditor(parent,kind,ui)
   local camp=kind=="camp" or sup
   local function K(campKey) return sup and (campKey:gsub("^camp","supply")) or campKey end
   section(ui,parent,"Layout",12,-12,416,100)
-  section(ui,parent,"Text",12,-130,416,248)
+  local textShift=camp and 88 or 114
+  section(ui,parent,"Text",12,-130-textShift,416,248)
   -- Buff reminder: Icon card (with Show icon as its first row), Preview, then Effect.
   -- Icon, Preview and Effect must end above the status bar (about -630).
   local ey=camp and 0 or 2
@@ -202,26 +203,26 @@ function B:BuildReminderEditor(parent,kind,ui)
   local opacity=slider(camp and K("campOpacity") or "opacity","Opacity (%)",26,-84,camp and 25 or 0,100,1,228,100)
   if not camp then f.sizeEdit=size.valueEdit; f.opacityEdit=opacity.valueEdit end
   local font=sup and f.supplyTextFont or camp and f.campingTextFont or f.fontButton
-  ui.label(parent,"Font",26,-169,"GameFontHighlightSmall",110); place(font,parent,152,-164,228,26)
-  slider(camp and K("campTextSize") or "labelSize","Text size (px)",26,-210,8,20,1,228)
-  slider(camp and K("campTextGap") or "labelGap","Text spacing (px)",26,-250,0,20,1,228)
+  ui.label(parent,"Font",26,-169-textShift,"GameFontHighlightSmall",110); place(font,parent,152,-164-textShift,228,26)
+  slider(camp and K("campTextSize") or "labelSize","Text size (px)",26,-210-textShift,8,20,1,228)
+  slider(camp and K("campTextGap") or "labelGap","Text spacing (px)",26,-250-textShift,0,20,1,228)
   local outline=sup and f.supplyTextOutline or camp and f.campingTextOutline or f.labelOutlineButton
   local color=sup and f.supplyTextColor or camp and f.campingTextColor or f.colorButton
-  ui.label(parent,"Outline",26,-292,"GameFontHighlightSmall",110); place(outline,parent,152,-286,228,26)
-  ui.label(parent,"Text colour",26,-330,"GameFontHighlightSmall",110); place(color,parent,152,-324,228,26)
+  ui.label(parent,"Outline",26,-292-textShift,"GameFontHighlightSmall",110); place(outline,parent,152,-286-textShift,228,26)
+  ui.label(parent,"Text colour",26,-330-textShift,"GameFontHighlightSmall",110); place(color,parent,152,-324-textShift,228,26)
   local effect=sup and f.supplyEffect or camp and f.campingEffect or f.effectButton
   local effectColor=sup and f.supplyColor or camp and f.campingColor or f.effectColorButton
   local speed=sup and f.supplySpeed or camp and f.campingSpeed or f.effectSpeedButton
   place(effect,parent,458,camp and -442 or -480,232,26); place(effectColor,parent,458,camp and -480 or -510,232,26); place(speed,parent,458,camp and -518 or -540,232,26)
   if not camp then place(f.effectUrgency,parent,458,-570); place(f.effectOnce,parent,458,-594) end
-  section(ui,parent,"Visible labels",12,-396,416,camp and 70 or 96)
+  section(ui,parent,"Visible labels",12,-130,416,camp and 70 or 96)
   if sup then
-    place(f.supplyShowName,parent,26,-428); place(f.supplyShowCount,parent,208,-428)
+    place(f.supplyShowName,parent,26,-162); place(f.supplyShowCount,parent,208,-162)
   elseif camp then
-    place(f.campingCountdown,parent,26,-428); place(f.campingStacks,parent,208,-428)
+    place(f.campingCountdown,parent,26,-162); place(f.campingStacks,parent,208,-162)
   else
-    place(f.buffNameCheck,parent,26,-428); place(f.targetNameCheck,parent,208,-428)
-    place(f.timerCheck,parent,26,-458); place(f.groupBadgeCheck,parent,208,-458)
+    place(f.buffNameCheck,parent,26,-162); place(f.targetNameCheck,parent,208,-162)
+    place(f.timerCheck,parent,26,-192); place(f.groupBadgeCheck,parent,208,-192)
     place(f.showReminderCheck,parent,458,-46,184,24); f.showReminderCheck.Text:SetText(self:Text("Show icon"))
   end
   local actionY=camp and -506 or -544
