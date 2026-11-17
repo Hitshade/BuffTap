@@ -1,5 +1,7 @@
 # BuffTap 1.26.0-beta1 verification
 
+Latest Cancel/switch follow-up: importing `test_manual_consumables`, `test_options1170` and `test_convenience` passed **738 scenarios, zero failures**. New checks exercise the real switch, Move, Done and Cancel callbacks; restore all reminder coordinates including an unfinished drag; and verify fresh/repeated session baselines. The full-suite result below predates this follow-up. The refined controls still need owner visual review in Forever.
+
 Current follow-up includes detached positioning, edit-mode integration, themed captions, centered overlay labels and whole-composition preview centering.
 
 Executed 2026-11-17 using Python with lupa 2.8 (Lua 5.1).
@@ -18,6 +20,6 @@ New tests are imported by the release runner. These checks use a mocked game API
 4. Remove the displayed item before clicking. Confirm the click cancels, then the strip refreshes.
 5. Enter/leave combat and mount/dismount. Icons should hide and return only after fresh evaluation. Check for blocked-action or taint warnings.
 6. Switch Solo/Party/Raid and profiles, then reload. Confirm each setup's modes and selections remain correct. Review Buff reminder preview and unchanged Supplies layout.
-7. Use Customization > Buff reminder > Move consumables. Drag the independent group, finish editing and reload. Confirm its position persists. Enter native Edit Mode with no active consumable reminders and confirm the detached handle still appears. Attach to buff reminder should restore following the main icon.
+7. In Customization > Buff reminder, enable Detach consumables, then use Move. Drag the independent group, finish editing and reload. Confirm its position persists. Enter native Edit Mode with no active consumable reminders and confirm the detached handle still appears. Turn the switch off to follow the main icon again. In BuffTap's move screen, change several reminder positions and press Cancel; they should all return to the session's starting positions.
 
 Eight effects are clickable at a time; +N lists overflow for bag use. No public upload is part of this beta preparation.

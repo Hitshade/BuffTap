@@ -342,23 +342,42 @@ end
 -- (an addon opening Edit Mode can cause blocked-action errors later), plus a Done bar.
 function B:MoveAllFrames(returnView)
   if A.Combat() then self.Print(L("Settings are available after combat.")); return end
+  if not self.movingFrames then
+    local snapshot={db=self.db,profile=self.profileDB and self.profileDB.profile,values={}}
+    for _,key in ipairs({"x","y","nearbyX","nearbyY","campX","campY","supplyX","supplyY","manualConsumablesX","manualConsumablesY"}) do
+      snapshot.values[key]={value=self.db[key]}
+    end
+    self.movePositionSnapshot=snapshot
+  end
   local bar=self.moveDoneBar
   if not bar then
     bar=CreateFrame("Frame","BuffTapMoveDone",UIParent,"BackdropTemplate"); self.moveDoneBar=bar
-    bar:SetSize(340,72); bar:SetPoint("TOP",UIParent,"TOP",0,-120); bar:SetFrameStrata("FULLSCREEN_DIALOG")
+    bar:SetSize(380,80); bar:SetPoint("TOP",UIParent,"TOP",0,-120); bar:SetFrameStrata("FULLSCREEN_DIALOG")
     T.Surface(bar,"window"); T.Shadow(bar,14,.5)
     local text=bar:CreateFontString(nil,"OVERLAY","GameFontHighlight"); text:SetPoint("TOP",0,-12); text:SetText(L("Drag BuffTap's frames, then press Done."))
-    local done=CreateFrame("Button",nil,bar,"BackdropTemplate"); done:SetSize(140,28); done:SetPoint("BOTTOM",0,10); done:SetText(L("Done")); T.Variant(done,"primary")
+    local done=CreateFrame("Button",nil,bar,"BackdropTemplate"); done:SetSize(140,28); done:SetPoint("BOTTOMLEFT",40,10); done:SetText(L("Done")); T.Variant(done,"primary")
     done:SetScript("OnClick",function() B:FinishMovingFrames() end)
+    local cancel=CreateFrame("Button",nil,bar,"BackdropTemplate"); cancel:SetSize(140,28); cancel:SetPoint("BOTTOMRIGHT",-40,10); cancel:SetText(L("Cancel")); T.Variant(cancel,"secondary")
+    cancel:SetScript("OnClick",function() B:FinishMovingFrames(true) end)
+    bar.done=done; bar.cancel=cancel
     bar:SetScript("OnEvent",function() B:FinishMovingFrames() end); bar:RegisterEvent("PLAYER_REGEN_DISABLED")
   end
   self.moveReturnView=returnView or "binding"
   self.movingFrames=true; self:SetEditModeActive(true); bar:Show()
 end
-function B:FinishMovingFrames()
+function B:FinishMovingFrames(cancel)
+  if cancel and A.Combat() then return false end
   if self.moveDoneBar then self.moveDoneBar:Hide() end
   if not self.movingFrames then return end
   self.movingFrames=nil; self:SetEditModeActive(false)
+  local snapshot=self.movePositionSnapshot; self.movePositionSnapshot=nil
+  if cancel and snapshot and snapshot.db==self.db and snapshot.profile==(self.profileDB and self.profileDB.profile) then
+    for key,saved in pairs(snapshot.values) do self.db[key]=saved.value end
+    self.appearance=nil; self:Refresh(false)
+    if self.UpdateNearbyWindow then self:UpdateNearbyWindow() end
+    if self.UpdateCamping then self:UpdateCamping() end
+    if self.UpdateSupplyBadge then self:UpdateSupplyBadge() end
+  end
   if not A.Combat() then self:Options(); if self.options and self.options.selectTab then self.options.selectTab(8) end; if self.SetAppearanceView then self:SetAppearanceView(self.moveReturnView or "binding") end end
 end
 

@@ -235,13 +235,14 @@ function B:BuildReminderEditor(parent,kind,ui)
     for k,v in pairs({campSize=40,campOpacity=1,campEffectStyle="soft",campEffectColor="gold",campEffectSpeed="normal",campTextFont="default",campTextSize=0,campTextColor="white",campTextOutline="outline",campTextGap=4,campShowCountdown=true,campShowStacks=true}) do B.db[k]=v end
     B:NormalizeCamping(); B:UpdateCamping(); B:Options()
   end)) end
-  ui.label(parent,camp and "The preview does not move or activate your live reminder." or "Hiding the icon keeps your binding and optional sounds active.",26,-550,"GameFontDisableSmall",404)
+  ui.label(parent,camp and "The preview does not move or activate your live reminder." or "Hiding the icon keeps your binding and optional sounds active.",26,camp and -550 or -540,"GameFontDisableSmall",404)
   if not camp then
-    ui.button(parent,"Move consumables",26,-580,190,function()
-      if B:SetManualConsumablesDetached(true) then B:MoveAllFrames("buff") end
+    section(ui,parent,"Consumables",12,-558,416,68)
+    f.detachConsumables=ui.check(parent,"Detach consumables",26,-594,function(c)
+      if B:SetManualConsumablesDetached(c:GetChecked()==true) then B:UpdateRefinedOptions() end
     end)
-    ui.button(parent,"Attach to buff reminder",226,-580,200,function()
-      if B:SetManualConsumablesDetached(false) then B:Options() end
+    f.moveConsumables=ui.button(parent,"Move",294,-592,132,function()
+      if B.db.manualConsumablesDetached then B:MoveAllFrames("buff") end
     end)
   end
   -- Icon: style for both reminders; label placement, countdown sweep and out-of-range display for the buff reminder.
@@ -686,6 +687,10 @@ function B:UpdateNavStatus()
   end
 end
 function B:UpdateRefinedOptions()
+  if self.options and self.options.detachConsumables then
+    self.options.detachConsumables:SetChecked(self.db.manualConsumablesDetached==true)
+    self.options.moveConsumables:SetEnabled(self.db.manualConsumablesDetached==true)
+  end
   if self.UpdateCleansePage then self:UpdateCleansePage() end
   self:UpdateNavStatus()
   local f=self.options; if not f or not f.appearancePanes then return end

@@ -191,6 +191,35 @@ test('Attached consumables have no independent edit mover', BASE+"""
 B:SetEditModeActive(true); assert(not B.editManualConsumables); B:SetEditModeActive(false)
 """)
 
+test('Detach switch changes attachment without opening move mode', BASE+"""
+B:Options(); local f=B.options; assert(not f.detachConsumables:GetChecked() and not f.moveConsumables.enabled)
+f.detachConsumables:SetChecked(true); f.detachConsumables.scripts.OnClick(f.detachConsumables)
+assert(B.db.manualConsumablesDetached and f.moveConsumables.enabled and not B.editModeActive)
+f.moveConsumables.scripts.OnClick(); assert(B.editModeActive and B.moveDoneBar.cancel)
+B.moveDoneBar.cancel.scripts.OnClick(); assert(not B.editModeActive)
+f.detachConsumables:SetChecked(false); f.detachConsumables.scripts.OnClick(f.detachConsumables)
+assert(not B.db.manualConsumablesDetached and not f.moveConsumables.enabled)
+""")
+
+test('Cancel restores every moved position including an unfinished drag', BASE+"""
+B:SetManualConsumablesDetached(true); B.db.nearbyEnabled=true; B.db.campReminder=true
+local keys={'x','y','nearbyX','nearbyY','campX','campY','supplyX','supplyY','manualConsumablesX','manualConsumablesY'}
+local before={}; for i,k in ipairs(keys) do B.db[k]=50+i; before[k]=B.db[k] end
+B:MoveAllFrames('buff')
+for i,k in ipairs(keys) do B.db[k]=300+i end
+B.editManualConsumables.GetCenter=function() return 900,900 end
+B.editManualConsumables.scripts.OnDragStart(B.editManualConsumables)
+B.moveDoneBar.cancel.scripts.OnClick()
+for _,k in ipairs(keys) do assert(B.db[k]==before[k],k) end
+assert(not B.editModeActive and not B.editManualConsumables.shown and not B.movePositionSnapshot)
+""")
+
+test('Done saves positions and a later Cancel uses the new session baseline', BASE+"""
+B:MoveAllFrames('buff'); B.db.x=123; B.moveDoneBar.done.scripts.OnClick(); assert(B.db.x==123)
+B:MoveAllFrames('buff'); B.db.x=456; B:MoveAllFrames('buff'); B.moveDoneBar.cancel.scripts.OnClick()
+assert(B.db.x==123 and not B.movePositionSnapshot)
+""")
+
 test('Detached edit mode disarms real items and restores only on exit', BASE+"""
 put(manual('food')); B:SetManualConsumablesDetached(true); refresh(); local b=assert(icon('food')); assert(b.attrs.type1)
 B:SetEditModeActive(true); assert(not b.shown and not b.attrs.type1 and not B.manualConsumableCaption.shown)

@@ -1315,3 +1315,5 @@ B.Locales.deDE["Additional effects: use their items from your bags."]="Weitere E
 B.Locales.deDE["Move consumables"]="Verbrauchsgüter verschieben"
 B.Locales.deDE["Attach to buff reminder"]="An Stärkungserinnerung anheften"
 B.Locales.deDE["Consumables: drag to move"]="Verbrauchsgüter: zum Verschieben ziehen"
+B.Locales.deDE["Detach consumables"]="Verbrauchsgüter lösen"
+B.Locales.deDE["Move"]="Verschieben"

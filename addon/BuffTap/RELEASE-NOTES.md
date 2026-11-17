@@ -1,7 +1,9 @@
 # BuffTap 1.26.0-beta1
 
 ### Added
-Want the consumable icons closer to your action bars? In Customization > Buff reminder, use Move consumables to detach and position them. They then have their own drag handle whenever you enter Edit Mode, even if no items currently need reminding. Every row stays centered around that position. Attach to buff reminder restores the original arrangement. The preview also balances the main reminder and consumable samples together within its box.
+Want the consumable icons closer to your action bars? In Customization > Buff reminder, the Consumables box has a Detach consumables switch and a separate Move button. Detached consumables have their own drag handle in Edit Mode, even if no items currently need reminding. Every row stays centered around that position. Turn the switch off to restore the original arrangement. The preview balances the main reminder and consumable samples together within its box.
+
+BuffTap's move screen now offers Done and Cancel. Done keeps your changes; Cancel returns all reminder positions to where they were when you opened that move session, including any unfinished drag.
 The main buff icon now places its group count in the top-right corner and centers the remaining time along the bottom. The appearance preview matches this layout.
 Buff, Camping and Supplies previews now share the highlighted headings used by the other settings boxes, with the redundant sample caption removed.
 The small icons have a muted Consumables heading in game and in the appearance preview, so their purpose is clear without labeling every item.

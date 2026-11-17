@@ -1313,3 +1313,5 @@ B.Locales.ptBR["Additional effects: use their items from your bags."]="Efeitos a
 B.Locales.ptBR["Move consumables"]="Mover consumíveis"
 B.Locales.ptBR["Attach to buff reminder"]="Anexar ao lembrete de benefícios"
 B.Locales.ptBR["Consumables: drag to move"]="Consumíveis: arraste para mover"
+B.Locales.ptBR["Detach consumables"]="Desanexar consumíveis"
+B.Locales.ptBR["Move"]="Mover"

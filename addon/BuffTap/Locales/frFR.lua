@@ -1315,3 +1315,5 @@ B.Locales.frFR["Additional effects: use their items from your bags."]="Effets su
 B.Locales.frFR["Move consumables"]="Déplacer les consommables"
 B.Locales.frFR["Attach to buff reminder"]="Rattacher au rappel"
 B.Locales.frFR["Consumables: drag to move"]="Consommables : faites glisser pour déplacer"
+B.Locales.frFR["Detach consumables"]="Détacher les consommables"
+B.Locales.frFR["Move"]="Déplacer"
