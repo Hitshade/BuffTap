@@ -2,6 +2,17 @@
 local _,B=...
 -- Keep the ten most recent releases within a 24 KiB content ceiling.
 B.PatchNotes={
+ {version="1.25.0",title="Beta: smarter class setup, SmartShift and item choices",items={
+  "This is a test build of 1.25.0. Please report anything that looks wrong or does not work as expected.",
+  "Setup now keeps your ticked choices when moving between pages. Reviewing recommendations asks for confirmation and offers a profile backup before applying them. Hover a recommendation to compare the saved setting with its proposal.",
+  "Druids and Shamans: turn on SmartShift under My buffs to offer your previous form after refreshing your own buffs. Returning takes another click and is always silent.",
+  "Food and Elixirs: open the Category list in Choose to find items by their benefits. Your chosen items stay selected as you browse.",
+  "Smarter class setup: open My buffs > Review class setup to see recommendations for your class. Opening the review changes nothing. Tick only the recommendations you want; your existing choices stay saved unless you choose to replace them.",
+  "Paladins: the recommended party and raid blessing plan follows what you have learned. It prefers Kings when available, with Might for physical damage dealers and Wisdom for mana users as fallbacks. Known healer roles prefer Wisdom. You do not need to run setup again when you learn the next blessing, and your fixed manual choices still take priority.",
+  "Druids can choose Thorns for tanks in party and raid. Priests can plan Fear Ward for tanks before learning it at level 20. Shaman caster and healer recommendations set your main-hand Flametongue preference; applying weapon buffs stays a separate option.",
+  "Shaman setup now saves the actual main-hand preference. Rogue choices include Atrophic, Numbing, Sebacious and both ranks of Occult Poison.",
+  "New character settings start with cleansing and resurrection reminders off. Existing choices are kept.",
+  "Configure your class's cleansing and resurrection preferences before learning the spells, including Druid Rebirth and cleansing order. Unlearned spells cannot be offered for casting. Prefer Abolish is hidden for classes without an Abolish spell."}},
  {version="1.24.8",title="Cleansing and resurrection fixes",items={
   "Fixed: cleanse and resurrection reminders now update when you change target, or when a group member is poisoned or dies, even if Target buffs and group buffing are turned off.",
   "Cleanse and resurrection buttons now double-check the player, the debuff and your settings at the moment you click, so they cannot act on someone who changed in the meantime.",
@@ -55,17 +66,6 @@ B.PatchNotes={
   "Supplies counts now update even with supply warnings off.",
   "Settings export now includes your tracked supplies and the Supplies reminder's look and position.",
   "The Supplies reminder's Pulse effect now animates in play, not just in the preview."},thanks="Thanks to Lufia_TM for the Elemental Attractor request."},
- {version="1.23.0",title="Elixirs, utility and your own supplies",items={
-  "Elixirs stack on Forever, so the Elixirs row on the Consumables page is now a checklist. Click Choose and tick every elixir you want kept up.",
-  "Each ticked elixir gets its own reminder, and BuffTap offers whichever one is missing or running low.",
-  "Elixirs of the same line replace each other (for example Mongoose and Greater Agility), so only one of them can be ticked, and either one counts.",
-  "Utility works the same way: tick Firewater, Dragonbreath Chili and Gift of Arthas together.",
-  "Both rows show an icon for each ticked item. Hover one for its name and how many you carry. Choose has a Clear all button and remembers In bags only.",
-  "Track any item on the Supplies page: drag it from your bags onto the list, or type its name in Add by name. Great for reagents and crafting materials. BuffTap only warns about stock.",
-  "The Supplies list now scrolls, so every tracked item fits, and it shows even with supply warnings off.",
-  "New Supplies reminder icon that shows what is running low. By default it only appears while resting in a city or inn; turn on Outside towns on the Supplies page to see it everywhere. Change its look and position under Customization > Supplies.",
-  "The Choose window uses BuffTap's orange check boxes.",
-  "Your current elixir and utility choices carry over."},thanks="Thanks to Drusangus for the suggestion."}
 }
 function B:PatchNotesUnread()
   return self.profileDB and self.db.optionsPatchDot~=false and self.profileDB.global.patchNotesSeen~=self.version

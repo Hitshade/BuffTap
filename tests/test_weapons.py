@@ -63,4 +63,4 @@ test('Other classes expose temporary coatings without poison controls',"BuffTap:
 
 print(f'ALL {len(tests)} SCENARIOS PASSED')
 test('Skip when I have none hides the empty reminder (noci__)',modern+"BuffTap.db.weaponSkipEmpty=true; bags[6947]=0; bags[2892]=0; refresh(); assert(not BuffTap.action or BuffTap.action.source~='weapon-reminder','skipped'); BuffTap.db.weaponSkipEmpty=false; refresh(); assert(BuffTap.action and BuffTap.action.manual,'default still reminds')")
-test('Skip when I have none leaves Mage and Warlock item imbues alone (audit 1.24.4)',"local src=io.open('"+str(ROOT)+"/addon/BuffTap/WeaponCoatings.lua'):read('*a'); assert(src:find('hand.coating or (choice and choice.class==\"ROGUE\")',1,true))")
+test('Skip when I have none leaves Mage and Warlock item imbues alone (audit 1.24.4)',"local src=io.open('"+ROOT.as_posix()+"/addon/BuffTap/WeaponCoatings.lua'):read('*a'); assert(src:find('hand.coating or (choice and choice.class==\"ROGUE\")',1,true))")

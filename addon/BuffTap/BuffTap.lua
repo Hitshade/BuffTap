@@ -193,7 +193,11 @@ function B:CreateButton()
     local action=B.action
     if B.db.showReminder==false or A.Combat() or B:ReminderPauseReason() or not action or not action.valid or not GameTooltip then return end
     GameTooltip:SetOwner(b,"ANCHOR_RIGHT")
-    if action.source=="weapon-reminder" then
+    if action.source=="smartshift" then
+      if GameTooltip.SetSpellByID then GameTooltip:SetSpellByID(action.id) else GameTooltip:SetText(action.name) end
+      GameTooltip:AddLine(L("SmartShift: click or use your BuffTap binding to restore your previous form."),0.4,1,0.8,true)
+      GameTooltip:AddLine(L("This return is silent and always requires your input."),0.75,0.75,0.75,true)
+    elseif action.source=="weapon-reminder" then
       GameTooltip:SetText(action.name,1,0.82,0.1)
       GameTooltip:AddLine(action.targetName,0.4,1,0.8)
       GameTooltip:AddLine(L(action.reason),0.85,0.85,0.85,true)
@@ -232,6 +236,10 @@ function B:CreateButton()
     local paused=B:ActionPauseReason(action); if paused then B:Commit(nil,paused); return end
     if not action then return end
     if B:HelperSuppressed(action) then B:Commit(nil,"dismissed"); return end
+    if action.source=="smartshift" then
+      if not B:ValidateSmartShift(action,true) then B:ClearSmartShift("restore changed before click"); B:Commit(nil,"SmartShift changed") end
+      return
+    end
     if action.source=="readiness" then
       if action.key=="healthstone" or action.key=="soulstone" or action.key=="weaponstone" then B.readinessInventory=nil end -- explicit click: recheck carried stock/capacity
       if action.key=="soulstone" or action.key=="oath" then B:InvalidateAura() end -- fresh assigned-buff coverage
@@ -387,7 +395,7 @@ function B:Commit(action,reason)
     b.label:SetText(self.db.showTargetName and action.targetName or "")
     self.action=action; self.reason=reason; b:Show()
     self:UpdateOverlay(); self:UpdatePulse()
-    if self.db.sound and not action.nearby and not action.outOfRange and (not self.ReminderSoundAllowed or self:ReminderSoundAllowed(action)) and (not previous or previous.key~=action.key) and GetTime()-(self.lastSound or -100)>=(self.db.soundInterval or 5) then
+    if self.db.sound and action.source~="smartshift" and not action.nearby and not action.outOfRange and (not self.ReminderSoundAllowed or self:ReminderSoundAllowed(action)) and (not previous or previous.key~=action.key) and GetTime()-(self.lastSound or -100)>=(self.db.soundInterval or 5) then
       self:PlayAlert("reminder")
       self.lastSound=GetTime()
     end
@@ -442,7 +450,7 @@ function B:Commit(action,reason)
   self.action=action
   b:Show()
   self:UpdateOverlay(); self:UpdatePulse()
-  if self.db.sound and not action.nearby and (not self.ReminderSoundAllowed or self:ReminderSoundAllowed(action)) and (not previous or previous.key~=action.key or previous.target~=action.target)
+  if self.db.sound and action.source~="smartshift" and not action.nearby and (not self.ReminderSoundAllowed or self:ReminderSoundAllowed(action)) and (not previous or previous.key~=action.key or previous.target~=action.target)
     and GetTime()-(self.lastSound or -100)>=(self.db.soundInterval or 5) then
     self:PlayAlert("reminder")
     self.lastSound=GetTime()
@@ -887,6 +895,7 @@ local itemRequested=event=="ITEM_DATA_LOAD_RESULT" and A.Number(arg) and ((B.ite
     if not ok then B.readinessStatus="Class readiness event unavailable"
     elseif handled then return end
   end
+  if B.SmartShiftEvent then B:SmartShiftEvent(event,arg,castGUID,spellID) end
   if event=="PLAYER_MOUNT_DISPLAY_CHANGED" or event=="PLAYER_UPDATE_RESTING" or event=="UPDATE_STEALTH" then
     if B.InvalidateSupplies then B:InvalidateSupplies(false) end
     if B.UpdateSupplyBadge then B:UpdateSupplyBadge() end

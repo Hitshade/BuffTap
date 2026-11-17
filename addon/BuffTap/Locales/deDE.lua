@@ -2,6 +2,8 @@
 -- See LICENSE-MPL-2.0.txt.
 -- Initial translation; native-speaker review welcome. Missing text uses English.
 local _,B=...
+-- 1.25 settings and category controls.
+-- Entries are appended after the locale table below.
 if B.locale~="deDE" then return end
 B.Locales["deDE"]={
   ["Buffs"]="Stärkungen",
@@ -1281,3 +1283,23 @@ B.Locales.deDE["Raid: place your Soulstone on your assigned target (%s)."]="Schl
 B.Locales.deDE["Raid: place your Soulstone on your assigned target."]="Schlachtzug: Lege deinen Seelenstein auf dein zugewiesenes Ziel."
 B.Locales.deDE["Your assigned Soulstone player is unavailable (%s). BuffTap will not use it on someone else."]="Dein zugewiesener Seelenstein-Spieler ist nicht verfügbar (%s). BuffTap benutzt ihn nicht für jemand anderen."
 B.Locales.deDE["not eligible"]="nicht geeignet"
+B.Locales.deDE["SmartShift: restore previous form"]="SmartShift: vorherige Gestalt wiederherstellen"
+B.Locales.deDE["Review class setup"]="Klasseneinrichtung prüfen"
+B.Locales.deDE["Category: All"]="Kategorie: Alle"
+B.Locales.deDE["Category: %s"]="Kategorie: %s"
+B.Locales.deDE["Item and benefit"]="Gegenstand und Bonus"
+B.Locales.deDE["Confirm selected recommendations"]="Ausgewählte Empfehlungen bestätigen"
+B.Locales.deDE["Create a profile backup before applying"]="Vor dem Anwenden eine Profilsicherung erstellen"
+B.Locales.deDE["Review class recommendations"]="Klassenempfehlungen prüfen"
+B.Locales.deDE["Apply recommended class setup"]="Empfohlene Klasseneinrichtung anwenden"
+B.Locales.deDE["Current: %s"]="Aktuell: %s"
+B.Locales.deDE["Proposed: %s"]="Vorschlag: %s"
+B.Locales.deDE["Profile: %s"]="Profil: %s"
+B.Locales.deDE["No additional class recommendations are listed. Your saved choices are kept."]="Keine weiteren Klassenempfehlungen aufgeführt. Gespeicherte Einstellungen bleiben erhalten."
+B.Locales.deDE["Spell Power"]="Zaubermacht"
+B.Locales.deDE["Armor / Defense"]="Rüstung / Verteidigung"
+B.Locales.deDE["Health / Fortitude"]="Gesundheit / Ausdauer"
+B.Locales.deDE["Regeneration"]="Regeneration"
+B.Locales.deDE["Resistance"]="Widerstand"
+B.Locales.deDE["Hybrid"]="Gemischt"
+B.Locales.deDE["Other"]="Sonstige"

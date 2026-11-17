@@ -77,4 +77,5 @@ import test_nearby_resting
 import test_favor
 import test_elixirs
 import test_user_reload
+import test_release_125
 print('FINAL_TOTAL',len(__import__('test_bufftap').tests))

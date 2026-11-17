@@ -594,7 +594,10 @@ function B:StandardizeOptionsPages(ui,tabs)
   end
   T.Variant(ui.button(binding,"Move BuffTap frames",510,-582,178,function() B:MoveAllFrames("binding") end),"primary")
   -- The page area is 34 px taller than before; the list grows and the footer follows its bottom-anchored controls.
-  ui.card(f.buffContent,12,-64,692,478)
+  ui.card(f.buffContent,12,-64,692,418)
+  local setupFooter=ui.card(f.buffContent,12,-494,692,50)
+  place(f.smartShift,f.buffContent,28,-506,340,24)
+  place(f.classSetup,f.buffContent,522,-504,166,28)
   local rebuffFooter=ui.card(f.buffContent,12,-556,692,96)
   f.resetBuffsButton:ClearAllPoints(); f.resetBuffsButton:SetPoint("BOTTOMRIGHT",rebuffFooter,"BOTTOMRIGHT",-14,14)
   ui.card(f.pages[3],12,-174,692,498)

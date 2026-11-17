@@ -1,15 +1,20 @@
 # BuffTap contributor rules
 
-## Release notes: mandatory two-audience rule
+## Release notes: mandatory three-audience rule
 
-For every user-visible release, write TWO independently authored records:
+For every user-visible release, including betas, write THREE independently authored records:
 
 1. `addon/BuffTap/PatchNotes.lua`: plain English for in-game players, explaining the visible effect and where to find it. Keep it short. No function names, variable names, API details, raw IDs or internal jargon. No em dashes. Keep exactly ten versions.
-2. `addon/BuffTap/CHANGELOG.md`: technical release notes, also used for the GitHub release and the CurseForge changelog. State additions, fixes, root causes, affected modules, API limits, saved-variable migrations, backwards compatibility and the test results actually obtained.
+2. `addon/BuffTap/CHANGELOG.md`: technical release notes for GitHub. State additions, fixes, root causes, affected modules, API limits, saved-variable migrations, backwards compatibility and the test results actually obtained.
+3. `addon/BuffTap/RELEASE-NOTES.md`: understandable, moderately detailed CurseForge notes. Explain setup, opt-in behavior and known limits independently of the other records.
 
 Never copy the in-game `items` strings into `CHANGELOG.md` or into a GitHub or CurseForge release, and never generate the technical notes from `PatchNotes.lua`. Check every claim against the merged source and the tests. Separate "added", "fixed" and "known limits". Keep contributor thanks in both records. Never claim a test passed, or that something was verified in the Forever client, unless it was.
 
-Before publishing: read both records, confirm the version in `BuffTap.toc`, `Engine.lua`, the top of `PatchNotes.lua` and the first heading of `CHANGELOG.md` agree, and make sure the GitHub and CurseForge text is the technical one.
+Before publishing: read all three records and confirm their versions agree with `BuffTap.toc` and `Engine.lua`. Do not publish without owner approval.
+
+## Class configuration ahead of learning
+
+Show and allow configuration of class-applicable spells regardless of level or learned status. Label unavailable spells honestly. Keep learned, level, resource, identity and protected-action checks in runtime action eligibility. Hide only controls that do not apply to the character's class or racial abilities.
 
 ## BuffTap is Forever only
 

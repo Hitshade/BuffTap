@@ -4,7 +4,7 @@
 
 local _, B = ...
 _G.BuffTap = B
-B.version = "1.24.8"
+B.version = "1.25.0"
 B.API = {}
 local A = B.API
 
@@ -96,7 +96,7 @@ function B:InitDB()
   if type(self.db.showGroupBadge)~="boolean" and type(self.db.showGroupIndicator)=="boolean" then self.db.showGroupBadge=self.db.showGroupIndicator end
   self.db.showRemaining=nil; self.db.showGroupIndicator=nil
   local defaults = {enabled=true, showReminder=true, size=64, opacity=1, x=0, y=-180,
-    seconds=45, rebuffVersion=1, sound=false, reminderSound="cleanse", alertSoundVersion=0, supplySound="glass", campAlertSound="harp", cleanseSound="bell", socialSound="hello", nearbySocialAlert=false, nearbySocialFriends=true, nearbySocialGuild=true, cleanseEnabled=false, cleanseTypes={Magic=true,Curse=true,Poison=true,Disease=true}, cleanseSelf=true, cleanseGroup=true, cleanseTarget=true, cleanseNearby=false, cleansePreferAbolish=true, cleanseBorder=true, reviveEnabled=true, reviveGroup=true, reviveTarget=true, reviveRebirth=false, cleanseFirst=false, soundChannel="Master", soundInterval=5, glow=true, pulse=false, group=true, smartGroup=true,
+    seconds=45, rebuffVersion=1, sound=false, reminderSound="cleanse", alertSoundVersion=0, supplySound="glass", campAlertSound="harp", cleanseSound="bell", socialSound="hello", nearbySocialAlert=false, nearbySocialFriends=true, nearbySocialGuild=true, cleanseEnabled=false, cleanseTypes={Magic=true,Curse=true,Poison=true,Disease=true}, cleanseSelf=true, cleanseGroup=true, cleanseTarget=true, cleanseNearby=false, cleansePreferAbolish=true, cleanseBorder=true, reviveEnabled=false, reviveGroup=true, reviveTarget=true, reviveRebirth=false, cleanseFirst=false, smartShift=false, soundChannel="Master", soundInterval=5, glow=true, pulse=false, group=true, smartGroup=true,
     groupNeed=3, blessingNeed=2, friendlyTarget=false, targetSeconds=300, keys={"MOUSEWHEELDOWN"}, buffs={}, priorities={}, buffSeconds={},
     pauseResting=false, targetClassBlessings=true, targetClasses={}, targetBlessingFallback=true, targetBlessingClasses={}, targetBlessingPriorities={}, groupBlessingPriorities={}, blessingAssignments=false, blessingClasses={}, blessingGroupOverrides={}, buffGroups={}, buffClasses={}, buffGroupNeed={}, targetBuffs={}, targetBuffSeconds={}, showBuffName=false, showTargetName=true, showTimer=false, showGroupBadge=true,
     pickerBagsOnly=true, supplyCustom={}, consumablesEnabled=false, consumableFamilies={}, consumableChoices={}, consumableSeconds={},
@@ -107,7 +107,7 @@ function B:InitDB()
     nearbyEnabled=false, nearbyBuffing=true, nearbyShowAll=false, nearbyInvites=true, nearbyLocked=false, nearbyOnTop=false, nearbyFont="default", nearbyFontSize=0, nearbyFontOutline="none", nearbyShowLevel=false, nearbyMarkSocial=true, nearbyHideHeader=false, nearbyKeepLine=true, nearbyWhileResting=false, nearbyHoldShort=false, nearbyCastResult=true, nearbyAnimate=true, nearbyReturnFavor=true, nearbyKeys={}, effectUrgency=false, effectOnce=false, nearbyManaFloor=0, consumablesInstanceOnly=false, buffPets=false, helperDismissMinutes=10, helperThankDelay=0, readyCheckTopUp=true, pauseNotes=true, blockIgnored=true, blacklistTargets=true, blacklistInInstances=true, blockedPlayers={}, blockedGuilds={}, nearbyX=240, nearbyY=0, pvpProtection=true, helperDismiss=true, helperBounce=false, helperTracking=false, helperTreasure=false, helperCoverage=false,
     helperDiscovery=false, helperThanks=false, helperThankEmote="THANK", helperQuick=false, helperTracker=0, helperPet=false, helperHealthstone=false, helperSoulstone=false, helperOath=false, oathAssigned={}, soulstoneParty="healer", soulstoneRaid="remind", soulstoneAssigned="", soulstoneAssignedGUID="", helperDemon=0,
     raidGroups={true,true,true,true,true,true,true,true},
-    buffRoles={}, buffSelf={}, blessingRoleChoices={}, roleMarks={}, roleGuess=false, helperThanksResting=false,
+    buffRoles={}, buffSelf={}, blessingRoleChoices={}, blessingRolePriorities={}, roleMarks={}, roleGuess=false, helperThanksResting=false,
     nearbyRequests=false, requestMessage="", requestBuffs={}, nearbyButtonSide="left",
     iconStyle="classic", campIconStyle="classic", labelPosition="split", showSwipe=false, showOutOfRange=false}
   -- 1.20.0: right-click dismiss is on for 10 minutes on new characters; existing ones keep their choice.
@@ -1440,6 +1440,9 @@ function B:SetGroupBlessingSettings(class,scope,choice,order,setOrder,context)
     if not map.mode and self.db.blessingRaidDefaults.mode=="same" then map.mode="class" end
   else map=self.db.blessingRaidDefaults end
   if setOrder then map.priorities[class]=copyBlessingTable(order) else map.classes[class]=choice end
+  if type(self.db.smartPreset)=="table" and type(self.db.smartPreset.managed)=="table" then
+    self.db.smartPreset.managed[(context=="Raid" and "Raid" or "Party")..":blessing:"..class]=nil
+  end
 end
 function B:SetBlessingPlanMode(context,scope,mode,blessing)
   if A.Combat() or (context~="Party" and context~="Raid") or (mode~="class" and mode~="same") then return false end
@@ -1578,7 +1581,12 @@ function B:BlessingChoice(entry)
   -- Different choices within one class make Greater Blessings unsafe for that class, so singles are used.
   if not override then
     local roleKey=self:BlessingRoleChoice(entry,context)
-    if roleKey and roleKey~="priority" then return roleKey end
+    if roleKey=="priority" then
+      local byContext=self.db.blessingRolePriorities and self.db.blessingRolePriorities[context]
+      local byRole=byContext and byContext[self:UnitRole(entry.unit)]
+      local roleOrder=byRole and byRole[entry.class]
+      if type(roleOrder)=="table" then return self:OrderedBlessingChoice(entry,roleOrder,false) end
+    elseif roleKey then return roleKey end
   end
   local inherited,order=self:GroupBlessingSettings(entry.class,entry.group,true,context)
   local key=override and override.choice or inherited
@@ -1742,6 +1750,21 @@ function B:NormalizeRoles()
     end
   end
   d.blessingRoleChoices=choices
+  local priorities={}
+  for _,context in ipairs({"Party","Raid"}) do
+    priorities[context]={}
+    local source=type(d.blessingRolePriorities)=="table" and type(d.blessingRolePriorities[context])=="table" and d.blessingRolePriorities[context] or {}
+    for _,role in ipairs({"TANK","HEALER"}) do
+      priorities[context][role]={}
+      for class,order in pairs(type(source[role])=="table" and source[role] or {}) do
+        if type(class)=="string" and type(order)=="table" then
+          local clean={}; for _,key in ipairs(order) do if A.Text(key) and self:FindBuff(key) then clean[#clean+1]=key end end
+          if #clean>0 then priorities[context][role][class]=clean end
+        end
+      end
+    end
+  end
+  d.blessingRolePriorities=priorities
   if type(d.roleGuess)~="boolean" then d.roleGuess=false end
 end
 function B:UnitRole(unit)
@@ -1807,6 +1830,14 @@ function B:SetBlessingRoleChoice(role,class,key,context)
   d.blessingRoleChoices[context][role]=d.blessingRoleChoices[context][role] or {}
   d.blessingRoleChoices[context][role][class]=(A.Text(key) and key~="none") and key or nil
   self:InvalidateAura(); self:RequestRefresh("role blessing",0)
+end
+function B:SetBlessingRolePriority(role,class,order,context)
+  if A.Combat() or (role~="TANK" and role~="HEALER") or not A.Text(class) or type(order)~="table" then return end
+  context=context=="Raid" and "Raid" or "Party"
+  self.db.blessingRolePriorities[context]=self.db.blessingRolePriorities[context] or {}
+  self.db.blessingRolePriorities[context][role]=self.db.blessingRolePriorities[context][role] or {}
+  self.db.blessingRolePriorities[context][role][class]=copyBlessingTable(order)
+  self:SetBlessingRoleChoice(role,class,"priority",context)
 end
 
 function B:RecipientAllowed(b,entry)

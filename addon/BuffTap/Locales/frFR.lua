@@ -2,6 +2,8 @@
 -- See LICENSE-MPL-2.0.txt.
 -- Initial translation; native-speaker review welcome. Missing text uses English.
 local _,B=...
+-- 1.25 settings and category controls.
+-- Entries are appended after the locale table below.
 if B.locale~="frFR" then return end
 B.Locales["frFR"]={
   ["Buffs"]="Améliorations",
@@ -1281,3 +1283,23 @@ B.Locales.frFR["Raid: place your Soulstone on your assigned target (%s)."]="Raid
 B.Locales.frFR["Raid: place your Soulstone on your assigned target."]="Raid : placez votre Pierre d'âme sur votre cible assignée."
 B.Locales.frFR["Your assigned Soulstone player is unavailable (%s). BuffTap will not use it on someone else."]="Votre joueur assigné pour la Pierre d'âme est indisponible (%s). BuffTap ne l'utilisera pas sur quelqu'un d'autre."
 B.Locales.frFR["not eligible"]="non éligible"
+B.Locales.frFR["SmartShift: restore previous form"]="SmartShift : reprendre la forme précédente"
+B.Locales.frFR["Review class setup"]="Revoir la configuration de classe"
+B.Locales.frFR["Category: All"]="Catégorie : Tout"
+B.Locales.frFR["Category: %s"]="Catégorie : %s"
+B.Locales.frFR["Item and benefit"]="Objet et bonus"
+B.Locales.frFR["Confirm selected recommendations"]="Confirmer les recommandations choisies"
+B.Locales.frFR["Create a profile backup before applying"]="Créer une sauvegarde du profil avant application"
+B.Locales.frFR["Review class recommendations"]="Revoir les recommandations de classe"
+B.Locales.frFR["Apply recommended class setup"]="Appliquer la configuration de classe recommandée"
+B.Locales.frFR["Current: %s"]="Actuel : %s"
+B.Locales.frFR["Proposed: %s"]="Proposé : %s"
+B.Locales.frFR["Profile: %s"]="Profil : %s"
+B.Locales.frFR["No additional class recommendations are listed. Your saved choices are kept."]="Aucune autre recommandation de classe affichée. Vos choix enregistrés sont conservés."
+B.Locales.frFR["Spell Power"]="Puissance des sorts"
+B.Locales.frFR["Armor / Defense"]="Armure / Défense"
+B.Locales.frFR["Health / Fortitude"]="Santé / Robustesse"
+B.Locales.frFR["Regeneration"]="Régénération"
+B.Locales.frFR["Resistance"]="Résistance"
+B.Locales.frFR["Hybrid"]="Hybride"
+B.Locales.frFR["Other"]="Autre"

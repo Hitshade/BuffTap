@@ -64,6 +64,10 @@ B.WeaponChoices={
   {key="crippling-poison",class="ROGUE",name="Crippling Poison",ranks={11202,3408},enchants={603,22},items={{3776,11202},{3775,3408}}},
   {key="mind-poison",class="ROGUE",name="Mind-numbing Poison",ranks={11399,8693,5761},enchants={35,23,643},items={{9186,11399},{6951,8693},{5237,5761}}},
   {key="wound-poison",class="ROGUE",name="Wound Poison",ranks={13227,13226,13225,13219},enchants={704,705,706,703},items={{10922,13227},{10921,13226},{10920,13225},{10918,13219}}},
+  {key="atrophic-poison",class="ROGUE",name="Atrophic Poison",ranks={439465},enchants={7256},items={{217347,439465}}},
+  {key="numbing-poison",class="ROGUE",name="Numbing Poison",ranks={439464},enchants={7255},items={{217346,439464}}},
+  {key="sebacious-poison",class="ROGUE",name="Sebacious Poison",ranks={439462},enchants={7254},items={{217345,439462}}},
+  {key="occult-poison",class="ROGUE",name="Occult Poison",ranks={1214171,458821},enchants={7651,7542},items={{234444,1214171},{226374,458821}}},
 }
 
 -- Verified Mage scrolls: research/mage-and-coating-review-1.7.0/mage-scroll-candidates.json.
@@ -164,6 +168,17 @@ function B:WeaponReminderAvailable()
   local class=self:WeaponReminderClass()
   if not class then return false end
   if itemImbueClasses[class] then return self:WeaponPreference("main")~=nil end
+  if class=="ROGUE" then
+    -- Forever's newer poisons are item-use effects, not learned spellbook entries.
+    -- An explicitly selected carried item is sufficient to make the feature available.
+    for _,hand in ipairs({"main","off"}) do
+      local choice=self:WeaponPreference(hand)
+      if choice then for _,pair in ipairs(choice.items or {}) do
+        local count=A.Call(C_Item and C_Item.GetItemCount,pair[1],false,false,false,false)
+        if A.Number(count) and count>0 then return true end
+      end end
+    end
+  end
   -- Do not warn characters that have not learned any supported poison/imbue.
   for _,def in ipairs(self.Buffs or {}) do
     if def.class==class and def.kind=="weapon" then

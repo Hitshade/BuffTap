@@ -1,5 +1,7 @@
 # BuffTap development
 
+Working beta: **1.25.0**. Keep class-applicable preferences available regardless of character level or learned spell. Enforce spell eligibility at selection and click time. The UI mock must reject frame parents that are textures. Release documentation has three audiences: in-game PatchNotes.lua, CurseForge RELEASE-NOTES.md, and GitHub CHANGELOG.md.
+
 Current released version: **1.24.8**. Runtime files: `addon/BuffTap/`; tests: `tests/`; release harness: `tests/run_release.py`.
 
 Install `requirements-dev.txt`, then run `python tests/run_release.py` (set `BT_KEEP_GOING=1` to see every failure) and `python tools/verify_mage_catalog.py`. The mocked Lua 5.1 suite does not establish live WoW Forever compatibility. See `AGENTS.md` for the release-notes policy and the combat and secure-action safety rules. Test counts in older release notes are historical.

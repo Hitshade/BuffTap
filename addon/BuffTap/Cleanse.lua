@@ -606,26 +606,28 @@ function B:UpdateCleansePage()
   local d=self.db
   f.cleanseEnable:SetChecked(d.cleanseEnabled==true)
   if f.reviveEnable then
-    local can=self:CanRevive(); local druid=A.Class("player")=="DRUID"
+    local class=A.Class("player")
+    local can=self:CanRevive(); local druid=class=="DRUID"
+    local supported=druid or REVIVE[class or ""]~=nil
     local normal=self:ReviveSpell(false)
-    f.reviveEnable:SetChecked(can and d.reviveEnabled~=false); f.reviveEnable:SetEnabled(can)
-    f.reviveGroup:SetChecked(d.reviveGroup~=false); f.reviveGroup:SetEnabled(can and d.reviveEnabled~=false)
-    f.reviveTarget:SetChecked(d.reviveTarget~=false); f.reviveTarget:SetEnabled(can and d.reviveEnabled~=false)
+    f.reviveEnable:SetChecked(supported and d.reviveEnabled==true); f.reviveEnable:SetEnabled(supported)
+    f.reviveGroup:SetChecked(d.reviveGroup~=false); f.reviveGroup:SetEnabled(supported and d.reviveEnabled==true)
+    f.reviveTarget:SetChecked(d.reviveTarget~=false); f.reviveTarget:SetEnabled(supported and d.reviveEnabled==true)
     -- One line only: the Rebirth switch and the note share a spot (GitHub issue #4).
-    f.reviveRebirth:SetShown(druid and can); f.reviveRebirth:SetChecked(d.reviveRebirth==true); f.reviveRebirth:SetEnabled(druid and d.reviveEnabled~=false and self:ReviveSpell(true)~=nil)
+    f.reviveRebirth:SetShown(druid); f.reviveRebirth:SetChecked(d.reviveRebirth==true); f.reviveRebirth:SetEnabled(druid)
     local note=""
-    if not can then note=druid and self:Text("Not learned yet") or self:Text("Your class can't resurrect.")
+    if not can then note=supported and self:Text("Not learned yet") or self:Text("Your class can't resurrect.")
     elseif not druid and normal then note=self:Text("Uses %s",(spellInfo(normal))) end
-    f.reviveNote:SetText(note); f.reviveNote:SetShown(not druid or not can)
+    f.reviveNote:SetText(note); f.reviveNote:SetShown(not druid)
     -- Only meaningful for a class that can both cleanse and resurrect; the saved choice is kept either way.
-    local canCleanse=self:CanCleanseAnything()
-    f.cleanseFirst:SetShown(canCleanse and can); f.cleanseFirst:SetChecked(d.cleanseFirst==true); f.cleanseFirst:SetEnabled(not A.Combat())
+    local canCleanse=SPELLS[class or ""]~=nil
+    f.cleanseFirst:SetShown(canCleanse and supported); f.cleanseFirst:SetChecked(d.cleanseFirst==true); f.cleanseFirst:SetEnabled(not A.Combat())
   end
   for _,row in ipairs(f.cleanseRows) do
     local classCan=self:CleanseClassSpells(row.kind)~=nil
     local names=classCan and knownNames(self,row.kind) or {}
     row.check:SetChecked(classCan and d.cleanseTypes[row.kind]~=false)
-    row.check:SetEnabled(classCan and #names>0)
+    row.check:SetEnabled(classCan)
     row.swatch:SetAlpha(classCan and 1 or .3)
     row.spell:SetText(not classCan and self:Text("Your class can't remove this") or #names==0 and self:Text("Not learned yet") or table.concat(names,", "))
   end
@@ -634,6 +636,7 @@ function B:UpdateCleansePage()
   for _,kind in ipairs({"Poison","Disease"}) do
     for _,spec in ipairs(self:CleanseClassSpells(kind) or {}) do if spec.abolish then hasAbolish=true end end
   end
+  f.cleansePreferAbolish:SetShown(hasAbolish)
   f.cleansePreferAbolish:SetChecked(d.cleansePreferAbolish~=false); f.cleansePreferAbolish:SetEnabled(abolish and hasAbolish)
   for key,check in pairs(f.cleanseWho) do check:SetChecked(key=="cleanseNearby" and d[key]==true or key~="cleanseNearby" and d[key]~=false) end
   f.cleanseBorder:SetChecked(d.cleanseBorder~=false)

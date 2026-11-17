@@ -52,6 +52,10 @@ local function visual()
  return setmetatable({SetTexture=function(s,v) s.texture=v end,SetText=function(s,v) s.text=v end,SetShown=function(s,v) s.shown=not not v end,Show=function(s) s.shown=true end,Hide=function(s) s.shown=false end,IsShown=function(s) return s.shown end}, {__index=function(_,k) return visualExtra and visualExtra[k] or noop end})
 end
 local methods={}
+function methods:SetParent(parent)
+ assert(not parent or parent:GetObjectType()~='Texture','a texture cannot parent a frame')
+ self.parent=parent
+end
 function methods:SetAttribute(k,v) assert(not combat or self.secure,'protected write in combat'); self.attrs[k]=v end
 function methods:GetAttribute(k) return self.attrs[k] end
 function methods:Hide() assert(not combat or not self.protected or self.secure,'protected hide in combat'); self.shown=false; if self.scripts.OnHide then self.scripts.OnHide(self) end end
@@ -225,8 +229,8 @@ visualExtra={
  SetSize=function(s,w,h) s.width=w; s.height=h end, GetSize=function(s) return s.width or 100,s.height or 14 end,
  GetStringWidth=function(s) return #(tostring(s.text or ''))*6 end,
  GetFont=function(s) return 'Fonts\\FRIZQT__.TTF',12,'' end,
- GetObjectType=function(s) return s.kind or 'Texture' end,
- IsObjectType=function(s,t) return t==(s.kind or 'Texture') end,
+ GetObjectType=function(s) return rawget(s,'kind') or 'Texture' end,
+ IsObjectType=function(s,t) return t==(rawget(s,'kind') or 'Texture') end,
 }
 UIParent.width=1920; UIParent.height=1080
 function methods:GetScript(k) return self.scripts[k] end

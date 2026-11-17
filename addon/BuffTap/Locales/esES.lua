@@ -2,6 +2,8 @@
 -- See LICENSE-MPL-2.0.txt.
 -- Initial translation; native-speaker review welcome. Missing text uses English.
 local _,B=...
+-- 1.25 settings and category controls.
+-- Entries are appended after the locale table below.
 if B.locale~="esES" then return end
 B.Locales["esES"]={
   ["Buffs"]="Beneficios",
@@ -1281,3 +1283,23 @@ B.Locales.esES["Raid: place your Soulstone on your assigned target (%s)."]="Band
 B.Locales.esES["Raid: place your Soulstone on your assigned target."]="Banda: coloca tu Piedra de alma en tu objetivo asignado."
 B.Locales.esES["Your assigned Soulstone player is unavailable (%s). BuffTap will not use it on someone else."]="Tu jugador asignado para la Piedra de alma no está disponible (%s). BuffTap no la usará en otra persona."
 B.Locales.esES["not eligible"]="no apto"
+B.Locales.esES["SmartShift: restore previous form"]="SmartShift: recuperar la forma anterior"
+B.Locales.esES["Review class setup"]="Revisar configuración de clase"
+B.Locales.esES["Category: All"]="Categoría: Todo"
+B.Locales.esES["Category: %s"]="Categoría: %s"
+B.Locales.esES["Item and benefit"]="Objeto y beneficio"
+B.Locales.esES["Confirm selected recommendations"]="Confirmar recomendaciones seleccionadas"
+B.Locales.esES["Create a profile backup before applying"]="Crear una copia del perfil antes de aplicar"
+B.Locales.esES["Review class recommendations"]="Revisar recomendaciones de clase"
+B.Locales.esES["Apply recommended class setup"]="Aplicar configuración de clase recomendada"
+B.Locales.esES["Current: %s"]="Actual: %s"
+B.Locales.esES["Proposed: %s"]="Propuesto: %s"
+B.Locales.esES["Profile: %s"]="Perfil: %s"
+B.Locales.esES["No additional class recommendations are listed. Your saved choices are kept."]="No hay más recomendaciones de clase. Se conservan tus opciones guardadas."
+B.Locales.esES["Spell Power"]="Poder con hechizos"
+B.Locales.esES["Armor / Defense"]="Armadura / Defensa"
+B.Locales.esES["Health / Fortitude"]="Salud / Fortaleza"
+B.Locales.esES["Regeneration"]="Regeneración"
+B.Locales.esES["Resistance"]="Resistencia"
+B.Locales.esES["Hybrid"]="Híbrido"
+B.Locales.esES["Other"]="Otros"

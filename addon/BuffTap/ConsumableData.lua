@@ -249,6 +249,29 @@ elixir.auraSpellIDs={673,2367,2374,2378,3160,3164,3166,3219,3220,3222,3223,3593,
 elixir.name="Elixirs"
 elixir.multi=true
 elixir.protectPresent=nil
+-- Source-backed presentation metadata. It is derived once from this curated static
+-- file, never from runtime tooltip text, and has no gameplay meaning.
+local function displayMetadata(item,kind)
+  local note=tostring(item.note or ""); local lower=note:lower(); local categories={}
+  local function add(key) for _,old in ipairs(categories) do if old==key then return end end; categories[#categories+1]=key end
+  if lower:find("stamina",1,true) or lower:find("maximum health",1,true) then add(kind=="food" and "stamina" or "health") end
+  if lower:find("strength",1,true) then add("strength") end
+  if lower:find("agility",1,true) then add("agility") end
+  if lower:find("intellect",1,true) then add("intellect") end
+  if lower:find("spirit",1,true) then add("spirit") end
+  if lower:find("attack power",1,true) or lower:find("physical damage",1,true) then add("attack-power") end
+  if lower:find("spell damage",1,true) or lower:find("spell fire",1,true) or lower:find("spell frost",1,true) or lower:find("spell shadow",1,true) or lower:find("nature spell",1,true) or lower:find("spell holy",1,true) then add("spell-power") end
+  if lower:find("healing",1,true) then add("healing") end
+  if lower:find("armor",1,true) or lower:find("defense",1,true) or lower:find("dodge",1,true) then add("armor") end
+  if lower:find("resistance",1,true) then add("resistance") end
+  if lower:find("regener",1,true) or lower:find(" mana per ",1,true) then add("regeneration") end
+  if #categories==0 then add("other") end
+  if #categories>1 and kind=="elixir" then add("hybrid") end
+  item.displayCategories=categories
+  item.benefitShort=(note:match("^(.-)[%.] ?") or note):gsub("Additionally,.*$",""):gsub("%s+$","")
+end
+for _,item in ipairs(food.items or {}) do displayMetadata(item,"food") end
+for _,item in ipairs(elixir.items or {}) do displayMetadata(item,"elixir") end
 local ELIXIR_LINES={
   agility={2457,3390,8949,9187,13452}, strength={2454,3391,9206,250349}, fortitude={2458,3825,250334,250335},
   troll={3382,3388,3826,20004}, defense={5997,3389,8951,13445}, intellect={3383,250353,250354,9179},

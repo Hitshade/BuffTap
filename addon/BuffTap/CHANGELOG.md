@@ -1,3 +1,21 @@
+# BuffTap 1.25.0 beta
+
+### Added
+- `SmartShift.lua`: opt-in Druid and Ghost Wolf restoration through the existing secure button. Captures the form on a BuffTap self-buff attempt, requires correlated success and form exit, defers restoration until ordinary work is complete, and revalidates before use. Restoration is silent; active forms, combat, mounting and stale state cannot trigger a toggle.
+- Food and Elixir category dropdowns and secondary benefit text in the existing picker. Categories use curated static notes and do not alter inventory eligibility, item actions, Auto semantics or elixir stacking.
+- Adaptive Paladin class/role blessing orders, stored with class-profile settings. Accepted orders evaluate learned spells at selection time; fixed manual choices remain authoritative. Shaman setup writes the actual main-hand preference without enabling application. Added optional Atrophic, Numbing, Sebacious and Occult I/II poison mappings.
+
+### Fixed
+- Cleanse/resurrection preferences can be configured before spells are learned. Unsupported classes retain explanatory status; Abolish is shown only for classes with an Abolish spell. Runtime learned-spell and secure-action eligibility remains unchanged.
+- Setup pagination preserves selections across pages. Review requires confirmation, offers an ordinary profile backup and applies all selected pages. Existing recommendations can be reviewed without resetting setup history. Removed the unsupported assertion that custom settings already match recommendations.
+- SmartShift settings occupy their own area. Corrected frame parenting to use the settings frame rather than a decorative texture. The UI mock now rejects texture parents.
+- Corrected a Windows-only test source-path escape error.
+
+### Compatibility and known limits
+- Fresh resurrection defaults to off; saved true/false values are preserved. New class fields participate in profile copy/export/import. No game SavedVariables files are edited by installation.
+- Beta installation has been exercised by the owner. This is not a claim of full live-client class, raid or SmartShift validation. High-level behavior is covered through mocked APIs; final live layout and form-flow checks remain necessary.
+- See the release verification record for exact executed test results. No publication is authorized by preparing this build.
+
 # BuffTap 1.24.8
 
 ### Fixed

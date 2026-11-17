@@ -1693,14 +1693,18 @@ function B:ChooseConsumable(family,anchor,situation)
     label(f,L("Search"),20,-59,"GameFontHighlightSmall")
     f.search=editbox(f,76,-54,300,false)
     f.bags=check(f,L("In bags only"),410,-54,function(c) B.pickerBagsOnly=c:GetChecked()==true; B.db.pickerBagsOnly=B.pickerBagsOnly; f.offset=0; B:UpdateConsumablePicker() end)
-    f.auto=flatButton(f,"",20,-90,606,function()
+    f.category=selector(f,L("Category: All"),20,-88,606,
+      function() return f.categoryChoices or {{key="all",name="All"}} end,
+      function(key) f.categoryKey=key; f.offset=0; B:UpdateConsumablePicker() end,"scroll")
+    f.auto=flatButton(f,"",20,-120,606,function()
       if A.Combat() then return end
       if f.situation then B:SetSituationValue(f.situation,"consumables","consumableChoices",nil,f.family.key) else B:SetConsumableChoice(f.family,nil); B:InvalidateConsumables(); B:RequestRefresh("auto selected",0) end; B:Options(); B:UpdateConsumablePicker()
     end)
-    label(f,L("Item"),66,-127,"GameFontNormalSmall"); label(f,L("In bags"),518,-127,"GameFontNormalSmall")
+    addHelp(f.auto,"Auto - first usable supported item","Auto is the default selection mode. Choose a specific item to replace it. To stop reminders, turn off this item family on the Consumables page.")
+    label(f,L("Item and benefit"),66,-157,"GameFontNormalSmall"); label(f,L("In bags"),518,-157,"GameFontNormalSmall")
     f.rows={}
     for i=1,8 do
-      local row=flatButton(f,"",20,-147-(i-1)*34,580,function(btn)
+      local row=flatButton(f,"",20,-175-(i-1)*34,580,function(btn)
         if A.Combat() then return end
         if f.family.multi then B:ToggleElixir(btn.itemID); B:Options(); B:UpdateConsumablePicker(); return end
         -- Clicking the chosen item again unticks it (back to Auto).
@@ -1715,12 +1719,13 @@ function B:ChooseConsumable(family,anchor,situation)
       -- The theme's orange check box, for checklists and single choices alike.
       row.tick=check(row,"",2,-4,function(c) local click=row:GetScript("OnClick"); c:SetChecked(not c:GetChecked()); if click then click(row) end end)
       row.icon=row:CreateTexture(nil,"ARTWORK"); row.icon:SetSize(24,24); row.icon:SetPoint("TOPLEFT",32,-4)
-      row.name=label(row,"",62,-9,"GameFontHighlightSmall",380)
+      row.name=label(row,"",62,-3,"GameFontHighlightSmall",380)
+      row.benefit=label(row,"",62,-18,"GameFontDisableSmall",380)
       row.stock=label(row,"",448,-9,"GameFontHighlightSmall",124)
       f.rows[i]=row
     end
     f.scroll=CreateFrame("Slider",nil,f,"OptionsSliderTemplate"); f.scroll:SetOrientation("VERTICAL")
-    f.scroll:SetSize(16,268); f.scroll:SetPoint("TOPLEFT",610,-147); f.scroll:SetMinMaxValues(0,1); f.scroll:SetValueStep(1)
+    f.scroll:SetSize(16,268); f.scroll:SetPoint("TOPLEFT",610,-175); f.scroll:SetMinMaxValues(0,1); f.scroll:SetValueStep(1)
     if f.scroll.SetObeyStepOnDrag then f.scroll:SetObeyStepOnDrag(true) end
     if f.scroll.Text then f.scroll.Text:Hide() end
     if f.scroll.Low then f.scroll.Low:Hide() end; if f.scroll.High then f.scroll.High:Hide() end
@@ -1752,7 +1757,7 @@ function B:ChooseConsumable(family,anchor,situation)
     if UISpecialFrames then table.insert(UISpecialFrames,"BuffTapItemPicker") end
   end
   f:ClearAllPoints(); f:SetPoint("CENTER",self.options,"CENTER")
-  f.family=family; f.situation=situation; f.offset=0; local bagsOnly=self.pickerBagsOnly; if bagsOnly==nil then bagsOnly=self.db.pickerBagsOnly~=false end; f.bags:SetChecked(bagsOnly); f.search:SetText("")
+  f.family=family; f.situation=situation; f.offset=0; f.categoryKey="all"; local bagsOnly=self.pickerBagsOnly; if bagsOnly==nil then bagsOnly=self.db.pickerBagsOnly~=false end; f.bags:SetChecked(bagsOnly); f.search:SetText("")
   if family.multi then
     -- Ticked set is stored per elixir; seed it from the old single choice the first time.
     local values=self:EditorSettings("consumables").consumableFamilies
@@ -1767,14 +1772,23 @@ function B:UpdateConsumablePicker()
   local f=self.itemPicker
   if not f or not f.family or A.Combat() then return end
   local family=f.family; local list={}; local query=(f.search:GetText() or ""):lower()
+  local categoryNames={all="All",stamina="Stamina",strength="Strength",agility="Agility",intellect="Intellect",spirit="Spirit",["attack-power"]="Attack Power",["spell-power"]="Spell Power",healing="Healing",armor="Armor / Defense",health="Health / Fortitude",regeneration="Regeneration",resistance="Resistance",hybrid="Hybrid",other="Other"}
+  local populated={}; for _,item in ipairs(family.items or {}) do for _,key in ipairs(item.displayCategories or {}) do populated[key]=true end end
+  f.categoryChoices={{key="all",name="All"}}
+  for _,key in ipairs({"stamina","strength","agility","intellect","spirit","attack-power","spell-power","healing","armor","health","regeneration","resistance","hybrid","other"}) do if populated[key] then f.categoryChoices[#f.categoryChoices+1]={key=key,name=categoryNames[key]} end end
+  if not f.categoryKey or (f.categoryKey~="all" and not populated[f.categoryKey]) then f.categoryKey="all"; f.offset=0 end
+  f.category:SetShown(family.key=="food" or family.children==B.ElixirFamilies)
+  f.category:SetText(L("Category: %s",L(categoryNames[f.categoryKey] or "All")))
   local selected=self:ConsumableChoiceID(family,f.situation and self:SituationPreview(f.situation,"consumables") or self.db)
   for _,item in ipairs(family.items or {}) do
     local count=self:ConsumableCount(item.id)
     if not f.bags:GetChecked() or count>0 then
       local info=self.ConsumableItemInfo and self:ConsumableItemInfo(item.id,item)
       local name=(info and info.name) or item.name
-      if query=="" or name:lower():find(query,1,true) or item.name:lower():find(query,1,true) or tostring(item.id):find(query,1,true) then
-        list[#list+1]={id=item.id,name=name,count=count,note=item.note,icon=item.icon}
+      local categoryMatch=f.categoryKey=="all"
+      for _,key in ipairs(item.displayCategories or {}) do if key==f.categoryKey then categoryMatch=true end end
+      if categoryMatch and (query=="" or name:lower():find(query,1,true) or item.name:lower():find(query,1,true) or tostring(item.id):find(query,1,true)) then
+        list[#list+1]={id=item.id,name=name,count=count,note=item.note,benefitShort=item.benefitShort,icon=item.icon}
       end
     end
   end
@@ -1803,6 +1817,7 @@ function B:UpdateConsumablePicker()
       end
       local info=self.ConsumableItemInfo and self:ConsumableItemInfo(item.id,item)
       row.name:SetText(((info and info.name) or item.name)..(blockedBy and ("  |cff9a7a3c"..L("Same line as %s",blockedBy).."|r") or "")); row.stock:SetText(item.count>0 and ("|cff88dd88"..item.count.."|r") or ("|cffffc466"..L("Out of stock").."|r"))
+      row.benefit:SetText(item.benefitShort or "")
       row.icon:SetTexture((info and info.texture) or item.icon or 134400)
       row:SetBackdropColor(rowSel and 0.16 or 0.065,rowSel and 0.12 or 0.085,rowSel and 0.08 or 0.10,1)
       row.tick:SetChecked(rowSel and true or false); row.tick:SetAlpha(blockedBy and .45 or 1)
@@ -1929,7 +1944,7 @@ function B:Options()
     f.buffRebuffHeader=label(buffs,L("Rebuff"),28+284,-70,"GameFontDisableSmall",90)
     f.buffPriorityHeader=label(buffs,L("Priority"),28+556,-70,"GameFontDisableSmall",90)
     local scroll=CreateFrame("ScrollFrame",nil,buffs,"UIPanelScrollFrameTemplate")
-    scroll:SetPoint("TOPLEFT",28,-90); scroll:SetPoint("BOTTOMRIGHT",-40,126)
+    scroll:SetPoint("TOPLEFT",28,-90); scroll:SetPoint("BOTTOMRIGHT",-40,186)
     local child=CreateFrame("Frame",nil,scroll); child:SetSize(644,1); scroll:SetScrollChild(child); f.buffChild=child; f.buffRows={}
 
     f.emptyBuffs=label(child,"No supported aura buffs for this class.",8,-12,"GameFontDisableSmall",610)
@@ -2006,6 +2021,16 @@ function B:Options()
     local timingHint=buffs:CreateFontString(nil,"OVERLAY","GameFontDisableSmall")
     timingHint:SetPoint("LEFT",timingLabel,"RIGHT",12,0); timingHint:SetText(L("Used until a buff is customized. Hour-long buffs refresh 5 minutes early; buffs under 2 minutes remind when they wear off.")); timingHint:SetWidth(470); timingHint:SetJustifyH("LEFT")
     f.rebuffSlider=rebuffSlider(buffs); f.rebuffSlider:SetPoint("BOTTOMLEFT",28,54)
+    f.smartShift=check(buffs,L("SmartShift: restore previous form"),320,-492,function(c)
+      if A.Combat() then return end
+      B.db.smartShift=c:GetChecked()==true
+      if not B.db.smartShift and B.ClearSmartShift then B:ClearSmartShift("disabled") end
+      B:RequestRefresh("SmartShift setting",0)
+    end)
+    f.smartShift:ClearAllPoints(); f.smartShift:SetPoint("BOTTOMLEFT",28,146)
+    addHelp(f.smartShift,"SmartShift: restore previous form","For Druids and Shamans. After BuffTap helps refresh your own buffs, it silently offers your previous form on the next click. Off by default; never shifts automatically.")
+    f.classSetup=button(buffs,L("Review class setup"),0,0,150,function() B:ShowOnboarding(true) end)
+    f.classSetup:ClearAllPoints(); f.classSetup:SetPoint("BOTTOMLEFT",500,146)
     local resetBuffs=button(buffs,L("Reset buffs"),0,0,100,function()
       if not A.Combat() then B:EditorSettings("buffs").buffs={}; B:EditorSettings("buffs").priorities={}; B:EditorSettings("buffs").buffSeconds={}; B:Refresh(); B:Options() end
     end)
@@ -2869,6 +2894,8 @@ function B:Options()
   f.timerCheck:SetChecked(self.db.showTimer); f.groupBadgeCheck:SetChecked(self.db.showGroupBadge)
   if f.effectUrgency then f.effectUrgency:SetChecked(self.db.effectUrgency==true); f.effectOnce:SetChecked(self.db.effectOnce==true) end
   f.profileCheck:SetChecked(self.profileEnabled==true)
+  local playerClass=A.Class("player")
+  if f.smartShift then f.smartShift:SetShown(playerClass=="DRUID" or playerClass=="SHAMAN"); f.smartShift:SetChecked(self.db.smartShift==true) end
   f.rebuffSlider.silent=true; f.rebuffSlider:SetValue(self:EditorSettings("buffs").seconds); f.rebuffSlider.valueText:SetText(formatSeconds(self:EditorSettings("buffs").seconds)); f.rebuffSlider.silent=false
 
   local weaponClass=self.WeaponReminderClass and self:WeaponReminderClass()
@@ -2919,7 +2946,9 @@ function B:Options()
       local row=pick.menu.rows[i]
       if not row then row=flatButton(pick.menu.child,"",0,-(i-1)*28,466,function(control)
         if A.Combat() then return end
-        B:EditorSettings("weapons").weaponChoices[control.hand]=control.choice; B.weaponPending=nil; B:InvalidateSupplies(false); B:RequestRefresh("weapon preference",0); B:Options()
+        B:EditorSettings("weapons").weaponChoices[control.hand]=control.choice
+        if type(B.db.smartPreset)=="table" and type(B.db.smartPreset.managed)=="table" then B.db.smartPreset.managed["weapon:"..control.hand]=nil end
+        B.weaponPending=nil; B:InvalidateSupplies(false); B:RequestRefresh("weapon preference",0); B:Options()
       end); row.icon=row:CreateTexture(nil,"ARTWORK"); row.icon:SetSize(22,22); row.icon:SetPoint("LEFT",4,0); pick.menu.rows[i]=row end
       row.hand=handKey; row.choice=choiceKey
       local source,why=self:WeaponChoiceSource(choiceKey and choice or nil)

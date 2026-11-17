@@ -1,5 +1,7 @@
 # BuffTap
 
+1.25.0 beta: configure your class preferences before learning spells. Use My buffs > Review class setup for recommendations and optional backup. SmartShift is opt-in for Druids and Shamans; Food and Elixir pickers have category dropdowns. Every cast still requires your click or binding and a learned, eligible spell. See RELEASE-NOTES.md and the in-game Patch notes.
+
 **Smart buff reminders and effortless mouse-wheel buffing for all classes in WoW Forever.**
 
 BuffTap detects missing or expiring buffs, follows your priorities, and prepares the next spell or item. **Scroll to buff, then keep adventuring.** Prefer a different control? Use a custom keybind, mouse button, or the clickable reminder.

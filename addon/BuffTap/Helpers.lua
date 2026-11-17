@@ -94,6 +94,7 @@ function B:RestoreHelpers()
   self:RequestRefresh("restore reminders",0)
 end
 function B:BeginHelperAttempt(action)
+  if self.SmartShiftBegin then self:SmartShiftBegin(action) end
   local key=retryKey(action)
   self.castRetryAttempt=key and {key=key,action=action,at=GetTime(),spellID=action.id} or nil
   self.buffCastAttempt=nil
@@ -689,6 +690,7 @@ function B:BuffCastSucceeded(unit,id)
   if unit~="player" or not A.Number(id) or not attempt or id~=attempt.id or GetTime()-attempt.at>3 then return end
   if A.Call(UnitGUID,attempt.unit)~=attempt.guid then return end
   self.buffCastAttempt=nil
+  if self.SmartShiftCastSucceeded then self:SmartShiftCastSucceeded(id) end
   self.buffAuraFresh={unit=attempt.unit,guid=attempt.guid,untilTime=GetTime()+3}
   self:RefreshBuffCastAuras(attempt)
   for _,value in ipairs({{"buff-aura-early",.12},{"buff-aura-settle",.45},{"buff-aura-late",1.6}}) do

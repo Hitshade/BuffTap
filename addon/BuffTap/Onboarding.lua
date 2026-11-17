@@ -7,17 +7,42 @@ local A=B.API
 local T=B.OptionsTheme
 local ONBOARDING_VERSION=1
 local WIDTH,HEIGHT=560,600
+local function describe(value)
+  if type(value)~="table" then return value==nil and B:Text("Default") or type(value)=="boolean" and B:Text(value and "On" or "Off") or tostring(value) end
+  local keys={}; for key in pairs(value) do keys[#keys+1]=key end; table.sort(keys,function(a,b) return tostring(a)<tostring(b) end)
+  local parts={}; for _,key in ipairs(keys) do parts[#parts+1]=tostring(key)..": "..describe(value[key]) end
+  return #parts>0 and table.concat(parts,", ") or B:Text("Default")
+end
 
 -- Each recommendation knows the old default, so a value still at its default counts as untouched
 -- and is pre-selected. A value the player changed is listed but left unselected.
 local function recommendations(self)
   local d=self.db; local list={}
-  local function add(spec) if spec.current~=spec.target then list[#list+1]=spec end end
+  local fields={sounds={"sound","campSound"},chime={"reminderSound","supplySound","campAlertSound"},modern={"iconStyle"},glow={"glow"},thanks={"helperThanks"},resting={"pauseResting"},party={"group"},dismiss={"helperDismiss","helperDismissMinutes"},pvp={"pvpProtection"},bounce={"helperBounce"},accent={"optionsAccentMode"},shamanCaster={"weaponChoices","weaponApply"},shamanHealer={"weaponChoices","weaponApply","buffs"}}
+  local function add(spec)
+    if spec.current==spec.target then return end
+    local previous={}
+    for _,key in ipairs(fields[spec.key] or {spec.key}) do
+      local value=d[key]
+      if key=="weaponChoices" then value=value and value.main elseif key=="buffs" then value=value and value["water-shield"] end
+      previous[#previous+1]=describe(value)
+    end
+    spec.previous=table.concat(previous,"; ")
+    if spec.group then
+      local old={}
+      for _,context in ipairs({"Party","Raid"}) do
+        local settings=self:GroupSettings(context)
+        old[#old+1]=context..": "..describe(spec.key=="blessings" and {classes=settings.blessingClasses,roles=d.blessingRoleChoices and d.blessingRoleChoices[context],priorities=settings.groupBlessingPriorities} or settings.buffRoles)
+      end
+      spec.previous=table.concat(old,"\n")
+    end
+    list[#list+1]=spec
+  end
   local soundsOn=d.sound==true and d.campSound==true
   add({key="sounds",label="Alert sounds for reminders and camp",current=soundsOn,target=true,untouched=d.sound==false and d.campSound==false,
     apply=function() d.sound=true; d.campSound=true end})
   add({key="chime",label="BuffTap sounds for reminder, supply and camp alerts",current=d.reminderSound=="marimba" and d.supplySound=="glass" and d.campAlertSound=="bell",target=true,
-    untouched=(d.reminderSound=="default" or d.reminderSound=="marimba") and (d.supplySound=="default" or d.supplySound=="glass") and (d.campAlertSound=="default" or d.campAlertSound=="bell"),
+    untouched=false,
     apply=function() d.reminderSound="marimba"; d.supplySound="glass"; d.campAlertSound="bell" end})
   add({key="modern",label="Modern square reminder icon instead of Classic",current=false,target=true,untouched=false,optional=true,
     apply=function() d.iconStyle="modern" end})
@@ -49,7 +74,7 @@ local function recommendations(self)
       local map=settings and settings[spec.field]
       if type(map)=="table" and map[root]~=nil then untouched=false end
     end
-    if untouched then
+    if untouched or (self.onboarding and self.onboarding.reviewMode) then
       add({key=spec.buff,label=spec.label,current=false,target=true,untouched=true,group=true,apply=function()
         for _,context in ipairs({"Party","Raid"}) do
           local settings=self:GroupSettings(context,true)
@@ -66,8 +91,8 @@ local function recommendations(self)
   local before=#list
   if class=="DRUID" then groupPreset({buff="thorns",field="buffRoles",value=tank,label="Thorns on tanks in party and raid"}) end
   if class=="PRIEST" then
-    -- Fear Ward is a Dwarf priest spell; only offered when it is actually known.
-    if known("fear-ward") and unset("fear-ward") then
+    -- Forever grants Fear Ward to every Priest at level 20; setup may be chosen before it is learned.
+    if unset("fear-ward") then
       groupPreset({buff="fear-ward",field="buffRoles",value=tank,label="Fear Ward on tanks in party and raid"})
       -- Situational (fear-heavy fights), so it is listed but not preselected.
       local last=list[#list]; if last and last.key=="fear-ward" then local apply=last.apply; last.untouched=false; last.optional=true; last.apply=function() d.buffs["fear-ward"]=true; apply() end end
@@ -75,23 +100,26 @@ local function recommendations(self)
   end
   if class=="PALADIN" then
     local untouched=not self:GroupPreference("blessingAssignments","Party") and not self:GroupPreference("blessingAssignments","Raid") and next(d.blessingClasses or {})==nil
-    if untouched then
-      local kings=known("bok")
-      -- Kings first once it is learned (level 20): it helps every class and scales with gear.
-      -- Wisdom stays on the mana-hungry healing classes. Before Kings, Might for physical, Wisdom for mana.
-      local plan=kings and {WARRIOR="bok",ROGUE="bok",HUNTER="bok",MAGE="bok",WARLOCK="bok",PALADIN="bok",PRIEST="bow",DRUID="bow",SHAMAN="bow"}
-        or {WARRIOR="bom",ROGUE="bom",HUNTER="bom",MAGE="bow",WARLOCK="bow",PRIEST="bow",DRUID="bow",SHAMAN="bow",PALADIN="bow"}
+    if untouched or (self.onboarding and self.onboarding.reviewMode) then
+      local plan={
+        WARRIOR={"bok","bom"},ROGUE={"bok","bom"},HUNTER={"bok","bom"},
+        MAGE={"bok","bow"},WARLOCK={"bok","bow"},PRIEST={"bok","bow"},DRUID={"bok","bow"},SHAMAN={"bok","bow"},
+        PALADIN={"bok","bom","bow"},
+      }
       add({key="blessings",untouched=true,current=false,target=true,group=true,
-        label=kings and "Blessing plan: Kings for most classes and tanks; Wisdom for Priests, Druids, Shamans and healers"
-          or "Blessing plan: Might for Warriors, Rogues and Hunters and tanks; Wisdom for casters and healers",
+        label="Adaptive blessing plan: Kings first when learned, with Might or Wisdom fallbacks",
         apply=function()
-          for _,key in ipairs({"bom","bow"}) do if d.buffs[key]==nil then d.buffs[key]=true end end
-          if kings and d.buffs.bok==nil then d.buffs.bok=true end
+          for _,key in ipairs({"bok","bom","bow"}) do if d.buffs[key]==nil then d.buffs[key]=true end end
+          d.smartPreset=d.smartPreset or {version=1,managed={}}
           for _,context in ipairs({"Party","Raid"}) do
             self:SetBlessingPlanMode(context,0,"class")
-            for cls,key in pairs(plan) do self:SetGroupBlessingSettings(cls,nil,key,nil,false,context) end
-            for _,cls in ipairs({"WARRIOR","PALADIN","DRUID"}) do self:SetBlessingRoleChoice("TANK",cls,kings and "bok" or "bom",context) end
-            for _,cls in ipairs({"PRIEST","PALADIN","DRUID","SHAMAN"}) do self:SetBlessingRoleChoice("HEALER",cls,"bow",context) end
+            for cls,order in pairs(plan) do
+              self:SetGroupBlessingSettings(cls,nil,"priority",nil,false,context)
+              self:SetGroupBlessingSettings(cls,nil,nil,order,true,context)
+              d.smartPreset.managed[context..":blessing:"..cls]=true
+            end
+            for _,cls in ipairs({"WARRIOR","PALADIN","DRUID"}) do self:SetBlessingRolePriority("TANK",cls,{"bok","bom"},context) end
+            for _,cls in ipairs({"PRIEST","PALADIN","DRUID","SHAMAN"}) do self:SetBlessingRolePriority("HEALER",cls,{"bow","bok"},context) end
           end
         end})
     end
@@ -107,9 +135,9 @@ local function recommendations(self)
   if class=="SHAMAN" then
     -- Spec can't be read, so casters and healers pick here; melee keeps Windfury and Lightning Shield.
     add({key="shamanCaster",exclusive="shaman",optional=true,untouched=false,current=false,target=true,label="I play a caster Shaman: Flametongue Weapon",
-      apply=function() d.buffs.flametongue=true; d.buffs.windfury=false end})
+      apply=function() d.weaponChoices.main="flametongue"; d.smartPreset=d.smartPreset or {version=1,managed={}}; d.smartPreset.managed["weapon:main"]=true end})
     add({key="shamanHealer",exclusive="shaman",optional=true,untouched=false,current=false,target=true,label="I play a healing Shaman: Flametongue Weapon and Water Shield",
-      apply=function() d.buffs.flametongue=true; d.buffs.windfury=false; d.buffs["water-shield"]=true end})
+      apply=function() d.weaponChoices.main="flametongue"; d.buffs["water-shield"]=true; d.smartPreset=d.smartPreset or {version=1,managed={}}; d.smartPreset.managed["weapon:main"]=true end})
   end
   list.classCovered=#list==before
   return list
@@ -150,8 +178,15 @@ function B:OnboardingWelcomePage()
   track(f,text(f,T.fonts.Note,24,-152,WIDTH-48,returning
     and "This appears once. BuffTap can switch on a set of recommended settings and point out a few features you may have missed. You will see every change before it applies."
     or "BuffTap reminds you when a buff is missing and gets the cast ready for one click or key press. Let it switch on sensible settings for your class, or leave everything as it is."))
-  track(f,button(f,"Set me up (recommended)",24,-240,250,"primary",function() B:OnboardingSettingsPage() end))
+  track(f,button(f,f.reviewMode and "Review class recommendations" or "Set me up (recommended)",24,-240,250,"primary",function() B:OnboardingSettingsPage() end))
   track(f,button(f,"Leave me alone",286,-240,250,nil,function() B:FinishOnboarding() end))
+  if f.reviewMode then
+    track(f,button(f,"Apply recommended class setup",24,-356,512,nil,function()
+      f.recommendations=recommendations(B); f.selection={}
+      for _,spec in ipairs(f.recommendations) do f.selection[spec.key]=spec.group==true or spec.key=="shamanCaster" or spec.key=="helperPet" or spec.key=="helperHealthstone" or spec.key=="helperSoulstone" or spec.key=="helperOath" end
+      f.choices={}; B:ApplyOnboarding()
+    end))
+  end
   local others={}
   local current=self.profileDB and self.profileDB:GetCurrentProfile()
   for _,name in ipairs(self.ProfileNames and self:ProfileNames() or {}) do if name~=current then others[#others+1]=name end end
@@ -183,41 +218,85 @@ function B:OnboardingCopyPage()
   track(f,button(f,"Back",24,-540,250,nil,function() B:OnboardingWelcomePage() end))
 end
 
-function B:OnboardingSettingsPage()
-  local f=self.onboarding; clearPage(f)
-  local list=recommendations(self)
+function B:OnboardingSettingsPage(offset)
+  local f=self.onboarding
+  f.selection=f.selection or {}
+  for _,choice in ipairs(f.choices or {}) do f.selection[choice.spec.key]=choice.check:GetChecked()==true end
+  clearPage(f)
+  local list=f.recommendations or recommendations(self); f.recommendations=list
   if #list==0 then return self:OnboardingFeaturesPage(true) end
   track(f,text(f,T.fonts.Title,24,-120,WIDTH-48,"Recommended settings"))
   track(f,text(f,T.fonts.Muted,24,-148,WIDTH-48,"Selected items will change. Settings you changed yourself are listed but not selected."))
   f.choices={}
+  offset=math.max(0,tonumber(offset) or 0); f.recommendOffset=offset
   local y=-176
   for i,spec in ipairs(list) do
-    if i>11 then break end
+    if i<=offset then -- page starts after this row
+    elseif i>offset+11 then break
+    else
     local c=CreateFrame("CheckButton",nil,f,"UICheckButtonTemplate"); c:SetSize(24,24); c:SetPoint("TOPLEFT",22,y)
     -- The template's own label turns the check into a themed switch.
     local label=B:Text(spec.label)
     if spec.optional then label=label.."  |cff8a8f99"..B:Text("(optional)").."|r"
     elseif not spec.untouched then label=label.."  |cff8a8f99"..B:Text("(you changed this)").."|r" end
     if c.Text then c.Text:SetFontObject(T.fonts.Body); c.Text:SetText(label); c.Text:SetWidth(WIDTH-100); c.Text:SetJustifyH("LEFT") end
-    c:SetChecked(spec.untouched==true); T.Check(c)
+    c:HookScript("OnEnter",function(control)
+      local current=spec.previous or describe(spec.current)
+      T.Tooltip(control,B:Text(spec.label),B:Text("Current: %s",current).."\n"..B:Text("Proposed: %s",B:Text(spec.label)))
+    end)
+    c:HookScript("OnLeave",function() if GameTooltip then GameTooltip:Hide() end end)
+    if f.selection[spec.key]==nil then f.selection[spec.key]=not f.reviewMode and spec.untouched==true end
+    c:SetChecked(f.selection[spec.key]); T.Check(c)
     -- Exclusive rows (Shaman spec) behave like a radio group.
     if spec.exclusive then c:HookScript("OnClick",function(self)
       if not self:GetChecked() then return end
+      for _,other in ipairs(list) do if other.key~=spec.key and other.exclusive==spec.exclusive then f.selection[other.key]=false end end
       for _,other in ipairs(f.choices) do if other.check~=self and other.spec.exclusive==spec.exclusive then other.check:SetChecked(false); T.Check(other.check) end end
     end) end
     track(f,c); f.choices[#f.choices+1]={check=c,spec=spec}
     y=y-30
+    end
   end
-  if list.classCovered then track(f,text(f,T.fonts.Muted,24,y-6,WIDTH-48,"Your class buffs already match the recommended setup.")) end
+  if list.classCovered then track(f,text(f,T.fonts.Muted,24,y-6,WIDTH-48,"No additional class recommendations are listed. Your saved choices are kept.")) end
   track(f,button(f,"Apply selected",24,-540,250,"primary",function() B:ApplyOnboarding() end))
   track(f,button(f,"Skip",286,-540,250,nil,function() B:OnboardingFeaturesPage() end))
+  if offset>0 then track(f,button(f,"Previous",24,-502,120,nil,function() B:OnboardingSettingsPage(math.max(0,offset-11)) end)) end
+  if offset+11<#list then track(f,button(f,"Next",416,-502,120,nil,function() B:OnboardingSettingsPage(offset+11) end)) end
 end
 
-function B:ApplyOnboarding()
+function B:ApplyOnboarding(confirmed)
   if A.Combat() then return end
+  local f=self.onboarding
+  f.selection=f.selection or {}
+  for _,choice in ipairs(f.choices or {}) do f.selection[choice.spec.key]=choice.check:GetChecked()==true end
+  local list=f.recommendations or recommendations(self)
+  if f.reviewMode and not confirmed then
+    clearPage(f)
+    track(f,text(f,T.fonts.Title,24,-120,WIDTH-48,"Confirm selected recommendations"))
+    track(f,text(f,T.fonts.Note,24,-158,WIDTH-48,"Only checked recommendations will replace saved settings. Cancel returns to your review without applying changes."))
+    track(f,text(f,T.fonts.Muted,24,-196,WIDTH-48,B:Text("Profile: %s",self.profileDB:GetCurrentProfile())))
+    local names={}; for _,spec in ipairs(list) do if f.selection[spec.key] then names[#names+1]=B:Text(spec.label) end end
+    local scroll=CreateFrame("ScrollFrame",nil,f,"UIPanelScrollFrameTemplate"); scroll:SetPoint("TOPLEFT",24,-224); scroll:SetSize(WIDTH-76,216)
+    local child=CreateFrame("Frame",nil,scroll); child:SetSize(WIDTH-100,math.max(216,#names*48)); scroll:SetScrollChild(child)
+    text(child,T.fonts.Muted,0,0,WIDTH-100,table.concat(names,"\n\n")); track(f,scroll)
+    local backup=CreateFrame("CheckButton",nil,f,"UICheckButtonTemplate"); backup:SetSize(24,24); backup:SetPoint("TOPLEFT",24,-458)
+    backup.Text:SetText(B:Text("Create a profile backup before applying")); backup:SetChecked(f.backup==true); T.Check(backup)
+    backup:SetScript("OnClick",function(c) f.backup=c:GetChecked()==true end); track(f,backup)
+    track(f,button(f,"Apply selected",24,-500,250,"primary",function() B:ApplyOnboarding(true) end))
+    track(f,button(f,"Cancel",286,-500,250,nil,function() B:OnboardingSettingsPage(f.recommendOffset) end))
+    return
+  end
+  if f.backup then
+    local original=self.profileDB:GetCurrentProfile()
+    local base=original.." backup"; local name=base; local n=1
+    while self.profileDB.sv.profiles[name] do n=n+1; name=base.." "..n end
+    if not self:CreateSettingsProfile(name,true) then self.Print("Could not create profile backup. No recommendations applied."); return end
+    if not self:SelectSettingsProfile(original) then self.Print("Could not restore active profile. No recommendations applied."); return end
+    list=recommendations(self); f.backup=false
+  end
   local applied=0
-  for _,choice in ipairs(self.onboarding.choices or {}) do
-    if choice.check:GetChecked() then choice.spec.apply(); applied=applied+1 end
+  for _,spec in ipairs(list) do
+    if f.selection[spec.key] then spec.apply(); applied=applied+1 end
   end
   if applied>0 then
     self:NormalizeVisualOptions(); if self.NormalizeAlerts then self:NormalizeAlerts() end
@@ -294,6 +373,8 @@ function B:ShowOnboarding(force)
     close:SetScript("OnLeave",function() GameTooltip:Hide() end)
     self.onboarding=f; f.pageRegions={}
   end
+  self.onboarding.reviewMode=force==true
+  self.onboarding.selection={}; self.onboarding.choices={}; self.onboarding.recommendations=nil; self.onboarding.backup=false
   if self.HideOptionsPopups then self:HideOptionsPopups() end
   local width,height=UIParent:GetSize()
   if A.Number(width) and A.Number(height) then self.onboarding:SetScale(math.min(1,(width-32)/WIDTH,(height-32)/HEIGHT)) end
