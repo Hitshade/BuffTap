@@ -279,8 +279,9 @@ function B:StyleCampIcon(icon)
   local style=self.db.campIconStyle=="modern" and "modern" or "classic"
   if icon.campIconStyleApplied==style then return end
   icon.campIconStyleApplied=style; icon.art:ClearAllPoints()
-  if style=="modern" then icon:SetBackdrop(nil); icon.art:SetPoint("TOPLEFT",1,-1); icon.art:SetPoint("BOTTOMRIGHT",-1,1)
-  else backdrop(icon); icon.art:SetPoint("TOPLEFT",4,-4); icon.art:SetPoint("BOTTOMRIGHT",-4,4) end
+  -- Match Buff and the customization preview: the art owns the full icon footprint.
+  -- Classic already contains its game bevel; a tooltip frame adds a second border.
+  icon:SetBackdrop(nil); icon.art:SetAllPoints(icon)
   self:ApplyIconStyle(icon,icon.art,style)
 end
 function B:UpdateCampLabel(icon,state,preview)

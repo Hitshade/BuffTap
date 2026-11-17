@@ -1,6 +1,9 @@
 # BuffTap 1.26.0-beta1
 
 ### Added
+- Feathered the generated halo completely to transparent before its texture boundary, removing the abrupt outer cutoff that could read as a second square outline.
+- Modern hairline borders now render below glow textures instead of bisecting them at higher overlay sublevels, removing the doubled-outline appearance without changing glow intensity or Classic art.
+- Removed Camping/Supplies tooltip backdrops and art insets that produced nested borders and a mismatch with previews. Both styles now use full-size art and the shared icon styling: original game bevel for Classic, cropped art and dark square edge for Modern. Soft/Pulse glows share the same footprint across Buff, Camping, Supplies and previews.
 - Increased the shared Modern square glow's bright core and feathered halo after owner visual feedback. The same generated texture serves Buff, Camping, Supplies and their customization previews; Classic and other effect designs remain unchanged.
 - Added an original generated RGBA square-glow texture and reproducible `tools/build_square_glow.py`. Shared Soft/Pulse glow geometry now follows Modern square bounds at every size rather than reusing the rounded game highlight. Icon style participates in the effect cache key; switching to Classic restores that frame's original highlight texture. The shared path covers Buff, Camping, Supplies and previews; motion-effect designs and library effects remain unchanged.
 - Moved `labelPositionButton` from Icon to the Buff Visible labels card, retaining its setting and callback. Expanded that card and shifted Text below it; the smaller Icon card releases space for a taller Buff preview. Camping/Supplies now use 328px previews, taller Text cards and the same Effect/footer bottom boundary as Buff, without changing saved values or live reminder behavior. Existing preview geometry checks were updated; 269 scenarios passed across Manual consumables, appearance and Camping modules.

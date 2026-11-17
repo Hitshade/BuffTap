@@ -110,7 +110,9 @@ function B:ApplyIconStyle(frame,texture,style)
   local modern=style=="modern"
   if modern then texture:SetTexCoord(.08,.92,.08,.92) else texture:SetTexCoord(0,1,0,1) end
   if modern and not frame.modernFrame then
-    frame.modernFrame={outer=hairlines(frame,texture,1,"OVERLAY",6),inner=hairlines(frame,texture,0,"OVERLAY",7)}
+    -- Keep the dark edge below glow textures; above them it cuts a bright halo
+    -- in two and makes Soft/Pulse look like nested borders.
+    frame.modernFrame={outer=hairlines(frame,texture,1,"OVERLAY",-2),inner=hairlines(frame,texture,0,"OVERLAY",-1)}
   end
   if frame.modernFrame then
     for _,t in ipairs(frame.modernFrame.outer) do t:SetVertexColor(0,0,0,1); t:SetShown(modern) end

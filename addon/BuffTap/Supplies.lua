@@ -382,12 +382,8 @@ function B:StyleSupplyBadge(f)
   -- Its own frame style, text and glow, set under Customization > Supplies.
   local style=d.supplyIconStyle=="modern" and "modern" or "classic"
   f.icon:ClearAllPoints()
-  if style=="modern" then f:SetBackdrop(nil); f.icon:SetPoint("TOPLEFT",1,-1); f.icon:SetPoint("BOTTOMRIGHT",-1,1)
-  else
-    f:SetBackdrop({bgFile="Interface\\Buttons\\WHITE8X8",edgeFile="Interface\\Tooltips\\UI-Tooltip-Border",edgeSize=12,insets={left=3,right=3,top=3,bottom=3}})
-    f:SetBackdropColor(unpack(B.OptionsTheme.menu)); f:SetBackdropBorderColor(.50,.42,.26,1)
-    f.icon:SetPoint("TOPLEFT",4,-4); f.icon:SetPoint("BOTTOMRIGHT",-4,4)
-  end
+  -- Use the same art bounds and shared border/glow styling as Buff and previews.
+  f:SetBackdrop(nil); f.icon:SetAllPoints(f)
   if self.ApplyIconStyle then self:ApplyIconStyle(f,f.icon,style) end
   self:StyleSupplyLabel(f.time,f)
 end

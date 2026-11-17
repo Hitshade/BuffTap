@@ -1,5 +1,7 @@
 # BuffTap 1.26.0-beta1 verification
 
+Classic/Modern frame cleanup: **270 scenarios passed, zero failed** across Manual, appearance and Camping modules after removing extra Camping/Supplies frames and lowering Modern border draw order. Final halo feathering then passed **137 focused/base scenarios, zero failures**. Owner screenshots motivated these visual corrections; their final appearance still needs owner review.
+
 Modern-glow follow-up: **270 passed, zero failed** across Manual consumables, appearance and Camping modules. After preserving each frame's original Classic texture, the focused Manual/base module passed **137 scenarios, zero failures**, including immediate Modern-to-Classic glow switching. Final square-glow appearance still requires owner review in Forever.
 
 Latest appearance-layout follow-up: **269 passed, zero failed** across Manual consumables, appearance and Camping modules after relocating label placement and expanding Camping/Supplies card layouts. Updated preview-height assertions reflect the requested taller previews. No live screenshot verification of this final arrangement is claimed.
