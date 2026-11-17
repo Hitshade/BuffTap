@@ -1,6 +1,7 @@
 # BuffTap 1.26.0-beta2
 
 ### Added
+- Registered the timing information heading with the existing theme label tracking, so its section highlight follows the selected accent like other headings. Cosmetic follow-up only; no regression-suite rerun.
 - Replaced the visible shared rebuff slider with a Default refresh timings information panel. It explains one effective timer per buff and the actual duration rules (45 seconds, five minutes for durations of at least 45 minutes, missing-only below two minutes/untimed). Reset default timings restores the selected context's 45-second baseline and clears per-buff overrides without altering enables/priorities. Existing legacy baselines remain unchanged unless explicitly reset; per-row edits remain available. Removed the unused shared slider factory and updated its superseded UI regression.
 - `ManualConsumables.lua`: independent secure click-only buttons for Manual Food, Flask, Elixirs and Utility. Auto remains the default; Manual families never enter `B.action` or override bindings. Exact item identity, current stock, metadata/use spell, level, cooldown, aura state, settings and pending/quarantined effects are revalidated before preparation and click.
 - `consumableModes` persists per visible family in profiles and situation settings; checklist children inherit it. Missing values retain Auto. No destructive saved-variable migration, new catalog, polling loop or insecure item-use calls.
