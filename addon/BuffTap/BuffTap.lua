@@ -712,6 +712,11 @@ function B:Refresh(captureDiagnostics)
     end
   end
   self.dirty=false; self.pendingReason=nil
+  -- Before manual consumables: their row moves down while the queue row is shown.
+  if self.UpdateBuffQueue then
+    local queueOK,queueErr=pcall(self.UpdateBuffQueue,self,self.action)
+    if not queueOK then self.lastError="buff queue: "..publicError(queueErr); pcall(self.ClearBuffQueue,self) end
+  end
   if self.UpdateManualConsumables then
     local manualOK,manualErr=pcall(self.UpdateManualConsumables,self)
     if not manualOK then

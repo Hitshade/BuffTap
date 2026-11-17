@@ -55,3 +55,4 @@ Cleanse.lua
 SmartShift.lua
 ManualConsumables.lua
 CombatExpiry.lua
+BuffQueue.lua

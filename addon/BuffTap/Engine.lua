@@ -105,7 +105,7 @@ function B:InitDB()
   if type(self.db.showGroupBadge)~="boolean" and type(self.db.showGroupIndicator)=="boolean" then self.db.showGroupBadge=self.db.showGroupIndicator end
   self.db.showRemaining=nil; self.db.showGroupIndicator=nil
   local defaults = {enabled=true, showReminder=true, size=64, opacity=1, x=0, y=-180,
-    seconds=45, rebuffVersion=1, sound=false, combatExpiry=false, reminderSound="cleanse", alertSoundVersion=0, supplySound="glass", campAlertSound="harp", cleanseSound="bell", socialSound="hello", nearbySocialAlert=false, nearbySocialFriends=true, nearbySocialGuild=true, cleanseEnabled=false, cleanseTypes={Magic=true,Curse=true,Poison=true,Disease=true}, cleanseSelf=true, cleanseGroup=true, cleanseTarget=true, cleanseNearby=false, cleansePreferAbolish=true, cleanseBorder=true, reviveEnabled=false, reviveGroup=true, reviveTarget=true, reviveRebirth=false, cleanseFirst=false, smartShift=false, soundChannel="Master", soundInterval=5, glow=true, pulse=false, group=true, smartGroup=true,
+    seconds=45, rebuffVersion=1, sound=false, combatExpiry=false, buffQueue=false, reminderSound="cleanse", alertSoundVersion=0, supplySound="glass", campAlertSound="harp", cleanseSound="bell", socialSound="hello", nearbySocialAlert=false, nearbySocialFriends=true, nearbySocialGuild=true, cleanseEnabled=false, cleanseTypes={Magic=true,Curse=true,Poison=true,Disease=true}, cleanseSelf=true, cleanseGroup=true, cleanseTarget=true, cleanseNearby=false, cleansePreferAbolish=true, cleanseBorder=true, reviveEnabled=false, reviveGroup=true, reviveTarget=true, reviveRebirth=false, cleanseFirst=false, smartShift=false, soundChannel="Master", soundInterval=5, glow=true, pulse=false, group=true, smartGroup=true,
     nearbyRankUpgrades=false,
     groupNeed=3, blessingNeed=2, friendlyTarget=false, targetSeconds=300, keys={"MOUSEWHEELDOWN"}, buffs={}, priorities={}, buffSeconds={}, buffCharges={},
     pauseResting=false, targetClassBlessings=true, targetClasses={}, targetBlessingFallback=true, targetBlessingClasses={}, targetBlessingPriorities={}, groupBlessingPriorities={}, blessingAssignments=false, blessingClasses={}, blessingGroupOverrides={}, buffGroups={}, buffClasses={}, buffGroupNeed={}, targetBuffs={}, targetBuffSeconds={}, showBuffName=false, showTargetName=true, showTimer=false, showGroupBadge=true,
@@ -2017,10 +2017,21 @@ local function needSort(a,b)
   return (a.entry.rosterOrder or 999)<(b.entry.rosterOrder or 999)
 end
 
+-- Queue passes (BuffQueue.lua) skip recipients already shown on the main button or an earlier queue icon.
+function B:QueueExcluded(b,unit)
+  if not self.queuePass then return false end
+  local root=self:RootKey(b)
+  if self.queueExcludeFamily and self.queueExcludeFamily[root] then return true end
+  if b.kind=="blessing" and self.queueNoBlessings then return true end
+  local guid=A.Call(UnitGUID,unit)
+  -- An unreadable recipient can never be shown as a separate queued need.
+  if not A.Text(guid) then return true end
+  return self.queueExclude~=nil and self.queueExclude[root..":"..guid]==true
+end
 function B:ScanMissing(b,entries,scans,scanErrors,rebuffSeconds)
   local missing={}
   for _,entry in ipairs(entries) do
-    if self:RecipientAllowed(b,entry) then
+    if self:RecipientAllowed(b,entry) and not self:QueueExcluded(b,entry.unit) then
       local action,reason=self:Resolve(b,entry.unit)
       if action then
         -- Do cheap/static eligibility first. Exact spell range is checked only for
@@ -2169,7 +2180,8 @@ function B:Select()
     if not A.Number(quickLevel) or quickLevel<1 then self.targetDataPending=true; self:AddDiag("friendly target: target level unavailable") end
     local chosen=self.db.targetClassBlessings and self.db.targetBlessingClasses[quick.class]
     local explicitTarget=not quick.blessingAssigned and chosen and chosen~="skip"
-    local blessingOwned=false
+    local quickGUID=self.queuePass and A.Call(UnitGUID,quick.unit)
+    local blessingOwned=self.queuePass and A.Text(quickGUID) and self.queueBlessingGUIDs and self.queueBlessingGUIDs[quickGUID]==true or false
     for _,b in ipairs(list) do
       local supported,why=self:Supported(b)
       if (self:Enabled(b) or (b.classWide and self:TargetBuffEnabled(b)) or (explicitTarget and b.kind=="blessing") or (blessingPlan and quick.blessingAssigned and b.kind=="blessing")) and (self:TargetBuffEnabled(b) or (blessingPlan and quick.blessingAssigned and b.kind=="blessing")) and supported and not b.singleKey and (b.kind=="single" or b.kind=="blessing")
@@ -2206,6 +2218,13 @@ function B:Select()
   -- Single-target/self pass. Buff priority remains primary; within a buff a
   -- truly missing target outranks one that is only inside its rebuff window.
   local exclusive={}
+  -- A queued blessing already owns that player's blessing slot for later queue passes.
+  if self.queuePass and self.queueBlessingGUIDs then
+    for _,entry in ipairs(roster) do
+      local guid=A.Call(UnitGUID,entry.unit)
+      if A.Text(guid) and self.queueBlessingGUIDs[guid] then exclusive["blessing:"..entry.unit]=true end
+    end
+  end
   for _,b in ipairs(list) do
     local supported,why=self:Supported(b)
     if (self:Enabled(b) or (blessingPlan and b.kind=="blessing")) and supported and not b.singleKey then
@@ -2225,7 +2244,7 @@ function B:Select()
       -- Count only verified, in-range group-rank recipients. Restrict Greater
       -- Blessings to a class whose assigned members all belong to this family.
       local groupDef=b.groupKey and self:FindBuff(b.groupKey)
-      if self:GroupPreference("group") and self:GroupPreference("smartGroup") and groupDef and (self:Enabled(groupDef) or (blessingPlan and b.kind=="blessing")) then
+      if not self.queuePass and self:GroupPreference("group") and self:GroupPreference("smartGroup") and groupDef and (self:Enabled(groupDef) or (blessingPlan and b.kind=="blessing")) then
         local buckets={}
         for _,need in ipairs(missing) do
           local entry=need.entry
@@ -2315,6 +2334,8 @@ function B:Select()
 
   -- Class readiness you can actually cast (pet recovery, Healthstone, Soulstone) comes before optional
   -- consumables. A manual-only notice has no cast, so it waits until everything castable was tried.
+  -- Queue passes list buff spells only.
+  if self.queuePass then return nil,"queue pass complete" end
   local deferredReadiness
   if self.SelectReadiness then
     local readiness=self:SelectReadiness()
@@ -2369,6 +2390,9 @@ function B:Select()
   if self.deferredBlocked then return nil,"Temporary cast failure; automatic retry pending" end
   return nil,"nothing actionable"
 end
+
+-- The buff-only selection, before cleanse and SmartShift wrap it. Used by BuffQueue.lua.
+B.EngineSelect=B.Select
 
 -- A group reminder can become stale between display and the click (another
 -- player buffs, a member dies/leaves, or assignment/threshold/range changes).

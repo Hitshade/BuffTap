@@ -11,7 +11,7 @@ function B:ManualConsumableAnchor()
   local labels=d.labelPosition=="above" and 0 or (d.showTargetName and 1 or 0)
   if d.labelPosition=="below" and d.showBuffName then labels=labels+1 end
   local height=labels>0 and labels*math.max(10,d.labelSize or 10)+(d.labelGap or 5)+(labels-1)*2 or 0
-  return d.x,d.y-d.size/2-height-35
+  return d.x,d.y-d.size/2-height-35-(self.BuffQueueOffset and self:BuffQueueOffset() or 0)
 end
 function B:SetManualConsumablesDetached(detached)
   if A.Combat() then return false end

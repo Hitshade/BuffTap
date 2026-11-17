@@ -223,7 +223,7 @@ function B:BuildReminderEditor(parent,kind,ui)
   else
     place(f.buffNameCheck,parent,26,-162); place(f.targetNameCheck,parent,208,-162)
     place(f.timerCheck,parent,26,-192); place(f.groupBadgeCheck,parent,208,-192)
-    place(f.showReminderCheck,parent,458,-46,184,24); f.showReminderCheck.Text:SetText(self:Text("Show icon"))
+    place(f.showReminderCheck,parent,458,-40,184,24); f.showReminderCheck.Text:SetText(self:Text("Show icon"))
   end
   local actionY=-592
   local move=ui.button(parent,"Move reminders",26,actionY,184,function() B:MoveAllFrames(sup and "supply" or camp and "camp" or "buff") end)
@@ -247,7 +247,7 @@ function B:BuildReminderEditor(parent,kind,ui)
   end
   -- Icon: style for both reminders; label placement, countdown sweep and out-of-range display for the buff reminder.
   section(ui,parent,"Icon",444,-12,260,camp and 76 or 160)
-  local sy=camp and 0 or -32
+  local sy=camp and 0 or -26
   ui.label(parent,"Style",458,-54+sy,"GameFontHighlightSmall",76)
   local styleKey=camp and K("campIconStyle") or "iconStyle"
   local style=ui.selector(parent,"",540,-48+sy,150,function() return B:IconStyleChoices() end,function(v) change(styleKey,v) end)
@@ -255,8 +255,12 @@ function B:BuildReminderEditor(parent,kind,ui)
     f.iconStyleButton=style
     ui.label(parent,"Position",26,-234,"GameFontHighlightSmall",110)
     f.labelPositionButton=ui.selector(parent,"",152,-228,228,function() return {{key="split",name="Split"},{key="above",name="Above icon"},{key="below",name="Below icon"}} end,function(v) change("labelPosition",v) end)
-    f.swipeCheck=ui.check(parent,"Rebuff countdown sweep",458,-116,function(c) change("showSwipe",c:GetChecked()==true) end)
-    f.rangeCheck=ui.check(parent,"Grey out-of-range buffs",458,-144,function(c) change("showOutOfRange",c:GetChecked()==true) end)
+    f.swipeCheck=ui.check(parent,"Rebuff countdown sweep",458,-101,function(c) change("showSwipe",c:GetChecked()==true) end)
+    f.rangeCheck=ui.check(parent,"Grey out-of-range buffs",458,-124,function(c) change("showOutOfRange",c:GetChecked()==true) end)
+    f.queueCheck=ui.check(parent,"Show next buffs below",458,-147,function(c) change("buffQueue",c:GetChecked()==true) end)
+    f.queueCheck:HookScript("OnEnter",function(s)
+      T.Tooltip(s,B:Text("Show next buffs below"),B:Text("Shows up to four more buffs that are due as smaller icons under the reminder. Click one to cast it. A number shows how many players need it. Group spells and key bindings stay on the main reminder. Hidden in combat."))
+    end)
   end
   self.optionsPreviews[kind]=self:CreateOptionsPreview(parent,kind,ui)
 end
@@ -755,6 +759,7 @@ function B:UpdateRefinedOptions()
   if f.swipeCheck then f.swipeCheck:SetChecked(self.db.showSwipe==true) end
   if f.rangeCheck then f.rangeCheck:SetChecked(self.db.showOutOfRange==true) end
   for kind,control in pairs(f.categorySounds or {}) do T.SoundSpeaker(control,self:AlertCategoryEnabled(kind)) end
+  if f.queueCheck then f.queueCheck:SetChecked(self.db.buffQueue==true) end
   f.reduceMotion:SetChecked(self.db.optionsReduceMotion); f.nearbyLock:SetChecked(self.db.nearbyLocked==true); if f.nearbyAnimate then f.nearbyAnimate:SetChecked(self.db.nearbyAnimate==true) end; if f.nearbyFavor then f.nearbyFavor:SetChecked(self.db.nearbyReturnFavor~=false) end; if f.nearbyPvp then f.nearbyPvp:SetChecked(self.db.pvpProtection==true) end; if f.nearbyOnTop then f.nearbyOnTop:SetChecked(self.db.nearbyOnTop==true) end; if f.nearbyShowLevel then f.nearbyShowLevel:SetChecked(self.db.nearbyShowLevel==true) end; if f.nearbyMarkSocial then f.nearbyMarkSocial:SetChecked(self.db.nearbyMarkSocial~=false) end; if f.nearbyWhileResting then f.nearbyWhileResting:SetChecked(self.db.nearbyWhileResting==true) end; if f.nearbyCastResult then f.nearbyCastResult:SetChecked(self.db.nearbyCastResult~=false) end; if f.socialAlert then f.socialAlert:SetChecked(self.db.nearbySocialAlert==true); f.socialFriends:SetChecked(self.db.nearbySocialFriends~=false); f.socialGuild:SetChecked(self.db.nearbySocialGuild~=false); f.socialFriends:SetEnabled(self.db.nearbySocialAlert==true); f.socialGuild:SetEnabled(self.db.nearbySocialAlert==true) end; if f.nearbyHoldShort then f.nearbyHoldShort:SetChecked(self.db.nearbyHoldShort==true); f.nearbyHoldShort:SetEnabled(not (self.db.pauseResting and self.db.nearbyWhileResting~=true)) end; if f.nearbyHideHeader then f.nearbyHideHeader:SetChecked(self.db.nearbyHideHeader==true); f.nearbyKeepLine:SetChecked(self.db.nearbyKeepLine~=false); f.nearbyKeepLine:SetEnabled(self.db.nearbyHideHeader==true) end; if f.nearbyFullNames then f.nearbyFullNames:SetChecked(self.db.nearbyFullNames~=false) end
   if f.nearbyFontButton then
     for _,v in ipairs(self:NearbyFonts()) do if v.key==self.db.nearbyFont then f.nearbyFontButton:SetText(self:Text(v.name)) end end
