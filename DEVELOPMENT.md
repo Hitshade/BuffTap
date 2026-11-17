@@ -1,5 +1,11 @@
 # BuffTap development
 
+## Issue review workflow
+
+Check [GitHub issues](https://github.com/Hitshade/BuffTap/issues) at the start of development or review work and before each public release. Read relevant comments, assess reports against the current source and Forever client limits, and record what is reproduced, addressed or deferred. Carry applicable issue references and reporter credits into release preparation. Report any inability to complete the check; do not assume no issues exist. Posting replies and closing issues require owner authorization.
+
+Latest review, 2026-11-17: open issue [#5: Goblin Deviled Clams not showing as food after latest update](https://github.com/Hitshade/BuffTap/issues/5), reported by shaunpearsondev in the supplied screenshot. The report says the food is absent from consumables and its expired buff is not reminded. Recorded for investigation; not reproduced or fixed as part of this workflow-only change.
+
 Current release: **1.26.2**. Keep class-applicable preferences available regardless of character level or learned spell. Enforce spell eligibility at selection and click time. The UI mock must reject frame parents that are textures. Release documentation has three audiences: in-game PatchNotes.lua, CurseForge RELEASE-NOTES.md, and GitHub CHANGELOG.md.
 
 1.26.2 fixes repeated reminder sounds during active smooth-buffing sequences. No casting or saved-setting changes. Publication approved by the owner on 2026-11-17.
