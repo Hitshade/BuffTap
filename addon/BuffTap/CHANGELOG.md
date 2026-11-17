@@ -1,4 +1,4 @@
-# BuffTap 1.26.0-beta2
+# BuffTap 1.26.0
 
 ### Added
 - Registered the timing information heading with the existing theme label tracking, so its section highlight follows the selected accent like other headings. Cosmetic follow-up only; no regression-suite rerun.
@@ -22,7 +22,7 @@
 - Full mocked Lua 5.1 release suite: **2,162 passed, zero failed**, including 17 new pre-ship review scenarios. All 15 Mage item/use/enchant/weapon mappings match reviewed offline evidence. See `RELEASE-REVIEW-1.26.0-beta2.md`.
 - The owner visually tested earlier beta layouts and glow revisions. Native secure execution across every class, raid and item combination has not been established by these mocked checks. Final SmartShift, timing and edit-mode smoke tests remain recommended.
 - Eight Manual effects are clickable; overflow is a named informational list for bag use. Buffs unavailable under Forever combat restrictions are never inferred missing. Manual food does not add Auto food's global eating gate to class readiness. Supplies tracking/alert behavior is unchanged; appearance is updated.
-- Beta 2 updates the release identity so previously read beta notes become unread again. This package is prepared locally and is not published.
+- Final release identity is 1.26.0, so previously read beta notes become unread again. Publication approved by the owner on 2026-11-17; beta wording removed from current in-game notes and package metadata.
 
 # BuffTap 1.25.0
 

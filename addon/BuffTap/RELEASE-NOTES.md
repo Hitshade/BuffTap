@@ -1,4 +1,4 @@
-# BuffTap 1.26.0-beta2
+# BuffTap 1.26.0
 
 ### Added
 Food, Flask, Elixirs and Utility each have an optional **Manual** mode on Consumables. Auto keeps the existing behavior. Manual items appear as small, centered icons with stock counts; click an icon directly to use that item. The buff binding and mouse wheel skip Manual families. Solo, Party and Raid can use different modes.

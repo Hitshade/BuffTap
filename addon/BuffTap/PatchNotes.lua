@@ -2,7 +2,7 @@
 local _,B=...
 -- Keep the ten most recent releases within a 24 KiB content ceiling.
 B.PatchNotes={
- {version="1.26.0-beta2",title="Manual consumables and release review fixes",items={
+ {version="1.26.0",title="Manual consumables and clearer customization",items={
   "Consumables: choose Auto or Manual for Food, Flask, Elixirs and Utility. Manual shows separate clickable item icons; your normal binding and mouse wheel skip them.",
   "Labeled icons and stock counts stay centered, even with the main reminder hidden. Active effects disappear until they need refreshing; unavailable items stay dimmed.",
   "On Consumables, selected-item thumbnails sit below the labels, with Rebuff at on the right, so the icons no longer cover the selection text.",
@@ -10,7 +10,7 @@ B.PatchNotes={
   "Up to eight effects can be clicked here. Hover +N to see additional effects to use from your bags. Manual icons hide in combat and while you cannot safely use them.",
   "Review fixes: disabling BuffTap blocks prepared clicks immediately. SmartShift respects pauses and form cooldowns. Manual icons return on time at refresh thresholds. Appearance reset now restores all its visual choices.",
   "My buffs: the bottom panel explains default timings instead of showing another slider. Set each buff's timing in its row. Reset default timings restores timings for the selected setup without changing buff choices or priorities.",
-  "Customization groups label visibility and position before text styling. Camping and Supplies have fuller layouts. Modern glow is rounded inside and square outside; timers are centered and group counts sit at the top right. This is a beta; please test in game."},thanks="Thanks to Xprit44 for suggesting reminders without accidental mouse-wheel consumption."},
+  "Customization groups label visibility and position before text styling. Camping and Supplies have fuller layouts. Modern glow is rounded inside and square outside; timers are centered and group counts sit at the top right."},thanks="Thanks to Xprit44 for suggesting reminders without accidental mouse-wheel consumption."},
  {version="1.25.0",title="Smarter class setup, SmartShift and item choices",items={
   "Druids and Shamans: turn on SmartShift under My buffs to offer your previous form after refreshing your own buffs. Returning takes another click and is always silent.",
   "Food and Elixirs: open the Category list in Choose to find items by their benefits. Your chosen items stay selected as you browse.",

@@ -1,6 +1,6 @@
 # BuffTap
 
-1.25.0: class preferences can be configured before learning spells. My buffs > Review class setup offers adaptive class recommendations with confirmation and optional backup. SmartShift is opt-in for Druids and Shamans. Food and Elixirs support category dropdowns. See `addon/BuffTap/RELEASE-NOTES.md` for player-facing details and `CHANGELOG.md` in that folder for technical changes.
+1.26.0 adds optional Manual consumable icons that stay off the buff binding, detachable positioning, clearer appearance controls and timing defaults, and pre-release safety fixes. Thanks to Xprit44 for the Manual reminder suggestion. SmartShift remains opt-in for Druids and Shamans. See `addon/BuffTap/RELEASE-NOTES.md` for practical release notes and `CHANGELOG.md` in that folder for technical changes.
 
 **Smart buff reminders and effortless mouse-wheel buffing for all classes in WoW Forever.**
 
