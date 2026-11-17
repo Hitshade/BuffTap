@@ -1,0 +1,336 @@
+PASS Highest known rank, exact secure spell and binding
+PASS Applied buffs advance and release overrides
+PASS Aura failures and secret records fail closed
+PASS Global secrecy cannot reuse cached auras
+PASS Mouse click refuses changed target identity
+PASS Combat clears payload, bindings and timers without insecure writes
+PASS Quick target uses its own threshold at click
+PASS Unrelated target changes are idle with target mode off
+PASS Unwatched raid auras and unrelated item/spell loads are ignored
+PASS Repeated wake replacement leaves only one timer
+PASS Rapid target changes keep a bounded timer set
+PASS Threshold wake restores action at the configured time
+PASS Unknown external range is never a castable action
+PASS Smart group does not count out of range members
+PASS Smart group chooses group spell for verified recipients
+PASS Higher priority single stays ahead of lower group family
+PASS Mark recipient accepts rank trained ten levels higher
+PASS Malformed saved keys, priorities and group maps recover
+PASS Old overlay and threshold settings migrate
+PASS All options pages build and move control opens
+PASS Consumables default off and never query inventory at idle
+PASS Whitelist item creates exact secure item action
+PASS Physical mouse down does not block mouse up item use
+PASS Right click never marks an item consumed
+PASS Successful item spell confirms settling, failed clicks do not
+PASS Disappearing bag item rejected during prepare and click
+PASS Unloaded metadata cannot create an item action
+PASS Questionmark icon cannot create an item action
+PASS Changed mapping is quarantined locally and Auto falls back
+PASS A broken preferred item does not block another family
+PASS Food eating aura suppresses repeated use until Well Fed
+PASS Existing flask recognized by ID regardless of language
+PASS Inventory cache is not rescanned on ordinary aura refreshes
+PASS Water Shield satisfies Lightning Shield without overwriting
+PASS Missing rogue poison is a manual unbound alert
+PASS Weapon enchant event clears a satisfied manual alert
+PASS Coated main hand advances reminder to off hand
+PASS Shield off hand does not request a poison
+PASS Unreadable weapon enchant state fails closed
+PASS Unreadable main hand does not hide missing off hand
+PASS Zero item sentinel is treated as an empty hand
+PASS Unchanged manual reminder uses the safe fast path
+PASS Castable class buff precedes manual weapon reminder
+PASS Castable consumable precedes manual weapon reminder
+PASS Camp Benefits reports exact granted additions
+PASS Catalog excludes known wrong spell IDs
+PASS New Aspect and Seal IDs remain known-spell gated
+PASS No permanent OnUpdate on supported client
+PASS Group reagent missing falls back to single
+PASS Confirmed flask use pauses after bounded second observation
+PASS Confirmed flask with effect does not quarantine
+PASS Saved per-buff group overrides retain mixed state
+PASS Greater blessing never replaces higher-priority owned family
+PASS Raid subgroup assignments exclude unassigned recipients
+PASS Dead and offline targets skipped without blocking other members
+PASS Empty spellbook retry stops and book event recovers
+PASS Metadata changes in combat applied safely on exit
+PASS Missing optional item APIs do not break class spell selection
+PASS Appearance changes preserve selected secure action
+PASS Hundreds of idle aura refreshes reuse rank and roster caches
+PASS Every target class advances Mark to Thorns
+PASS Group class defaults and overrides share single and group families
+PASS Party class and group filters intersect
+PASS Class filters leave personal buffs independent
+PASS Group cast falls back when subgroup contains excluded class
+PASS Paladin opt-out target follows priority without class filters
+PASS Paladin group sorting skips filtered higher priority family
+PASS Malformed class maps recover safely
+PASS Class option toggles and reset persist correctly
+PASS Priest multiple explicit target buffs advance in order
+PASS Divine Spirit is not offered to a Warrior target by default
+PASS Egg is offered and Well Fed clears it
+PASS Manual low level eating suppresses all buff actions
+PASS Manual nutritious food does not prompt repeated consumption
+PASS Different Well Fed effect preserves the existing meal
+PASS XP bonus alone does not substitute for a food buff
+PASS Explicit missing food never substitutes another item
+PASS Selected elixir uses exact spell mapping
+PASS A different active elixir no longer blocks the chosen one (elixirs stack)
+PASS Elixir default preserves legacy Ferocity preference
+PASS Removed potion family cannot become a secure item action
+PASS Picker keeps absent choices and filters inventory
+PASS Expanded inventory uses cache on ordinary aura refresh
+PASS Picker scrolling clamps and search resets the visible range
+PASS Auto and explicit selection remain mutually exclusive
+PASS Missing selected food remains visible in selection summary
+PASS Group buff selection and all-classes controls keep other assignments
+PASS Picker closes with options and combat prevents changes
+PASS Item data event replaces placeholder with the native item icon
+PASS Personal consumable is aimed at yourself (audit 1.24.1 #6)
+PASS 1.25 category and setup labels translated deDE
+PASS 1.25 category and setup labels translated esES
+PASS 1.25 category and setup labels translated frFR
+PASS 1.25 category and setup labels translated ptBR
+PASS 1.25 class buff configuration is identical at level one and sixty
+PASS 1.25 review backup preserves old preferences and active profile
+PASS 1.25 setup selections persist across pages and apply together
+PASS 1.25 UI mock rejects parenting a frame to a texture
+PASS 1.25 Food and Elixir categories open a selectable menu
+PASS 1.25 Paladin review offers adaptive plan over existing saved choices
+PASS 1.25 SmartShift is opt in and class scoped
+PASS 1.25 SmartShift captures a real form spell and offers one silent return
+PASS 1.25 SmartShift never toggles an already active form
+PASS 1.25 SmartShift cancels failures combat zones and manual form changes
+PASS 1.25 approved poison manifest uses exact item effect and enchant IDs
+PASS 1.25 food and elixir metadata is display only and multi category
+PASS 1.25 SmartShift and adaptive ownership survive class profile export
+PASS Review: timing panel explains one time without changing existing preferences
+PASS Review: timing reset preserves buff toggles and priorities
+PASS Review: timing reset edits only the selected Party setup
+PASS Review: disabling BuffTap revokes an ordinary prepared click immediately
+PASS Review: Reset look restores all main appearance choices, not just text and size
+PASS Review: SmartShift respects disabled addon at selection
+PASS Review: SmartShift respects temporary pause at selection
+PASS Review: SmartShift respects edit mode at selection
+PASS Review: SmartShift respects loading pause at selection
+PASS Review: SmartShift respects resting pause at selection
+PASS Review: SmartShift master-off cancels an already prepared hardware click
+PASS Review: SmartShift rejects unreadable form
+PASS Review: SmartShift rejects unreadable active form metadata
+PASS Review: SmartShift rejects missing player identity
+PASS Review: SmartShift rejects unconfirmed cooldown
+PASS Review: SmartShift rejects active cooldown flag
+PASS Review: SmartShift rejects casting
+PASS Review: SmartShift wakes at the end of the form cooldown
+PASS Review: Shaman Ghost Wolf follows the same pause and click safety rules
+PASS Review: an active hidden Manual effect still schedules its refresh threshold
+PASS Queue: GCD event keeps verified next buff ready 1.5 seconds before GCD ends
+PASS Queue: classification outside cooldown event is never trusted
+PASS Queue: real spell cooldown blocks even when GCD classification is true
+PASS Queue: a new independent cooldown cancels a previously prepared click
+PASS Queue: changed timing cannot reuse the preceding GCD evidence
+PASS Queue: lost event classification revokes previous GCD evidence
+PASS Queue: missing duration API retains conservative cooldown behavior
+PASS Queue: nil duration retains conservative cooldown behavior
+PASS Queue: throwing duration method retains conservative cooldown behavior
+PASS Queue: restricted remaining duration retains conservative cooldown behavior
+PASS Queue: unknown classification retains conservative cooldown behavior
+PASS Queue: restricted classification retains conservative cooldown behavior
+PASS Queue: fresh aura prevents recasting a covered buff during GCD
+PASS Queue: disabled setting cancels the GCD-ready click
+PASS Queue: combat discards GCD evidence and protected payload
+PASS Queue: helper and consumable sources cannot use ordinary buff GCD permission
+PASS Queue: event scope is cleared after a refresh exception
+PASS Queue: unchanged recipient identity remains mandatory during GCD
+PASS Queue: expired evidence cannot turn an active real cooldown into GCD
+PASS Queue: aura arriving after cooldown event prepares next spell during the GCD
+PASS GCD display: queued sweep appears with rebuff sweep disabled
+PASS GCD display: completion clears sweep without another cooldown event
+PASS GCD display: queued sweep takes precedence then restores rebuff direction
+PASS GCD display: cancelling the action hides the sweep
+PASS GCD display: refreshing queued action does not add another alert
+PASS GCD display: GCD expiry adds no secondary alert
+PASS GCD display: form cooldown event before cast confirmation still queues prompt return
+PASS GCD display: SmartShift return form queues silently and shows GCD
+PASS GCD display: SmartShift independent cooldown still blocks
+PASS GCD display: waiting SmartShift wakes on cooldown event without an ordinary action
+PASS GCD display: changed form cancels queued SmartShift click
+PASS GCD display: Shaman return to Ghost Wolf queues with same checks
+PASS GCD display: MAGE ordinary self buff uses shared queue and sweep
+PASS GCD display: SHAMAN ordinary self buff uses shared queue and sweep
+PASS GCD display: HUNTER ordinary self buff uses shared queue and sweep
+PASS GCD display: PALADIN ordinary self buff uses shared queue and sweep
+PASS Nearby is default off and adds no idle timer
+PASS Friendly nameplates are mandatory without changing CVar
+PASS Unreadable nameplate setting cannot arm nearby casts
+PASS Enabling seeds existing plates using Blizzard GetUnit
+PASS Nearby keeps nameplate help out of the active list
+PASS Automatic nearby comes after personal buffs
+PASS Nearby respects target family toggles
+PASS Nearby respects spell rank and low target level
+PASS PvP protection applies to nearby players
+PASS Hostile players never become nearby candidates
+PASS Nonplayers cannot become nearby candidates
+PASS Unreadable aura scan does not mean missing buffs
+PASS Applying all buffs removes recipient
+PASS Each row displays actual missing buff icons
+PASS Normal binding refuses recycled nameplate identity
+PASS Row click refuses recycled nameplate identity
+PASS Row click refuses buff applied since display
+PASS Row click rechecks PvP flag
+PASS Row click arms one-click target cast restore macro
+PASS Removing plate invalidates row and normal binding
+PASS Unit aura events refresh watched nearby players
+PASS Duplicate GUIDs yield one recipient
+PASS Actual party members stay under group settings
+PASS Explicit target does not also appear in nearby list
+PASS Scrolling supports more than five stable rows
+PASS Nearby tracking stays bounded
+PASS Feature off clears scanning and action
+PASS Closing nearby window disables experiment
+PASS Combat never updates protected nearby rows
+PASS Range change updates nearby list without aura event
+PASS Disabled feature ignores nameplate traffic
+PASS Nearby preference follows shared profiles
+PASS Buffs are not offered when reminder is paused
+PASS Paladin nearby preferences choose class priority
+PASS Other caster Kings permits nearby Wisdom
+PASS Own nearby blessing cannot be replaced
+PASS Unknown nearby caster blocks fallback
+PASS Class-aware disabled still preserves own nearby blessing
+PASS Changed nearby ownership before row click cancels cast
+PASS Turning off fallback does not choose another nearby blessing
+PASS Combat visibility registration failure leaves rows unusable
+PASS Forever friendly player setting wins over old Classic setting
+PASS Old enabled setting cannot override Forever disabled setting
+PASS Legacy client falls back when modern setting unavailable
+PASS Unknown setting is reported truthfully
+PASS Forever nameplate CVar update refreshes discovery
+PASS Refresh cannot move or resize a window during dragging
+PASS Locked nearby window cannot begin dragging
+PASS Nearby binding arms a macro instead of a nameplate spell
+PASS Nearby reminder is invisible and silent while the binding remains armed
+PASS Ordinary reminders retain their appearance and sound
+PASS Macro pins the chosen lower rank
+PASS Ambiguous rank text cannot silently use highest rank
+PASS Macro rejects spell text with command injection
+PASS Rank resolver disagreement blocks macro preparation
+PASS No previous target ends with clear instead of selecting historical target
+PASS Already selected recipient does not switch to historical target
+PASS Current target identity unreadable blocks macro preparation
+PASS Binding click rebuilds restoration for current target state
+PASS Binding click cancels macro when recipient gains all buffs
+PASS Combat safety clears the main macro payload
+PASS Compact window exactly matches the approved fixed footprint
+PASS Shift left minimap click toggles nearby without opening options
+PASS Combat prevents minimap nearby toggle
+PASS Minimap tooltip explains nearby shortcut
+PASS Nearby debug includes attempted row cast and immediate client error
+PASS Nearby debug never records restricted client errors
+PASS Unrelated later client errors are excluded from nearby debug
+PASS Exact target uses client full name without guessing realm or surname
+PASS Unsafe recipient name cannot become macro commands
+PASS Unreadable full name blocks casting rather than guessing a spelling
+PASS Ambiguous short name blocks exact-name casting without full-name API
+PASS Druid nearby scans do not produce Paladin blessing diagnostics
+PASS Exact-name macro model casts the selected rank and restores old target
+PASS Failed exact-name selection cannot buff an unrelated previous target
+PASS Exact-name lookup does not fall back to a matching name prefix
+PASS Dead exact-name recipient is not cast on
+PASS Name macro with no current target does not select a historical target
+PASS Nearby buffs flagged players when you are flagged too (PvP realm contested zones)
+PASS Nearby skips flagged players while your own flag is running out
+PASS Nearby skips a recipient already fighting
+PASS Unreadable combat state cannot arm a nearby action
+PASS Missing combat API cannot arm a nearby action
+PASS Explicit PvP opt out still permits peaceful flagged recipients
+PASS Opting out of PvP protection does not permit combat assistance
+PASS Nearby PvP guard applies inside battlegrounds too
+PASS Row click cancels a newly fighting recipient
+PASS Binding cancels a new flag while the caster flag is running out
+PASS Nearby window stays visible and fixed when the list empties
+PASS Routine refresh does not repeatedly reanchor the window
+PASS Hover keeps player names in their slots and disarms stale entries
+PASS Brief missing evidence does not instantly collapse row positions
+PASS Nameplate hide and show preserves arrival order
+PASS Remembered arrival order stays bounded across a busy city
+PASS Wheel scrolls Nearby without clearing the configured binding
+PASS Unbound wheel still scrolls the list
+PASS No action payload is rewritten on unchanged display refresh
+PASS Header drag handle moves the fixed frame
+PASS Temporary nearby target selection does not produce a normal reminder ding
+PASS Restoring the previous target stays quiet through early target retries
+PASS Late target retries for the same nearby transaction remain quiet
+PASS An unrelated manually selected player retains normal reminder sound
+PASS Personal buff reminders are not muted by a nearby cast
+PASS Sound preview remains available during nearby target settling
+PASS Supply alerts are not muted by nearby target settling
+PASS Scoped target silence expires without changing saved sound preferences
+PASS Merely opening the nearby window does not mute a normal target reminder
+PASS Cooldown keeps nearby rows visible but disarmed
+PASS Nearby successful cast catches delayed aura without UNIT_AURA
+PASS Normal self buff catches delayed aura without UNIT_AURA
+PASS Normal freshness expires instead of permanently disabling cache
+PASS Unrelated spell success never schedules buff aura retries
+PASS Recycled normal recipient cannot refresh former cast identity
+PASS Combat cancels normal buff aura retries
+PASS Secondary spell range change is detected while first spell stays in range
+PASS Nearby distinguishes low mana from fully buffed recipients
+PASS Other unusable spells are not labelled low mana
+PASS Nearby stronger rejection advances to another missing buff with helper off
+PASS Nearby row rejection skips fully blocked player for next recipient
+PASS Nearby stronger error alone does not suppress
+PASS Nearby unrelated failed spell cannot suppress recipient
+PASS Normal buff bounce remains opt in
+PASS Restore reminders restores nearby stronger buff suppression
+PASS Target options directly toggle Nearby and follow profile state
+PASS Closing Nearby stays hidden after secure visibility evaluation
+PASS Nearby heartbeat skips newly flagged player without movement or events
+PASS Nearby safety removes hovered flagged row and advances display
+PASS Nearby safety removes flagged row even while another row is hovered
+PASS Nearby heartbeat recovers initially blocked player when flag clears
+PASS Nearby heartbeat observes recipient entering combat
+PASS Nearby heartbeat observes unreadable flag state
+PASS Nearby binding rejection schedules immediate selection of next safe player
+PASS Nearby hover stability remains for safe aura updates
+PASS Nearby wheel scroll works over player rows and invite buttons
+PASS Nearby wheel clamps at both ends with the normal wheel binding
+PASS Nearby wheel refuses combat changes
+PASS Scaled Nearby window stays where it is dropped
+PASS Nearby sits under interface windows unless kept on top
+PASS SmartShift priority: return form precedes real Nearby buff on main binding
+PASS SmartShift priority: remaining own buff still precedes return
+PASS SmartShift priority: Nearby resumes after confirmed form restoration
+PASS SmartShift priority: inactive or unverified intent leaves Nearby unchanged
+PASS SmartShift priority: waiting for return cooldown does not hand binding to Nearby
+PASS SmartShift priority: real Nearby queued buff yields to queued return during GCD
+PASS SmartShift priority: Shaman return wins over optional Nearby buffs too
+PASS SmartShift priority: Nearby cleanse retains existing priority
+PASS Cleanse is off by default
+PASS A stacked poison gets Abolish Poison before buffs
+PASS A single short poison gets the plain cure
+PASS Abolish already ticking is left to work
+PASS Curse uses Remove Curse and turned-off types are skipped
+PASS Types the class cannot remove are ignored
+PASS Debuffs about to expire are skipped
+PASS Never list by name and the built-in list are honoured
+PASS Group members are cleansed after you
+PASS Right-click adds the debuff to the shared never list
+PASS Click revalidates and drops a cleansed debuff
+PASS Cleanse reminders play the cleanse sound and get a coloured border
+PASS Cleanse page sits after My buffs and lists the class spells
+PASS Classes without cleanses do not see the page
+PASS Sidebar status lights show which features are on
+PASS Old cleanse sounds move to Warm bell once and later choices stay
+PASS Cleanse sound is chosen under Binding & sound, reached from the Cleanse page
+PASS Weapon choices show the item icon when none are carried
+PASS Never list shows icons and every entry can be removed, built-ins too
+PASS A Nearby cleanse shows in the Nearby window with its spell icon
+PASS Nearby cleanses are silent and keep the main icon hidden
+PASS The keybind cleanse is marked on its Nearby row
+PASS The cleanse icon edge uses the debuff colour
+PASS A cleanse comes before that player's buffs
+PASS Nearby cleanse stays off unless turned on
+PASS Row click cleanses and refuses a cleansed debuff
+FINAL_TOTAL 335

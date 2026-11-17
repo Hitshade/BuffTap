@@ -76,7 +76,7 @@ function B:ValidateSmartShift(action,click)
   if (cd.isActive==true or (duration>0 and start+duration>GetTime())) and not self:OnlyGlobalCooldown(action,cd) then
     self.cooldownBlocked=true
     if duration>0 then self:ConsiderWake(start+duration-GetTime()+.03) end
-    return false
+    return false,"return form cooldown"
   end
   return true
 end
@@ -89,7 +89,8 @@ function B:SmartShiftAction()
   local action={source="smartshift",valid=true,key="smartshift:"..intent.spellID,id=intent.spellID,
     name=A.Text(name) and name or "Previous form",icon=icon or 134400,target="player",targetName="You",
     targetGUID=A.Call(UnitGUID,"player"),secureType="spell",reason="restore previous form",selectedAt=GetTime()}
-  return self:ValidateSmartShift(action,false) and action or nil
+  local valid,why=self:ValidateSmartShift(action,false)
+  return valid and action or nil,why
 end
 
 function B:SmartShiftEvent(event,arg,castGUID,spellID)
@@ -113,10 +114,14 @@ end
 local baseSelect=B.Select
 function B:Select()
   local action,reason=baseSelect(self)
-  if action then return action,reason end
-  local restore=self:SmartShiftAction()
+  local nearbyBuff=action and action.nearby and (not action.source or action.source=="spell")
+  if action and not nearbyBuff then return action,reason end
+  local restore,waiting=self:SmartShiftAction()
   if restore then return restore,"SmartShift restore" end
-  return nil,reason
+  -- Keep the self-buff/return sequence ahead of optional stranger buffs even
+  -- when conservative cooldown checks need one more wake before restoration.
+  if nearbyBuff and waiting=="return form cooldown" then return nil,"waiting to restore previous form" end
+  return action,reason
 end
 
 local baseValidate=B.Validate

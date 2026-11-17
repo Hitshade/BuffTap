@@ -1,3 +1,14 @@
+# BuffTap 1.26.1-beta4
+
+### Faster multi-buff flow
+Working through several missing class buffs is more responsive. BuffTap keeps the next eligible spell on your binding during the global cooldown, so repeated presses can use the game's spell queue rather than waiting for the reminder to disappear and return. The icon's cooldown sweep shows the remaining wait, without another alert at the end. There is no setup change, and each cast still requires your input.
+
+### SmartShift priority fix
+After the remaining class buffs are handled, a confirmed return to Cat Form or another supported Druid/Shaman form now takes precedence over optional Nearby buff requests. Nearby resumes afterward; its separate clickable rows remain available. A short return-form cooldown also reserves the main binding for the return instead of handing it to a passing player. Cleansing priority is unchanged.
+
+### Limits
+Independent spell cooldowns and all existing safety checks remain enforced. Ordinary queueing has owner testing; this latest Nearby interaction still needs an in-game check. Thanks to **Mechrite** for the responsiveness suggestion.
+
 # BuffTap 1.26.1-beta3
 
 ### Fixed

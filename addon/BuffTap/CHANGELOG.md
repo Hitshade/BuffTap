@@ -1,3 +1,15 @@
+# BuffTap 1.26.1-beta4
+
+### Fixed
+- SmartShift's outer `Select` wrapper previously accepted every core action before considering restoration. An eligible Nearby buff could therefore occupy the main binding indefinitely ahead of an already confirmed return form.
+- Defer only optional Nearby ordinary spell actions to validated SmartShift restoration. Core class/group/target maintenance and cleanse/helper actions retain their existing precedence. When restoration passes all state checks but is waiting for its cooldown, reserve the main binding until the existing exact wake; independent Nearby rows remain available. Disabled/unverified intents leave Nearby unchanged, and confirmed restoration resumes Nearby normally. No settings migration or new polling.
+
+### Release presentation
+- Lead player-facing notes with the practical responsiveness improvement across multiple buffs, the GCD sweep and absence of a secondary alert. Preserve Mechrite's contributor credit; distinguish owner-tested queueing from the pending live Nearby fix.
+
+### Validation
+- **335 targeted mocked Lua 5.1 checks passed, 0 failed**, including eight new SmartShift/Nearby priority cases, real Nearby candidates, main-button PreClick, remaining self buffs, restoration completion, inactive intents, exact cooldown wake, queued GCD display, Shaman restoration and unchanged Nearby cleanse precedence. Existing setup, pre-ship, queue/display and Nearby-cleanse coverage ran together. Full release suite not repeated for this narrow selection change; live beta4 confirmation remains pending.
+
 # BuffTap 1.26.1-beta3
 
 ### Fixed

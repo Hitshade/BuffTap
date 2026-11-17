@@ -2,10 +2,10 @@
 local _,B=...
 -- Keep the ten most recent releases within a 24 KiB content ceiling.
 B.PatchNotes={
- {version="1.26.1-beta3",title="Queued buff sweep and prompt SmartShift return",items={
-  "Fixed SmartShift showing the return form late after buffing. It can now prepare the return as soon as your buff and form exit are confirmed.",
-  "Queued class buffs now show a cooldown sweep while waiting for the global cooldown. The icon stays ready for your next press, without another alert when the wait ends.",
-  "SmartShift can also keep your return form ready during the global cooldown. Each cast still needs your click or binding."},thanks="Thanks to Mechrite for the smoother buffing suggestion."},
+ {version="1.26.1-beta4",title="Faster, smoother buffing",items={
+  "Refreshing several class buffs feels more responsive: the next buff stays ready during the global cooldown, so you can keep pressing your usual binding instead of waiting for the reminder to come back.",
+  "A cooldown sweep shows when your queued buff can cast. There is no second alert when the wait ends, and every cast still needs your input.",
+  "Druids and Shamans: SmartShift prepares your return form promptly after buffing. Returning now takes priority over optional Nearby buffs, so helping a passing player does not hold up your return."},thanks="Thanks to Mechrite for suggesting smoother, more responsive buffing."},
  {version="1.26.1-beta1",title="Testing smoother buffing",items={
   "BuffTap can keep your next class buff ready while the global cooldown finishes, so repeated clicks or key presses can feel smoother.",
   "This beta needs in-game testing. Your clicks still cast each buff, and spells with their own cooldown still wait."},thanks="Thanks to Mechrite for suggesting smoother buffing."},
