@@ -224,25 +224,24 @@ function B:BuildReminderEditor(parent,kind,ui)
     place(f.timerCheck,parent,26,-458); place(f.groupBadgeCheck,parent,208,-458)
     place(f.showReminderCheck,parent,458,-46,184,24); f.showReminderCheck.Text:SetText(self:Text("Show icon"))
   end
-  ui.button(parent,sup and "Move supplies reminder" or camp and "Move camping reminder" or "Move buff reminder",26,-506,176,function() B:MoveAllFrames(sup and "supply" or camp and "camp" or "buff") end)
-  ui.button(parent,"Center",212,-506,72,function() if sup then B.db.supplyX=0; B.db.supplyY=0; B:UpdateSupplyBadge() elseif camp then B.db.campX=0; B.db.campY=0; B:PreviewCampReminder() else B.db.x=0; B.db.y=-180; B.appearance=nil; B:RequestRefresh("center reminder",0) end end)
-  if not camp then place(f.resetLookButton,parent,294,-506,132,26) end
-  if sup then T.Confirm(ui.button(parent,"Reset supplies look",294,-506,132,function()
-    for _,k in ipairs({"supplySize","supplyOpacity","supplyEffectStyle","supplyEffectColor","supplyEffectSpeed","supplyTextFont","supplyTextSize","supplyTextColor","supplyTextOutline","supplyTextGap","supplyShowName","supplyShowCount","supplyIconStyle"}) do B.db[k]=nil end
+  local actionY=camp and -506 or -544
+  local move=ui.button(parent,"Move reminders",26,actionY,184,function() B:MoveAllFrames(sup and "supply" or camp and "camp" or "buff") end)
+  if not camp then f.moveReminders=move; place(f.resetLookButton,parent,230,actionY,184,26); f.resetLookButton:SetText(self:Text("Reset look & position")) end
+  if sup then T.Confirm(ui.button(parent,"Reset look & position",230,actionY,184,function()
+    for _,k in ipairs({"supplySize","supplyOpacity","supplyEffectStyle","supplyEffectColor","supplyEffectSpeed","supplyTextFont","supplyTextSize","supplyTextColor","supplyTextOutline","supplyTextGap","supplyShowName","supplyShowCount","supplyIconStyle","supplyX","supplyY"}) do B.db[k]=nil end
     B:NormalizeSupplyReminder(); B:UpdateSupplyBadge(); B:Options()
   end))
-  elseif camp then T.Confirm(ui.button(parent,"Reset camp look",294,-506,132,function()
-    for k,v in pairs({campSize=40,campOpacity=1,campEffectStyle="soft",campEffectColor="gold",campEffectSpeed="normal",campTextFont="default",campTextSize=0,campTextColor="white",campTextOutline="outline",campTextGap=4,campShowCountdown=true,campShowStacks=true}) do B.db[k]=v end
+  elseif camp then T.Confirm(ui.button(parent,"Reset look & position",230,actionY,184,function()
+    for k,v in pairs({campX=100,campY=0,campSize=40,campOpacity=1,campEffectStyle="soft",campEffectColor="gold",campEffectSpeed="normal",campTextFont="default",campTextSize=0,campTextColor="white",campTextOutline="outline",campTextGap=4,campShowCountdown=true,campShowStacks=true}) do B.db[k]=v end
     B:NormalizeCamping(); B:UpdateCamping(); B:Options()
   end)) end
-  ui.label(parent,camp and "The preview does not move or activate your live reminder." or "Hiding the icon keeps your binding and optional sounds active.",26,camp and -550 or -540,"GameFontDisableSmall",404)
+  if camp then ui.label(parent,"The preview does not move or activate your live reminder.",26,-550,"GameFontDisableSmall",404) end
   if not camp then
-    section(ui,parent,"Consumables",12,-558,416,68)
-    f.detachConsumables=ui.check(parent,"Detach consumables",26,-594,function(c)
+    f.detachConsumables=ui.check(parent,"Detach consumables",26,-506,function(c)
       if B:SetManualConsumablesDetached(c:GetChecked()==true) then B:UpdateRefinedOptions() end
     end)
-    f.moveConsumables=ui.button(parent,"Move",294,-592,132,function()
-      if B.db.manualConsumablesDetached then B:MoveAllFrames("buff") end
+    f.detachConsumables:HookScript("OnEnter",function(s)
+      T.Tooltip(s,B:Text("Detach consumables"),B:Text("Detached consumables can be positioned separately with Move reminders or Edit Mode."))
     end)
   end
   -- Icon: style for both reminders; label placement, countdown sweep and out-of-range display for the buff reminder.
@@ -689,7 +688,6 @@ end
 function B:UpdateRefinedOptions()
   if self.options and self.options.detachConsumables then
     self.options.detachConsumables:SetChecked(self.db.manualConsumablesDetached==true)
-    self.options.moveConsumables:SetEnabled(self.db.manualConsumablesDetached==true)
   end
   if self.UpdateCleansePage then self:UpdateCleansePage() end
   self:UpdateNavStatus()

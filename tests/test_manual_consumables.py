@@ -192,13 +192,13 @@ B:SetEditModeActive(true); assert(not B.editManualConsumables); B:SetEditModeAct
 """)
 
 test('Detach switch changes attachment without opening move mode', BASE+"""
-B:Options(); local f=B.options; assert(not f.detachConsumables:GetChecked() and not f.moveConsumables.enabled)
+B:Options(); local f=B.options; assert(not f.detachConsumables:GetChecked() and f.moveReminders and not f.moveConsumables)
 f.detachConsumables:SetChecked(true); f.detachConsumables.scripts.OnClick(f.detachConsumables)
-assert(B.db.manualConsumablesDetached and f.moveConsumables.enabled and not B.editModeActive)
-f.moveConsumables.scripts.OnClick(); assert(B.editModeActive and B.moveDoneBar.cancel)
+assert(B.db.manualConsumablesDetached and not B.editModeActive)
+f.moveReminders.scripts.OnClick(); assert(B.editModeActive and B.moveDoneBar.cancel)
 B.moveDoneBar.cancel.scripts.OnClick(); assert(not B.editModeActive)
 f.detachConsumables:SetChecked(false); f.detachConsumables.scripts.OnClick(f.detachConsumables)
-assert(not B.db.manualConsumablesDetached and not f.moveConsumables.enabled)
+assert(not B.db.manualConsumablesDetached)
 """)
 
 test('Cancel restores every moved position including an unfinished drag', BASE+"""
@@ -212,6 +212,15 @@ B.editManualConsumables.scripts.OnDragStart(B.editManualConsumables)
 B.moveDoneBar.cancel.scripts.OnClick()
 for _,k in ipairs(keys) do assert(B.db[k]==before[k],k) end
 assert(not B.editModeActive and not B.editManualConsumables.shown and not B.movePositionSnapshot)
+""")
+
+test('Reset look and position reattaches consumables without changing modes', BASE+"""
+manual('food'); B.db.x=300; B.db.y=200; B:SetManualConsumablesDetached(true)
+B.db.manualConsumablesX=400; B.db.manualConsumablesY=500; B:Options()
+local r=B.options.resetLookButton; r.scripts.OnClick(r); assert(B.db.manualConsumablesDetached)
+r.scripts.OnClick(r)
+assert(B.db.x==0 and B.db.y==-180 and not B.db.manualConsumablesDetached)
+assert(B.db.manualConsumablesX==0 and B.db.manualConsumablesY==0 and B.db.consumableModes.food=='manual')
 """)
 
 test('Done saves positions and a later Cancel uses the new session baseline', BASE+"""

@@ -2367,6 +2367,7 @@ function B:Options()
     button(app,L("Move icon"),18,-366,108,function() B:MoveAnchor() end)
     button(app,L("Center"),136,-366,90,function() if not A.Combat() then B.db.x=0; B.db.y=-180; B.appearance=nil; B:RequestRefresh("center icon",0); B:Options() end end)
     f.resetLookButton=button(app,L("Reset look"),236,-366,100,function()
+      if not A.Combat() then B.db.manualConsumablesDetached=false; B.db.manualConsumablesX=0; B.db.manualConsumablesY=0 end
       if not A.Combat() then B.db.showReminder=true; B.db.size=64; B.db.opacity=1; B.db.x=0; B.db.y=-180; B.db.glow=true; B.db.pulse=false; B.db.effectStyle=nil; B.db.effectColor="gold"; B.db.effectSpeed="normal"; B.db.showBuffName=false; B.db.showTargetName=true; B.db.showTimer=false; B.db.showGroupBadge=true; B.db.labelFont="default"; B.db.labelColor="default"; B.db.labelSize=0; B.db.labelOutline=B:GameTextOutline(); B.db.labelGap=5; B.appearance=nil; B:RequestRefresh("reset look",0); B:Options() end
     end)
     T.Confirm(f.resetLookButton)

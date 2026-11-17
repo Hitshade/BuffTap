@@ -1,5 +1,7 @@
 # BuffTap 1.26.0-beta1 verification
 
+Simplified-footer follow-up: Manual consumables, appearance and Camping regression modules passed **269 scenarios, zero failures**. The switch uses the single Move reminders action, with the duplicate button/card and Center actions removed. A new reset scenario confirms default main placement, consumable reattachment and preservation of Auto/Manual choices. Final spacing remains subject to owner visual review.
+
 Latest Cancel/switch follow-up: importing `test_manual_consumables`, `test_options1170` and `test_convenience` passed **738 scenarios, zero failures**. New checks exercise the real switch, Move, Done and Cancel callbacks; restore all reminder coordinates including an unfinished drag; and verify fresh/repeated session baselines. The full-suite result below predates this follow-up. The refined controls still need owner visual review in Forever.
 
 Current follow-up includes detached positioning, edit-mode integration, themed captions, centered overlay labels and whole-composition preview centering.
