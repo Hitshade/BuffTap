@@ -726,6 +726,10 @@ function B:DiagnosticsLines()
     out[#out+1]="Reason: "..tostring(a.reason).." | range: "..tostring(a.rangeSource or "not checked")
   else out[#out+1]="Next: none" end
   out[#out+1]="Solo thanks: "..tostring(self.helperThankStatus or "not observed")
+  if self.smartShiftIntent then
+    local intent=self.smartShiftIntent
+    out[#out+1]="SmartShift: buff "..(intent.verified and "confirmed" or "pending").." | form exit "..(intent.exited and "confirmed" or "pending").." | "..tostring(self.smartShiftStatus or "finishing class maintenance")
+  end
   out[#out+1]="Setup: "..self:SituationSummary()
   out[#out+1]="PvP protection: "..(self.db and self.db.pvpProtection and "on" or "off")
   if self.buffDataUnavailable then out[#out+1]="Buff information unavailable or incomplete; missing coverage cannot be assumed." end

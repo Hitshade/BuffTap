@@ -83,4 +83,5 @@ import test_pre_ship_review
 import test_gcd_queue
 import test_gcd_display
 import test_smartshift_nearby
+import test_smartshift_reliability
 print('FINAL_TOTAL',len(__import__('test_bufftap').tests))

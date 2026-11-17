@@ -1,3 +1,17 @@
+# BuffTap 1.26.1-beta5
+
+### Fixed
+- Reproduced six failures across optional provider priority, resource-event wake and delayed original-cast confirmation after a later buff had occupied the shared `buffCastAttempt`.
+- SmartShift now confirms its own original player spell success in the event dispatcher, independently of the ordinary buff aura-retry attempt. The original captured readable player GUID, exact spell and four-second bound are required. Rapid input while the original form is still active preserves that intent instead of replacing it with a later buff. Failure, combat, manual form changes and unsafe-state cancellation remain in force.
+- Restore usability failures set the existing power/mana blocked flags so `UNIT_POWER_UPDATE` can wake the return; no polling added. A later repeated same-spell failure no longer revokes an already confirmed original success.
+- Validated return forms precede optional consumable, tracking, weapon and readiness actions as well as ordinary Nearby buffs, reserving the binding on cooldown waits. Ordinary class/group/target spells and cleanse/revive priority remain unchanged. Added current SmartShift confirmation/exit stage to Check-up diagnostics. No saved setting changes or migration.
+
+### Validation
+- Full mocked Lua 5.1 release run: **2,222 passed, 0 failed**, including 12 new reliability cases covering the six reproduced failures, changed identity, rapid intent recapture, stale/other-unit success, repeated failure after confirmed success and Check-up state. Original failure reproduction recorded six failures on beta4; all now pass. Owner's intermittent beta4 delay motivated this pass; no live beta5 verification claimed.
+
+### Notes
+- Consolidated internal beta entries into one current in-game update, with one Mechrite acknowledgment and concise multi-buff responsiveness wording. Restored 1.24.2 from the stable history to retain exactly ten entries. Full technical beta records remain here.
+
 # BuffTap 1.26.1-beta4
 
 ### Fixed

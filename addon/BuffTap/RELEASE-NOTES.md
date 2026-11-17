@@ -1,3 +1,13 @@
+# BuffTap 1.26.1-beta5
+
+### Faster, smoother buffing
+The multi-buff queue and GCD sweep remain the main improvement: keep pressing your usual binding while BuffTap prepares the next eligible class buff, with no second alert when the cooldown ends. Thanks to **Mechrite** for the suggestion.
+
+### SmartShift reliability
+This beta addresses more intermittent waits. Rapid presses can no longer displace the confirmation for the self buff that started SmartShift. When mana recovers, the return is checked promptly. After class buff maintenance, the return also precedes optional consumables, tracking, weapon and readiness reminders as well as Nearby buffs. Cleansing and resurrection retain their priority, and other reminders resume after the return.
+
+Every cast still requires your input and the same identity, state and cooldown checks. The corrections have automated regression coverage; confirmation in Forever is still needed. Check-up now includes the pending SmartShift stage if a delay recurs.
+
 # BuffTap 1.26.1-beta4
 
 ### Faster multi-buff flow

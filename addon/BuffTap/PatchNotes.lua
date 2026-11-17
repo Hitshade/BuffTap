@@ -2,13 +2,11 @@
 local _,B=...
 -- Keep the ten most recent releases within a 24 KiB content ceiling.
 B.PatchNotes={
- {version="1.26.1-beta4",title="Faster, smoother buffing",items={
-  "Refreshing several class buffs feels more responsive: the next buff stays ready during the global cooldown, so you can keep pressing your usual binding instead of waiting for the reminder to come back.",
+ {version="1.26.1-beta5",title="Faster, smoother buffing",items={
+  "Buffing several spells in a row is faster and smoother. Your next class buff stays ready during the global cooldown, so keep pressing your usual binding.",
   "A cooldown sweep shows when your queued buff can cast. There is no second alert when the wait ends, and every cast still needs your input.",
-  "Druids and Shamans: SmartShift prepares your return form promptly after buffing. Returning now takes priority over optional Nearby buffs, so helping a passing player does not hold up your return."},thanks="Thanks to Mechrite for suggesting smoother, more responsive buffing."},
- {version="1.26.1-beta1",title="Testing smoother buffing",items={
-  "BuffTap can keep your next class buff ready while the global cooldown finishes, so repeated clicks or key presses can feel smoother.",
-  "This beta needs in-game testing. Your clicks still cast each buff, and spells with their own cooldown still wait."},thanks="Thanks to Mechrite for suggesting smoother buffing."},
+  "SmartShift offers your previous form after class buffs, ahead of optional consumable, tracking, weapon, readiness and Nearby reminders.",
+  "Improved SmartShift's response to rapid buffing and recovering mana."},thanks="Thanks to Mechrite for suggesting smoother, more responsive buffing."},
  {version="1.26.0",title="Manual consumables and clearer customization",items={
   "Consumables: choose Auto or Manual for Food, Flask, Elixirs and Utility. Manual shows separate clickable item icons; your normal binding and mouse wheel skip them.",
   "Labeled icons and stock counts stay centered, even with the main reminder hidden. Active effects disappear until they need refreshing; unavailable items stay dimmed.",
@@ -61,6 +59,13 @@ B.PatchNotes={
   "New \"Skip when I have none\" switch on the Weapons page: no reminder for an oil, sharpening stone or poison you have run out of, the same way buff food works.",
   "Buffs with no timer, such as Hunter aspects, Trueshot Aura and Paladin auras, no longer show a Rebuff slider that did nothing. They remind you when they are off.",
   "Fixed two lines overlapping in the Resurrection box for druids who have not learned a resurrection spell yet."},thanks="Thanks to waggz81 for the tracking idea and the Rebirth report, and a big shoutout to noci__, who has been with BuffTap since the beta, for the weapon idea."},
+ {version="1.24.2",title="Fixes",items={
+  "Personal consumables such as Juju Power and Crystal Force are now always used on yourself, even with someone else targeted.",
+  "Paladins: a blessing exception set only for raids no longer overrides your tank and healer choices in a party, and the other way around.",
+  "Remembered players can be reached and removed even when nobody of their class is in your group.",
+  "Full check-up reports leave out remembered players. Your own settings export still keeps them.",
+  "Blessing exceptions are no longer copied when you import settings onto a character of another class.",
+  "Remember now reads a player's class directly, so it works even when the group list has not caught up yet."}},
 }
 function B:PatchNotesUnread()
   return self.profileDB and self.db.optionsPatchDot~=false and self.profileDB.global.patchNotesSeen~=self.version

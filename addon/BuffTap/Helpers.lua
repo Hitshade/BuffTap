@@ -690,7 +690,8 @@ function B:BuffCastSucceeded(unit,id)
   if unit~="player" or not A.Number(id) or not attempt or id~=attempt.id or GetTime()-attempt.at>3 then return end
   if A.Call(UnitGUID,attempt.unit)~=attempt.guid then return end
   self.buffCastAttempt=nil
-  if self.SmartShiftCastSucceeded then self:SmartShiftCastSucceeded(id) end
+  -- SmartShift observes its own original cast confirmation in the dispatcher;
+  -- the general attempt here can already refer to a later queued buff.
   self.buffAuraFresh={unit=attempt.unit,guid=attempt.guid,untilTime=GetTime()+3}
   self:RefreshBuffCastAuras(attempt)
   for _,value in ipairs({{"buff-aura-early",.12},{"buff-aura-settle",.45},{"buff-aura-late",1.6}}) do
