@@ -63,7 +63,7 @@ end
 function B:CreateOptionsPreview(parent,kind,ui)
   -- Right column order: Icon, Preview, Effect. The preview is compact and ends level with Effect's top.
   local holder=CreateFrame("Frame",nil,parent,"BackdropTemplate"); local campLike=kind=="camp" or kind=="supply"
-  holder:SetSize(260,campLike and 284 or 216); holder:SetPoint("TOPLEFT",444,campLike and -104 or -218); T.Surface(holder,"card")
+  holder:SetSize(260,campLike and 328 or 248); holder:SetPoint("TOPLEFT",444,campLike and -104 or -186); T.Surface(holder,"card")
   -- The buff and camp editors share one page; without this the taller buff Icon card would inset the camp preview.
   holder.visualInsetX=444
   local heading=ui.label(holder,"PREVIEW",16,-16,T.fonts.Section,228); T.SectionTitle(heading)
@@ -184,12 +184,12 @@ function B:BuildReminderEditor(parent,kind,ui)
   local camp=kind=="camp" or sup
   local function K(campKey) return sup and (campKey:gsub("^camp","supply")) or campKey end
   section(ui,parent,"Layout",12,-12,416,100)
-  local textShift=camp and 88 or 114
-  section(ui,parent,"Text",12,-130-textShift,416,248)
+  local textShift=camp and 88 or 158
+  section(ui,parent,"Text",12,-130-textShift,416,camp and 316 or 248)
   -- Buff reminder: Icon card (with Show icon as its first row), Preview, then Effect.
   -- Icon, Preview and Effect must end above the status bar (about -630).
   local ey=camp and 0 or 2
-  section(ui,parent,"Effect",444,camp and -404 or -448,260,camp and 154 or 170)
+  section(ui,parent,"Effect",444,-448,260,170)
   local function change(key,value) self:VisualSetting(key,value) end
   local function slider(key,title,x,y,min,max,step,width,multiplier)
     -- "Icon size (px)" becomes the label "Icon size" with "px" shown inside the value field.
@@ -204,18 +204,18 @@ function B:BuildReminderEditor(parent,kind,ui)
   if not camp then f.sizeEdit=size.valueEdit; f.opacityEdit=opacity.valueEdit end
   local font=sup and f.supplyTextFont or camp and f.campingTextFont or f.fontButton
   ui.label(parent,"Font",26,-169-textShift,"GameFontHighlightSmall",110); place(font,parent,152,-164-textShift,228,26)
-  slider(camp and K("campTextSize") or "labelSize","Text size (px)",26,-210-textShift,8,20,1,228)
-  slider(camp and K("campTextGap") or "labelGap","Text spacing (px)",26,-250-textShift,0,20,1,228)
+  slider(camp and K("campTextSize") or "labelSize","Text size (px)",26,camp and -312 or -210-textShift,8,20,1,228)
+  slider(camp and K("campTextGap") or "labelGap","Text spacing (px)",26,camp and -372 or -250-textShift,0,20,1,228)
   local outline=sup and f.supplyTextOutline or camp and f.campingTextOutline or f.labelOutlineButton
   local color=sup and f.supplyTextColor or camp and f.campingTextColor or f.colorButton
-  ui.label(parent,"Outline",26,-292-textShift,"GameFontHighlightSmall",110); place(outline,parent,152,-286-textShift,228,26)
-  ui.label(parent,"Text colour",26,-330-textShift,"GameFontHighlightSmall",110); place(color,parent,152,-324-textShift,228,26)
+  ui.label(parent,"Outline",26,camp and -438 or -292-textShift,"GameFontHighlightSmall",110); place(outline,parent,152,camp and -432 or -286-textShift,228,26)
+  ui.label(parent,"Text colour",26,camp and -498 or -330-textShift,"GameFontHighlightSmall",110); place(color,parent,152,camp and -492 or -324-textShift,228,26)
   local effect=sup and f.supplyEffect or camp and f.campingEffect or f.effectButton
   local effectColor=sup and f.supplyColor or camp and f.campingColor or f.effectColorButton
   local speed=sup and f.supplySpeed or camp and f.campingSpeed or f.effectSpeedButton
-  place(effect,parent,458,camp and -442 or -480,232,26); place(effectColor,parent,458,camp and -480 or -510,232,26); place(speed,parent,458,camp and -518 or -540,232,26)
+  place(effect,parent,458,-480,232,26); place(effectColor,parent,458,camp and -526 or -510,232,26); place(speed,parent,458,camp and -572 or -540,232,26)
   if not camp then place(f.effectUrgency,parent,458,-570); place(f.effectOnce,parent,458,-594) end
-  section(ui,parent,"Visible labels",12,-130,416,camp and 70 or 96)
+  section(ui,parent,"Visible labels",12,-130,416,camp and 70 or 140)
   if sup then
     place(f.supplyShowName,parent,26,-162); place(f.supplyShowCount,parent,208,-162)
   elseif camp then
@@ -225,7 +225,7 @@ function B:BuildReminderEditor(parent,kind,ui)
     place(f.timerCheck,parent,26,-192); place(f.groupBadgeCheck,parent,208,-192)
     place(f.showReminderCheck,parent,458,-46,184,24); f.showReminderCheck.Text:SetText(self:Text("Show icon"))
   end
-  local actionY=camp and -506 or -592
+  local actionY=-592
   local move=ui.button(parent,"Move reminders",26,actionY,184,function() B:MoveAllFrames(sup and "supply" or camp and "camp" or "buff") end)
   if not camp then f.moveReminders=move; place(f.resetLookButton,parent,230,actionY,184,26); f.resetLookButton:SetText(self:Text("Reset look & position")) end
   if sup then T.Confirm(ui.button(parent,"Reset look & position",230,actionY,184,function()
@@ -236,7 +236,7 @@ function B:BuildReminderEditor(parent,kind,ui)
     for k,v in pairs({campX=100,campY=0,campSize=40,campOpacity=1,campEffectStyle="soft",campEffectColor="gold",campEffectSpeed="normal",campTextFont="default",campTextSize=0,campTextColor="white",campTextOutline="outline",campTextGap=4,campShowCountdown=true,campShowStacks=true}) do B.db[k]=v end
     B:NormalizeCamping(); B:UpdateCamping(); B:Options()
   end)) end
-  if camp then ui.label(parent,"The preview does not move or activate your live reminder.",26,-550,"GameFontDisableSmall",404) end
+  if camp then ui.label(parent,"The preview does not move or activate your live reminder.",26,-554,"GameFontDisableSmall",404) end
   if not camp then
     f.detachConsumables=ui.check(parent,"Detach consumables",26,-554,function(c)
       if B:SetManualConsumablesDetached(c:GetChecked()==true) then B:UpdateRefinedOptions() end
@@ -246,17 +246,17 @@ function B:BuildReminderEditor(parent,kind,ui)
     end)
   end
   -- Icon: style for both reminders; label placement, countdown sweep and out-of-range display for the buff reminder.
-  section(ui,parent,"Icon",444,-12,260,camp and 76 or 192)
+  section(ui,parent,"Icon",444,-12,260,camp and 76 or 160)
   local sy=camp and 0 or -32
   ui.label(parent,"Style",458,-54+sy,"GameFontHighlightSmall",76)
   local styleKey=camp and K("campIconStyle") or "iconStyle"
   local style=ui.selector(parent,"",540,-48+sy,150,function() return B:IconStyleChoices() end,function(v) change(styleKey,v) end)
   if sup then f.supplyIconStyleButton=style elseif camp then f.campIconStyleButton=style else
     f.iconStyleButton=style
-    ui.label(parent,"Labels",458,-120,"GameFontHighlightSmall",76)
-    f.labelPositionButton=ui.selector(parent,"",540,-114,150,function() return {{key="split",name="Split"},{key="above",name="Above icon"},{key="below",name="Below icon"}} end,function(v) change("labelPosition",v) end)
-    f.swipeCheck=ui.check(parent,"Rebuff countdown sweep",458,-148,function(c) change("showSwipe",c:GetChecked()==true) end)
-    f.rangeCheck=ui.check(parent,"Grey out-of-range buffs",458,-176,function(c) change("showOutOfRange",c:GetChecked()==true) end)
+    ui.label(parent,"Position",26,-234,"GameFontHighlightSmall",110)
+    f.labelPositionButton=ui.selector(parent,"",152,-228,228,function() return {{key="split",name="Split"},{key="above",name="Above icon"},{key="below",name="Below icon"}} end,function(v) change("labelPosition",v) end)
+    f.swipeCheck=ui.check(parent,"Rebuff countdown sweep",458,-116,function(c) change("showSwipe",c:GetChecked()==true) end)
+    f.rangeCheck=ui.check(parent,"Grey out-of-range buffs",458,-144,function(c) change("showOutOfRange",c:GetChecked()==true) end)
   end
   self.optionsPreviews[kind]=self:CreateOptionsPreview(parent,kind,ui)
 end

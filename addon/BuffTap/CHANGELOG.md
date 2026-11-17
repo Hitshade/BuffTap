@@ -1,6 +1,7 @@
 # BuffTap 1.26.0-beta1
 
 ### Added
+- Moved `labelPositionButton` from Icon to the Buff Visible labels card, retaining its setting and callback. Expanded that card and shifted Text below it; the smaller Icon card releases space for a taller Buff preview. Camping/Supplies now use 328px previews, taller Text cards and the same Effect/footer bottom boundary as Buff, without changing saved values or live reminder behavior. Existing preview geometry checks were updated; 269 scenarios passed across Manual consumables, appearance and Camping modules.
 - Buff appearance footer now anchors its action buttons at the Effect card's bottom edge, with the detachment switch above them.
 - Buff, Camping and Supplies appearance pages now order the left-column cards as Layout, Visible labels, then Text. Card spacing and footer positions remain consistent; settings and callbacks are unchanged.
 - Optional detached Manual strip anchor, persisted as shared visual settings and included in profile transfer. A standalone Detach consumables switch controls attachment; one Move reminders action opens all movers. Removed the redundant consumable Move button and card. Detaching seeds the first-row center without a jump and does not enter move mode. Detached strips participate in native Edit Mode even without active items; switching off resumes following the current main reminder. Edit mode disarms the live item buttons. Combat interrupts dragging without protected writes or saving an interrupted position. Sparse mover cleanup now handles absent Nearby/Camping movers.
