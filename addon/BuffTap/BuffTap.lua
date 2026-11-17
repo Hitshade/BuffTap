@@ -169,9 +169,9 @@ function B:CreateButton()
   b.label=b:CreateFontString(nil,"OVERLAY","GameFontHighlightSmall")
   b.label:SetPoint("TOP",b,"BOTTOM",0,-5)
   b.timerLabel=b:CreateFontString(nil,"OVERLAY","GameFontHighlightSmall")
-  b.timerLabel:SetPoint("BOTTOMRIGHT",b,"BOTTOMRIGHT",-3,3); b.timerLabel:SetJustifyH("RIGHT")
+  b.timerLabel:SetPoint("BOTTOM",b,"BOTTOM",0,3); b.timerLabel:SetJustifyH("CENTER")
   b.groupLabel=b:CreateFontString(nil,"OVERLAY","GameFontNormalSmall")
-  b.groupLabel:SetPoint("TOPLEFT",b,"TOPLEFT",4,-3); b.groupLabel:SetTextColor(1,0.82,0.1)
+  b.groupLabel:SetPoint("TOPRIGHT",b,"TOPRIGHT",-3,-3); b.groupLabel:SetJustifyH("RIGHT"); b.groupLabel:SetTextColor(1,0.82,0.1)
   b:SetHighlightTexture("Interface\\Buttons\\ButtonHilight-Square")
 
   -- Pulse is a native UI animation when available: no Lua OnUpdate work.

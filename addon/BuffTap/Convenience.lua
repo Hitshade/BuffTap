@@ -150,6 +150,9 @@ function B:ApplyLabelStyle(fs,settings,fontObject,defaultColor)
 end
 function B:ApplyReminderStyle(frame)
   local d=self.db
+  local timer=frame.timerLabel or frame.timer; local count=frame.groupLabel or frame.count
+  if timer then timer:ClearAllPoints(); timer:SetPoint("BOTTOM",frame,"BOTTOM",0,3); timer:SetWidth(math.max(1,frame:GetWidth()-6)); timer:SetJustifyH("CENTER") end
+  if count then count:ClearAllPoints(); count:SetPoint("TOPRIGHT",frame,"TOPRIGHT",-3,-3); count:SetJustifyH("RIGHT") end
   for _,entry in ipairs({{frame.nameLabel,"GameFontHighlightSmall"},{frame.label or frame.recipient,"GameFontHighlightSmall"},{frame.timerLabel or frame.timer,"GameFontHighlightSmall"},{frame.groupLabel or frame.count,"GameFontNormalSmall"}}) do
     self:ApplyLabelStyle(entry[1],d,entry[2],(entry[1]==frame.groupLabel or entry[1]==frame.count) and colors.gold or nil)
   end

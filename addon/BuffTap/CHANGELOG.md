@@ -1,6 +1,7 @@
 # BuffTap 1.26.0-beta1
 
 ### Added
+- Shared reminder styling anchors the group badge at TOPRIGHT with right justification and the timer at BOTTOM with centered justification and icon-relative width. Live Buff and Buff preview now use the same overlay alignment; Camping timers and consumable stock overlays are unchanged.
 - All appearance previews now use the existing themed section-heading font and accent; removed the redundant Sample display caption from Buff, Camping and Supplies previews.
 - A centered, muted, localized Consumables caption above the live strip and preview samples. The live caption has its own secure visibility driver and hides when the strip is inactive. Preview spacing reserves room for the caption, including larger labels.
 - `ManualConsumables.lua`: independent secure left-click item buttons, parented separately from the main action button. Fixed 22px icons, four per row, eight clickable effects plus informational overflow. Every partial row is centered under the main reminder anchor, accounting for visible labels. No override bindings or insecure item-use calls.

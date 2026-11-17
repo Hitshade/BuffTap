@@ -139,7 +139,7 @@ function B:UpdateOptionsPreviews()
       icon.icon:SetTexture(camp and 135805 or sample and sample.icon or "Interface\\AddOns\\BuffTap\\Media\\BuffTapIcon")
       icon.nameLabel:SetShown(not camp and d.showBuffName); icon.recipient:SetShown(not camp and d.showTargetName)
       icon.nameLabel:SetText(sample and sample.name or self:Text("Buff reminder")); icon.recipient:SetText(A.Call(UnitName,"player") or "Player")
-      icon.timer:ClearAllPoints(); icon.timer:SetPoint("BOTTOMLEFT",icon,"BOTTOMLEFT",2,2); icon.timer:SetShown(not camp and d.showTimer)
+      icon.timer:ClearAllPoints(); icon.timer:SetPoint("BOTTOM",icon,"BOTTOM",0,3); icon.timer:SetShown(not camp and d.showTimer)
       icon.count:SetShown(not camp and d.showGroupBadge)
       if camp then
         icon.time:Show(); self:StyleCampLabel(icon)
