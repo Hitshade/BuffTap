@@ -66,8 +66,7 @@ function B:CreateOptionsPreview(parent,kind,ui)
   holder:SetSize(260,campLike and 284 or 216); holder:SetPoint("TOPLEFT",444,campLike and -104 or -218); T.Surface(holder,"card")
   -- The buff and camp editors share one page; without this the taller buff Icon card would inset the camp preview.
   holder.visualInsetX=444
-  ui.label(holder,"PREVIEW",14,-12,"GameFontDisableSmall",100)
-  ui.label(holder,"Sample display",142,-12,"GameFontDisableSmall",108)
+  local heading=ui.label(holder,"PREVIEW",16,-16,T.fonts.Section,228); T.SectionTitle(heading)
   local icon=CreateFrame("Frame",nil,holder); icon:SetPoint("CENTER",holder,"CENTER",0,campLike and 0 or 24); icon:SetSize(64,64)
   icon.icon=icon:CreateTexture(nil,"ARTWORK"); icon.icon:SetAllPoints(); icon.icon:SetTexCoord(.07,.93,.07,.93)
   icon.glow=icon:CreateTexture(nil,"OVERLAY"); icon.glow:SetAllPoints(); icon.glow:SetTexture("Interface\\Buttons\\CheckButtonHilight"); icon.glow:SetBlendMode("ADD")
@@ -129,8 +128,8 @@ function B:UpdateOptionsPreviews()
         local lower=d.labelPosition=="above" and 0 or d.labelPosition=="below" and names+recipients or recipients
         local top=upper>0 and upper*size+gap+(upper-1)*2 or 0
         local bottom=lower>0 and lower*size+gap+(lower-1)*2 or 0
-        shown=math.min(shown,math.max(24,132-top-bottom)); icon:SetSize(shown,shown)
-        local center=26+top+shown/2+math.max(0,(132-top-bottom-shown)/2)
+        shown=math.min(shown,math.max(24,120-top-bottom)); icon:SetSize(shown,shown)
+        local center=38+top+shown/2+math.max(0,(120-top-bottom-shown)/2)
         icon:ClearAllPoints(); icon:SetPoint("TOP",preview,"TOP",0,-center+shown/2)
         for _,sample in ipairs(preview.manualSamples or {}) do sample:SetAlpha(d.opacity) end
         if preview.manualCaption then preview.manualCaption:SetAlpha(d.opacity) end
