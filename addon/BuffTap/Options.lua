@@ -3153,8 +3153,8 @@ function B:PreviewAppearance()
   f.recipient:ClearAllPoints(); f.recipient:SetPoint("TOP",f,"BOTTOM",0,-5)
   f.timer:SetText(L("%d sec",30)); f.timer:SetShown(self.db.showTimer)
   f.count:ClearAllPoints(); f.count:SetPoint("TOPLEFT",f,"TOPLEFT",4,-3); f.count:SetShown(self.db.showGroupBadge)
-  self:ApplyIconEffect(f,true)
   if self.ApplyReminderStyle then self:ApplyReminderStyle(f) end
+  self:ApplyIconEffect(f,true)
   f:Show()
 end
 

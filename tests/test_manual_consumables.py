@@ -17,7 +17,7 @@ end
 test('Modern glow switches shape immediately and Classic restores its original texture', """
 local B=BuffTap; local b=B.button
 B:ApplyIconStyle(b,b.icon,'modern'); B:ApplyIconEffect(b,true,{effectStyle='pulse'})
-assert(b.glow.texture=='Interface\\\\AddOns\\\\BuffTap\\\\Media\\\\ModernSquareGlow' and b.glow.shown)
+assert(b.glow.texture=='Interface\\\\AddOns\\\\BuffTap\\\\Media\\\\ModernSquareGlowStrong' and b.glow.shown)
 local key=b.buffTapEffectKey
 B:ApplyIconStyle(b,b.icon,'classic'); B:ApplyIconEffect(b,true,{effectStyle='pulse'})
 assert(b.glow.texture=='Interface\\\\Buttons\\\\CheckButtonHilight-Square' and b.glow.shown and b.buffTapEffectKey~=key)
