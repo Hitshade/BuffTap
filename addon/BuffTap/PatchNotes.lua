@@ -2,13 +2,13 @@
 local _,B=...
 -- Keep the ten most recent releases within a 24 KiB content ceiling.
 B.PatchNotes={
- {version="1.26.0-beta1",title="Manual consumable reminders",items={
-  "Consumables: choose Auto or Manual separately for Food, Flask, Elixirs and Utility. Auto keeps the usual click or mouse-wheel behavior.",
-  "Manual shows small item icons centered beneath your main reminder. Click an item directly to use it; your buff binding never consumes Manual items. The icons also work when the main reminder is hidden.",
-  "A small Consumables label identifies the icons in game and in the preview. Each row stays centered as icons appear and disappear. Counts show your stock, and unavailable items stay dimmed. Active effects disappear until they need refreshing.",
-  "Customization > Buff reminder: turn on Detach consumables, then use Move reminders to position them separately. They also get their own handle in Edit Mode. Turn the switch off to attach them again. One Move reminders button handles all reminders; Reset look & position replaces the separate Center button. Cancel in BuffTap's move screen restores positions from the start of that session.",
+ {version="1.26.0-beta2",title="Manual consumables and release review fixes",items={
+  "Consumables: choose Auto or Manual for Food, Flask, Elixirs and Utility. Manual shows separate clickable item icons; your normal binding and mouse wheel skip them.",
+  "Labeled icons and stock counts stay centered, even with the main reminder hidden. Active effects disappear until they need refreshing; unavailable items stay dimmed.",
+  "Customization > Buff reminder: Detach consumables lets you position the group separately with Move reminders or Edit Mode. Switch it off to reattach. Cancel restores the move session's starting positions; Reset look & position restores defaults.",
   "Up to eight effects can be clicked here. Hover +N to see additional effects to use from your bags. Manual icons hide in combat and while you cannot safely use them.",
-  "Customization puts Visible labels before Text for Buff, Camping and Supplies. Label position is now under Visible labels. Camping and Supplies use more of the pane and no longer add an extra border around their live icons. Classic keeps the original artwork; Modern's Soft glow and Pulse have a rounded inside and square outside. Camping applies the correct glow immediately. Group counts sit at the top right and the timer is centered at the bottom. This is a beta; please test your item choices in game."},thanks="Thanks to Xprit44 for suggesting reminders without accidental mouse-wheel consumption."},
+  "Review fixes: disabling BuffTap blocks prepared clicks immediately. SmartShift respects pauses and form cooldowns. Manual icons return on time at refresh thresholds. Appearance reset now restores all its visual choices.",
+  "Customization groups label visibility and position before text styling. Camping and Supplies have fuller layouts. Modern glow is rounded inside and square outside; timers are centered and group counts sit at the top right. This is a beta; please test in game."},thanks="Thanks to Xprit44 for suggesting reminders without accidental mouse-wheel consumption."},
  {version="1.25.0",title="Smarter class setup, SmartShift and item choices",items={
   "Druids and Shamans: turn on SmartShift under My buffs to offer your previous form after refreshing your own buffs. Returning takes another click and is always silent.",
   "Food and Elixirs: open the Category list in Choose to find items by their benefits. Your chosen items stay selected as you browse.",

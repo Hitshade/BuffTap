@@ -53,18 +53,29 @@ function B:ValidateSmartShift(action,click)
   local intent=self.smartShiftIntent
   local allowed,class=classAllowed()
   if not allowed or not intent or not action or action.source~="smartshift" or action.id~=intent.spellID
-    or not self.db or self.db.smartShift~=true or not intent.verified or not intent.exited or A.Combat()
+    or not self.db or not self.db.enabled or self.db.smartShift~=true or not intent.verified or not intent.exited or A.Combat()
     or A.Call(IsMounted)==true or self:Stealthed() or A.Call(UnitIsDeadOrGhost,"player")~=false then return false end
-  local active=self:CurrentSmartShiftForm()
-  if active then return false end -- never toggle any active form off
+  if self:ActionPauseReason(action) or not self:SituationActionCurrent(action) then return false end
+  if action.target~="player" or not A.Text(action.targetGUID) or A.Call(UnitGUID,"player")~=action.targetGUID then return false end
+  -- A failed form read is not evidence of caster form. Any active form blocks
+  -- restoration even if its spell metadata is missing or not known to the addon.
+  if A.Call(GetShapeshiftForm)~=0 then return false end
+  local casting,castError=A.Call(UnitCastingInfo,"player")
+  local channeling,channelError=A.Call(UnitChannelInfo,"player")
+  if castError or channelError or casting~=nil or channeling~=nil then return false end
   if class=="SHAMAN" and action.id~=GHOST_WOLF then return false end
   if not A.Known(action.id) then return false end
   local usable,why=A.SpellUsable(action.id)
   if usable~=true then return false,why end
   local cd=A.Call(C_Spell and C_Spell.GetSpellCooldown,action.id)
-  if type(cd)~="table" or cd.isEnabled==false then return false end
-  local start=tonumber(cd.startTime) or 0; local duration=tonumber(cd.duration) or 0
-  if start>0 and duration>0 and start+duration>GetTime() then return false end
+  if type(cd)~="table" or not A.Public(cd.isEnabled) or cd.isEnabled~=true then return false end
+  if not A.Number(cd.startTime) or not A.Number(cd.duration) then return false end
+  local start,duration=cd.startTime,cd.duration
+  if not A.Public(cd.isActive) then return false end
+  if cd.isActive==true or (duration>0 and start+duration>GetTime()) then
+    if duration>0 then self:ConsiderWake(start+duration-GetTime()+.03) end
+    return false
+  end
   return true
 end
 

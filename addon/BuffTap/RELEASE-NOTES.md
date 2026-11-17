@@ -1,25 +1,19 @@
-# BuffTap 1.26.0-beta1
+# BuffTap 1.26.0-beta2
 
 ### Added
-Camping and Supplies no longer add an extra frame around their icons. Classic shows the game's original artwork and border; Modern uses cropped artwork with a square edge. Live icons now match their appearance previews more closely.
-Modern square icons now have a Soft glow and Pulse outline with a rounded inside, like the original glow, and a square outside that fades away smoothly. The dark border sits beneath the glow rather than cutting through it. This applies to Buff, Camping and Supplies in both live reminders and previews. Classic keeps its original outline. Camping now applies the correct glow as soon as it appears or you change its icon style.
-Appearance settings put Visible labels before Text, so you choose what to display before styling it. Buff label position (Split, Above icon or Below icon) now lives there too. Camping and Supplies have taller previews, more generous text-control spacing and bottom-aligned action buttons to make fuller use of the pane.
-Want the consumable icons closer to your action bars? In Customization > Buff reminder, turn on Detach consumables, then use the single Move reminders button. Detached consumables have their own drag handle in Edit Mode, even if no items currently need reminding. Every row stays centered around that position. Turn the switch off to restore the original arrangement. The preview balances the main reminder and consumable samples together within its box.
+Food, Flask, Elixirs and Utility each have an optional **Manual** mode on Consumables. Auto keeps the existing behavior. Manual items appear as small, centered icons with stock counts; click an icon directly to use that item. The buff binding and mouse wheel skip Manual families. Solo, Party and Raid can use different modes.
 
-Appearance pages now have two aligned actions: Move reminders and Reset look & position. On Buff reminder, these sit level with the bottom of the Effect box, with the detachment switch above. Reset restores the selected reminder's default appearance and placement, so a separate Center button is unnecessary. Resetting the main reminder also reattaches its consumable icons; your Auto/Manual item choices remain unchanged.
+The strip stays visible when the main reminder is hidden or idle. Under Customization > Buff reminder, enable **Detach consumables** to position it separately with **Move reminders** or Edit Mode. Done saves; Cancel restores the move session's starting positions. Reset look & position restores defaults without changing item choices.
 
-BuffTap's move screen now offers Done and Cancel. Done keeps your changes; Cancel returns all reminder positions to where they were when you opened that move session, including any unfinished drag.
-The main buff icon now places its group count in the top-right corner and centers the remaining time along the bottom. The appearance preview matches this layout.
-Buff, Camping and Supplies previews now share the highlighted headings used by the other settings boxes, with the redundant sample caption removed.
-The small icons have a muted Consumables heading in game and in the appearance preview, so their purpose is clear without labeling every item.
-Food, Flask, Elixirs and Utility each have an Auto/Manual choice on the Consumables page. Everything starts in Auto, with the existing behavior. Choose Manual to keep reminders while using items only by clicking their small icons beneath the main buff reminder. The buff binding and mouse wheel skip Manual families. Your Solo, Party and Raid setups can use different modes.
+Appearance settings put Visible labels before Text, including label position. Camping and Supplies have larger previews and fuller layouts. Timers are centered, group counts sit at the top right, and Modern Soft glow/Pulse has a rounded inside and square outer halo.
 
-Icons stay centered under the main reminder as their number changes, including shorter rows. They remain available when the main reminder is hidden or idle. Stock counts use white above three, amber for one to three, and red for zero; uncertain stock shows a question mark. Active effects leave the strip until they need refreshing. The Buff reminder appearance preview includes sample consumable icons.
+### Fixed
+The release review corrected prepared clicks after disabling BuffTap, SmartShift ignoring pauses or waiting too long after cooldowns, Manual icons returning late at refresh thresholds, and appearance reset leaving some choices unchanged.
 
-### Safety and limits
-Each click rechecks the exact displayed item. A changed or unavailable item cancels the click and refreshes the reminder. Icons hide in combat, while dead, mounted, in a vehicle, in a pet battle or stealthed. Up to eight effects are clickable; hover +N for the remaining effects and use those items from your bags. Manual food does not pause your normal class reminders while eating. Supplies is unchanged.
+### Limits
+Up to eight Manual effects are clickable. Hover +N for remaining effects to use from your bags. Unknown stock shows a question mark. Unsafe player states hide the icons; changed items cancel the click. Manual food leaves class reminders available while eating.
 
-This internal beta has automated checks against a simulated game interface; live Forever testing is still required. Thanks to **Xprit44** for requesting food reminders without accidental mouse-wheel consumption.
+Automated regression checks passed; final Forever testing is still recommended. Thanks to **Xprit44** for the suggestion.
 
 # BuffTap 1.25.0
 

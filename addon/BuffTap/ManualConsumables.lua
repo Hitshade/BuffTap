@@ -63,10 +63,12 @@ end
 -- confirms uses, starts retries, quarantines items, or installs protected payloads.
 function B:ManualConsumableProjection(auras,cache)
   local entries,seen={},{}
+  local nextWake
   if not self.db or not self.db.enabled or not self:Preference("consumablesEnabled") then return entries end
   for _,family in ipairs(self.ConsumableFamilies or {}) do
     if not family.multi and self:ConsumableMode(family)=="manual" and self:ConsumableFamilyEnabled(family) then
       local missing,state,_,_,wake=self:ConsumableFamilyState(family,auras)
+      if A.Number(wake) and wake>0 then nextWake=math.min(nextWake or wake,wake) end
       if missing~=false then
         local chosen=self:ConsumableChoiceID(family)
         local item,unknown
@@ -94,7 +96,7 @@ function B:ManualConsumableProjection(auras,cache)
       end
     end
   end
-  return entries
+  return entries,nextWake
 end
 
 function B:ValidateManualConsumable(button)
@@ -168,7 +170,8 @@ function B:UpdateManualConsumables()
     end
   end
   if not any or unsafe() or self.editModeActive then self:DisarmManualConsumables(); return end
-  local entries=self:ManualConsumableProjection(self:GetAuras("player",false),self:RebuildConsumableCache(false))
+  local entries,nextWake=self:ManualConsumableProjection(self:GetAuras("player",false),self:RebuildConsumableCache(false))
+  self:ConsiderWake(nextWake)
   self.manualConsumableEntries=entries
   if #entries==0 then self:DisarmManualConsumables(); return end
   if not self.manualConsumableHolder then

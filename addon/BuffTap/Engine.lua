@@ -4,7 +4,7 @@
 
 local _, B = ...
 _G.BuffTap = B
-B.version = "1.26.0-beta1"
+B.version = "1.26.0-beta2"
 B.API = {}
 local A = B.API
 
@@ -366,6 +366,9 @@ function B:ReminderPauseReason()
 end
 -- The pause that applies to one action: "Buff while resting" lets Nearby actions through the resting pause.
 function B:ActionPauseReason(action)
+  -- Recheck the master switch at the click boundary, including the brief
+  -- interval before a scheduled settings refresh revokes the old payload.
+  if not self.db or not self.db.enabled then return "disabled" end
   if action and action.nearby and self.NearbyPauseReason then return self:NearbyPauseReason() end
   return self:ReminderPauseReason()
 end

@@ -233,7 +233,7 @@ function B:BuildReminderEditor(parent,kind,ui)
     B:NormalizeSupplyReminder(); B:UpdateSupplyBadge(); B:Options()
   end))
   elseif camp then T.Confirm(ui.button(parent,"Reset look & position",230,actionY,184,function()
-    for k,v in pairs({campX=100,campY=0,campSize=40,campOpacity=1,campEffectStyle="soft",campEffectColor="gold",campEffectSpeed="normal",campTextFont="default",campTextSize=0,campTextColor="white",campTextOutline="outline",campTextGap=4,campShowCountdown=true,campShowStacks=true}) do B.db[k]=v end
+    for k,v in pairs({campX=100,campY=0,campSize=40,campOpacity=1,campIconStyle="classic",campEffectStyle="soft",campEffectColor="gold",campEffectSpeed="normal",campTextFont="default",campTextSize=0,campTextColor="white",campTextOutline="outline",campTextGap=4,campShowCountdown=true,campShowStacks=true}) do B.db[k]=v end
     B:NormalizeCamping(); B:UpdateCamping(); B:Options()
   end)) end
   if camp then ui.label(parent,"The preview does not move or activate your live reminder.",26,-554,"GameFontDisableSmall",404) end
