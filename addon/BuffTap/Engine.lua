@@ -4,7 +4,7 @@
 
 local _, B = ...
 _G.BuffTap = B
-B.version = "1.26.1-beta5"
+B.version = "1.26.1-beta6"
 B.API = {}
 local A = B.API
 
@@ -1269,11 +1269,12 @@ function B:Validate(action)
     local count=A.Call(C_Item and C_Item.GetItemCount,reagent[1],false,false,false,false)
     if not A.Number(count) or count<reagent[2] then return false,"group reagent unavailable" end
   end
+  if self.SelfBuffAwaitingAura and self:SelfBuffAwaitingAura(action) then return false,"waiting for successful self buff aura" end
   local usable,err = A.SpellUsable(action.id)
   action.usable = usable==true
   if not action.usable then
     self.powerBlocked=true
-    if err==true then self.manaBlocked=true; return false,"not enough mana" end
+    if err==true then self.manaBlocked=true; self.manaWaitIcon=self.manaWaitIcon or action.icon; return false,"not enough mana" end
     return false,type(err)=="string" and err or "spell not usable (power, form, reagent or requirements)"
   end
   local cd,cdwhy = A.Call(C_Spell and C_Spell.GetSpellCooldown,action.id)
@@ -1987,6 +1988,7 @@ function B:Select()
   self.rangeBlockedKeys={}
   self.powerBlocked=false; self.manaFloorBlocked=nil
   self.manaBlocked=false
+  self.manaWaitIcon=nil
   self.cooldownBlocked=false
   self.dataPending=false
   self.targetDataPending=false

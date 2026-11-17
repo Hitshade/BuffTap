@@ -197,6 +197,11 @@ function B:CreateButton()
 
   b:SetScript("OnEnter",function()
     local action=B.action
+    if B.manaWaitVisible and not A.Combat() and B.db.showReminder~=false and not B:ActionPauseReason(nil) and GameTooltip then
+      GameTooltip:SetOwner(b,"ANCHOR_RIGHT"); GameTooltip:SetText(B.manaWaitTitle,1,.82,0.1)
+      GameTooltip:AddLine(L("BuffTap will check again as your power recovers. No spell or item is armed while waiting."),.85,.85,.85,true)
+      GameTooltip:Show(); return
+    end
     if B.db.showReminder==false or A.Combat() or B:ReminderPauseReason() or not action or not action.valid or not GameTooltip then return end
     GameTooltip:SetOwner(b,"ANCHOR_RIGHT")
     if action.source=="smartshift" then
@@ -235,6 +240,7 @@ function B:CreateButton()
   -- Never select a different action during PreClick. The displayed action is the action clicked.
   b:SetScript("PreClick",function(_,button,down)
     if button and button~="LeftButton" then return end
+    if B.manaWaitVisible then B:RequestRefresh("mana wait check",0); return end
     local ok=guarded("click validation",function()
     if A.Combat() then return end
     if B:SyncSituation() then B:Commit(nil,"setup changed before click"); B:RequestRefresh("setup changed",0); return end
@@ -334,8 +340,30 @@ function B:OutOfRangeDisplay()
   return {manual=true,valid=true,outOfRange=true,source="range",key=blocked.key,id=blocked.id,target=blocked.target,targetGUID=blocked.targetGUID,
     icon=blocked.icon,name=blocked.name,targetName=(blocked.targetName or "").." ("..self:Text("out of range")..")",reason="target out of range"}
 end
+
+-- Passive information on the existing reminder, without an action, override
+-- binding, sound or polling. Power events already wake resource-blocked work.
+function B:ShowManaWait()
+  if A.Combat() or self.action or not self.db.enabled or self:ActionPauseReason(nil)
+    or A.Call(UnitIsDeadOrGhost,'player')~=false or not (self.manaBlocked or self.manaFloorBlocked) then return end
+  local b=self.button
+  if not b or b:GetAttribute('state-safety')=='blocked' or b:GetAttribute('type1')~=nil then return end
+  local class=A.Class('player')
+  local usesMana=class~='WARRIOR' and class~='ROGUE'
+  local title=self.manaFloorBlocked and self:Text('Saving mana') or self:Text(usesMana and 'Waiting for mana' or 'Waiting for power')
+  self.manaWaitVisible=true; self.manaWaitTitle=title
+  b:SetSize(self.db.size,self.db.size); b:ClearAllPoints(); b:SetPoint('CENTER',UIParent,'CENTER',self.db.x,self.db.y)
+  b.icon:SetTexture(self.manaWaitIcon or 'Interface\\Icons\\Spell_Nature_Sleep')
+  b.icon:SetDesaturated(true); b.icon:SetVertexColor(.55,.55,.55)
+  b.nameLabel:SetText(title); b.label:SetText(self:Text('Resumes when ready'))
+  b.timerLabel:SetText(''); b.groupLabel:SetText('')
+  if b.swipe then b.swipe:Hide(); b.swipeKey=nil end
+  self:ApplyReminderVisibility(); self:UpdatePulse(); b:Show()
+end
+
 function B:Commit(action,reason)
   if A.Combat() then self.dirty=true; return end
+  self.manaWaitVisible=nil; self.manaWaitTitle=nil
   local b=self.button
   if not b then return end
   if action and action.situationRevision==nil then action.situationRevision=self.situationRevision or 0 end
@@ -647,6 +675,7 @@ function B:Refresh(captureDiagnostics)
   else self.lastError=nil end
   if ok and not action and self.db.showOutOfRange and self.rangeBlocked then action=self:OutOfRangeDisplay() end
   local commitOK,commitErr=pcall(self.Commit,self,action,reason)
+  if ok and commitOK and not action then self:ShowManaWait() end
   if not commitOK then
     self.lastError="commit: "..publicError(commitErr)
     self.reason="secure update error (see diagnostics)"
@@ -999,6 +1028,7 @@ local itemRequested=event=="ITEM_DATA_LOAD_RESULT" and A.Number(arg) and ((B.ite
   if event=="UNIT_SPELLCAST_SUCCEEDED" and B.ObserveConsumableUse then B:ObserveConsumableUse(spellID) end
 
   if event=="PLAYER_REGEN_DISABLED" then
+    B.manaWaitVisible=nil; B.manaWaitTitle=nil
     B.gcdEvidence=nil
     B.buffCastAttempt=nil; B.buffAuraFresh=nil
     for _,slot in ipairs({"buff-aura-early","buff-aura-settle","buff-aura-late"}) do B:CancelTimer(slot) end

@@ -84,4 +84,6 @@ import test_gcd_queue
 import test_gcd_display
 import test_smartshift_nearby
 import test_smartshift_reliability
+import test_mana_wait_display
+import test_self_buff_confirmation
 print('FINAL_TOTAL',len(__import__('test_bufftap').tests))

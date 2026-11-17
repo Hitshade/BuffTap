@@ -93,7 +93,49 @@ function B:RestoreHelpers()
   self.helperDismissed={}; self.helperDismissUntil={}; self.helperAttempt=nil; self.castRetry={}; self.castRetryAttempt=nil
   self:RequestRefresh("restore reminders",0)
 end
+function B:RememberSelfBuffAttempt(action)
+  if not action or action.manual or action.groupCast or action.target~='player'
+    or (action.source and action.source~='spell') or not A.Number(action.id)
+    or not A.Text(action.targetGUID) or A.Call(UnitGUID,'player')~=action.targetGUID then return end
+  local now=GetTime(); self.selfBuffAttempts=self.selfBuffAttempts or {}
+  local count=0; local oldest,oldestAt
+  for id,entry in pairs(self.selfBuffAttempts) do
+    if now-entry.at>3 then self.selfBuffAttempts[id]=nil
+    else count=count+1; if not oldestAt or entry.at<oldestAt then oldest=id; oldestAt=entry.at end end
+  end
+  if count>=16 then self.selfBuffAttempts[oldest]=nil end
+  self.selfBuffAttempts[action.id]={at=now,guid=action.targetGUID}
+end
+
+function B:ConfirmSelfBuffCast(unit,id)
+  if unit~='player' or not A.Number(id) then return end
+  local attempt=self.selfBuffAttempts and self.selfBuffAttempts[id]
+  if not attempt or GetTime()-attempt.at>3 or A.Call(UnitGUID,'player')~=attempt.guid then return end
+  self.selfBuffAttempts[id]=nil
+  self.selfBuffSettling=self.selfBuffSettling or {}
+  local count,oldest,oldestUntil=0
+  for spell,entry in pairs(self.selfBuffSettling) do
+    if entry.untilTime<=GetTime() then self.selfBuffSettling[spell]=nil
+    else count=count+1; if not oldestUntil or entry.untilTime<oldestUntil then oldest=spell; oldestUntil=entry.untilTime end end
+  end
+  if count>=16 then self.selfBuffSettling[oldest]=nil end
+  self.selfBuffSettling[id]={guid=attempt.guid,untilTime=GetTime()+.75}
+  self:InvalidateAura('player')
+  self.buffAuraFresh={unit='player',guid=attempt.guid,untilTime=GetTime()+3}
+end
+
+function B:SelfBuffAwaitingAura(action)
+  if not action or action.groupCast or action.target~='player' or (action.source and action.source~='spell') then return false end
+  local pending=self.selfBuffSettling and self.selfBuffSettling[action.id]
+  if not pending then return false end
+  local remaining=pending.untilTime-GetTime()
+  if remaining<=0 or not A.Text(action.targetGUID) or pending.guid~=action.targetGUID then self.selfBuffSettling[action.id]=nil; return false end
+  self:ConsiderWake(remaining)
+  return true
+end
+
 function B:BeginHelperAttempt(action)
+  self:RememberSelfBuffAttempt(action)
   if self.SmartShiftBegin then self:SmartShiftBegin(action) end
   local key=retryKey(action)
   self.castRetryAttempt=key and {key=key,action=action,at=GetTime(),spellID=action.id} or nil
@@ -646,6 +688,7 @@ function B:HelperEvent(event,arg,arg2,spellID)
   if event=="UNIT_AURA" and A.Text(arg) and arg=="player" and self:HelperEnabled("helperThanks") then
     self:ObserveSoloThanks()
   elseif event=="PLAYER_REGEN_DISABLED" then
+    self.selfBuffAttempts=nil; self.selfBuffSettling=nil
     self.helperThankQueue={}; self:CancelTimer("thanks-send")
     self.helperAttempt=nil; self.castRetryAttempt=nil; self.helperThankSeen=nil
     self.helperThankBaseline=nil; self.helperThankRetries=0; self.helperThankRetryPending=nil; self:CancelTimer("thanks-settle")
@@ -686,6 +729,7 @@ function B:RefreshBuffCastAuras(attempt)
   self:RequestRefresh("buff cast aura update",.03)
 end
 function B:BuffCastSucceeded(unit,id)
+  self:ConfirmSelfBuffCast(unit,id)
   local attempt=self.buffCastAttempt
   if unit~="player" or not A.Number(id) or not attempt or id~=attempt.id or GetTime()-attempt.at>3 then return end
   if A.Call(UnitGUID,attempt.unit)~=attempt.guid then return end

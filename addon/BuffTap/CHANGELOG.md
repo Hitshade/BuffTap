@@ -1,3 +1,16 @@
+# BuffTap 1.26.1-beta6
+
+### Added
+- Passive mana-wait display reuses the main reminder after successful selection returns no action with a confirmed resource block. It keeps `B.action=nil`, no secure payload/override binding, a dimmed icon, explicit waiting labels, no effects/sound, and a status tooltip. Existing power events restore normal selection. Reserve pauses are distinguished from shortages; non-mana classes say power. Hidden-reminder preferences, unsafe-state pauses and secure combat hiding remain enforced. No SavedVariables migration or polling.
+
+### Fixed
+- Investigation of jimbo1111's repeat-Thorns report confirmed that zero refresh and priority two correctly suppress a present fresh aura. A separate mocked race reproduced duplicate preparation between `UNIT_SPELLCAST_SUCCEEDED` and delayed aura visibility.
+- A captured, exact-GUID self-cast attempt now starts a 0.75s same-spell deferral only upon matching player success. The attempt and confirmation maps are bounded to 16 entries, expire, and clear on combat. Confirmation is independent of the later general buff attempt. The player's aura cache is invalidated and the existing three-second fresh-scan window is renewed. This is not optimistic aura coverage: unknown/missing auras stay unknown/missing; the same spell is retryable after expiry. Other spell IDs, other recipients and group casts are unaffected. No failure or unconfirmed click grants a deferral. This mitigates the reproduced race; the original player's live incident is not confirmed.
+- Thanks to **jimbo1111** for the report and **Mechrite** for the responsiveness suggestion.
+
+### Validation
+- **2,243 full-suite mocked Lua 5.1 checks passed, 0 failed**, including 12 new mana-display cases and nine self-buff confirmation cases. Following the final aura-cache freshening adjustment, **111 focused checks passed, 0 failed**. Coverage includes no payload/binding/sound on the wait display, resource recovery, pause/combat/visibility behavior, zero-refresh Thorns, delayed aura replay, bounded retry, unrelated spells/recipients/group casts, unconfirmed/failed attempts and displaced general attempts. No live beta6 verification claimed.
+
 # BuffTap 1.26.1-beta5
 
 ### Fixed

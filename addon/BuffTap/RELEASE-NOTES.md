@@ -1,3 +1,13 @@
+# BuffTap 1.26.1-beta6
+
+### Clearer mana waits
+The faster multi-buff queue and GCD sweep now have a companion status for mana shortages. When no cast is ready because mana is too low, the main reminder stays dimmed with **Waiting for mana** and **Resumes when ready**, even with Nearby closed. A configured reserve says **Saving mana**. This is silent and cannot cast or consume anything. Your hidden-reminder preference and normal safety pauses are respected.
+
+### Repeated self buffs
+After a confirmed successful self buff, a short grace period prevents that same spell from immediately being offered again while its aura update arrives. It does not delay another buff, change priorities or alter refresh timings. If the aura does not arrive, the brief wait expires and the spell can be offered again.
+
+This addresses a reproduced timing gap, not a confirmed reproduction of the player's exact live incident. Thanks to **jimbo1111** for the Thorns report, and **Mechrite** for the original responsiveness suggestion. The new display and safeguard need in-game testing.
+
 # BuffTap 1.26.1-beta5
 
 ### Faster, smoother buffing

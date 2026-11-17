@@ -2,11 +2,12 @@
 local _,B=...
 -- Keep the ten most recent releases within a 24 KiB content ceiling.
 B.PatchNotes={
- {version="1.26.1-beta5",title="Faster, smoother buffing",items={
+ {version="1.26.1-beta6",title="Faster, smoother buffing",items={
   "Buffing several spells in a row is faster and smoother. Your next class buff stays ready during the global cooldown, so keep pressing your usual binding.",
   "A cooldown sweep shows when your queued buff can cast. There is no second alert when the wait ends, and every cast still needs your input.",
-  "SmartShift offers your previous form after class buffs, ahead of optional consumable, tracking, weapon, readiness and Nearby reminders.",
-  "Improved SmartShift's response to rapid buffing and recovering mana."},thanks="Thanks to Mechrite for suggesting smoother, more responsive buffing."},
+  "SmartShift offers your previous form after class buffs, ahead of optional reminders. It also responds more reliably to rapid buffing and recovering mana.",
+  "Low on mana? The main reminder stays dimmed with a waiting message, even with Nearby closed. Normal reminders resume when you have enough.",
+  "A brief safeguard after a successful self buff reduces repeat casts while the game updates your buffs. Other buffs can still follow normally."},thanks="Thanks to Mechrite for the responsiveness suggestion and jimbo1111 for the repeated Thorns report."},
  {version="1.26.0",title="Manual consumables and clearer customization",items={
   "Consumables: choose Auto or Manual for Food, Flask, Elixirs and Utility. Manual shows separate clickable item icons; your normal binding and mouse wheel skip them.",
   "Labeled icons and stock counts stay centered, even with the main reminder hidden. Active effects disappear until they need refreshing; unavailable items stay dimmed.",
