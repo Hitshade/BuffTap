@@ -2,7 +2,7 @@
 local _,B=...
 -- Keep the ten most recent releases within a 24 KiB content ceiling.
 B.PatchNotes={
- {version="1.26.1-beta6",title="Faster, smoother buffing",items={
+ {version="1.26.1",title="Faster, smoother buffing",items={
   "Buffing several spells in a row is faster and smoother. Your next class buff stays ready during the global cooldown, so keep pressing your usual binding.",
   "A cooldown sweep shows when your queued buff can cast. There is no second alert when the wait ends, and every cast still needs your input.",
   "SmartShift offers your previous form after class buffs, ahead of optional reminders. It also responds more reliably to rapid buffing and recovering mana.",

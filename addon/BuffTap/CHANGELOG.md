@@ -1,74 +1,21 @@
-# BuffTap 1.26.1-beta6
+# BuffTap 1.26.1
 
 ### Added
-- Passive mana-wait display reuses the main reminder after successful selection returns no action with a confirmed resource block. It keeps `B.action=nil`, no secure payload/override binding, a dimmed icon, explicit waiting labels, no effects/sound, and a status tooltip. Existing power events restore normal selection. Reserve pauses are distinguished from shortages; non-mana classes say power. Hidden-reminder preferences, unsafe-state pauses and secure combat hiding remain enforced. No SavedVariables migration or polling.
+- GCD-aware ordinary class-buff and SmartShift preparation keeps a verified secure action and override binding available during a confirmed global cooldown. `SPELL_UPDATE_COOLDOWN` captures per-spell public start/duration evidence because Forever limits trust in `isOnGCD` to that event. Every later validation, including PreClick, requires matching timing and a fresh public zero from `GetSpellCooldownDuration(id,true):GetRemainingDuration()`. Independent cooldowns, missing APIs and restricted data retain conservative waiting behavior. Item, tracking, weapon and readiness cooldown permissions are unchanged.
+- A forward GCD sweep takes precedence over the optional reverse rebuff sweep and clears at expiry through the existing exact wake. No second completion alert, polling loop or preference migration.
+- A passive main-reminder status explains mana shortages and configured reserve pauses while keeping `B.action=nil`, no secure payload, no override binding and no sound/effects. Existing power events restore selection. Visibility preferences, other pauses and secure combat hiding remain enforced; non-mana classes say power.
 
 ### Fixed
-- Investigation of jimbo1111's repeat-Thorns report confirmed that zero refresh and priority two correctly suppress a present fresh aura. A separate mocked race reproduced duplicate preparation between `UNIT_SPELLCAST_SUCCEEDED` and delayed aura visibility.
-- A captured, exact-GUID self-cast attempt now starts a 0.75s same-spell deferral only upon matching player success. The attempt and confirmation maps are bounded to 16 entries, expire, and clear on combat. Confirmation is independent of the later general buff attempt. The player's aura cache is invalidated and the existing three-second fresh-scan window is renewed. This is not optimistic aura coverage: unknown/missing auras stay unknown/missing; the same spell is retryable after expiry. Other spell IDs, other recipients and group casts are unaffected. No failure or unconfirmed click grants a deferral. This mitigates the reproduced race; the original player's live incident is not confirmed.
-- Thanks to **jimbo1111** for the report and **Mechrite** for the responsiveness suggestion.
-
-### Validation
-- **2,243 full-suite mocked Lua 5.1 checks passed, 0 failed**, including 12 new mana-display cases and nine self-buff confirmation cases. Following the final aura-cache freshening adjustment, **111 focused checks passed, 0 failed**. Coverage includes no payload/binding/sound on the wait display, resource recovery, pause/combat/visibility behavior, zero-refresh Thorns, delayed aura replay, bounded retry, unrelated spells/recipients/group casts, unconfirmed/failed attempts and displaced general attempts. No live beta6 verification claimed.
-
-# BuffTap 1.26.1-beta5
-
-### Fixed
-- Reproduced six failures across optional provider priority, resource-event wake and delayed original-cast confirmation after a later buff had occupied the shared `buffCastAttempt`.
-- SmartShift now confirms its own original player spell success in the event dispatcher, independently of the ordinary buff aura-retry attempt. The original captured readable player GUID, exact spell and four-second bound are required. Rapid input while the original form is still active preserves that intent instead of replacing it with a later buff. Failure, combat, manual form changes and unsafe-state cancellation remain in force.
-- Restore usability failures set the existing power/mana blocked flags so `UNIT_POWER_UPDATE` can wake the return; no polling added. A later repeated same-spell failure no longer revokes an already confirmed original success.
-- Validated return forms precede optional consumable, tracking, weapon and readiness actions as well as ordinary Nearby buffs, reserving the binding on cooldown waits. Ordinary class/group/target spells and cleanse/revive priority remain unchanged. Added current SmartShift confirmation/exit stage to Check-up diagnostics. No saved setting changes or migration.
-
-### Validation
-- Full mocked Lua 5.1 release run: **2,222 passed, 0 failed**, including 12 new reliability cases covering the six reproduced failures, changed identity, rapid intent recapture, stale/other-unit success, repeated failure after confirmed success and Check-up state. Original failure reproduction recorded six failures on beta4; all now pass. Owner's intermittent beta4 delay motivated this pass; no live beta5 verification claimed.
-
-### Notes
-- Consolidated internal beta entries into one current in-game update, with one Mechrite acknowledgment and concise multi-buff responsiveness wording. Restored 1.24.2 from the stable history to retain exactly ten entries. Full technical beta records remain here.
-
-# BuffTap 1.26.1-beta4
-
-### Fixed
-- SmartShift's outer `Select` wrapper previously accepted every core action before considering restoration. An eligible Nearby buff could therefore occupy the main binding indefinitely ahead of an already confirmed return form.
-- Defer only optional Nearby ordinary spell actions to validated SmartShift restoration. Core class/group/target maintenance and cleanse/helper actions retain their existing precedence. When restoration passes all state checks but is waiting for its cooldown, reserve the main binding until the existing exact wake; independent Nearby rows remain available. Disabled/unverified intents leave Nearby unchanged, and confirmed restoration resumes Nearby normally. No settings migration or new polling.
-
-### Release presentation
-- Lead player-facing notes with the practical responsiveness improvement across multiple buffs, the GCD sweep and absence of a secondary alert. Preserve Mechrite's contributor credit; distinguish owner-tested queueing from the pending live Nearby fix.
-
-### Validation
-- **335 targeted mocked Lua 5.1 checks passed, 0 failed**, including eight new SmartShift/Nearby priority cases, real Nearby candidates, main-button PreClick, remaining self buffs, restoration completion, inactive intents, exact cooldown wake, queued GCD display, Shaman restoration and unchanged Nearby cleanse precedence. Existing setup, pre-ship, queue/display and Nearby-cleanse coverage ran together. Full release suite not repeated for this narrow selection change; live beta4 confirmation remains pending.
-
-# BuffTap 1.26.1-beta3
-
-### Fixed
-- Reproduced SmartShift latency with `SPELL_UPDATE_COOLDOWN` arriving before `UNIT_SPELLCAST_SUCCEEDED` and `UPDATE_SHAPESHIFT_FORM`. Beta2 observed the form only once its intent was verified and exited, so the first GCD evidence was lost and the return waited until cooldown expiry or another event.
-- Observe the known intent form's public cooldown tuple during the event even while confirmation is pending. This grants no cast permission: `ValidateSmartShift` still requires verified success, confirmed exit and all existing current-state/independent cooldown checks. Ordinary queue and sweep behavior remain unchanged; no settings changes or migration.
-
-### Validation
-- **163 focused mocked Lua 5.1 checks passed, 0 failed** across core, 1.25 setup/SmartShift, pre-ship safety and GCD queue/display modules. The new real-dispatcher test fails on beta2 with "return delayed until GCD end", passes on beta3 within 0.1s of confirmation, and asserts that the earlier, unconfirmed state cannot offer a return. Full suite was not repeated for this narrow event-observation correction; no live beta3 verification claimed.
-
-# BuffTap 1.26.1-beta2
-
-### Added
-- Successful GCD-only validation records public start/duration on the action and schedules an expiry wake. The main overlay prioritizes a forward cooldown sweep for queued GCDs regardless of `showSwipe`; the optional reverse rebuff sweep resumes afterward. Expired or cancelled actions clear the GCD display. No new preference, migration, polling or secondary alert.
-
-### Changed
-- Event-scoped evidence also observes a verified, exited SmartShift intent's learned form spell. Druid/Shaman restore validation accepts only confirmed GCD-only waits, retaining identity, current caster form, settings, pause, resource and independent cooldown checks. SmartShift marks rejected cooldowns for event refresh. Ordinary class self buffs already use the shared validator; items/readiness/cleanse/revive/tracking remain excluded.
-- Thanks to **Mechrite** for the original queue suggestion. Owner reports beta1 ordinary buff queue works in Forever; beta2's new sweep and return-form behavior have not been live tested.
-
-### Validation
-- Full mocked Lua 5.1 regression run: **2,201 passed, 0 failed**. Fifteen new display/SmartShift cases cover sweep precedence/direction, expiry without a cooldown-end event, cancellation, no secondary sound, Druid/Shaman return forms and Mage/Shaman/Hunter/Paladin self-buff actions. The 20 beta1 queue cases remain included, with the source exclusion assertion updated for SmartShift's explicit permission.
-
-# BuffTap 1.26.1-beta1
-
-### Changed
-- Ordinary spell validation may retain a secure action during a confirmed GCD. Previously any active spell cooldown removed the action and override binding until the cooldown-end refresh.
-- `SPELL_UPDATE_COOLDOWN` performs an event-scoped refresh because Forever's `isOnGCD` documentation limits its trust to that event. Evidence is keyed by spell and exact public start/duration, replaced on every cooldown event, cleared on combat/error, and expires with the cooldown.
-- Every reuse, including PreClick, requires a fresh `GetSpellCooldownDuration(id,true):GetRemainingDuration()` equal to public zero, so an independent cooldown cannot inherit GCD permission. Missing APIs, restricted values and exceptions fail closed. Existing learned/usability, situation, identity, range, reagent and fresh aura checks remain in place. No automatic casts, polling or SavedVariables migration. Helpers and items do not receive this exception.
-- Thanks to **Mechrite** for the responsiveness suggestion.
+- SmartShift now observes its intent form's cooldown before success/form-exit events arrive, but still grants restoration only after both confirmations and all runtime guards pass. Confirmation observes the original exact player spell/GUID independently of the shared general attempt, with the existing four-second bound. Rapid pre-exit input preserves the first intent; a later repeated failure cannot revoke an already confirmed success.
+- Restore usability failures set the existing power/mana flags so resource recovery triggers a refresh. Validated restoration precedes optional consumables, tracking, weapons, readiness and ordinary Nearby buffs, reserving the binding during a cooldown wait. Class/group/target spell maintenance and cleanse/revive precedence remain unchanged. Check-up reports pending SmartShift stages.
+- A successful self-cast confirmation starts a 0.75-second same-spell aura-settling deferral, keyed by readable self GUID. Captured-attempt and confirmation maps are bounded to 16 entries, expire, and clear on combat. Confirmation refreshes the player's aura cache and existing three-second fresh-scan window. This does not mark an aura present: the spell becomes retryable after expiry if still missing. Other spell IDs, recipients and group casts are unaffected; failed/unconfirmed clicks grant no deferral.
+- Preserved all settings, refresh thresholds and priorities. No SavedVariables migration, automatic casts or new permanent polling. Consolidated internal beta notes into one current release while retaining ten in-game versions.
+- Thanks to **Mechrite** for the responsiveness suggestion and **jimbo1111** for reporting repeated Thorns.
 
 ### Validation and limits
-- Full mocked Lua 5.1 release run: **2,186 passed, 0 failed**, including 20 new GCD regressions in `test_gcd_queue.py`. Tests exercise the real dispatcher and PreClick, delayed aura delivery, real cooldowns, missing/restricted APIs, changed timing/identity, combat, master disable and exception cleanup.
-- `probe_gcd_timing.py` compares tag `v1.26.0` with the working tree: next Thorns action and binding ready at 1.56s versus 0.00s in a simulated 1.50s GCD with immediately confirmed aura coverage. This measures preparation, not actual casting throughput. No live Forever casting or spell-queue timing has been verified for this beta.
+- Final 1.26.1 mocked Lua 5.1 release suite: **2,243 passed, 0 failed**. All 15 Mage item/use/enchant/weapon mappings match reviewed catalog evidence. Runtime Lua was compared with the owner-tested beta6 archive and matches apart from release identity; in-game notes retain exactly ten entries and both contributor credits.
+- Owner confirmed the beta6 live smoke test: rapid self-buffing, low mana/recovery, SmartShift return with Nearby enabled and settings surviving reload. This does not establish every class, latency or server-event combination.
+- The delayed-aura duplicate path was reproduced in mocks; jimbo1111's exact live incident remains unconfirmed. The safeguard mitigates that window without claiming every possible repeat cast is eliminated. The timing probe measured earlier action preparation, not a reduction in the game's GCD or guaranteed casting throughput.
 
 # BuffTap 1.26.0
 

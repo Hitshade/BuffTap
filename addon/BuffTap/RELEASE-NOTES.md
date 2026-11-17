@@ -1,61 +1,18 @@
-# BuffTap 1.26.1-beta6
-
-### Clearer mana waits
-The faster multi-buff queue and GCD sweep now have a companion status for mana shortages. When no cast is ready because mana is too low, the main reminder stays dimmed with **Waiting for mana** and **Resumes when ready**, even with Nearby closed. A configured reserve says **Saving mana**. This is silent and cannot cast or consume anything. Your hidden-reminder preference and normal safety pauses are respected.
-
-### Repeated self buffs
-After a confirmed successful self buff, a short grace period prevents that same spell from immediately being offered again while its aura update arrives. It does not delay another buff, change priorities or alter refresh timings. If the aura does not arrive, the brief wait expires and the spell can be offered again.
-
-This addresses a reproduced timing gap, not a confirmed reproduction of the player's exact live incident. Thanks to **jimbo1111** for the Thorns report, and **Mechrite** for the original responsiveness suggestion. The new display and safeguard need in-game testing.
-
-# BuffTap 1.26.1-beta5
+# BuffTap 1.26.1
 
 ### Faster, smoother buffing
-The multi-buff queue and GCD sweep remain the main improvement: keep pressing your usual binding while BuffTap prepares the next eligible class buff, with no second alert when the cooldown ends. Thanks to **Mechrite** for the suggestion.
+Working through several class buffs is more responsive. The next eligible spell stays on your usual binding during the global cooldown, letting repeated presses use the game's spell queue. A cooldown sweep shows the wait, without another alert when it finishes. No setup change is needed; every cast still requires your input.
 
-### SmartShift reliability
-This beta addresses more intermittent waits. Rapid presses can no longer displace the confirmation for the self buff that started SmartShift. When mana recovers, the return is checked promptly. After class buff maintenance, the return also precedes optional consumables, tracking, weapon and readiness reminders as well as Nearby buffs. Cleansing and resurrection retain their priority, and other reminders resume after the return.
+### Clearer mana pauses
+When mana runs low, the main reminder stays dimmed with **Waiting for mana** and **Resumes when ready**, even with Nearby closed. A configured reserve says **Saving mana**. The status is silent and cannot cast or use an item; normal reminders return when enough mana is available.
 
-Every cast still requires your input and the same identity, state and cooldown checks. The corrections have automated regression coverage; confirmation in Forever is still needed. Check-up now includes the pending SmartShift stage if a delay recurs.
+### More reliable SmartShift
+Druid and Shaman return forms can queue too. After class buff maintenance, the return takes priority over optional consumable, tracking, weapon, readiness and Nearby reminders. Rapid presses and recovering mana no longer cause the reproduced delays. Cleansing and resurrection keep their priority.
 
-# BuffTap 1.26.1-beta4
+### Repeat-cast safeguard
+A brief wait after a confirmed successful self buff reduces repeat offers while the game updates its aura. Other spells remain eligible, and missing effects become retryable afterward. Refresh settings and priorities are unchanged. This addresses a reproduced timing gap; jimbo1111's exact live Thorns incident remains unconfirmed.
 
-### Faster multi-buff flow
-Working through several missing class buffs is more responsive. BuffTap keeps the next eligible spell on your binding during the global cooldown, so repeated presses can use the game's spell queue rather than waiting for the reminder to disappear and return. The icon's cooldown sweep shows the remaining wait, without another alert at the end. There is no setup change, and each cast still requires your input.
-
-### SmartShift priority fix
-After the remaining class buffs are handled, a confirmed return to Cat Form or another supported Druid/Shaman form now takes precedence over optional Nearby buff requests. Nearby resumes afterward; its separate clickable rows remain available. A short return-form cooldown also reserves the main binding for the return instead of handing it to a passing player. Cleansing priority is unchanged.
-
-### Limits
-Independent spell cooldowns and all existing safety checks remain enforced. Ordinary queueing has owner testing; this latest Nearby interaction still needs an in-game check. Thanks to **Mechrite** for the responsiveness suggestion.
-
-# BuffTap 1.26.1-beta3
-
-### Fixed
-SmartShift could miss the cooldown information it needed when the game reported the global cooldown before confirming the buff and form exit. The return form now uses that earlier information as soon as both confirmations arrive, rather than waiting for another cooldown update.
-
-The ordinary buff queue and GCD sweep are retained. Returning still requires your input, and an unconfirmed or failed buff never permits a return. This timing correction has automated event-order coverage and needs a fresh in-game check.
-
-# BuffTap 1.26.1-beta2
-
-### Added
-A standard cooldown sweep now shows the wait on a queued class-buff icon. It appears automatically, with no settings change, and disappears when the global cooldown finishes. If you use the optional rebuff countdown sweep, that display resumes afterward. Finishing the wait does not create an extra reminder sound.
-
-### Changed
-Druid and Shaman SmartShift return forms can now stay available during a confirmed global cooldown too. Ordinary class self buffs already share this queue behavior, including armors, shields, aspects and blessings. Spells with their own cooldown still wait; item-use cooldown behavior is unchanged.
-
-### Limits
-The owner confirmed smoother ordinary buffing in beta1. The new sweep and form extension need in-game testing. Existing safety checks and settings are retained, and every cast still requires your input. Thanks to **Mechrite** for the original suggestion.
-
-# BuffTap 1.26.1-beta1
-
-### Changed
-This test build prepares an eligible next class buff during the global cooldown, instead of temporarily removing the buff binding. Repeated clicks or key presses can then reach the game's normal spell queue. No setup changes are needed, and your existing choices are preserved.
-
-### Limits
-Each cast still needs your input. The improvement depends on clear cooldown information from the Forever client; spells with a separate cooldown and uncertain information retain the previous waiting behavior. Consumable and helper cooldown rules are unchanged. This has automated coverage but still needs in-game testing for how smooth it feels.
-
-Thanks to **Mechrite** for raising the delay between buffs.
+Existing settings are preserved. Owner testing covered rapid buffing, mana recovery, SmartShift with Nearby enabled and settings after reload. Thanks to **Mechrite** for suggesting more responsive buffing and **jimbo1111** for the Thorns report.
 
 # BuffTap 1.26.0
 
