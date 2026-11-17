@@ -163,7 +163,7 @@ function B:ReadinessContext()
   if A.Call(IsMounted)~=false or A.Call(UnitInVehicle,"player")~=false then return false,"mounted, vehicle or state unreadable" end
   local cast,err=A.Call(UnitCastingInfo,"player"); local channel,cerr=A.Call(UnitChannelInfo,"player")
   if err or cerr or cast~=nil or channel~=nil then return false,"casting / channeling or state unreadable" end
-  if self:Preference("consumablesEnabled") and self:Preference("consumableFamilies").food then
+  if self:Preference("consumablesEnabled") and self:Preference("consumableFamilies").food and self:ConsumableMode(self:ConsumableFamily("food"))=="auto" then
     local auras=self:GetAuras("player",false)
     if not auras then return false,"eating state unreadable" end
     for _,aura in ipairs(auras) do if self.EatingSpellIDs[aura.spellId] then return false,"eating" end end

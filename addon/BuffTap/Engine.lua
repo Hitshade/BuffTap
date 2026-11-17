@@ -4,7 +4,7 @@
 
 local _, B = ...
 _G.BuffTap = B
-B.version = "1.25.0"
+B.version = "1.26.0-beta1"
 B.API = {}
 local A = B.API
 
@@ -99,7 +99,7 @@ function B:InitDB()
     seconds=45, rebuffVersion=1, sound=false, reminderSound="cleanse", alertSoundVersion=0, supplySound="glass", campAlertSound="harp", cleanseSound="bell", socialSound="hello", nearbySocialAlert=false, nearbySocialFriends=true, nearbySocialGuild=true, cleanseEnabled=false, cleanseTypes={Magic=true,Curse=true,Poison=true,Disease=true}, cleanseSelf=true, cleanseGroup=true, cleanseTarget=true, cleanseNearby=false, cleansePreferAbolish=true, cleanseBorder=true, reviveEnabled=false, reviveGroup=true, reviveTarget=true, reviveRebirth=false, cleanseFirst=false, smartShift=false, soundChannel="Master", soundInterval=5, glow=true, pulse=false, group=true, smartGroup=true,
     groupNeed=3, blessingNeed=2, friendlyTarget=false, targetSeconds=300, keys={"MOUSEWHEELDOWN"}, buffs={}, priorities={}, buffSeconds={},
     pauseResting=false, targetClassBlessings=true, targetClasses={}, targetBlessingFallback=true, targetBlessingClasses={}, targetBlessingPriorities={}, groupBlessingPriorities={}, blessingAssignments=false, blessingClasses={}, blessingGroupOverrides={}, buffGroups={}, buffClasses={}, buffGroupNeed={}, targetBuffs={}, targetBuffSeconds={}, showBuffName=false, showTargetName=true, showTimer=false, showGroupBadge=true,
-    pickerBagsOnly=true, supplyCustom={}, consumablesEnabled=false, consumableFamilies={}, consumableChoices={}, consumableSeconds={},
+    pickerBagsOnly=true, supplyCustom={}, consumablesEnabled=false, consumableFamilies={}, consumableChoices={}, consumableSeconds={}, consumableModes={},
     suppliesEnabled=false, suppliesChat=false, suppliesSound=false, suppliesReadyCheck=false, supplySettings={},
     weaponReminder=true, weaponMainHand=true, weaponOffHand=true,
     consumablesPauseResting=false, weaponsPauseResting=false, weaponSkipEmpty=false, helperTrackingFollow=true,
@@ -203,6 +203,11 @@ function B:InitDB()
   if type(self.db.targetClasses) ~= "table" then self.db.targetClasses = {} end
   for key,map in pairs(self.db.targetClasses) do if type(key)~="string" or type(map)~="table" then self.db.targetClasses[key]=nil end end
   if type(self.db.consumableFamilies) ~= "table" then self.db.consumableFamilies = {} end
+  if type(self.db.consumableModes)~="table" then self.db.consumableModes={} end
+  for key,value in pairs(self.db.consumableModes) do
+    local family=self.ConsumableFamily and self:ConsumableFamily(key)
+    if not family or family.hidden or (value~="auto" and value~="manual") then self.db.consumableModes[key]=nil end
+  end
   if type(self.db.consumableChoices) ~= "table" then self.db.consumableChoices = {} end
   if type(self.db.consumableSeconds) ~= "table" then self.db.consumableSeconds = {} end
   -- Removed in 1.0.0: inventory-only potion tracking. Preserve other choices.
@@ -1965,7 +1970,7 @@ function B:Select()
     return nil,bgReason
   end
 
-  if self:Preference("consumablesEnabled") and self:Preference("consumableFamilies").food then
+  if self:Preference("consumablesEnabled") and self:Preference("consumableFamilies").food and self:ConsumableMode(self:ConsumableFamily("food"))=="auto" then
     local eatingAuras=self:GetAuras("player",false)
     for _,aura in ipairs(eatingAuras or {}) do
       if self.EatingSpellIDs and self.EatingSpellIDs[aura.spellId] then

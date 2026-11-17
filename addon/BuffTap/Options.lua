@@ -2231,11 +2231,16 @@ function B:Options()
       end)
       row.icon=row:CreateTexture(nil,"ARTWORK"); row.icon:SetSize(30,30); row.icon:SetPoint("TOPLEFT",42,-8); row.icon:SetTexture(134400)
       row.name=label(row,family.name,82,-8,"GameFontHighlight",210)
+      row.auto=flatButton(row,L("Auto"),300,-5,62,function() if B:SetConsumableMode(family,"auto") then B:Options() end end)
+      row.manual=flatButton(row,L("Manual"),366,-5,68,function() if B:SetConsumableMode(family,"manual") then B:Options() end end)
+      row.auto:SetHeight(22); row.manual:SetHeight(22)
+      local modeHelp="Auto: offered by BuffTap's normal binding. Manual: shown below the icon; click its small icon to use it. Never uses your BuffTap binding."
+      addHelp(row.auto,"Consumable mode",modeHelp); addHelp(row.manual,"Consumable mode",modeHelp)
       row.choice=label(row,"Auto",82,-29,"GameFontHighlightSmall",420)
       row.prev=button(row,L("Choose"),584,-8,86,function(btn) B:ChooseConsumable(btn:GetParent().family,btn,B:EditorContext("consumables")) end)
       row.inventory=label(row,"",450,-11,"GameFontHighlightSmall",120)
       label(row,family.protectPresent and (family.key=="utility" and "Preserve active utility; remind after expiry" or "Preserve active elixirs; remind after expiry") or "Rebuff at",42,-52,"GameFontDisableSmall",family.protectPresent and 390 or 62)
-      addHelp(row.enable,"Maintain this consumable buff","Enable this family to maintain its selected item. Utility maintains one choice; recognized active utility effects are preserved until expiry. Enable consumable reminders above too. Preferences stay saved when supplies run out.")
+      addHelp(row.enable,"Maintain this consumable buff","Enable this family to monitor its selected effects. Auto offers items on your normal binding; Manual uses separate click-only icons. Enable consumable reminders above too. Preferences stay saved when supplies run out.")
       row.threshold=compactSlider(row,30,1800,30,230,formatSeconds,function(slider,value)
         local fam=slider:GetParent().family
         if fam then B:SetSituationValue(B:EditorContext("consumables"),"consumables","consumableSeconds",value,fam.key); B:InvalidateAura("player"); B:RequestRefresh("consumable threshold",0.08) end
@@ -2245,13 +2250,13 @@ function B:Options()
         -- Ticked items: a row of icons (hover for the name and stock).
         row.strip={}
         for j=1,12 do
-          local b=CreateFrame("Frame",nil,row); b:SetSize(18,18); b:SetPoint("TOPLEFT",150+(j-1)*21,-27); b:EnableMouse(true)
+          local b=CreateFrame("Frame",nil,row); b:SetSize(18,18); b:SetPoint("TOPLEFT",150+(j-1)*21,-32); b:EnableMouse(true)
           b.tex=b:CreateTexture(nil,"ARTWORK"); b.tex:SetAllPoints(); b:Hide()
           b:SetScript("OnEnter",function(s) if s.title then T.Tooltip(s,s.title,s.body) end end)
           b:SetScript("OnLeave",function() if GameTooltip then GameTooltip:Hide() end end)
           row.strip[j]=b
         end
-        row.more=label(row,"",150+12*21,-29,"GameFontDisableSmall",40)
+        row.more=label(row,"",150+12*21,-34,"GameFontDisableSmall",40)
       end
       f.consumableRows[index]=row
     end
@@ -2857,6 +2862,9 @@ function B:Options()
           local count=self:ConsumableCount(chosen)
           row.inventory:SetText(count>0 and ("|cff88dd88"..count.." in bags|r") or "|cffffbb44Out of stock|r")
         elseif family.explicitChoice then row.choice:SetText(L("Choose an item to track")); row.inventory:SetText(L("Not selected")) end
+        local mode=self:ConsumableMode(family,self:EditorSettings("consumables"))
+        T.Navigation(row.auto,mode=="auto"); T.Navigation(row.manual,mode=="manual")
+        if mode=="manual" then row.choice:SetText(L("Manual")..": "..(row.choice:GetText() or "")) end
       end
     end
     local paused=false; for _ in pairs(self.effectPauses or {}) do paused=true; break end

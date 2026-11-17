@@ -2,6 +2,12 @@
 local _,B=...
 -- Keep the ten most recent releases within a 24 KiB content ceiling.
 B.PatchNotes={
+ {version="1.26.0-beta1",title="Manual consumable reminders",items={
+  "Consumables: choose Auto or Manual separately for Food, Flask, Elixirs and Utility. Auto keeps the usual click or mouse-wheel behavior.",
+  "Manual shows small item icons centered beneath your main reminder. Click an item directly to use it; your buff binding never consumes Manual items. The icons also work when the main reminder is hidden.",
+  "Each row stays centered as icons appear and disappear. Counts show your stock, and unavailable items stay dimmed. Active effects disappear until they need refreshing.",
+  "Up to eight effects can be clicked here. Hover +N to see additional effects to use from your bags. Manual icons hide in combat and while you cannot safely use them.",
+  "Customization > Buff reminder now previews the smaller item icons. This is a beta; please test your item choices in game."},thanks="Thanks to Xprit44 for suggesting reminders without accidental mouse-wheel consumption."},
  {version="1.25.0",title="Smarter class setup, SmartShift and item choices",items={
   "Druids and Shamans: turn on SmartShift under My buffs to offer your previous form after refreshing your own buffs. Returning takes another click and is always silent.",
   "Food and Elixirs: open the Category list in Choose to find items by their benefits. Your chosen items stay selected as you browse.",
@@ -55,15 +61,6 @@ B.PatchNotes={
  {version="1.24.1",title="Blessing exceptions you can keep",items={
   "Paladins: the blessing exception you set for yourself on the Groups page (for example Kings instead of Wisdom) is now saved and survives reloads and logouts.",
   "Exceptions for other players still last for the current session, unless you tick Remember on their row. Remembered players keep their blessing the next time you group, and show greyed out with a Remove button while they are away."},thanks="Thanks to Misketadam for the report."},
- {version="1.24.0",title="Special buffs",items={
-  "The Utility checklist now has special buffs: Magical Awareness (Elemental Attractor or Arcane Censer), the three Zanzas, Jujus, the Blasted Lands buffs, Un'Goro crystals and the Dire Maul drinks.",
-  "Magical Awareness is one buff: tick either item and BuffTap uses whichever you carry.",
-  "Only one Zanza can be ticked, and any active Zanza counts.",
-  "Short combat items such as Juju Flurry and Juju Escape are left out, since they are not worth keeping up.",
-  "If a new item ever does not give the buff BuffTap expects, its reminder pauses and says so instead of using more.",
-  "Supplies counts now update even with supply warnings off.",
-  "Settings export now includes your tracked supplies and the Supplies reminder's look and position.",
-  "The Supplies reminder's Pulse effect now animates in play, not just in the preview."},thanks="Thanks to Lufia_TM for the Elemental Attractor request."},
 }
 function B:PatchNotesUnread()
   return self.profileDB and self.db.optionsPatchDot~=false and self.profileDB.global.patchNotesSeen~=self.version

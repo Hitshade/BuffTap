@@ -78,4 +78,5 @@ import test_favor
 import test_elixirs
 import test_user_reload
 import test_release_125
+import test_manual_consumables
 print('FINAL_TOTAL',len(__import__('test_bufftap').tests))

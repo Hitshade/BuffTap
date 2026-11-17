@@ -656,6 +656,13 @@ function B:Refresh(captureDiagnostics)
     end
   end
   self.dirty=false; self.pendingReason=nil
+  if self.UpdateManualConsumables then
+    local manualOK,manualErr=pcall(self.UpdateManualConsumables,self)
+    if not manualOK then
+      self.lastError="manual consumables: "..publicError(manualErr)
+      if self.DisarmManualConsumables then self:DisarmManualConsumables() end
+    end
+  end
   if self.SyncSupplies then self:SyncSupplies() end
 
   -- Exact wake-up for the next aura crossing a rebuff threshold or cooldown end.

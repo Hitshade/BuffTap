@@ -1,0 +1,174 @@
+from test_bufftap import test
+
+BASE="""local B=BuffTap
+UnitInVehicle=function() return false end
+local function manual(key)
+ B.db.consumablesEnabled=true; B.db.consumableFamilies[key]=true; B.db.consumableModes[key]='manual'
+ return B:ConsumableFamily(key)
+end
+local function put(f,i)
+ local item=f.items[i or 1]; stock(item.id,item.useSpell); return item
+end
+local function icon(key)
+ for _,b in ipairs(B.manualConsumableButtons or {}) do if b.entry and b.entry.family.key==key then return b end end
+end
+"""
+
+test('Manual modes default to legacy Auto without inventory work',
+     "local B=BuffTap; assert(B:ConsumableMode(B:ConsumableFamily('food'))=='auto'); assert(not B.manualConsumableButtons and countCalls==0)")
+
+test('Five Manual effects never displace a normal class buff or binding', BASE+"""
+put(manual('food')); put(manual('flask')); local e=manual('ferocity'); put(e); stock(13452,17538)
+B.db.consumableFamilies['elixir:250350']=true; B.db.consumableFamilies['elixir:13452']=true
+local u=manual('utility'); local item=put(u); B.db.consumableFamilies['utility:'..item.id]=true
+B:InvalidateConsumables(); refresh(); assert(B.action and B.action.id==5232)
+assert(B.manualConsumableEntries,'no projection: '..tostring(B.lastError)..' vehicle '..tostring(UnitInVehicle and UnitInVehicle('player')))
+assert(#B.manualConsumableEntries==5 and bindings.MOUSEWHEELDOWN=='BuffTapActionButton:LeftButton')
+for _,b in ipairs(B.manualConsumableButtons) do if b.action then assert(b.action.manualConsumable and b.attrs.unit=='player' and b.attrs.type1=='item') end end
+""")
+
+test('Manual strip survives an idle or hidden main reminder without a wheel binding', BASE+"""
+local f=manual('food'); local item=put(f); consumables('food'); B.db.showReminder=false
+refresh(); assert(not B.action and not B.button.shown and not next(bindings))
+local b=assert(icon('food')); assert(b.shown and b.action and b.parent~=B.button)
+""")
+
+for count in (12,3,1,0):
+ test('Manual stock overlay reflects known count '+str(count), BASE+f"""
+local f=manual('food'); local item=put(f); bags[item.id]={count}; refresh()
+local b=assert(icon('food')); assert(b.count.text=='{count}'); assert((b.attrs.type1=='item')==({count}>0))
+""")
+
+test('Unknown stock is not a red zero and cannot arm', BASE+"""
+local f=manual('food'); local item=put(f); local old=C_Item.GetItemCount
+C_Item.GetItemCount=function(id,...) if id==item.id then return nil end return old(id,...) end
+B:InvalidateConsumables(); refresh(); local b=assert(icon('food')); assert(b.count.text=='?' and not b.action and not b.attrs.type1)
+""")
+
+test('Unreadable auras show uncertainty without a clickable missing assertion', BASE+"""
+put(manual('food')); B.GetAuras=function() return nil,'unreadable' end; refresh()
+local b=assert(icon('food')); assert(b.count.text=='?' and b.entry.unknown and not b.attrs.type1)
+""")
+
+test('Click-only item uses exact stored payload and settles once', BASE+"""
+local item=put(manual('food')); refresh(); local b=assert(icon('food')); local exact=b.action.itemID
+b.scripts.PreClick(b,'LeftButton',false); assert(b.attrs.item=='item:'..exact and B.itemAttempts[exact])
+bags[exact]=bags[exact]-1; b.scripts.PostClick(b,'LeftButton',false)
+assert(not b.attrs.type1 and B.consumablePending.food>now); refresh(); assert(not icon('food').attrs.type1)
+assert(not (B.action and B.action.source=='consumable'))
+""")
+
+test('Item disappearing before click never substitutes another supported food', BASE+"""
+local f=manual('food'); local first=put(f); local second=put(f,2); refresh(); local b=assert(icon('food')); local id=b.action.itemID
+bags[id]=0; b.scripts.PreClick(b,'LeftButton',false); assert(not b.attrs.type1 and not B.itemAttempt)
+assert(bags[second.id]==5); refresh(); assert(icon('food').action.itemID==second.id)
+""")
+
+test('Wrong-button and down phases do not start item attempts', BASE+"""
+put(manual('flask')); refresh(); local b=assert(icon('flask'))
+b.scripts.PreClick(b,'RightButton',false); b.scripts.PostClick(b,'RightButton',false); assert(not B.itemAttempt)
+b.scripts.PreClick(b,'LeftButton',true); b.scripts.PostClick(b,'LeftButton',true); assert(not B.itemAttempt)
+""")
+
+test('Separate elixir effects produce separate icons and shared lines deduplicate', BASE+"""
+manual('ferocity'); stock(13452,17538); stock(9187,11334); stock(250350,1250985)
+for _,id in ipairs({13452,9187,250350}) do B.db.consumableFamilies['elixir:'..id]=true end
+refresh(); assert(#B.manualConsumableEntries==2)
+aura('player',17538,'Mongoose'); refresh(); assert(#B.manualConsumableEntries==1 and B.manualConsumableEntries[1].item.id==250350)
+""")
+
+test('Auto Manual toggles synchronously revoke old payloads', BASE+"""
+stock(13510,17626); consumables('flask'); refresh(); assert(B.button.attrs.item)
+B:SetConsumableMode(B:ConsumableFamily('flask'),'manual'); assert(not B.button.attrs.item and not next(bindings))
+local b=assert(icon('flask')); assert(b.attrs.item); B:SetConsumableMode(B:ConsumableFamily('flask'),'auto')
+assert(not b.attrs.item and not b.shown and B.action.itemID==13510 and bindings.MOUSEWHEELDOWN)
+""")
+
+test('Disabled families revoke Manual buttons without losing saved mode', BASE+"""
+put(manual('flask')); refresh(); local b=assert(icon('flask')); B.db.consumableFamilies.flask=false
+b.scripts.PreClick(b,'LeftButton',false); assert(not b.attrs.item); refresh(); assert(not b.shown and B.db.consumableModes.flask=='manual')
+""")
+
+test('Safety driver disarms in combat and does not restore stale items', BASE+"""
+local item=put(manual('food')); refresh(); local b=assert(icon('food')); combat=true; b.secure=true
+local fn=assert(loadstring('local self,newstate=...; '..b.attrs['_onstate-safety']))
+b.attrs['state-safety']='blocked'; fn(b,'blocked'); b.secure=false
+B:UpdateManualConsumables(); b.scripts.PreClick(b,'LeftButton',false); assert(not b.attrs.item and not b.shown)
+combat=false; b.secure=true; b.attrs['state-safety']='ready'; fn(b,'ready'); b.secure=false
+assert(not b.attrs.item and not b.shown); bags[item.id]=0; refresh(); assert(not b.attrs.type1)
+""")
+
+test('Manual mode preserves Auto eating pause but adds no global eating gate', BASE+"""
+put(manual('food')); local eat=next(B.EatingSpellIDs); aura('player',eat,'Eating',20,30)
+refresh(); assert(B.action and B.action.id==5232); assert(B:ReadinessContext())
+B.db.consumableModes.food='auto'; refresh(); assert(not B.action and B.reason=='eating'); assert(not B:ReadinessContext())
+""")
+
+test('Rapid different-family attempts confirm independently', BASE+"""
+local f=put(manual('food')); local flask=put(manual('flask')); refresh()
+local a=assert(icon('food')); local b=assert(icon('flask')); a.scripts.PreClick(a,'LeftButton',false); a.scripts.PostClick(a,'LeftButton',false)
+b.scripts.PreClick(b,'LeftButton',false); b.scripts.PostClick(b,'LeftButton',false)
+assert(B.itemAttempts[f.id] and B.itemAttempts[flask.id])
+bags[f.id]=4; B:ObserveConsumableUse(); assert(B.confirmedItems.food==f.id and B.itemAttempts[flask.id])
+B:ObserveConsumableUse(flask.useSpell); assert(B.confirmedItems.flask==flask.id and not B.itemAttempts)
+""")
+
+test('Projection does not validate or mutate pending effect checks', BASE+"""
+put(manual('flask')); B:RebuildConsumableCache(); local a=B:GetAuras('player',false)
+B.ValidateConsumable=function() error('projection must not validate') end
+B.confirmedItems={flask=13510}; local list=B:ManualConsumableProjection(a,B.consumableCache)
+assert(#list==1 and B.confirmedItems.flask==13510 and not B.confirmedChecks and not B.effectPauses)
+""")
+
+test('Every partial icon row is centered under the main anchor', """
+local B=BuffTap
+for n=1,9 do
+ local width=math.min(4,n)*26-4
+ for first=1,n,4 do
+  local last=math.min(first+3,n); local x=B:ManualConsumableOffset(first,n); local right=B:ManualConsumableOffset(last,n)
+  assert(math.abs((x+right+22)/2-width/2)<.01,'not centered '..n..' '..first)
+ end
+end
+""")
+
+test('Preview contains noninteractive samples and leaves Supplies alone', """
+local B=BuffTap; B:Options(); local p=B.optionsPreviews.buff
+assert(p:GetHeight()==216 and #p.manualSamples==3 and not p.hint.shown)
+for _,s in ipairs(p.manualSamples) do assert(not s.protected and not s.attrs.type1 and not s.scripts.OnClick) end
+assert(B.optionsPreviews.supply:GetHeight()==284)
+""")
+
+for name,change in (
+ ('mounted', 'IsMounted=function() return true end'),
+ ('dead', 'UnitIsDeadOrGhost=function() return true end'),
+ ('vehicle', 'UnitInVehicle=function() return true end'),
+ ('pet battle', 'C_PetBattles={IsInBattle=function() return true end}'),
+ ('unknown vehicle', 'UnitInVehicle=function() return nil end'),
+ ('changed player identity', "local old=UnitGUID; UnitGUID=function(u) if u=='player' then return 'replacement' end return old(u) end"),
+ ('disabled master', 'B.db.consumablesEnabled=false'),
+ ('disabled family', 'B.db.consumableFamilies.food=false'),
+ ('quarantined item', "B.itemQuarantine={[item.id]='test quarantine'}"),
+ ('unloaded metadata', 'items[item.id].loaded=false'),
+ ('changed use spell', 'items[item.id].spell=999999'),
+ ('active cooldown', 'C_Item.GetItemCooldown=function() return GetTime(),30,true end'),
+ ('unmet item level', 'UnitLevel=function() return 0 end'),
+):
+ test('Exact Manual click cancels for '+name, BASE+"""
+local item=put(manual('food')); refresh(); local b=assert(icon('food')); assert(b.attrs.type1=='item')
+"""+change+"""
+b.scripts.PreClick(b,'LeftButton',false); assert(not b.attrs.type1 and not b.attrs.item and not B.itemAttempt)
+""")
+
+test('Manual projection and secure pool remain bounded with overflow', BASE+"""
+manual('ferocity'); manual('utility')
+for _,f in ipairs(B.ConsumableFamilies) do
+ if f.parent and (f.parent.key=='ferocity' or f.parent.key=='utility') then
+  B.db.consumableFamilies[f.key]=true; put(f)
+ end
+end
+B:InvalidateConsumables(); refresh(); assert(#B.manualConsumableEntries>8)
+local clickable=0
+for _,b in ipairs(B.manualConsumableButtons) do if b.attrs.type1 then clickable=clickable+1 end end
+assert(clickable<=8 and #B.manualConsumableButtons==9)
+local extra=B.manualConsumableButtons[9]; assert(extra.overflow and not extra.attrs.type1 and extra.count.text:sub(1,1)=='+')
+""")

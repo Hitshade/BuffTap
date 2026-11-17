@@ -1,3 +1,20 @@
+# BuffTap 1.26.0-beta1
+
+### Added
+- `ManualConsumables.lua`: independent secure left-click item buttons, parented separately from the main action button. Fixed 22px icons, four per row, eight clickable effects plus informational overflow. Every partial row is centered under the main reminder anchor, accounting for visible labels. No override bindings or insecure item-use calls.
+- `consumableModes` is a validated per-family map in profile and situation consumable settings. Missing values retain Auto; checklist children inherit their parent mode. Existing settings require no destructive migration. Options retains existing row heights and adds compact Auto/Manual controls. The Buff preview gains noninteractive stock samples; Supplies is unchanged.
+
+### Fixed and protected
+- Manual families are excluded from `SelectConsumable` and the normal binding. Manual food does not introduce the legacy Auto-food eating gate into class selection or readiness.
+- Preparation and PreClick validate exact item identity, metadata, current stock, level, cooldown, effect state, settings, player/profile/situation identity and pending/quarantined attempts. Rejected clicks clear payloads and invalidate stale caches without substituting an item during the click.
+- Secure state drivers clear and hide protected payloads for combat, death, mounting, vehicles, pet battles and stealth. Returning to a ready state never restores an old item; fresh out-of-combat evaluation is required.
+- Item-use observation tracks attempts by item so rapid clicks on different families do not overwrite confirmation evidence. Shared use-spell evidence cannot confirm ambiguous attempts; inventory loss remains exact-item evidence.
+
+### Validation and known limits
+- Executed mocked regression suite: 2,118 scenarios passed, zero failed, including 125 focused/base scenarios for Manual consumables. See `VERIFICATION-1.26.0-beta1.md` for evidence and remaining client checks. No live Forever validation is claimed.
+- The secure pool is bounded at eight clickable effects. Overflow lists remaining effects for bag use. Unknown aura/stock/metadata and unavailable safety APIs fail closed. No new polling loop, item catalog, sound or Supplies behavior was added.
+- Thanks to **Xprit44** for the Manual consumable reminder suggestion.
+
 # BuffTap 1.25.0
 
 ### Added

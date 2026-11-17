@@ -145,6 +145,21 @@ function B:ConsumableFamilyEnabled(family,settings)
   return self.db and enabled==true and self:ConsumableFamilySelected(family,settings)
 end
 
+-- Mode belongs to the visible family; checklist children inherit it. Missing means legacy Auto.
+function B:ConsumableMode(family,settings)
+  local parent=family and (family.parent or family)
+  local modes=settings and settings.consumableModes or self:Preference("consumableModes")
+  return parent and type(modes)=="table" and modes[parent.key]=="manual" and "manual" or "auto"
+end
+function B:SetConsumableMode(family,mode)
+  if A.Combat() or not family or family.hidden or (mode~="auto" and mode~="manual") then return false end
+  self:EditorSettings("consumables").consumableModes[family.key]=mode
+  self:InvalidateConsumables()
+  -- Immediately revoke a main item before preparing any Manual buttons (and vice versa).
+  self:Refresh(false)
+  return true
+end
+
 function B:ConsumableThreshold(family,settings)
   local values=settings and settings.consumableSeconds or self:Preference("consumableSeconds")
   local value=family and values and values[family.thresholdKey or family.key]
@@ -486,6 +501,7 @@ function B:ValidateConsumable(action,forceAura,forceInventory)
   local resting=self:CategoryRestingPause("consumables"); if resting then return false,"consumables "..resting end
   local family=self:ConsumableFamily(action.familyKey)
   if not family or not self:ConsumableFamilyEnabled(family) then return false,"consumable family disabled" end
+  if (self:ConsumableMode(family)=="manual")~=(action.manualConsumable==true) then return false,"consumable mode changed" end
 
   local static
   for _,item in ipairs(family.items or {}) do if item.id==action.itemID then static=item; break end end
@@ -505,12 +521,15 @@ function B:ValidateConsumable(action,forceAura,forceInventory)
     self.itemQuarantine[action.itemID]="item mapping changed; disabled until reload"
     return false,self.itemQuarantine[action.itemID]
   end
+  local level=A.Call(UnitLevel,"player")
+  if not A.Number(info.minLevel) or not A.Number(level) or level<info.minLevel then return false,"item level unavailable or not met" end
   local configured=self:ConsumableChoiceID(family)
   if configured and configured~=action.itemID then return false,"preferred item changed" end
   local count,why
   if forceInventory then count,why=safeItemCount(action.itemID)
   else count,why=self:ConsumableCount(action.itemID) end
   if count==nil then return false,why end
+  action.stock=count
   if count<1 then return false,"item no longer in bags" end
 
   local pending=self.consumablePending and self.consumablePending[family.key]
@@ -565,7 +584,7 @@ function B:ValidateConsumable(action,forceAura,forceInventory)
   return true
 end
 
-function B:ResolveConsumableItem(family,item)
+function B:ResolveConsumableItem(family,item,manual)
   local info=self:ConsumableItemInfo(item.id,item)
   if not info or not info.loaded then return nil,"item metadata unavailable" end
   local level=A.Call(UnitLevel,"player")
@@ -573,13 +592,14 @@ function B:ResolveConsumableItem(family,item)
 
   local action={id=item.id,itemID=item.id,itemToken="item:"..tostring(item.id),name=info.name,icon=info.texture,
     key="consumable:"..family.key,familyKey=family.key,target="player",targetName=A.Call(UnitName,"player") or "player",
-    targetGUID=A.Call(UnitGUID,"player"),source="consumable",secureType="item",valid=false,pendingSeconds=family.pendingSeconds or 2}
+    targetGUID=A.Call(UnitGUID,"player"),source="consumable",secureType="item",valid=false,pendingSeconds=family.pendingSeconds or 2,
+    manualConsumable=manual==true,situationRevision=self.situationRevision or 0}
   local valid,reason=self:ValidateConsumable(action,false)
   if not valid then return nil,reason end
   return action
 end
 
-function B:ResolveConsumable(family)
+function B:ResolveConsumable(family,manual)
   local chosen=self:ConsumableChoiceID(family)
   if family.explicitChoice and not chosen then return nil,"choose an item in options" end
   local reason="no supported item in bags"
@@ -587,7 +607,7 @@ function B:ResolveConsumable(family)
     if not chosen or chosen==item.id then
       local count=self:ConsumableCount(item.id)
       if count>0 then
-        local ok,action,why=pcall(self.ResolveConsumableItem,self,family,item)
+        local ok,action,why=pcall(self.ResolveConsumableItem,self,family,item,manual)
         if ok and action and not (self.HelperSuppressed and self:HelperSuppressed(action)) then return action end
         reason=ok and why or "item provider unavailable"
         self:AddDiag("item "..item.id..": "..tostring(reason))
@@ -603,7 +623,7 @@ function B:SelectConsumable()
   if self.stats then self.stats.consumableSelects=(self.stats.consumableSelects or 0)+1 end
   self:RebuildConsumableCache(false)
   for _,family in ipairs(self.ConsumableFamilies or {}) do
-    if not family.multi and self:ConsumableFamilyEnabled(family) then
+    if not family.multi and self:ConsumableFamilyEnabled(family) and self:ConsumableMode(family)=="auto" then
       local action,why=self:ResolveConsumable(family)
       if action then
         action.reason="consumable: "..tostring(action.needState or "missing")
@@ -621,27 +641,37 @@ end
 function B:BeforeConsumableClick(action)
   local count=safeItemCount(action.itemID)
   if not count then return end
-  local old=self.itemAttempt
+  self.itemAttempts=self.itemAttempts or {}
+  local old=self.itemAttempts[action.itemID]
   if old and old.id==action.itemID and GetTime()-old.at<2 then return end
   local info=self.itemMeta and self.itemMeta[action.itemID]
   self.itemAttempt={id=action.itemID,count=count,at=GetTime(),family=action.familyKey,
     spellID=info and info.spellID,delay=action.pendingSeconds or 2}
+  self.itemAttempts[action.itemID]=self.itemAttempt
 end
 
 function B:ObserveConsumableUse(spellID)
-  local attempt=self.itemAttempt
-  if not attempt then return end
-  if GetTime()-attempt.at>3 then self.itemAttempt=nil; return end
-  local count=safeItemCount(attempt.id)
-  if (A.Number(spellID) and spellID==attempt.spellID) or (count and count<attempt.count) then
+  local attempts=self.itemAttempts or {}
+  if self.itemAttempt then attempts[self.itemAttempt.id]=self.itemAttempt end
+  local matches=0
+  for _,attempt in pairs(attempts) do
+    if GetTime()-attempt.at<=3 and A.Number(spellID) and spellID==attempt.spellID then matches=matches+1 end
+  end
+  for id,attempt in pairs(attempts) do
+    local count=safeItemCount(attempt.id)
+    if GetTime()-attempt.at>3 then
+      attempts[id]=nil; if self.itemAttempt==attempt then self.itemAttempt=nil end
+    elseif (count and count<attempt.count) or (matches==1 and spellID==attempt.spellID) then
     self.consumablePending=self.consumablePending or {}
     self.consumablePending[attempt.family]=GetTime()+math.max(5,attempt.delay)
     self.confirmedItems=self.confirmedItems or {}; self.confirmedItems[attempt.family]=attempt.id
     if self.confirmedChecks then self.confirmedChecks[attempt.family]=nil end
-    self.itemAttempt=nil
+    attempts[id]=nil; if self.itemAttempt==attempt then self.itemAttempt=nil end
     self:InvalidateConsumables(); self:InvalidateAura("player")
     self:RequestRefresh("confirmed item use",0.05)
+    end
   end
+  self.itemAttempts=next(attempts) and attempts or nil
 end
 
 function B:AfterConsumableClick(action)

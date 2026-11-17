@@ -63,12 +63,12 @@ end
 function B:CreateOptionsPreview(parent,kind,ui)
   -- Right column order: Icon, Preview, Effect. The preview is compact and ends level with Effect's top.
   local holder=CreateFrame("Frame",nil,parent,"BackdropTemplate"); local campLike=kind=="camp" or kind=="supply"
-  holder:SetSize(260,campLike and 284 or 168); holder:SetPoint("TOPLEFT",444,campLike and -104 or -218); T.Surface(holder,"card")
+  holder:SetSize(260,campLike and 284 or 216); holder:SetPoint("TOPLEFT",444,campLike and -104 or -218); T.Surface(holder,"card")
   -- The buff and camp editors share one page; without this the taller buff Icon card would inset the camp preview.
   holder.visualInsetX=444
   ui.label(holder,"PREVIEW",14,-12,"GameFontDisableSmall",100)
   ui.label(holder,"Sample display",142,-12,"GameFontDisableSmall",108)
-  local icon=CreateFrame("Frame",nil,holder); icon:SetPoint("CENTER",holder,"CENTER",0,0); icon:SetSize(64,64)
+  local icon=CreateFrame("Frame",nil,holder); icon:SetPoint("CENTER",holder,"CENTER",0,campLike and 0 or 24); icon:SetSize(64,64)
   icon.icon=icon:CreateTexture(nil,"ARTWORK"); icon.icon:SetAllPoints(); icon.icon:SetTexCoord(.07,.93,.07,.93)
   icon.glow=icon:CreateTexture(nil,"OVERLAY"); icon.glow:SetAllPoints(); icon.glow:SetTexture("Interface\\Buttons\\CheckButtonHilight"); icon.glow:SetBlendMode("ADD")
   icon.pulseAnimation=icon.glow:CreateAnimationGroup(); local out=icon.pulseAnimation:CreateAnimation("Alpha"); out:SetFromAlpha(1); out:SetToAlpha(.3); out:SetDuration(.7); out:SetOrder(1)
@@ -81,6 +81,17 @@ function B:CreateOptionsPreview(parent,kind,ui)
   for _,fs in ipairs({icon.nameLabel,icon.recipient,icon.timer,icon.count,icon.time}) do T.Track(fs,"preview") end
   holder.hint=ui.label(holder,kind=="supply" and "What is running low" or kind=="camp" and "Camp timer and rest stacks" or "Hidden icon: binding stays active",14,-(holder:GetHeight()-27),"GameFontDisableSmall",232)
   holder.hint:SetJustifyH("CENTER")
+  if not campLike then
+    holder.hint:Hide()
+    holder.manualSamples={}
+    for i,spec in ipairs({{"INV_Misc_Food_33",20},{"INV_Potion_65",3},{"INV_Potion_93",0}}) do
+      local sample=CreateFrame("Frame",nil,holder); sample:SetSize(22,22); sample:SetPoint("TOPLEFT",93+(i-1)*26,-182); sample:EnableMouse(false)
+      sample.icon=sample:CreateTexture(nil,"ARTWORK"); sample.icon:SetAllPoints(); sample.icon:SetTexture("Interface\\Icons\\"..spec[1]); sample.icon:SetDesaturated(spec[2]==0)
+      sample.count=sample:CreateFontString(nil,"OVERLAY","GameFontNormalSmall"); sample.count:SetPoint("BOTTOMRIGHT",1,-1); sample.count:SetText(tostring(spec[2]))
+      sample.count:SetTextColor(1,spec[2]==0 and .3 or spec[2]<=3 and .7 or 1,spec[2]==0 and .3 or spec[2]<=3 and .1 or 1)
+      holder.manualSamples[i]=sample
+    end
+  end
   holder.icon=icon; holder.kind=kind
   holder:HookScript("OnHide",function() B:StopIconEffect(icon) end)
   return holder
@@ -108,7 +119,18 @@ function B:UpdateOptionsPreviews()
       preview.hint:SetText(self:Text("What is running low")); icon.icon:SetAlpha(1)
     elseif not active then self:StopIconEffect(icon) else
       local d=self.db; local camp=kind=="camp"
-      local shown=math.min(camp and 96 or 72,camp and d.campSize or d.size); icon:SetSize(shown,shown); icon:SetAlpha(camp and d.campOpacity or d.opacity)
+      local shown=math.min(camp and 96 or 64,camp and d.campSize or d.size); icon:SetSize(shown,shown); icon:SetAlpha(camp and d.campOpacity or d.opacity)
+      if not camp then
+        local size=math.max(10,d.labelSize or 10); local gap=d.labelGap or 5
+        local names=(d.showBuffName and 1 or 0); local recipients=(d.showTargetName and 1 or 0)
+        local upper=d.labelPosition=="below" and 0 or d.labelPosition=="above" and names+recipients or names
+        local lower=d.labelPosition=="above" and 0 or d.labelPosition=="below" and names+recipients or recipients
+        local top=upper>0 and upper*size+gap+(upper-1)*2 or 0
+        local bottom=lower>0 and lower*size+gap+(lower-1)*2 or 0
+        local center=26+top+shown/2+math.max(0,(150-top-bottom-shown)/2)
+        icon:ClearAllPoints(); icon:SetPoint("TOP",preview,"TOP",0,-center+shown/2)
+        for _,sample in ipairs(preview.manualSamples or {}) do sample:SetAlpha(d.opacity) end
+      end
       local sample
       if not camp then for _,def in ipairs(self.Buffs) do if def.class==A.Class("player") and def.kind~="group" then sample=def; break end end end
       icon.icon:SetTexture(camp and 135805 or sample and sample.icon or "Interface\\AddOns\\BuffTap\\Media\\BuffTapIcon")
@@ -155,7 +177,7 @@ function B:BuildReminderEditor(parent,kind,ui)
   -- Buff reminder: Icon card (with Show icon as its first row), Preview, then Effect.
   -- Icon, Preview and Effect must end above the status bar (about -630).
   local ey=camp and 0 or 2
-  section(ui,parent,"Effect",444,-404+ey,260,camp and 154 or 214)
+  section(ui,parent,"Effect",444,camp and -404 or -448,260,camp and 154 or 170)
   local function change(key,value) self:VisualSetting(key,value) end
   local function slider(key,title,x,y,min,max,step,width,multiplier)
     -- "Icon size (px)" becomes the label "Icon size" with "px" shown inside the value field.
@@ -179,8 +201,8 @@ function B:BuildReminderEditor(parent,kind,ui)
   local effect=sup and f.supplyEffect or camp and f.campingEffect or f.effectButton
   local effectColor=sup and f.supplyColor or camp and f.campingColor or f.effectColorButton
   local speed=sup and f.supplySpeed or camp and f.campingSpeed or f.effectSpeedButton
-  place(effect,parent,458,-442+ey,232,26); place(effectColor,parent,458,-480+ey,232,26); place(speed,parent,458,-518+ey,232,26)
-  if not camp then place(f.effectUrgency,parent,458,-556+ey); place(f.effectOnce,parent,458,-584+ey) end
+  place(effect,parent,458,camp and -442 or -480,232,26); place(effectColor,parent,458,camp and -480 or -510,232,26); place(speed,parent,458,camp and -518 or -540,232,26)
+  if not camp then place(f.effectUrgency,parent,458,-570); place(f.effectOnce,parent,458,-594) end
   section(ui,parent,"Visible labels",12,-396,416,camp and 70 or 96)
   if sup then
     place(f.supplyShowName,parent,26,-428); place(f.supplyShowCount,parent,208,-428)
