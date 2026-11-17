@@ -50,6 +50,7 @@ function B:SmartShiftCastSucceeded(spellID)
 end
 
 function B:ValidateSmartShift(action,click)
+  if action then action.gcdStart=nil; action.gcdDuration=nil end
   local intent=self.smartShiftIntent
   local allowed,class=classAllowed()
   if not allowed or not intent or not action or action.source~="smartshift" or action.id~=intent.spellID
@@ -72,7 +73,8 @@ function B:ValidateSmartShift(action,click)
   if not A.Number(cd.startTime) or not A.Number(cd.duration) then return false end
   local start,duration=cd.startTime,cd.duration
   if not A.Public(cd.isActive) then return false end
-  if cd.isActive==true or (duration>0 and start+duration>GetTime()) then
+  if (cd.isActive==true or (duration>0 and start+duration>GetTime())) and not self:OnlyGlobalCooldown(action,cd) then
+    self.cooldownBlocked=true
     if duration>0 then self:ConsiderWake(start+duration-GetTime()+.03) end
     return false
   end

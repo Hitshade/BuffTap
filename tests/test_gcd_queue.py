@@ -77,7 +77,7 @@ assert(not B.gcdEvidence and not B.action and not next(bindings))
 
 test('Queue: helper and consumable sources cannot use ordinary buff GCD permission', SETUP+"""
 cooldown(); local cd=C_Spell.GetSpellCooldown(5232)
-for _,source in ipairs({'readiness','consumable','cleanse','revive','tracking','weapon','smartshift'}) do
+for _,source in ipairs({'readiness','consumable','cleanse','revive','tracking','weapon'}) do
  assert(not B:OnlyGlobalCooldown({id=5232,source=source},cd),source)
 end
 """)

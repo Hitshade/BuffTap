@@ -1,3 +1,15 @@
+# BuffTap 1.26.1-beta2
+
+### Added
+- Successful GCD-only validation records public start/duration on the action and schedules an expiry wake. The main overlay prioritizes a forward cooldown sweep for queued GCDs regardless of `showSwipe`; the optional reverse rebuff sweep resumes afterward. Expired or cancelled actions clear the GCD display. No new preference, migration, polling or secondary alert.
+
+### Changed
+- Event-scoped evidence also observes a verified, exited SmartShift intent's learned form spell. Druid/Shaman restore validation accepts only confirmed GCD-only waits, retaining identity, current caster form, settings, pause, resource and independent cooldown checks. SmartShift marks rejected cooldowns for event refresh. Ordinary class self buffs already use the shared validator; items/readiness/cleanse/revive/tracking remain excluded.
+- Thanks to **Mechrite** for the original queue suggestion. Owner reports beta1 ordinary buff queue works in Forever; beta2's new sweep and return-form behavior have not been live tested.
+
+### Validation
+- Full mocked Lua 5.1 regression run: **2,201 passed, 0 failed**. Fifteen new display/SmartShift cases cover sweep precedence/direction, expiry without a cooldown-end event, cancellation, no secondary sound, Druid/Shaman return forms and Mage/Shaman/Hunter/Paladin self-buff actions. The 20 beta1 queue cases remain included, with the source exclusion assertion updated for SmartShift's explicit permission.
+
 # BuffTap 1.26.1-beta1
 
 ### Changed

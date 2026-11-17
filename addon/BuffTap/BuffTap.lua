@@ -95,7 +95,13 @@ function B:UpdateOverlay()
   end
   if b.swipe then
     local threshold=A.Number(action.threshold) and action.threshold or nil
-    if self.db.showSwipe and action.needState=="expiring" and type(action.remaining)=="number" and threshold and threshold>0 and action.remaining<=threshold then
+    if A.Number(action.gcdStart) and A.Number(action.gcdDuration) and action.gcdDuration>0 and action.gcdStart+action.gcdDuration>GetTime() then
+      local key="gcd:"..tostring(action.gcdStart)..":"..tostring(action.gcdDuration)
+      if b.swipe.SetReverse then b.swipe:SetReverse(false) end
+      if b.swipeKey~=key then b.swipeKey=key; pcall(b.swipe.SetCooldown,b.swipe,action.gcdStart,action.gcdDuration) end
+      b.swipe:Show()
+    elseif self.db.showSwipe and action.needState=="expiring" and type(action.remaining)=="number" and threshold and threshold>0 and action.remaining<=threshold then
+      if b.swipe.SetReverse then b.swipe:SetReverse(true) end
       if not action.selectedAt then action.selectedAt=GetTime() end
       local now=action.selectedAt
       local key=tostring(action.key)..":"..tostring(action.targetGUID)..":"..tostring(now)
@@ -374,6 +380,7 @@ function B:Commit(action,reason)
   b:Hide()
   b:SetAttribute("type1",nil); b:SetAttribute("macrotext",nil); b:SetAttribute("spell",nil); b:SetAttribute("item",nil); b:SetAttribute("unit",nil); b:SetAttribute("target-slot",nil)
   self.action=nil; self.reason=reason
+  if not action and b.swipe then b.swipe:Hide(); b.swipeKey=nil end
   if self.UpdateBroker then self:UpdateBroker() end
   if type(ClearOverrideBindings)~="function" then self.setupError="override binding API unavailable"; return end
   local cleared=pcall(ClearOverrideBindings,b)

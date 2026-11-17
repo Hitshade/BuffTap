@@ -1,3 +1,14 @@
+# BuffTap 1.26.1-beta2
+
+### Added
+A standard cooldown sweep now shows the wait on a queued class-buff icon. It appears automatically, with no settings change, and disappears when the global cooldown finishes. If you use the optional rebuff countdown sweep, that display resumes afterward. Finishing the wait does not create an extra reminder sound.
+
+### Changed
+Druid and Shaman SmartShift return forms can now stay available during a confirmed global cooldown too. Ordinary class self buffs already share this queue behavior, including armors, shields, aspects and blessings. Spells with their own cooldown still wait; item-use cooldown behavior is unchanged.
+
+### Limits
+The owner confirmed smoother ordinary buffing in beta1. The new sweep and form extension need in-game testing. Existing safety checks and settings are retained, and every cast still requires your input. Thanks to **Mechrite** for the original suggestion.
+
 # BuffTap 1.26.1-beta1
 
 ### Changed

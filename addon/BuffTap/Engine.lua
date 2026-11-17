@@ -4,7 +4,7 @@
 
 local _, B = ...
 _G.BuffTap = B
-B.version = "1.26.1-beta1"
+B.version = "1.26.1-beta2"
 B.API = {}
 local A = B.API
 
@@ -1196,37 +1196,45 @@ function B:ObserveGlobalCooldown()
   self.gcdEvidence={}
   if not self.inCooldownEvent then return end
   local class=A.Class('player')
+  local function observe(id)
+    if not A.Known(id) then return end
+    local cd=A.Call(C_Spell and C_Spell.GetSpellCooldown,id)
+    if type(cd)=="table" and A.Public(cd.isOnGCD) and cd.isOnGCD==true
+      and A.Public(cd.isEnabled) and cd.isEnabled==true
+      and A.Number(cd.startTime) and A.Number(cd.duration) and cd.duration>0
+      and cd.startTime+cd.duration>GetTime() then
+      self.gcdEvidence[id]={start=cd.startTime,duration=cd.duration}
+    end
+  end
   -- The aura event may arrive after the cooldown event. Snapshot all known
   -- class ranks now so the newly uncovered next candidate has event evidence.
   for _,def in ipairs(self.Buffs) do
     if def.class==class and self:Supported(def) then
       for _,id in ipairs(def.ranks or {}) do
-        if A.Known(id) then
-          local cd=A.Call(C_Spell and C_Spell.GetSpellCooldown,id)
-          if type(cd)=="table" and A.Public(cd.isOnGCD) and cd.isOnGCD==true
-            and A.Public(cd.isEnabled) and cd.isEnabled==true
-            and A.Number(cd.startTime) and A.Number(cd.duration) and cd.duration>0
-            and cd.startTime+cd.duration>GetTime() then
-            self.gcdEvidence[id]={start=cd.startTime,duration=cd.duration}
-          end
-        end
+        observe(id)
       end
     end
   end
+  local intent=self.smartShiftIntent
+  if intent and intent.verified and intent.exited and A.Number(intent.spellID) then observe(intent.spellID) end
 end
 
 function B:OnlyGlobalCooldown(action,cd)
-  if not action or (action.source~=nil and action.source~="spell") then return false end
+  if not action or (action.source~=nil and action.source~="spell" and action.source~="smartshift") then return false end
   if not A.Number(cd.startTime) or not A.Number(cd.duration) or cd.duration<=0 or cd.startTime+cd.duration<=GetTime() then return false end
   local evidence=self.gcdEvidence and self.gcdEvidence[action.id]
   if not evidence or evidence.start~=cd.startTime or evidence.duration~=cd.duration then return false end
   local duration=A.Call(C_Spell and C_Spell.GetSpellCooldownDuration,action.id,true)
   if not duration then return false end
   local ok,remaining=pcall(function() return duration:GetRemainingDuration() end)
-  return ok and A.Number(remaining) and remaining==0
+  if not ok or not A.Number(remaining) or remaining~=0 then return false end
+  action.gcdStart=cd.startTime; action.gcdDuration=cd.duration
+  self:ConsiderWake(cd.startTime+cd.duration-GetTime())
+  return true
 end
 
 function B:Validate(action)
+  if action then action.gcdStart=nil; action.gcdDuration=nil end
   if not self:SituationActionCurrent(action) then return false,"setup changed before validation" end
   if self.CastRetryBlocked and self:CastRetryBlocked(action) then return false,"recipient temporarily skipped after cast failure" end
   local paused=self:ActionPauseReason(action); if paused then return false,paused end

@@ -2,6 +2,9 @@
 local _,B=...
 -- Keep the ten most recent releases within a 24 KiB content ceiling.
 B.PatchNotes={
+ {version="1.26.1-beta2",title="See when your queued buff is ready",items={
+  "Queued class buffs now show a cooldown sweep while waiting for the global cooldown. The icon stays ready for your next press, without another alert when the wait ends.",
+  "SmartShift can also keep your return form ready during the global cooldown. Each cast still needs your click or binding."},thanks="Thanks to Mechrite for the smoother buffing suggestion."},
  {version="1.26.1-beta1",title="Testing smoother buffing",items={
   "BuffTap can keep your next class buff ready while the global cooldown finishes, so repeated clicks or key presses can feel smoother.",
   "This beta needs in-game testing. Your clicks still cast each buff, and spells with their own cooldown still wait."},thanks="Thanks to Mechrite for suggesting smoother buffing."},
@@ -57,13 +60,6 @@ B.PatchNotes={
   "New \"Skip when I have none\" switch on the Weapons page: no reminder for an oil, sharpening stone or poison you have run out of, the same way buff food works.",
   "Buffs with no timer, such as Hunter aspects, Trueshot Aura and Paladin auras, no longer show a Rebuff slider that did nothing. They remind you when they are off.",
   "Fixed two lines overlapping in the Resurrection box for druids who have not learned a resurrection spell yet."},thanks="Thanks to waggz81 for the tracking idea and the Rebirth report, and a big shoutout to noci__, who has been with BuffTap since the beta, for the weapon idea."},
- {version="1.24.2",title="Fixes",items={
-  "Personal consumables such as Juju Power and Crystal Force are now always used on yourself, even with someone else targeted.",
-  "Paladins: a blessing exception set only for raids no longer overrides your tank and healer choices in a party, and the other way around.",
-  "Remembered players can be reached and removed even when nobody of their class is in your group.",
-  "Full check-up reports leave out remembered players. Your own settings export still keeps them.",
-  "Blessing exceptions are no longer copied when you import settings onto a character of another class.",
-  "Remember now reads a player's class directly, so it works even when the group list has not caught up yet."}},
 }
 function B:PatchNotesUnread()
   return self.profileDB and self.db.optionsPatchDot~=false and self.profileDB.global.patchNotesSeen~=self.version
