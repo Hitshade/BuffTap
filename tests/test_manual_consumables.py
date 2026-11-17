@@ -171,6 +171,46 @@ local item=put(manual('food')); refresh(); local b=assert(icon('food')); assert(
 b.scripts.PreClick(b,'LeftButton',false); assert(not b.attrs.type1 and not b.attrs.item and not B.itemAttempt)
 """)
 
+test('Detaching preserves first-row center and reattaches to the current buff position', BASE+"""
+put(manual('food')); refresh(); local x,y=B:ManualConsumableAnchor()
+assert(not B.db.manualConsumablesDetached and B:SetManualConsumablesDetached(true))
+assert(B.db.manualConsumablesX==x and B.db.manualConsumablesY==y)
+B.db.x=B.db.x+140; B.db.y=B.db.y+70
+local dx,dy=B:ManualConsumableAnchor(); assert(dx==x and dy==y)
+assert(B:SetManualConsumablesDetached(false)); dx,dy=B:ManualConsumableAnchor(); assert(dx==x+140 and dy==y+70)
+""")
+
+test('Detached edit mover works without active items and saves on drag stop', BASE+"""
+B:SetManualConsumablesDetached(true); B.db.nearbyEnabled=false; B.db.campReminder=false; B.db.supplyReminder=false
+B:SetEditModeActive(true); local m=assert(B.editManualConsumables); assert(m.shown and not m.protected and not m.attrs.type1)
+m.GetCenter=function() return 700,350 end; m.scripts.OnDragStart(m); B:SetEditModeActive(false)
+assert(B.db.manualConsumablesX==200 and B.db.manualConsumablesY==-150 and not m.shown and not m.dragging)
+""")
+
+test('Attached consumables have no independent edit mover', BASE+"""
+B:SetEditModeActive(true); assert(not B.editManualConsumables); B:SetEditModeActive(false)
+""")
+
+test('Detached edit mode disarms real items and restores only on exit', BASE+"""
+put(manual('food')); B:SetManualConsumablesDetached(true); refresh(); local b=assert(icon('food')); assert(b.attrs.type1)
+B:SetEditModeActive(true); assert(not b.shown and not b.attrs.type1 and not B.manualConsumableCaption.shown)
+B:SetEditModeActive(false); assert(b.shown and b.attrs.type1=='item')
+""")
+
+test('Combat refuses detaching and interrupts the consumables mover without saving', BASE+"""
+B:SetManualConsumablesDetached(true); local x,y=B:ManualConsumableAnchor(); B:SetEditModeActive(true)
+local m=B.editManualConsumables; m.GetCenter=function() return 900,900 end; m.scripts.OnDragStart(m)
+combat=true; m.scripts.OnEvent(m,'PLAYER_REGEN_DISABLED'); assert(not m.shown and not m.dragging)
+assert(not B:SetManualConsumablesDetached(false) and B.db.manualConsumablesDetached)
+assert(B.db.manualConsumablesX==x and B.db.manualConsumablesY==y)
+""")
+
+test('Detached anchor round-trips with profile settings', BASE+"""
+B:SetManualConsumablesDetached(true); B.db.manualConsumablesX=177; B.db.manualConsumablesY=-233
+local text=B:ExportSettings(); B.db.manualConsumablesDetached=false; B.db.manualConsumablesX=0
+assert(B:ImportSettings(text)); assert(B.db.manualConsumablesDetached and B.db.manualConsumablesX==177 and B.db.manualConsumablesY==-233)
+""")
+
 test('Manual projection and secure pool remain bounded with overflow', BASE+"""
 manual('ferocity'); manual('utility')
 for _,f in ipairs(B.ConsumableFamilies) do

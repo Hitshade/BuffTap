@@ -3,6 +3,11 @@ local _,B=...
 local A=B.API
 function B:NormalizeVisualOptions()
   local d=self.db
+  if type(d.manualConsumablesDetached)~="boolean" then d.manualConsumablesDetached=false end
+  for _,key in ipairs({"manualConsumablesX","manualConsumablesY"}) do
+    if not A.Number(d[key]) then d[key]=0 end
+    d[key]=math.max(-10000,math.min(10000,d[key]))
+  end
   -- 1.19.2: Nearby shows full names (first name and surname) by default, so the old 210 px default widens once to 240.
   if d.nearbyNameVersion~=1 then
     if d.nearbyWidth==nil or d.nearbyWidth==210 then d.nearbyWidth=240 end

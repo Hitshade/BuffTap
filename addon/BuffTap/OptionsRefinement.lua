@@ -128,11 +128,19 @@ function B:UpdateOptionsPreviews()
         local lower=d.labelPosition=="above" and 0 or d.labelPosition=="below" and names+recipients or recipients
         local top=upper>0 and upper*size+gap+(upper-1)*2 or 0
         local bottom=lower>0 and lower*size+gap+(lower-1)*2 or 0
-        shown=math.min(shown,math.max(24,120-top-bottom)); icon:SetSize(shown,shown)
-        local center=38+top+shown/2+math.max(0,(120-top-bottom-shown)/2)
-        icon:ClearAllPoints(); icon:SetPoint("TOP",preview,"TOP",0,-center+shown/2)
-        for _,sample in ipairs(preview.manualSamples or {}) do sample:SetAlpha(d.opacity) end
-        if preview.manualCaption then preview.manualCaption:SetAlpha(d.opacity) end
+        -- Center the entire display below the heading, including the smaller strip.
+        local available=preview:GetHeight()-54; local strip=50
+        shown=math.min(shown,math.max(24,available-strip-top-bottom)); icon:SetSize(shown,shown)
+        local block=top+shown+bottom
+        local start=42+math.max(0,(available-block-strip)/2)
+        icon:ClearAllPoints(); icon:SetPoint("TOP",preview,"TOP",0,-start-top)
+        for i,sample in ipairs(preview.manualSamples or {}) do
+          sample:ClearAllPoints(); sample:SetPoint("TOPLEFT",preview,"TOPLEFT",93+(i-1)*26,-start-block-28); sample:SetAlpha(d.opacity)
+        end
+        if preview.manualCaption then
+          preview.manualCaption:ClearAllPoints(); preview.manualCaption:SetPoint("TOP",preview,"TOP",0,-start-block-10)
+          preview.manualCaption:SetAlpha(d.opacity)
+        end
       end
       local sample
       if not camp then for _,def in ipairs(self.Buffs) do if def.class==A.Class("player") and def.kind~="group" then sample=def; break end end end
@@ -228,6 +236,14 @@ function B:BuildReminderEditor(parent,kind,ui)
     B:NormalizeCamping(); B:UpdateCamping(); B:Options()
   end)) end
   ui.label(parent,camp and "The preview does not move or activate your live reminder." or "Hiding the icon keeps your binding and optional sounds active.",26,-550,"GameFontDisableSmall",404)
+  if not camp then
+    ui.button(parent,"Move consumables",26,-580,190,function()
+      if B:SetManualConsumablesDetached(true) then B:MoveAllFrames("buff") end
+    end)
+    ui.button(parent,"Attach to buff reminder",226,-580,200,function()
+      if B:SetManualConsumablesDetached(false) then B:Options() end
+    end)
+  end
   -- Icon: style for both reminders; label placement, countdown sweep and out-of-range display for the buff reminder.
   section(ui,parent,"Icon",444,-12,260,camp and 76 or 192)
   local sy=camp and 0 or -32

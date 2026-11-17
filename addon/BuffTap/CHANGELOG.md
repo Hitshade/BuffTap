@@ -1,6 +1,8 @@
 # BuffTap 1.26.0-beta1
 
 ### Added
+- Optional detached Manual strip anchor, persisted as shared visual settings and included in profile transfer. `Move consumables` seeds the first-row center without a jump, then opens existing unprotected edit movers. Detached strips participate in native Edit Mode even without active items; reattach resumes following the current main reminder. Edit mode disarms the live item buttons. Combat interrupts dragging without protected writes or saving an interrupted position. Sparse mover cleanup now handles absent Nearby/Camping movers.
+- Buff preview vertically centers its complete sample composition, including visible name/recipient labels, Consumables caption and small icons, with reserved heading and bottom margins. Large label settings reduce the sample icon to preserve spacing.
 - Shared reminder styling anchors the group badge at TOPRIGHT with right justification and the timer at BOTTOM with centered justification and icon-relative width. Live Buff and Buff preview now use the same overlay alignment; Camping timers and consumable stock overlays are unchanged.
 - All appearance previews now use the existing themed section-heading font and accent; removed the redundant Sample display caption from Buff, Camping and Supplies previews.
 - A centered, muted, localized Consumables caption above the live strip and preview samples. The live caption has its own secure visibility driver and hides when the strip is inactive. Preview spacing reserves room for the caption, including larger labels.
@@ -14,8 +16,8 @@
 - Item-use observation tracks attempts by item so rapid clicks on different families do not overwrite confirmation evidence. Shared use-spell evidence cannot confirm ambiguous attempts; inventory loss remains exact-item evidence.
 
 ### Validation and known limits
-- Caption follow-up: Manual consumables plus appearance regression modules passed 142 scenarios, zero failed. The full-suite result below was obtained before the caption addition. Owner screenshots confirm the original beta strip and preview render in Forever; caption appearance still needs an owner check.
-- Executed mocked regression suite: 2,118 scenarios passed, zero failed, including 125 focused/base scenarios for Manual consumables. See `VERIFICATION-1.26.0-beta1.md` for evidence and remaining client checks. No live Forever validation is claimed.
+- Executed mocked regression suite after detached positioning and preview refinements: 2,139 passed, zero failed. Focused Manual consumable and appearance modules: 148 passed, zero failed. New scenarios cover detaching without a jump, independent edit movers without active items, reattaching, disarming while editing, combat interruption and export/import. See `VERIFICATION-1.26.0-beta1.md`.
+- Owner screenshots confirm the earlier beta strip, caption and preview render in Forever. Detached dragging and final preview centering still need an owner check; native secure item execution has not been comprehensively validated in client.
 - The secure pool is bounded at eight clickable effects. Overflow lists remaining effects for bag use. Unknown aura/stock/metadata and unavailable safety APIs fail closed. No new polling loop, item catalog, sound or Supplies behavior was added.
 - Thanks to **Xprit44** for the Manual consumable reminder suggestion.
 

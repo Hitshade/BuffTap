@@ -4,6 +4,26 @@ local _,B=...
 local A=B.API
 local LIMIT,SIZE,GAP=8,22,4
 B.ManualConsumableLimit=LIMIT
+-- Anchor is the center of the first icon row, independent of row count.
+function B:ManualConsumableAnchor()
+  local d=self.db
+  if d.manualConsumablesDetached then return d.manualConsumablesX or 0,d.manualConsumablesY or 0 end
+  local labels=d.labelPosition=="above" and 0 or (d.showTargetName and 1 or 0)
+  if d.labelPosition=="below" and d.showBuffName then labels=labels+1 end
+  local height=labels>0 and labels*math.max(10,d.labelSize or 10)+(d.labelGap or 5)+(labels-1)*2 or 0
+  return d.x,d.y-d.size/2-height-35
+end
+function B:SetManualConsumablesDetached(detached)
+  if A.Combat() then return false end
+  detached=detached==true
+  if detached and not self.db.manualConsumablesDetached then
+    self.db.manualConsumablesX,self.db.manualConsumablesY=self:ManualConsumableAnchor()
+  end
+  self.db.manualConsumablesDetached=detached
+  self:Refresh(false)
+  if self.editModeActive then self:ShowEditMovers() end
+  return true
+end
 function B:ManualConsumableOffset(index,total)
   local row=math.floor((index-1)/4)
   local columns=math.min(4,total)
@@ -147,7 +167,7 @@ function B:UpdateManualConsumables()
       if family and not family.hidden and self:ConsumableFamilyEnabled(family) then any=true; break end
     end
   end
-  if not any or unsafe() then self:DisarmManualConsumables(); return end
+  if not any or unsafe() or self.editModeActive then self:DisarmManualConsumables(); return end
   local entries=self:ManualConsumableProjection(self:GetAuras("player",false),self:RebuildConsumableCache(false))
   self.manualConsumableEntries=entries
   if #entries==0 then self:DisarmManualConsumables(); return end
@@ -167,10 +187,8 @@ function B:UpdateManualConsumables()
   local shown=math.min(#entries,LIMIT); local total=shown+(#entries>LIMIT and 1 or 0)
   holder:SetSize(math.min(4,total)*(SIZE+GAP)-GAP,math.ceil(total/4)*(SIZE+GAP)-GAP)
   holder:ClearAllPoints()
-  local labels=self.db.labelPosition=="above" and 0 or (self.db.showTargetName and 1 or 0)
-  if self.db.labelPosition=="below" and self.db.showBuffName then labels=labels+1 end
-  local textHeight=labels>0 and labels*math.max(10,self.db.labelSize or 10)+(self.db.labelGap or 5)+(labels-1)*2 or 0
-  holder:SetPoint("TOP",UIParent,"CENTER",self.db.x,self.db.y-self.db.size/2-textHeight-24)
+  local anchorX,anchorY=self:ManualConsumableAnchor()
+  holder:SetPoint("TOP",UIParent,"CENTER",anchorX,anchorY+SIZE/2)
   holder:SetAlpha(self.db.opacity); holder:Show()
   local caption=self.manualConsumableCaption
   caption:SetShown(not caption.driverFailed and caption:GetAttribute("state-safety")=="ready")

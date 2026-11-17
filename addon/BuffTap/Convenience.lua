@@ -285,7 +285,7 @@ local function editMover(key,caption,iconTexture)
   if iconTexture then
     f.icon=f:CreateTexture(nil,"ARTWORK"); f.icon:SetPoint("TOPLEFT",4,-4); f.icon:SetPoint("BOTTOMRIGHT",-4,4); f.icon:SetTexture(iconTexture)
   else
-    f.label=f:CreateFontString(nil,"OVERLAY","GameFontNormal"); f.label:SetPoint("CENTER"); f.label:SetText(B:Text("Nearby players"))
+    f.label=f:CreateFontString(nil,"OVERLAY","GameFontNormal"); f.label:SetPoint("CENTER"); f.label:SetText(B:Text(key=="manual" and "Consumables" or "Nearby players"))
   end
   f.caption=f:CreateFontString(nil,"OVERLAY","GameFontNormal"); f.caption:SetPoint("TOP",f,"BOTTOM",0,-6); f.caption:SetText(B:Text(caption))
   f:SetScript("OnDragStart",function(s) if not A.Combat() then s.dragging=true; s:StartMoving() end end)
@@ -298,6 +298,7 @@ local function editMover(key,caption,iconTexture)
         local nx,ny=x-cx,y-cy
         if B.NearbyCenterOffset then nx,ny=B:NearbyCenterOffset(s) end
         if nx then B.db.nearbyX=nx; B.db.nearbyY=ny end
+      elseif key=="manual" then B.db.manualConsumablesX=x-cx; B.db.manualConsumablesY=y-cy
       elseif key=="supply" then B.db.supplyX=x-cx; B.db.supplyY=y-cy
       else B.db.campX=x-cx; B.db.campY=y-cy end
     end
@@ -308,6 +309,11 @@ local function editMover(key,caption,iconTexture)
 end
 function B:ShowEditMovers()
   local d=self.db
+  if d.manualConsumablesDetached then
+    self.editManualConsumables=self.editManualConsumables or editMover("manual","Consumables: drag to move")
+    local f=self.editManualConsumables; local x,y=self:ManualConsumableAnchor()
+    f:SetSize(100,22); f:ClearAllPoints(); f:SetPoint("CENTER",UIParent,"CENTER",x,y); f:Show()
+  elseif self.editManualConsumables then self.editManualConsumables:Hide() end
   if d.nearbyEnabled then
     self.editNearby=self.editNearby or editMover("nearby","BuffTap Nearby: drag to move")
     local f=self.editNearby; local width,rows,scale=240,5,1
@@ -329,7 +335,7 @@ function B:ShowEditMovers()
   elseif self.editSupply then self.editSupply:Hide() end
 end
 function B:HideEditMovers()
-  for _,f in ipairs({self.editNearby,self.editCamp,self.editSupply}) do
+  for _,f in pairs({self.editNearby,self.editCamp,self.editSupply,self.editManualConsumables}) do
     if f then
       if f.dragging and not A.Combat() then f.savePosition(f) end
       f:StopMovingOrSizing(); f.dragging=false; f:Hide()
