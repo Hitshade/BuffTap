@@ -1,5 +1,7 @@
 # BuffTap 1.26.0-beta1 verification
 
+Caption follow-up: focused Manual consumable and appearance modules passed **142 scenarios, zero failures**, including caption visibility, secure combat hiding and the localized preview heading. The full-suite count below predates this cosmetic follow-up.
+
 Executed 2026-11-17 using Python with lupa 2.8 (Lua 5.1).
 
 Full release runner: `BT_KEEP_GOING=1`, import `tests/run_release.py`, inspect `test_bufftap.tests` and `test_bufftap.failures` after all imports: **2,118 passed, zero failed**.

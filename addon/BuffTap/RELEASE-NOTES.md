@@ -1,6 +1,7 @@
 # BuffTap 1.26.0-beta1
 
 ### Added
+The small icons have a muted Consumables heading in game and in the appearance preview, so their purpose is clear without labeling every item.
 Food, Flask, Elixirs and Utility each have an Auto/Manual choice on the Consumables page. Everything starts in Auto, with the existing behavior. Choose Manual to keep reminders while using items only by clicking their small icons beneath the main buff reminder. The buff binding and mouse wheel skip Manual families. Your Solo, Party and Raid setups can use different modes.
 
 Icons stay centered under the main reminder as their number changes, including shorter rows. They remain available when the main reminder is hidden or idle. Stock counts use white above three, amber for one to three, and red for zero; uncertain stock shows a question mark. Active effects leave the strip until they need refreshing. The Buff reminder appearance preview includes sample consumable icons.

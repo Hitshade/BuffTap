@@ -5,7 +5,7 @@ B.PatchNotes={
  {version="1.26.0-beta1",title="Manual consumable reminders",items={
   "Consumables: choose Auto or Manual separately for Food, Flask, Elixirs and Utility. Auto keeps the usual click or mouse-wheel behavior.",
   "Manual shows small item icons centered beneath your main reminder. Click an item directly to use it; your buff binding never consumes Manual items. The icons also work when the main reminder is hidden.",
-  "Each row stays centered as icons appear and disappear. Counts show your stock, and unavailable items stay dimmed. Active effects disappear until they need refreshing.",
+  "A small Consumables label identifies the icons in game and in the preview. Each row stays centered as icons appear and disappear. Counts show your stock, and unavailable items stay dimmed. Active effects disappear until they need refreshing.",
   "Up to eight effects can be clicked here. Hover +N to see additional effects to use from your bags. Manual icons hide in combat and while you cannot safely use them.",
   "Customization > Buff reminder now previews the smaller item icons. This is a beta; please test your item choices in game."},thanks="Thanks to Xprit44 for suggesting reminders without accidental mouse-wheel consumption."},
  {version="1.25.0",title="Smarter class setup, SmartShift and item choices",items={

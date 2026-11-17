@@ -136,6 +136,18 @@ local B=BuffTap; B:Options(); local p=B.optionsPreviews.buff
 assert(p:GetHeight()==216 and #p.manualSamples==3 and not p.hint.shown)
 for _,s in ipairs(p.manualSamples) do assert(not s.protected and not s.attrs.type1 and not s.scripts.OnClick) end
 assert(B.optionsPreviews.supply:GetHeight()==284)
+assert(p.manualCaption and p.manualCaption.text==B:Text('Consumables'))
+""")
+
+test('Consumables caption follows strip visibility and secure safety', BASE+"""
+put(manual('food')); refresh(); local c=assert(B.manualConsumableCaption)
+assert(c.shown and c.text.text==B:Text('Consumables') and not c.attrs.type1)
+combat=true; c.secure=true
+local fn=assert(loadstring('local self,newstate=...; '..c.attrs['_onstate-safety']))
+c.attrs['state-safety']='blocked'; fn(c,'blocked'); assert(not c.shown)
+c.attrs['state-safety']='ready'; fn(c,'ready'); assert(not c.shown)
+c.secure=false; combat=false; refresh(); assert(c.shown)
+B.db.consumableFamilies.food=false; refresh(); assert(not c.shown)
 """)
 
 for name,change in (

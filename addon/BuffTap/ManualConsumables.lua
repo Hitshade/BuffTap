@@ -36,6 +36,7 @@ end
 function B:DisarmManualConsumables()
   if A.Combat() then return end
   for _,button in ipairs(self.manualConsumableButtons or {}) do self:DisarmManualButton(button); button:Hide() end
+  if self.manualConsumableCaption then self.manualConsumableCaption:Hide() end
 end
 
 -- Projection reads effect state and existing stock/metadata only. It never validates,
@@ -153,6 +154,14 @@ function B:UpdateManualConsumables()
   if not self.manualConsumableHolder then
     local holder=CreateFrame("Frame",nil,UIParent); holder:SetFrameStrata("HIGH"); holder:SetClampedToScreen(true)
     holder:EnableMouse(false); self.manualConsumableHolder=holder; self.manualConsumableButtons={}
+    local caption=CreateFrame("Frame",nil,holder,"SecureHandlerStateTemplate")
+    caption:SetSize(160,12); caption:SetPoint("BOTTOM",holder,"TOP",0,4); caption:EnableMouse(false); caption:Hide()
+    caption.text=caption:CreateFontString(nil,"OVERLAY","GameFontDisableSmall")
+    caption.text:SetAllPoints(); caption.text:SetJustifyH("CENTER"); caption.text:SetText(self:Text("Consumables"))
+    caption.text:SetFont("Fonts\\FRIZQT__.TTF",10,"OUTLINE"); caption.text:SetTextColor(.6,.63,.67)
+    caption:SetAttribute("_onstate-safety",safety)
+    caption.driverFailed=type(RegisterStateDriver)~="function" or not pcall(RegisterStateDriver,caption,"safety",condition)
+    self.manualConsumableCaption=caption
   end
   local holder=self.manualConsumableHolder
   local shown=math.min(#entries,LIMIT); local total=shown+(#entries>LIMIT and 1 or 0)
@@ -161,8 +170,10 @@ function B:UpdateManualConsumables()
   local labels=self.db.labelPosition=="above" and 0 or (self.db.showTargetName and 1 or 0)
   if self.db.labelPosition=="below" and self.db.showBuffName then labels=labels+1 end
   local textHeight=labels>0 and labels*math.max(10,self.db.labelSize or 10)+(self.db.labelGap or 5)+(labels-1)*2 or 0
-  holder:SetPoint("TOP",UIParent,"CENTER",self.db.x,self.db.y-self.db.size/2-textHeight-8)
+  holder:SetPoint("TOP",UIParent,"CENTER",self.db.x,self.db.y-self.db.size/2-textHeight-24)
   holder:SetAlpha(self.db.opacity); holder:Show()
+  local caption=self.manualConsumableCaption
+  caption:SetShown(not caption.driverFailed and caption:GetAttribute("state-safety")=="ready")
   for i=1,LIMIT+1 do
     local button=self.manualConsumableButtons[i]
     if not button and i<=total then button=newButton(i,holder); self.manualConsumableButtons[i]=button end

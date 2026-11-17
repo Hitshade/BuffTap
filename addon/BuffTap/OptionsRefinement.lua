@@ -83,6 +83,8 @@ function B:CreateOptionsPreview(parent,kind,ui)
   holder.hint:SetJustifyH("CENTER")
   if not campLike then
     holder.hint:Hide()
+    holder.manualCaption=ui.label(holder,"Consumables",14,-164,"GameFontDisableSmall",232)
+    holder.manualCaption:SetJustifyH("CENTER")
     holder.manualSamples={}
     for i,spec in ipairs({{"INV_Misc_Food_33",20},{"INV_Potion_65",3},{"INV_Potion_93",0}}) do
       local sample=CreateFrame("Frame",nil,holder); sample:SetSize(22,22); sample:SetPoint("TOPLEFT",93+(i-1)*26,-182); sample:EnableMouse(false)
@@ -127,9 +129,11 @@ function B:UpdateOptionsPreviews()
         local lower=d.labelPosition=="above" and 0 or d.labelPosition=="below" and names+recipients or recipients
         local top=upper>0 and upper*size+gap+(upper-1)*2 or 0
         local bottom=lower>0 and lower*size+gap+(lower-1)*2 or 0
-        local center=26+top+shown/2+math.max(0,(150-top-bottom-shown)/2)
+        shown=math.min(shown,math.max(24,132-top-bottom)); icon:SetSize(shown,shown)
+        local center=26+top+shown/2+math.max(0,(132-top-bottom-shown)/2)
         icon:ClearAllPoints(); icon:SetPoint("TOP",preview,"TOP",0,-center+shown/2)
         for _,sample in ipairs(preview.manualSamples or {}) do sample:SetAlpha(d.opacity) end
+        if preview.manualCaption then preview.manualCaption:SetAlpha(d.opacity) end
       end
       local sample
       if not camp then for _,def in ipairs(self.Buffs) do if def.class==A.Class("player") and def.kind~="group" then sample=def; break end end end

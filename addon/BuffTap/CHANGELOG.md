@@ -1,6 +1,7 @@
 # BuffTap 1.26.0-beta1
 
 ### Added
+- A centered, muted, localized Consumables caption above the live strip and preview samples. The live caption has its own secure visibility driver and hides when the strip is inactive. Preview spacing reserves room for the caption, including larger labels.
 - `ManualConsumables.lua`: independent secure left-click item buttons, parented separately from the main action button. Fixed 22px icons, four per row, eight clickable effects plus informational overflow. Every partial row is centered under the main reminder anchor, accounting for visible labels. No override bindings or insecure item-use calls.
 - `consumableModes` is a validated per-family map in profile and situation consumable settings. Missing values retain Auto; checklist children inherit their parent mode. Existing settings require no destructive migration. Options retains existing row heights and adds compact Auto/Manual controls. The Buff preview gains noninteractive stock samples; Supplies is unchanged.
 
@@ -11,6 +12,7 @@
 - Item-use observation tracks attempts by item so rapid clicks on different families do not overwrite confirmation evidence. Shared use-spell evidence cannot confirm ambiguous attempts; inventory loss remains exact-item evidence.
 
 ### Validation and known limits
+- Caption follow-up: Manual consumables plus appearance regression modules passed 142 scenarios, zero failed. The full-suite result below was obtained before the caption addition. Owner screenshots confirm the original beta strip and preview render in Forever; caption appearance still needs an owner check.
 - Executed mocked regression suite: 2,118 scenarios passed, zero failed, including 125 focused/base scenarios for Manual consumables. See `VERIFICATION-1.26.0-beta1.md` for evidence and remaining client checks. No live Forever validation is claimed.
 - The secure pool is bounded at eight clickable effects. Overflow lists remaining effects for bag use. Unknown aura/stock/metadata and unavailable safety APIs fail closed. No new polling loop, item catalog, sound or Supplies behavior was added.
 - Thanks to **Xprit44** for the Manual consumable reminder suggestion.
