@@ -1,5 +1,17 @@
 # BuffTap 1.26.4-beta1 verification
 
+## Follow-up 1.26.4-beta2: ordinary recipient ranks
+
+Owner supplied stronger Classic-rule evidence and a focused-beta recommendation. The beta changes recipient eligibility only for Mark, Thorns, Intellect, Dampen/Amplify Magic, Fortitude, Divine Spirit, Shadow Protection, Might and Wisdom. Known catalog ranks use the existing Forever-derived rank level minus ten, clamped to one. Learning API metadata remains separate, including when Level Link changes it. Unknown/remapped ranks do not inherit the allowance. Self behavior, individual ownership checks, unknown-level rejection, localized macros and cache invalidation remain intact.
+
+Group/Greater spells, single-rank effects, shouts, auras and utility retain their prior rules. All beta1 fixes are retained. This is an internal test build, with no publication authorized and no unrelated competitor feature added.
+
+`test_recipient_ranks.py` adds 134 cases: exact and below-boundary checks across all 53 affected ranks, invalid/restricted levels, individually unknown ranks, adjusted learning metadata, per-level caches, actual spellbook-event invalidation, missing/remapped records, 14 excluded-family controls, exact Nearby rank macros and a real Nearby PreClick rejection after eligibility changes. The two existing audit rank checks now use the new 3/4 Intellect boundary and correctly expect rank 2 while rank 3 metadata loads. An old Priest-ordering fixture falsely declared Divine Spirit learned at level 1 on a level-10 target; it now supplies the real learning level and an eligible level-60 recipient. That fixture change preserves its intended ordering assertion.
+
+Live release gate: explicitly cast a representative known rank immediately below/at its expected boundary, recording actual aura/error and client build: Mage Intellect rank 3 (17/18), Priest Fortitude rank 2 (1/2), Druid Thorns rank 2 (3/4), Paladin Wisdom rank 1 (3/4). No stronger competing aura should obscure acceptance. These checks sample the four classes; any deviation requires narrowing the policy before publication. They have not been performed by the agent. Keep the prior beta1 live checks below where not already confirmed by the owner.
+
+Final strict release run: **2,553 mocked Lua 5.1 cases passed, 0 failed**, including all 134 new recipient cases; `tests/recipient-ranks-beta2-release.txt`. All 53 fixture levels independently matched the preserved client export. In-game notes retain exactly ten versions. Against the beta1 package, only Engine.lua, BuffTap.toc and the three note files changed; all other addon files remain byte-identical.
+
 Owner authorized a beta implementing the four findings from the isolated v1.26.3 audit. Publication is not authorized. The original audit checkout and its failing acceptance evidence are preserved.
 
 ## Changes and boundaries

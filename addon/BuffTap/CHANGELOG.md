@@ -1,3 +1,12 @@
+# BuffTap 1.26.4-beta2
+
+### Recipient rank eligibility
+- `Engine.lua`: separate ordinary ranked recipient requirements from caster learning metadata. The explicit allowlist is Mark of the Wild, Thorns, Arcane Intellect, Dampen Magic, Amplify Magic, Power Word: Fortitude, Divine Spirit, Shadow Protection, Blessing of Might and Blessing of Wisdom. For a catalogued rank in its own family, apply `max(1, RankLevel[id] - 10)` using the existing Forever 70888 client-derived rank record. This replaces the learning-level comparison for those families and preserves Mark's established allowance.
+- No new inference of learned ranks. Unrecognized/remapped IDs or missing catalog levels retain the learning-level fallback without an allowance. Self still uses its highest known rank. Restricted, absent and invalid external levels remain ineligible. Candidate ordering, localized exact-rank macros, identity checks and cache invalidation stay in place.
+- Group/Greater versions, Kings, Fear Ward, utility spells, shouts and auras retain their existing recipient policy. No saved-variable migration, configuration gating, layout, priority, assignment, event or secure-action redesign. The four beta1 corrections are retained.
+- The Classic formula and an independent Forever implementation justify a focused beta, not a claim of comprehensive Forever server verification. CheaperBuffs explicitly requests retesting on the current build; its historical spell table was compared, not copied into runtime. The linked Blizzard-hosted discussion is player discussion, not an official server specification. Representative live boundary casts remain a release gate.
+- Validation: strict mocked Lua 5.1 release suite **2,553 passed, 0 failed**, including 134 new recipient-rank cases. All 53 affected fixture levels match the preserved Forever SpellLevels export. Tests cover every exact/below boundary, unknown/remapped/missing data, adjusted learning metadata, ownership, cache/event behavior, 14 excluded families, exact-rank Nearby macros and click-time rejection. An existing Priest ordering fixture now uses a genuinely eligible recipient and Divine Spirit's real learning level. Log: `tests/recipient-ranks-beta2-release.txt`. No live casts claimed.
+
 # BuffTap 1.26.4-beta1
 
 ### Corrected audit findings

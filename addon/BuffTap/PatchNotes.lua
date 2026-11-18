@@ -2,6 +2,9 @@
 local _,B=...
 -- Keep the ten most recent releases within a 24 KiB content ceiling.
 B.PatchNotes={
+ {version="1.26.4-beta2",title="Better buff ranks for lower-level players",items={
+  "Mages, Priests, Druids and Paladins: ordinary ranked buffs can now offer a stronger rank to lower-level players, instead of treating the level where you learn it as their requirement.",
+  "This beta tests the usual Classic buff-level allowance. Group versions and unusual spells keep their existing rules; every cast still needs your click or binding."}},
  {version="1.26.4-beta1",title="Safer group buffs and pet reminders",items={
   "Nearby buttons now clear their prepared casts reliably when combat starts.",
   "Group buffs respect Also on me being turned off. If an affected member's buff information cannot be verified, BuffTap offers single buffs where possible.",
@@ -57,13 +60,6 @@ B.PatchNotes={
   "Hover a food, flask or elixir row on the Consumables page to see why nothing is being offered. The food picker also tells you when a different food effect is active. BuffTap never replaces it for you.",
   "Hover the tracking choice under Helpers to see whether it is on, off or not learned yet.",
   "Battlegrounds: your chosen tracking can be reminded again when you are not in combat."}},
- {version="1.24.5",title="Fixes",items={
-  "Fixed: a tracking choice other than Herbs, Minerals or Fish (such as Hunter tracking) was reset on every reload. It now stays.",
-  "When you switch tracking in the minimap menu, BuffTap no longer briefly offers your old tracking before following the new one. Switches made in combat are followed once combat ends, and your choice is checked again after logging in.",
-  "\"Skip when I have none\" now only covers oils, sharpening stones and Rogue poisons, as its help says. Mage scrolls and Warlock stones still remind you when you run out.",
-  "Full check-up reports now also leave out your Oath of Light and Soulstone targets. Your own settings export still keeps them.",
-  "Remembered players from an imported settings string are checked, so a damaged string cannot break the Groups page.",
-  "Full check-up now shows the correct instance type in dungeons and raids."}},
 }
 function B:PatchNotesUnread()
   return self.profileDB and self.db.optionsPatchDot~=false and self.profileDB.global.patchNotesSeen~=self.version

@@ -89,4 +89,5 @@ import test_self_buff_confirmation
 import test_buff_queue_sound
 import test_review_1263
 import test_regression_1264
+import test_recipient_ranks
 print('FINAL_TOTAL',len(__import__('test_bufftap').tests))

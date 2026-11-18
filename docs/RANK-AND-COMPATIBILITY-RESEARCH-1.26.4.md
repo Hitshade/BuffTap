@@ -1,5 +1,15 @@
 # Forever recipient ranks and consumable compatibility
 
+## Follow-up: focused Classic-policy beta
+
+After this research, the owner supplied further Classic-rule and CheaperBuffs evidence and endorsed a focused test branch with representative live verification. **1.26.4-beta2 now tests the Classic allowance for ten ordinary ranked families only.** This supersedes the earlier research-only implementation decision below; it does not convert the historical evidence into comprehensive Forever server verification. Group versions, unusual effects and consumable compatibility remain unchanged.
+
+Read the [independent CheaperBuffs data](https://github.com/mendeleevforever/CheaperBuffs/blob/main/Data.lua) and [logic](https://github.com/mendeleevforever/CheaperBuffs/blob/main/Logic.lua): its author explicitly calls the table historical 1.12 data and requests current Forever retesting. Compare against our preserved Forever 70888 records; do not transplant its rank ownership assumptions, hidden-level fallback or historical table. BuffTap still requires every offered rank to be individually known and rejects unreadable recipient levels. Its own existing catalog supplies the levels.
+
+The supplied Classic [Blizzard-hosted thread](https://us.forums.blizzard.com/en/wow/t/buff-auto-down-ranking/465042) contains player discussion, not an official Blizzard server specification. The linked spell 1245 is Fortitude rank **3**, learned at 24; rank **2** is 1244, learned at 12. The latter is the Classic level-2 recipient example. Existing BuffTap data has the correct identities.
+
+The supplied expanded competitor review was read as a backlog of candidate investigations, not authorization to add preference learning, stack controls, a buff inspector, supply features or other unrelated changes. No competitor code is copied. See the beta verification record for implementation boundaries and the remaining four-class live check.
+
 Research date: 2026-11-17 local. Installed beta: 1.26.4-beta1. Research only; no runtime change, new package or publication.
 
 ## Scope and evidence

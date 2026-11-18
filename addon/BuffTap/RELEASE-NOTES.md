@@ -1,3 +1,12 @@
+# BuffTap 1.26.4-beta2
+
+### More appropriate buffs for lower-level players
+BuffTap previously used the level where most buff ranks are learned as the requirement for receiving them. This beta applies Classic's usual ten-level allowance to ordinary ranked Mage, Priest, Druid and Paladin buffs. For example, it can offer Arcane Intellect rank 3 from recipient level 18 when you know that rank.
+
+This covers Mark of the Wild, Thorns, Arcane Intellect, Dampen and Amplify Magic, Fortitude, Divine Spirit, Shadow Protection, Might and Wisdom. Group versions and unusual spells keep their existing behavior while their rules are evaluated separately. Your priorities, settings and appearance stay the same, with no extra setup.
+
+The earlier beta's Nearby, group-choice and Demonic Pact corrections are included. The ordinary-buff allowance still needs representative in-game boundary testing on Forever before public release. BuffTap continues to require known spells, readable recipient information and your input for every cast.
+
 # BuffTap 1.26.4-beta1
 
 ### Nearby combat safety

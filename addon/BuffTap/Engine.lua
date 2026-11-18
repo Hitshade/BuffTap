@@ -4,7 +4,7 @@
 
 local _, B = ...
 _G.BuffTap = B
-B.version = "1.26.4-beta1"
+B.version = "1.26.4-beta2"
 B.API = {}
 local A = B.API
 
@@ -872,6 +872,21 @@ function B:Candidates(b)
   return candidates,reason
 end
 
+-- Ordinary ranked buffs use the Classic recipient allowance. This beta keeps
+-- group versions and unusual/single-rank effects on their existing policy.
+-- Use catalog rank levels, not a potentially Level-Linked learning API value.
+local recipientRankAllowance={motw=true,thorns=true,ai=true,dampen=true,amplify=true,
+  fort=true,spirit=true,sp=true,bom=true,bow=true}
+local function recipientMinimum(self,b,c)
+  local level=self.RankLevel[c.id]
+  if recipientRankAllowance[b.key] and c.order and b.ranks[c.order]==c.id
+    and A.Number(level) and level>=1 then
+    return math.max(1,level-10)
+  end
+  -- Unknown/remapped ranks receive no inferred allowance.
+  return c.level
+end
+
 function B:Resolve(b, unit)
   local candidates,reason=self:Candidates(b)
   if not candidates or #candidates==0 then return nil,reason end
@@ -886,7 +901,8 @@ function B:Resolve(b, unit)
   else
     if self.stats then self.stats.resolveBuilds=(self.stats.resolveBuilds or 0)+1 end
     for _,c in ipairs(candidates) do
-      if unit=="player" or (A.Number(targetLevel) and A.Number(c.level) and targetLevel+(b.key=="motw" and 10 or 0)>=c.level) then
+      local minimum=recipientMinimum(self,b,c)
+      if unit=="player" or (A.Number(targetLevel) and A.Number(minimum) and targetLevel>=minimum) then
         if #candidates>1 and not A.Number(c.level) and not c.order then
           return nil,"ambiguous rank ordering for remapped spell"
         end

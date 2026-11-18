@@ -21,7 +21,7 @@ spell(1459,'Arcane Intellect',1); spell(1460,'Arcane Intellect',14); spell(1461,
 B.bookDirty=true; refresh(); local def=B:FindBuff('ai')
 """
 case('A','highest compatible ranks for mixed recipients and learned self',MAGE+"""
-UnitLevel=function(u) return u=='party1' and 13 or u=='party2' and 14 or 60 end
+UnitLevel=function(u) return u=='party1' and 3 or u=='party2' and 4 or 60 end
 assert(B:Resolve(def,'party1').id==1459); assert(B:Resolve(def,'party2').id==1460)
 assert(B:Resolve(def,'target').id==1461 and B:Resolve(def,'player').id==1461)
 """)
@@ -32,7 +32,7 @@ UnitLevel=function() return {level} end; assert(not B:Resolve(def,'target'))
 case('A','pending rank metadata recovers through actual spell-data event',MAGE+"""
 local get=C_Spell.GetSpellName
 C_Spell.GetSpellName=function(id) if id==1461 then return nil end return get(id) end
-B:ScanBook(); assert(B:Resolve(def,'target').id==1459)
+B:ScanBook(); assert(B:Resolve(def,'target').id==1460)
 C_Spell.GetSpellName=get; UnitLevel=function() return 60 end
 B.events.scripts.OnEvent(nil,'SPELL_DATA_LOAD_RESULT',1461,true); advance(.2)
 assert(B:Resolve(def,'target').id==1461)
