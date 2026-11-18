@@ -186,9 +186,11 @@ function B:PauseReminders(minutes)
     self:StartTimer("manual-pause",seconds,function()
       if B.pauseUntil~=deadline then return end
       B.pauseUntil=nil; B:RequestRefresh("pause ended",0)
+      if B.UpdateCamping and not A.Combat() then B:UpdateCamping() end
     end)
   end
   self:Refresh(false)
+  if self.UpdateCamping then self:UpdateCamping() end
   return true
 end
 local function window(name,title,width,height)
@@ -291,11 +293,30 @@ function B:ReminderDefaultPositions()
   if not A.Number(width) or not A.Number(height) or width<450 or height<320 then return end
   -- Work in scaled game-UI coordinates, not physical monitor pixels or a
   -- per-resolution preset. Shift the whole starter group inside the usable area.
-  local gap=math.min(220,math.max(176,width*.115))
-  local x=math.max(-width/2+126,math.min(width*.20,width/2-gap-148))
-  local y=math.max(-height/2+210,math.min(height*.31,height/2-64))
-  return {x=x,y=y,campX=x,campY=y-76,supplyX=x,supplyY=y-152,
-    nearbyX=x+gap,nearbyY=y-100}
+  local gap=math.min(220,math.max(192,width*.115))
+  local right=width/2-gap-148
+  local x=math.min(right,math.max(-width/2+126,math.min(width*.20,right)))
+  -- Reserve the attached caption and both Manual rows under the main icon.
+  -- A short UI uses the space under Nearby for Supplies instead of squeezing
+  -- the icon column or overlapping its Manual consumables.
+  local compact=height<380
+  local bottom=compact and 216 or 292
+  local top=compact and 103 or 64
+  local y=math.max(-height/2+bottom,math.min(height*.31,height/2-top))
+  return {x=x,y=y,campX=x,campY=y-160,supplyX=compact and x+gap or x,supplyY=y-(compact and 160 or 236),
+    nearbyX=x+gap,nearbyY=y+(compact and 20 or -100)}
+end
+function B:ResetReminderPosition(kind)
+  if A.Combat() or not self.db then return false end
+  local defaults=self:ReminderDefaultPositions() or {x=0,y=-180,campX=100,campY=-180,supplyX=76,supplyY=-180,nearbyX=240,nearbyY=0}
+  local prefix=({buff="",camp="camp",supply="supply",nearby="nearby"})[kind]
+  if prefix==nil then return false end
+  for _,axis in ipairs({"x","y"}) do
+    local key=prefix=="" and axis or prefix..axis:upper()
+    self.db[key]=defaults[key]
+  end
+  self.appearance=nil
+  return true
 end
 local function editMover(key,caption,iconTexture)
   local f=window(nil,"",100,40); f.title:SetText(""); f.moverKey=key
@@ -393,6 +414,7 @@ function B:SetEditModeActive(active)
     end
     local f=self.editAnchor; f:SetSize(self.db.size,self.db.size); f:ClearAllPoints(); f:SetPoint("CENTER",UIParent,"CENTER",self.db.x,self.db.y); f:Show()
     self:ShowEditMovers()
+    if self.UpdateCamping then self:UpdateCamping() end
   elseif self.editAnchor then
     if self.editAnchor.dragging and not A.Combat() then self.editAnchor.savePosition(self.editAnchor) end
     self.editAnchor:StopMovingOrSizing(); self.editAnchor.dragging=false; self.editAnchor:Hide()

@@ -30,8 +30,9 @@ function B:NormalizeCamping()
   if not ({gold=true,cyan=true,green=true,red=true,white=true})[d.campEffectColor] then d.campEffectColor="gold" end
   if not ({slow=true,normal=true,fast=true})[d.campEffectSpeed] then d.campEffectSpeed="normal" end
   d.campWarning=A.Number(d.campWarning) and math.max(60,math.min(1800,d.campWarning)) or 300
-  d.campX=A.Number(d.campX) and math.max(-4000,math.min(4000,d.campX)) or 100
-  d.campY=A.Number(d.campY) and math.max(-4000,math.min(4000,d.campY)) or -180
+  local defaults=self.ReminderDefaultPositions and self:ReminderDefaultPositions()
+  d.campX=A.Number(d.campX) and math.max(-4000,math.min(4000,d.campX)) or (defaults and defaults.campX or 100)
+  d.campY=A.Number(d.campY) and math.max(-4000,math.min(4000,d.campY)) or (defaults and defaults.campY or -180)
 end
 local function aura(id)
   local fn=C_UnitAuras and C_UnitAuras.GetPlayerAuraBySpellID
@@ -80,6 +81,7 @@ end
 function B:CampNeedsReminder(state)
   local d=self.db
   if not d or not d.enabled or not d.campReminder or state.globalUnknown or A.Combat() then return false end
+  if self:ReminderPauseReason() then return false end
   if self.campSnoozeSession or (self.campSnoozeUntil and self.campSnoozeUntil>GetTime()) then return false end
   if read(UnitIsDeadOrGhost,"player")==true or read(IsMounted)==true or read(IsInInstance)==true then return false end
   local camp,bag=self:CampingNeeds(state)
@@ -486,7 +488,7 @@ end
 function B:UpdateCamping()
   self:CancelTimer("camp"); self:CancelTimer("camp-text")
   if not self.db then return end
-  if A.Combat() then
+  if A.Combat() or self.editModeActive then
     if self.campReminderIcon then self.campReminderIcon:Hide() end
     if self.campSnoozeMenu then self.campSnoozeMenu:Hide() end
     return
@@ -503,7 +505,7 @@ function B:UpdateCamping()
   if not state.globalUnknown and (not self.db.campTrackBenefits or not state.campUnknown) and (not self.db.campTrackBag or not state.bagUnknown) and not needsCamp and not needsBag then self.campAlerted=false end
   if needed and not preview and not dragging and not self.campAlerted then
     self.campAlerted=true
-    if self.db.campSound then self:PlayAlert("camp",true) end
+    if self.db.campSound then self:PlayAlert("camp") end
   end
   if not needed and self.campSnoozeMenu then self.campSnoozeMenu:Hide() end
   if needed then self:CreateCampReminder() end
@@ -535,7 +537,7 @@ function B:UpdateCamping()
   if delay then self:StartTimer("camp",math.max(.1,delay),function() self:UpdateCamping() end) end
 end
 local events=CreateFrame("Frame")
-for _,event in ipairs({"PLAYER_LOGIN","PLAYER_ENTERING_WORLD","UNIT_AURA","BAG_UPDATE_DELAYED","TRADE_SKILL_LIST_UPDATE","TRADE_SKILL_SHOW","TRADE_SKILL_CLOSE","SKILL_LINES_CHANGED","SPELL_UPDATE_COOLDOWN","BAG_UPDATE_COOLDOWN","ITEM_DATA_LOAD_RESULT","PLAYER_REGEN_DISABLED","PLAYER_REGEN_ENABLED","PLAYER_MOUNT_DISPLAY_CHANGED","PLAYER_XP_UPDATE","PLAYER_LEVEL_UP"}) do events:RegisterEvent(event) end
+for _,event in ipairs({"PLAYER_LOGIN","PLAYER_ENTERING_WORLD","UNIT_AURA","BAG_UPDATE_DELAYED","TRADE_SKILL_LIST_UPDATE","TRADE_SKILL_SHOW","TRADE_SKILL_CLOSE","SKILL_LINES_CHANGED","SPELL_UPDATE_COOLDOWN","BAG_UPDATE_COOLDOWN","ITEM_DATA_LOAD_RESULT","PLAYER_REGEN_DISABLED","PLAYER_REGEN_ENABLED","PLAYER_MOUNT_DISPLAY_CHANGED","PLAYER_UPDATE_RESTING","UPDATE_STEALTH","PLAYER_XP_UPDATE","PLAYER_LEVEL_UP"}) do events:RegisterEvent(event) end
 events:SetScript("OnEvent",function(_,event,unit)
   if not B.db or (event=="UNIT_AURA" and unit~="player") then return end
   if event=="ITEM_DATA_LOAD_RESULT" and (not B.campRequestedItems or not B.campRequestedItems[unit]) then return end

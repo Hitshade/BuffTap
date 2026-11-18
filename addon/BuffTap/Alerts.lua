@@ -115,7 +115,11 @@ function B:PlayAlert(kind,preview)
   -- A temporarily unavailable resting read must not let an automatic sound
   -- escape an enabled pause. Explicit previews and opt-in social alerts differ.
   if not preview and not social and self.db.pauseResting and A.Call(IsResting)~=false then return false end
-  if not preview and not social and not (kind=="supply" and self.db.suppliesSound or kind~="supply" and self.db.sound) then return false end
+  local enabled
+  if kind=="camp" then enabled=self.db.campSound
+  elseif kind=="supply" then enabled=self.db.suppliesSound
+  else enabled=self.db.sound end
+  if not preview and not social and not enabled then return false end
   local now=GetTime()
   if not preview and not social and self.lastAlertSound and now-self.lastAlertSound<self.db.soundInterval then return false end
   local selected=self.db[kind=="supply" and "supplySound" or kind=="camp" and "campAlertSound" or kind=="cleanse" and "cleanseSound" or social and "socialSound" or "reminderSound"]
@@ -156,7 +160,10 @@ function B:FriendlyStatus()
   if self.reason=="resting" then return self:Text("Reminders pause in cities and inns.") end
   if self.reason=="mounted" then return self:Text("Reminders pause while mounted.") end
   if self.reason=="dead / ghost / player unavailable" then return self:Text("Player is dead, a ghost, or unavailable.") end
-  if self.reason=="not enough mana" then return self:Text("Not enough mana to buff.") end
+  if self.reason=="not enough mana" then
+    local class=A.Class("player")
+    return self:Text((class=="WARRIOR" or class=="ROGUE") and "Not enough power to buff." or "Not enough mana to buff.")
+  end
   if self.reason=="waiting for cooldown" then return self:Text("Waiting for a spell cooldown.") end
   if self.reason=="spell unavailable: form, reagents or requirements" then return self:Text("Buff unavailable: check form, reagents or requirements.") end
   if self.manaFloorBlocked then return self:Text("Saving mana: buffing other players resumes above %d%% mana.",self.db.nearbyManaFloor or 0) end

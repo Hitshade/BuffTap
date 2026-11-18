@@ -228,7 +228,7 @@ manual('food'); B.db.x=300; B.db.y=200; B:SetManualConsumablesDetached(true)
 B.db.manualConsumablesX=400; B.db.manualConsumablesY=500; B:Options()
 local r=B.options.resetLookButton; r.scripts.OnClick(r); assert(B.db.manualConsumablesDetached)
 r.scripts.OnClick(r)
-assert(B.db.x==0 and B.db.y==-180 and not B.db.manualConsumablesDetached)
+local defaults=B:ReminderDefaultPositions(); assert(B.db.x==defaults.x and B.db.y==defaults.y and not B.db.manualConsumablesDetached)
 assert(B.db.manualConsumablesX==0 and B.db.manualConsumablesY==0 and B.db.consumableModes.food=='manual')
 """)
 

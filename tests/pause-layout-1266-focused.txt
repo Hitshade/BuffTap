@@ -1,0 +1,48 @@
+PASS Camping respects temporary pause without a real icon or automatic sound
+PASS Camping respects resting without a real icon or automatic sound
+PASS Camping respects stealth without a real icon or automatic sound
+PASS Camping respects Edit Mode without a real icon or automatic sound
+PASS Temporary pause immediately hides an already active camp reminder and resumes quietly
+PASS Cancelling a temporary pause restores Camping without inventing another alert
+PASS Camping can detect a genuinely new missing effect after resuming
+PASS Camping independently reacts to PLAYER_UPDATE_RESTING
+PASS Camping independently reacts to UPDATE_STEALTH
+PASS Entering Edit Mode hides live Camping and leaves only its unprotected mover
+PASS Camping automatic sound is not classified as a preview and does not need main sounds
+PASS Main sound permission cannot enable a disabled Camping sound
+PASS Automatic Camping sound obeys rate limiting while explicit preview remains available
+PASS Camp visual preview never emits an automatic alert during a pause
+PASS Combat interruption of the pause timer cannot restore a camp icon
+PASS Manual items caption and holder all hide for resting
+PASS Manual items caption and holder all hide for global resting
+PASS Manual items caption and holder all hide for temporary pause
+PASS Manual items caption and holder all hide for excluded instance scope
+PASS Manual items resume with fresh payloads when their city pause ends
+PASS A stale Manual click is disarmed before a pending pause refresh
+PASS Detached Manual notifications obey the same pause without losing their saved position
+PASS Unknown stock remains a grey informative reminder outside a pause
+PASS Starter group separates Camping Supplies Nearby and both attached rows (450, 320)
+PASS Starter group separates Camping Supplies Nearby and both attached rows (640, 360)
+PASS Starter group separates Camping Supplies Nearby and both attached rows (640, 480)
+PASS Starter group separates Camping Supplies Nearby and both attached rows (1024, 768)
+PASS Starter group separates Camping Supplies Nearby and both attached rows (1920, 1080)
+PASS Starter group separates Camping Supplies Nearby and both attached rows (2560, 1440)
+PASS Starter group separates Camping Supplies Nearby and both attached rows (5120, 1440)
+PASS Starter group separates Camping Supplies Nearby and both attached rows (3840, 2160)
+PASS Actual buff reset uses shared defaults and leaves other module positions alone
+PASS Actual camp reset uses shared defaults and leaves other module positions alone
+PASS Actual supply reset uses shared defaults and leaves other module positions alone
+PASS Resetting positions never changes feature enable choices
+PASS Combat rejects explicit position resets without changing coordinates
+PASS Resource status terminology fits WARRIOR
+PASS Resource status terminology fits ROGUE
+PASS Resource status terminology fits MAGE
+PASS Resource status terminology fits DRUID
+SYNTAX Alerts.lua Lua 5.1 OK
+SYNTAX ManualConsumables.lua Lua 5.1 OK
+SYNTAX Camping.lua Lua 5.1 OK
+SYNTAX Convenience.lua Lua 5.1 OK
+SYNTAX Supplies.lua Lua 5.1 OK
+SYNTAX Options.lua Lua 5.1 OK
+SYNTAX OptionsRefinement.lua Lua 5.1 OK
+Focused fix scenarios: 40 passed; 0 failed.

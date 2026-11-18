@@ -304,8 +304,9 @@ function B:NormalizeSupplyReminder()
   if not ({slow=true,normal=true,fast=true})[d.supplyEffectSpeed] then d.supplyEffectSpeed="normal" end
   if d.supplyIconStyle~="modern" then d.supplyIconStyle="classic" end
   if not A.Number(d.supplyX) or not A.Number(d.supplyY) then
-    d.supplyX=(A.Number(d.x) and d.x or 0)+(A.Number(d.size) and d.size or 48)/2+44
-    d.supplyY=A.Number(d.y) and d.y or 0
+    local defaults=self.ReminderDefaultPositions and self:ReminderDefaultPositions()
+    d.supplyX=defaults and defaults.supplyX or (A.Number(d.x) and d.x or 0)+(A.Number(d.size) and d.size or 48)/2+44
+    d.supplyY=defaults and defaults.supplyY or (A.Number(d.y) and d.y or 0)
   end
   d.supplyX=math.max(-4000,math.min(4000,d.supplyX)); d.supplyY=math.max(-4000,math.min(4000,d.supplyY))
 end

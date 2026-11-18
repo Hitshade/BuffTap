@@ -2299,7 +2299,7 @@ function B:Options()
     button(camping,"Center",210,-492,98,function() B.db.campX=0; B.db.campY=0; B:PreviewCampReminder() end)
     T.Confirm(button(camping,"Reset camp look",324,-492,170,function()
       if A.Combat() then return end
-      B.db.campSize=40; B.db.campOpacity=1; B.db.campX=100; B.db.campY=-180; B.db.campEffectStyle="soft"; B.db.campEffectColor="gold"; B.db.campEffectSpeed="normal"; B.db.campTextFont="default"; B.db.campTextSize=0; B.db.campTextColor="white"; B.db.campTextOutline="outline"; B.db.campTextGap=4; B.db.campShowCountdown=true; B.db.campShowStacks=true; B:PreviewCampReminder(); B:UpdateCampingOptions()
+      B.db.campSize=40; B.db.campOpacity=1; B:ResetReminderPosition("camp"); B.db.campEffectStyle="soft"; B.db.campEffectColor="gold"; B.db.campEffectSpeed="normal"; B.db.campTextFont="default"; B.db.campTextSize=0; B.db.campTextColor="white"; B.db.campTextOutline="outline"; B.db.campTextGap=4; B.db.campShowCountdown=true; B.db.campShowStacks=true; B:PreviewCampReminder(); B:UpdateCampingOptions()
     end))
     label(camping,"Preview lasts 12 seconds. Drag the camp icon to position it.",18,-532,"GameFontDisableSmall",660)
     f.campingPause=label(camping,"",18,-562,"GameFontHighlightSmall",470)
@@ -2355,7 +2355,7 @@ function B:Options()
         B.db.effectUrgency=false; B.db.effectOnce=false
       end
       if not A.Combat() then B.db.manualConsumablesDetached=false; B.db.manualConsumablesX=0; B.db.manualConsumablesY=0 end
-      if not A.Combat() then B.db.showReminder=true; B.db.size=64; B.db.opacity=1; B.db.x=0; B.db.y=-180; B.db.glow=true; B.db.pulse=false; B.db.effectStyle=nil; B.db.effectColor="gold"; B.db.effectSpeed="normal"; B.db.showBuffName=false; B.db.showTargetName=true; B.db.showTimer=false; B.db.showGroupBadge=true; B.db.labelFont="default"; B.db.labelColor="default"; B.db.labelSize=0; B.db.labelOutline=B:GameTextOutline(); B.db.labelGap=5; B.appearance=nil; B:RequestRefresh("reset look",0); B:Options() end
+      if not A.Combat() then B.db.showReminder=true; B.db.size=64; B.db.opacity=1; B:ResetReminderPosition("buff"); B.db.glow=true; B.db.pulse=false; B.db.effectStyle=nil; B.db.effectColor="gold"; B.db.effectSpeed="normal"; B.db.showBuffName=false; B.db.showTargetName=true; B.db.showTimer=false; B.db.showGroupBadge=true; B.db.labelFont="default"; B.db.labelColor="default"; B.db.labelSize=0; B.db.labelOutline=B:GameTextOutline(); B.db.labelGap=5; B.appearance=nil; B:RequestRefresh("reset look",0); B:Options() end
     end)
     T.Confirm(f.resetLookButton)
     local function textChange(key,value)

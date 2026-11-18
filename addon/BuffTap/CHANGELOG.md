@@ -1,3 +1,19 @@
+# BuffTap 1.26.6-beta1
+
+### Pause consistency
+- Camping's normal eligibility now observes ReminderPauseReason, including temporary/resting/stealth/edit states. Entering editing hides the live reminder before showing the mover; temporary pause/cancel/expiry updates it independently. Its own event frame now observes resting and stealth updates, without relying on group/Target/Nearby toggles. Existing snooze, instance, mount, death and combat protections remain.
+- Automatic camp alerts use the non-preview path. PlayAlert chooses campSound separately from main sound permission while retaining automatic pause checks and shared pacing. Explicit sound/visual previews retain deliberate exceptions; a visual preview does not emit an automatic alert. Resuming an already-alerted missing effect does not replay the same alert; a newly missing effect can alert normally.
+- Manual consumable rendering now checks global and category/scope pauses before projection/inventory work. Buttons, caption and holder are hidden/disarmed, and visible entries cleared. Resume reconstructs fresh payloads. Click-boundary validation and secure combat drivers remain unchanged. Grey missing-stock information remains outside pauses.
+
+### Placement, reset and wording
+- Shared starter geometry reserves space for the attached caption and two Manual rows. Normal UIs keep the vertical column; short UI spaces put Supplies beneath Nearby instead. Saved/copied positions are never migrated. Explicit reset uses the same shared provider for main/Camping/Supplies, with module-local coordinates only and conservative geometry-unavailable fallbacks.
+- Main and both Camping reset paths use the shared helper. Supplies normalization uses the shared default only when coordinates require repair. Enabled features and consumable modes are preserved. The hidden legacy Center action remains a center operation, separate from a default reset.
+- Warrior/Rogue player-facing resource status now agrees with the power-wait icon instead of calling the shortage mana. Internal reason keys remain compatible.
+
+### Evidence and scope
+- Forty focused corrected-behavior scenarios passed, plus Lua 5.1 compilation of seven changed behavior modules. They include actual reset buttons and event handlers, pause/expiry/combat transitions, sound permission/rate/preview distinctions, stale-click disarming and UI-space layout checks. The integrated full mocked Lua 5.1 run completed with **2,791 passed, 0 recorded failures**; FINAL_TOTAL and the absence of FAIL records were checked. Focused and full logs accompany the committed scenarios. Historical 1.26.5 audit probes remain evidence of the old behavior and are not part of the release suite.
+- Owner authorized fixes and local beta testing only, not public publication. All three note audiences and release identity are prepared. No catalog/rank, cast-selection, profile migration or SavedVariables/WTF file changes. No live WoW verification is claimed; actual rendering still needs the owner's smoke check.
+
 # BuffTap 1.26.5
 
 ### Onboarding and preferences

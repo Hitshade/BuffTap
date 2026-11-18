@@ -57,6 +57,7 @@ function B:DisarmManualConsumables()
   if A.Combat() then return end
   for _,button in ipairs(self.manualConsumableButtons or {}) do self:DisarmManualButton(button); button:Hide() end
   if self.manualConsumableCaption then self.manualConsumableCaption:Hide() end
+  if self.manualConsumableHolder then self.manualConsumableHolder:Hide() end
 end
 
 -- Projection reads effect state and existing stock/metadata only. It never validates,
@@ -169,7 +170,10 @@ function B:UpdateManualConsumables()
       if family and not family.hidden and self:ConsumableFamilyEnabled(family) then any=true; break end
     end
   end
-  if not any or unsafe() or self.editModeActive then self:DisarmManualConsumables(); return end
+  local pause=self:ActionPauseReason({source="consumable"}) or self:CategoryRestingPause("consumables")
+  if not any or unsafe() or self.editModeActive or pause then
+    self.manualConsumableEntries={}; self:DisarmManualConsumables(); return
+  end
   local entries,nextWake=self:ManualConsumableProjection(self:GetAuras("player",false),self:RebuildConsumableCache(false))
   self:ConsiderWake(nextWake)
   self.manualConsumableEntries=entries

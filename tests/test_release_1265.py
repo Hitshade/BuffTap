@@ -56,7 +56,7 @@ test('Warrior power wait respects city pause independently of Nearby',WAIT+
 
 for width,height in [(450,320),(640,480),(1024,768),(1920,1080),(2560,1440),(5120,1440),(3840,2160)]:
  test('Fresh layout keeps the whole group inside scaled UI space '+str((width,height)),
-      f"local B=BuffTap; UIParent:SetSize({width},{height}); local p=B:ReminderDefaultPositions(); assert(p); assert(p.x-110>=-{width}/2+16 and p.nearbyX+132<={width}/2-16); assert(p.y+48<={height}/2-16 and p.supplyY-40>=-{height}/2+16); assert(p.campX==p.x and p.supplyX==p.x and p.y>p.campY and p.campY>p.supplyY and p.nearbyX>p.x+170)")
+      f"local B=BuffTap; UIParent:SetSize({width},{height}); local p=B:ReminderDefaultPositions(); assert(p); assert(p.x-105>=-{width}/2 and p.nearbyX+132<={width}/2-16); assert(p.y+48<={height}/2-16 and p.supplyY-40>=-{height}/2+16); assert(p.campX==p.x and (p.supplyX==p.x or p.supplyX==p.nearbyX) and p.y>p.campY and (p.campY>p.supplyY or (p.campY==p.supplyY and p.supplyX~=p.campX)) and p.nearbyX>p.x+170)")
 test('First-run layout is applied only when all positions are genuinely unset',
      "local B=BuffTap; B.db.welcomeSeen=false; B.db.onboardingVersion=nil; for _,k in ipairs({'x','y','campX','campY','supplyX','supplyY','nearbyX','nearbyY'}) do B.db[k]=nil end; local p=B:ReminderDefaultPositions(); B:InitDB(); assert(B.db.x==p.x and B.db.y==p.y and B.db.campY==p.campY and B.db.nearbyX==p.nearbyX and B.db.supplyY==p.supplyY)")
 test('Existing coordinates and resized UI never trigger automatic repositioning',

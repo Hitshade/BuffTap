@@ -2,6 +2,12 @@
 local _,B=...
 -- Keep the ten most recent releases within a 24 KiB content ceiling.
 B.PatchNotes={
+ {version="1.26.6-beta1",title="Quieter pauses and tidier reminders",items={
+  "Camping now respects temporary pause, the Helpers city/inn pause, stealth and Edit Mode. Its automatic sounds follow its own sound switch without bypassing pauses.",
+  "Manual consumable icons and their heading hide during applicable pauses and outside your chosen dungeon/raid scope. They return when reminders resume, without changing your selections.",
+  "New starter positions leave room for both rows of attached consumables. On short game UIs, Supplies sits below Nearby. Saved positions stay where you put them.",
+  "Reset look & position now uses the same starting layout for each reminder. Resetting one reminder does not move the others.",
+  "Resource-wait status text now says power rather than mana for Warriors and Rogues."}},
  {version="1.26.5",title="Quicker setup and clearer reminders",items={
   "New players can choose Get started once, Customize first, or Keep current settings. Nearby is included in the recommended setup without requiring a tour.",
   "Recommended setup enables reminder sounds, a resting pause, stronger-buff error protection and class-appropriate Cleanse and Resurrection. Solo thanks remains your choice; SmartShift and class helpers stay in Settings.",
@@ -61,14 +67,6 @@ B.PatchNotes={
   "Hover the Elixirs or Utility rows on the Consumables page to see which of your ticked effects are active, running low, missing or out of stock.",
   "A pet notice now shows before a weapon-coating notice, so one no longer hides the other.",
   "Fixed: the resurrection reminder could be offered for a player whose connection status the game would not confirm."}},
- {version="1.24.6",title="Fixes, and clearer reminders",items={
-  "Fixed: the resurrection reminder could fail to show for a dead group member. It now appears as it should.",
-  "New option on the Cleanse page: \"Cleanse before resurrection\", for classes that can do both. It is off by default, so resurrection still comes first unless you change it.",
-  "Soulstone: choosing a player with \"Use current target\" now remembers that exact person, even if someone in your group has a similar name. If an older assignment stops working, choose the player again.",
-  "Pet summons, Healthstones and Soulstones now come before optional food and flasks. A reminder you have to act on by hand no longer hides one you can click.",
-  "Hover a food, flask or elixir row on the Consumables page to see why nothing is being offered. The food picker also tells you when a different food effect is active. BuffTap never replaces it for you.",
-  "Hover the tracking choice under Helpers to see whether it is on, off or not learned yet.",
-  "Battlegrounds: your chosen tracking can be reminded again when you are not in combat."}},
 
 }
 function B:PatchNotesUnread()

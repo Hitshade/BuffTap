@@ -1,5 +1,7 @@
 # BuffTap 1.26.5 player-experience audit
 
+Follow-up: the owner authorized fixes to all findings. See PLAYER-EXPERIENCE-FIXES-1.26.6.md for the corrected local beta. The observations below remain historical 1.26.5 evidence; their standalone reproduction script is not intended to pass against the corrected branch.
+
 Reviewed 2026-11-18 against the shipped 1.26.5 behavior. No runtime changes, installation, publication or user replies were made for this review.
 
 ## Confirmed findings

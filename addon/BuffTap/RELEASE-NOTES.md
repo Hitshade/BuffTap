@@ -1,3 +1,17 @@
+# BuffTap 1.26.6-beta1
+
+### Pauses now cover the companion reminders
+Camping stays quiet during temporary pause, the Helpers city/inn pause, stealth and Edit Mode. Its sound still has its own switch; turning on ordinary reminder sounds does not turn on Camping sounds. Deliberate previews remain available from Settings.
+
+Manual consumable icons, their heading and additional-items button hide during the relevant pause or when **Only in dungeons and raids** excludes your current area. They return with fresh item checks when that condition ends. Your saved selections are retained, and low-stock icons can still appear normally outside a pause.
+
+### More consistent positions and status
+The starter layout now leaves space below the main icon for attached consumables, including two rows. Short game UIs use the space under Nearby for Supplies. This affects new defaults and explicit resets; existing positions are not moved automatically.
+
+**Reset look & position** returns the selected reminder to its place in that layout without moving the other reminders. Warrior and Rogue resource-wait status uses the same power wording as the icon.
+
+This is a local testing beta. In-game checks should cover pause/resume with Camping and Manual items enabled together, the small-UI layout and individual resets. Every cast and item use still requires your input.
+
 # BuffTap 1.26.5
 
 ### A shorter first run
