@@ -2,12 +2,13 @@
 local _,B=...
 -- Keep the ten most recent releases within a 24 KiB content ceiling.
 B.PatchNotes={
- {version="1.26.6-beta1",title="Quieter pauses and tidier reminders",items={
+ {version="1.26.6-beta2",title="Quieter pauses and tidier reminders",items={
   "Camping now respects temporary pause, the Helpers city/inn pause, stealth and Edit Mode. Its automatic sounds follow its own sound switch without bypassing pauses.",
   "Manual consumable icons and their heading hide during applicable pauses and outside your chosen dungeon/raid scope. They return when reminders resume, without changing your selections.",
   "New starter positions leave room for both rows of attached consumables. On short game UIs, Supplies sits below Nearby. Saved positions stay where you put them.",
   "Reset look & position now uses the same starting layout for each reminder. Resetting one reminder does not move the others.",
-  "Resource-wait status text now says power rather than mana for Warriors and Rogues."}},
+  "Resource-wait status text now says power rather than mana for Warriors and Rogues.",
+  "Settings have tighter Consumables spacing, clearer selection and pause labels, wider Nearby text choices and separate labels for saved and active accent colours."}},
  {version="1.26.5",title="Quicker setup and clearer reminders",items={
   "New players can choose Get started once, Customize first, or Keep current settings. Nearby is included in the recommended setup without requiring a tour.",
   "Recommended setup enables reminder sounds, a resting pause, stronger-buff error protection and class-appropriate Cleanse and Resurrection. Solo thanks remains your choice; SmartShift and class helpers stay in Settings.",

@@ -307,12 +307,13 @@ function B:BuildRefinedOptions(ui,tabs)
   section(ui,interface,"Interface",12,-12,692,278)
   ui.label(interface,"Accent colour",26,-62,"GameFontHighlightSmall",180)
   f.accentMode=ui.selector(interface,"",226,-56,462,function() return {{key="gold",name="BuffTap gold"},{key="class",name="My class"},{key="custom",name="Custom colour"}} end,function(v) B:VisualSetting("optionsAccentMode",v) end)
-  ui.label(interface,"Custom colour (hex)",26,-106,"GameFontHighlightSmall",180)
+  ui.label(interface,"Saved custom colour (hex)",26,-106,"GameFontHighlightSmall",180)
   -- The input box draws its frame 5 px left of its anchor; offset it so its left edge lines up with the rows above and below.
   f.accentHex=ui.editbox(interface,231,-100,107,false); f.accentHex:SetHeight(26)
   f.accentHex:SetScript("OnEnterPressed",function(s) local value=(s:GetText() or ""):gsub("#",""); if value:match("^%x%x%x%x%x%x$") then B:VisualSetting("optionsAccentColor",value); B:VisualSetting("optionsAccentMode","custom") end; s:ClearFocus(); B:Options() end)
   f.accentHex:SetScript("OnEscapePressed",function(s) s:ClearFocus(); B:Options() end)
   f.accentPick=ui.button(interface,"Pick colour",354,-100,158,function() B:OpenAccentPicker() end)
+  ui.label(interface,"Active accent",576,-88,"GameFontDisableSmall",112)
   -- Swatch: the accent colour currently in use.
   f.accentSwatch=CreateFrame("Frame",nil,interface,"BackdropTemplate"); f.accentSwatch:SetSize(40,26); f.accentSwatch:SetPoint("TOPLEFT",526,-100)
   f.accentSwatch:SetBackdrop({bgFile="Interface\\Buttons\\WHITE8X8"}); T.Round(f.accentSwatch,5,"surface"); T.LockBorder(f.accentSwatch,1,1,1,.25)
@@ -455,10 +456,10 @@ function B:BuildNearbyAppearance(ui,p)
     b:SetHeight(24); b.navStyle="segment"; b.side=side; f.nearbySide[i]=b
   end
   -- Text: font, size and outline for the player list, in the slider column as a sixth row.
-  ui.label(p,"List text",26,-277,"GameFontHighlightSmall",190)
-  f.nearbyFontButton=ui.selector(p,"",226,-272,176,function() return B:NearbyFonts() end,function(v) B:VisualSetting("nearbyFont",v); B:Options() end,true)
-  f.nearbyFontSizeButton=ui.selector(p,"",410,-272,110,function() return B:NearbyTextSizes() end,function(v) B:VisualSetting("nearbyFontSize",v); B:Options() end,"scroll")
-  f.nearbyFontOutlineButton=ui.selector(p,"",528,-272,160,function() return B:TextOutlineChoices() end,function(v) B:VisualSetting("nearbyFontOutline",v); B:Options() end)
+  -- Give the font and size enough width to show their selected names.
+  f.nearbyFontButton=ui.selector(p,"",26,-272,310,function() return B:NearbyFonts() end,function(v) B:VisualSetting("nearbyFont",v); B:Options() end,true)
+  f.nearbyFontSizeButton=ui.selector(p,"",344,-272,160,function() return B:NearbyTextSizes() end,function(v) B:VisualSetting("nearbyFontSize",v); B:Options() end,"scroll")
+  f.nearbyFontOutlineButton=ui.selector(p,"",512,-272,176,function() return B:TextOutlineChoices() end,function(v) B:VisualSetting("nearbyFontOutline",v); B:Options() end)
   section(ui,p,"Position",12,-336,692,124)
   section(ui,p,"Title bar and rows",12,-476,692,118)
   f.nearbyHideHeader=ui.check(p,"Hide the title bar until the mouse is over the window",26,-518,function(c)
@@ -484,7 +485,7 @@ function B:BuildNearbyAppearance(ui,p)
   end)
   f.nearbyOnTop:SetScript("OnEnter",function(s) T.Tooltip(s,B:Text("Keep above other windows"),B:Text("Off: interface windows such as professions and bags open on top of Nearby. On: Nearby stays above them.")) end)
   f.nearbyOnTop:SetScript("OnLeave",function() if GameTooltip then GameTooltip:Hide() end end)
-  ui.button(p,"Move BuffTap frames",26,-416,190,function() B:MoveAllFrames("nearby") end)
+  ui.button(p,"Move reminders",26,-416,190,function() B:MoveAllFrames("nearby") end)
   T.Confirm(ui.button(p,"Restore window defaults",450,-416,234,function()
     B.db.nearbyScale=1; B.db.nearbyRows=5; B.db.nearbyWidth=240; B.db.nearbyOpacity=.5; B.db.nearbyX=240; B.db.nearbyY=0; B.db.nearbyButtonSide="left"; B.db.nearbyFont="default"; B.db.nearbyFontSize=0; B.db.nearbyFontOutline="none"
     if B.nearbyFrame then B.nearbyFrame.positionX=nil; B.nearbyFrame.positionY=nil; B:UpdateNearbyWindow() end; B:Options()
@@ -583,7 +584,7 @@ function B:StandardizeOptionsPages(ui,tabs)
           reparent(group.active,canvas); reparent(group.reset,canvas); reparent(group.status,canvas)
         end end
         -- 1.24.4: the Buff items / Supplies tabs are gone, so the content moves up into their row.
-        f.consumableBody:ClearAllPoints(); f.consumableBody:SetPoint("TOPLEFT",0,-36); f.consumableBody:SetPoint("BOTTOMRIGHT",0,0)
+        f.consumableBody:ClearAllPoints(); f.consumableBody:SetPoint("TOPLEFT",0,4); f.consumableBody:SetPoint("BOTTOMRIGHT",0,0)
         for _,child in ipairs({f.consumableBody:GetChildren()}) do child:ClearAllPoints(); child:SetPoint("TOPLEFT",0,0); child:SetPoint("BOTTOMRIGHT",0,0); hideHead(child) end
         f.supplyBody:ClearAllPoints(); f.supplyBody:SetPoint("TOPLEFT",0,-72); f.supplyBody:SetPoint("BOTTOMRIGHT",0,0); hideHead(f.supplyBody)
         for _,child in ipairs(children) do if child~=f.consumableBody and child~=f.supplyBody and child:GetObjectType()=="Button" then local _,_,_,x=child:GetPoint(); place(child,canvas,x or 18,-68,104,26) end end
@@ -641,7 +642,7 @@ function B:StandardizeOptionsPages(ui,tabs)
     edit:HookScript("OnEnter",function(s) T.Tooltip(s,B:Text("Buff reminder position"),B:Text("Press Enter to save each coordinate.")) end)
     edit:HookScript("OnLeave",function() if GameTooltip then GameTooltip:Hide() end end)
   end
-  T.Variant(ui.button(binding,"Move BuffTap frames",510,-582,178,function() B:MoveAllFrames("binding") end),"primary")
+  T.Variant(ui.button(binding,"Move reminders",510,-582,178,function() B:MoveAllFrames("binding") end),"primary")
   -- The page area is 34 px taller than before; the list grows and the footer follows its bottom-anchored controls.
   ui.card(f.buffContent,12,-64,692,418)
   local setupFooter=ui.card(f.buffContent,12,-494,692,50)

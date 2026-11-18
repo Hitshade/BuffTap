@@ -1,4 +1,6 @@
-# BuffTap 1.26.6-beta1
+# BuffTap 1.26.6-beta2
+
+Settings also have a more compact Consumables layout, roomier Nearby text selectors and clearer Manual selection, pause and accent-colour labels. Class-specific settings and your saved choices are unchanged.
 
 ### Pauses now cover the companion reminders
 Camping stays quiet during temporary pause, the Helpers city/inn pause, stealth and Edit Mode. Its sound still has its own switch; turning on ordinary reminder sounds does not turn on Camping sounds. Deliberate previews remain available from Settings.

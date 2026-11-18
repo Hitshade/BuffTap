@@ -2864,7 +2864,7 @@ function B:Options()
           end
           if row.more then row.more:SetText(#ticked>#(row.strip or {}) and ("+"..(#ticked-#row.strip)) or "") end
           row.inventory:SetText(#ticked==0 and "" or carried>0 and ("|cff88dd88"..carried.." in bags|r") or "|cffffbb44Out of stock|r")
-          row.choice:SetText(#names==0 and L("None ticked") or L("%d ticked",#names))
+          row.choice:SetText(#names==0 and L("None selected") or L("%d selected",#names))
           row.icon:SetTexture(first or 134400)
           local isElixir=family.children==self.ElixirFamilies
           addHelp(row,family.name,(#names>0 and (table.concat(names,"\n").."\n\n") or "")..(not isElixir and L("Tick each item to keep up. Each one gets its own reminder. The two Firewaters share one effect, so only one of them can be ticked.") or "")..(isElixir and L("Tick each elixir to keep up. Each one gets its own reminder. Elixirs of the same line replace each other, so only one of them can be ticked.") or ""))
@@ -2874,7 +2874,11 @@ function B:Options()
         elseif family.explicitChoice then row.choice:SetText(L("Choose an item to track")); row.inventory:SetText(L("Not selected")) end
         local mode=self:ConsumableMode(family,self:EditorSettings("consumables"))
         T.Navigation(row.auto,mode=="auto"); T.Navigation(row.manual,mode=="manual")
-        if mode=="manual" then row.choice:SetText(L("Manual")..": "..(row.choice:GetText() or "")) end
+        if mode=="manual" then
+          local choice=row.choice:GetText() or ""
+          if not chosen and not family.multi and not family.explicitChoice then choice=L("Automatic item selection") end
+          row.choice:SetText(L("Manual use").." - "..choice)
+        end
       end
     end
     local paused=false; for _ in pairs(self.effectPauses or {}) do paused=true; break end
@@ -2947,7 +2951,7 @@ function B:Options()
   f.weaponOff:SetShown(weaponClass=="ROGUE" or not weaponClass)
   f.weaponTiming.silent=true; f.weaponTiming:SetValue(self:EditorSettings("weapons").weaponSeconds); f.weaponTiming.valueText:SetText(formatSeconds(self:EditorSettings("weapons").weaponSeconds)); f.weaponTiming.silent=false
   local status=self:WeaponReminderSummary()
-  f.weaponStatus:SetText(status)
+  f.weaponStatus:SetText(status=="disabled" and L("Weapon reminders are off") or status)
   for hand,pick in pairs(f.weaponPickers) do
     pick:SetShown(weaponClass~=nil and (hand=="main" or weaponClass=="ROGUE"))
     local handKey=hand; local selected=self:WeaponPreference(hand,self:EditorSettings("weapons"))
@@ -3141,7 +3145,8 @@ function B:UpdateCampingOptions(state)
   for _,v in ipairs(self:TextOutlineChoices()) do if v.key==self.db.campTextOutline then f.campingTextOutline:SetText(L(v.name)) end end
   f.campingTextGap.silent=true; f.campingTextGap:SetValue(self.db.campTextGap); f.campingTextGap.silent=false
   local paused=self.campSnoozeSession or (self.campSnoozeUntil and self.campSnoozeUntil>GetTime())
-  f.campingPause:SetText(L(paused and "Camp reminder snoozed" or "Camp reminder ready")); f.campingResume:SetShown(paused or false)
+  local reminderPaused=self.ReminderPauseReason and self:ReminderPauseReason()
+  f.campingPause:SetText(L(paused and "Camp reminder snoozed" or reminderPaused and "Camp reminder paused" or not self.db.campReminder and "Camp reminders are off" or "Camp reminder ready")); f.campingResume:SetShown(paused or false)
 end
 
 function B:PreviewAppearance()

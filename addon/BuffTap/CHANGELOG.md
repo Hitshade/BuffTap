@@ -1,4 +1,7 @@
-# BuffTap 1.26.6-beta1
+# BuffTap 1.26.6-beta2
+
+### Beta 2 settings polish
+- Presentation only: reduce Consumables toolbar spacing by 40 UI units; widen Nearby font and size selectors without changing class-dependent panels; distinguish stored custom hex from active accent; clarify manual selection, disabled weapons and Camping pause status; standardize movement labels. No saved-setting or secure-action changes. GitHub review: no open issues; closed #4/#5 remain outside this visual scope. Lua syntax and the existing focused pause/layout scenarios checked below; live rendering awaits owner review.
 
 ### Pause consistency
 - Camping's normal eligibility now observes ReminderPauseReason, including temporary/resting/stealth/edit states. Entering editing hides the live reminder before showing the mover; temporary pause/cancel/expiry updates it independently. Its own event frame now observes resting and stealth updates, without relying on group/Target/Nearby toggles. Existing snooze, instance, mount, death and combat protections remain.
