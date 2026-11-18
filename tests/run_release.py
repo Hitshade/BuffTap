@@ -61,6 +61,7 @@ import test_options1170
 import test_situations
 print('TOTAL',len(__import__('test_bufftap').tests))
 import test_group_contexts
+import test_pr6_adaptation
 print('FINAL_TOTAL',len(__import__('test_bufftap').tests))
 import test_release_119
 import test_release_1194
@@ -99,4 +100,8 @@ import test_regression_1264
 import test_recipient_ranks
 import test_shields_inspector
 import test_layout_setup_beta4
+import test_combat_expiry
+import test_buff_queue
+import test_button_strata
+import test_pr6_adaptation
 print('FINAL_TOTAL',len(__import__('test_bufftap').tests))

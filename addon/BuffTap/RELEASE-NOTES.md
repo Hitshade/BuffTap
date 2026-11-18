@@ -1,3 +1,19 @@
+# BuffTap 1.26.8-beta1
+
+### Optional clickable buff queue
+Try **Customization > Buff reminder > Show next buffs below**. It starts off. Up to four smaller buff icons appear centered beneath your main reminder; click one to cast that buff. The normal binding stays on the main reminder. Group spells remain on the main icon, and queue icons disappear in combat. Attached manual consumables move below the queue.
+
+A count shows additional recipients for that queued buff, excluding the main reminder's recipient. A trailing **+** means the displayed count is a lower bound from a limited scan. Queue clicks follow normal safety checks, SmartShift recovery and quiet sequence behavior.
+
+### Optional combat estimates
+**My buffs > Combat expiry warning** starts off separately. It remembers your own enabled buffs before combat, then shows a non-clickable warning about ten seconds before expected expiry. Personal per-buff mute/custom sound choices and normal pauses apply.
+
+This is an estimate, not live buff detection: Forever hides combat auras. Dispels and another player's recasts cannot be detected. Successful recasts of a true self-only buff can restart its estimate; targeted spells cannot safely be assumed to have landed on you. Death or loading clears the plan.
+
+Reminder windows use a lower layer, and German translations have been expanded. Some diagnostic and newly added wording remains English. Existing choices and positions are retained.
+
+Thanks to **tinect** for PR #6: the queue, combat estimates, window layering and German translation contribution. This is a local testing beta, with in-game layout and combat behavior still to verify.
+
 # BuffTap 1.26.7
 
 ### Choose which buffs you hear

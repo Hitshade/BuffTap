@@ -238,10 +238,11 @@ end
 function B:ActionAlertEnabled(action)
   return self:AlertCategoryEnabled(action and action.source=="cleanse" and "cleanse" or "reminder")
 end
-function B:PlayAlert(kind,preview,previewSound)
+function B:PlayAlert(kind,preview,previewSound,alertAction)
   if not self.db then return false end
   -- The friend/guild alert has its own switch and pacing (Nearby), and plays in cities and inns.
-  if kind=="reminder" and not preview and not self:BuffAlertAllowed(self.action) then return false end
+  if kind=="reminder" and not preview and not self:BuffAlertAllowed(alertAction or self.action) then return false end
+  local soundAction=alertAction or self.action
   local social=kind=="social"
   if not preview and not social and self.ReminderPauseReason and self:ReminderPauseReason() then return false end
   -- A temporarily unavailable resting read must not let an automatic sound
@@ -253,8 +254,8 @@ function B:PlayAlert(kind,preview,previewSound)
   local selected=self.db[kind=="supply" and "supplySound" or kind=="camp" and "campAlertSound" or kind=="cleanse" and "cleanseSound" or social and "socialSound" or "reminderSound"]
   if preview and previewSound then selected=previewSound
   elseif kind=="reminder" and not preview then
-    local context=self:BuffAlertContext(self.action)
-    if context then selected=self:BuffAlertSound(context,self.action.key) or selected end
+    local context=self:BuffAlertContext(soundAction)
+    if context then selected=self:BuffAlertSound(context,soundAction.key) or selected end
   end
   local player,value=PlaySound,12867
   if type(selected)=="string" and selected:sub(1,4)=="lsm:" then

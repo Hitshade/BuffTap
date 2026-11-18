@@ -359,9 +359,9 @@ function B:Validate(action)
 end
 -- A cleanse plays its own sound.
 local basePlay=B.PlayAlert
-function B:PlayAlert(kind,preview,previewSound)
-  if kind=="reminder" and not preview and self.action and self.action.source=="cleanse" then kind="cleanse" end
-  return basePlay(self,kind,preview,previewSound)
+function B:PlayAlert(kind,preview,previewSound,alertAction)
+  if kind=="reminder" and not preview and not alertAction and self.action and self.action.source=="cleanse" then kind="cleanse" end
+  return basePlay(self,kind,preview,previewSound,alertAction)
 end
 -- Border in the debuff type's colour around a cleanse reminder.
 local baseOverlay=B.UpdateOverlay

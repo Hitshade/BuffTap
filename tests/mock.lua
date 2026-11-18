@@ -58,6 +58,7 @@ function methods:SetParent(parent)
 end
 function methods:SetAttribute(k,v) assert(not combat or self.secure,'protected write in combat'); self.attrs[k]=v end
 function methods:GetAttribute(k) return self.attrs[k] end
+function methods:RegisterForClicks(...) self.clicks={...} end
 function methods:Hide() assert(not combat or not self.protected or self.secure,'protected hide in combat'); self.shown=false; if self.scripts.OnHide then self.scripts.OnHide(self) end end
 function methods:Show() assert(not combat or not self.protected or self.secure,'protected show in combat'); self.shown=true; if self.scripts.OnShow then self.scripts.OnShow(self) end end
 function methods:SetShown(v) if v then self:Show() else self:Hide() end end

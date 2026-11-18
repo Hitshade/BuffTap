@@ -2,6 +2,12 @@
 local _,B=...
 -- Keep the ten most recent releases within a 24 KiB content ceiling.
 B.PatchNotes={
+ {version="1.26.8-beta1",title="Try an optional buff queue",items={
+  "Customization > Buff reminder > Show next buffs below adds up to four clickable buff icons beneath your reminder. It starts off. Your binding stays on the main icon; queued icons hide in combat.",
+  "Queue icons stay centered and leave room for attached consumables. Counts ending in + mean at least that many players need the buff.",
+  "My buffs > Combat expiry warning is a separate optional estimate. It remembers your buffs before combat and warns near their expected expiry. It cannot detect combat dispels or another player's refresh.",
+  "Estimated warnings follow your personal buff sound choices and normal pauses. Queue clicks retain SmartShift and repeat-cast protection.",
+  "Reminders use a lower window layer, and German translations have been expanded."},thanks="Thanks to tinect for the queue, combat estimates, window layering and German translation contribution."},
  {version="1.26.7",title="Choose which reminders you hear",items={
   "Right-click a buff speaker to choose its own sound. Personal, Party and Raid choices stay separate. Use default follows the Reminder sound category; Preview never changes your selection.",
   "Sound lists open at your current choice, with smoother scrolling. Reduce animation makes scrolling immediate. The ten new custom sounds are slightly louder.",
@@ -69,11 +75,6 @@ B.PatchNotes={
   "Shaman setup now saves the actual main-hand preference. Rogue choices include Atrophic, Numbing, Sebacious and both ranks of Occult Poison.",
   "New character settings start with cleansing and resurrection reminders off. Existing choices are kept.",
   "Configure your class's cleansing and resurrection preferences before learning the spells, including Druid Rebirth and cleansing order. Unlearned spells cannot be offered for casting. Prefer Abolish is hidden for classes without an Abolish spell."}},
- {version="1.24.8",title="Cleansing and resurrection fixes",items={
-  "Fixed: cleanse and resurrection reminders now update when you change target, or when a group member is poisoned or dies, even if Target buffs and group buffing are turned off.",
-  "Cleanse and resurrection buttons now double-check the player, the debuff and your settings at the moment you click, so they cannot act on someone who changed in the meantime.",
-  "Assigned Soulstones now wait for the player you chose, and player names stay hidden in shared reports. The Soulstone notice is now translated."}},
-
 }
 function B:PatchNotesUnread()
   return self.profileDB and self.db.optionsPatchDot~=false and self.profileDB.global.patchNotesSeen~=self.version

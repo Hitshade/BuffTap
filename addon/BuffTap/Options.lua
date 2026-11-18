@@ -1968,7 +1968,7 @@ function B:Options()
     f.buffSoundHeader=label(buffs,L("Sound"),28+516,-70,"GameFontDisableSmall",40)
     f.buffPriorityHeader=label(buffs,L("Priority"),28+556,-70,"GameFontDisableSmall",90)
     local scroll=CreateFrame("ScrollFrame",nil,buffs,"UIPanelScrollFrameTemplate")
-    scroll:SetPoint("TOPLEFT",28,-90); scroll:SetPoint("BOTTOMRIGHT",-40,186)
+    scroll:SetPoint("TOPLEFT",28,-90); scroll:SetPoint("BOTTOMRIGHT",-40,218)
     local child=CreateFrame("Frame",nil,scroll); child:SetSize(644,1); scroll:SetScrollChild(child); f.buffChild=child; f.buffRows={}
 
     f.emptyBuffs=label(child,"No supported aura buffs for this class.",8,-12,"GameFontDisableSmall",610)
@@ -2052,6 +2052,12 @@ function B:Options()
     end)
     f.smartShift:ClearAllPoints(); f.smartShift:SetPoint("BOTTOMLEFT",28,146)
     addHelp(f.smartShift,"SmartShift: restore previous form","For Druids and Shamans. After BuffTap helps refresh your own buffs, it silently offers your previous form on the next click. Off by default; never shifts automatically.")
+    f.combatExpiry=check(buffs,L("Combat expiry warning"),0,0,function(c)
+      if A.Combat() then return end
+      B.db.combatExpiry=c:GetChecked()==true
+      B:RequestRefresh("combat expiry setting",0)
+    end)
+    addHelp(f.combatExpiry,"Combat expiry warning","The game hides buffs from addons during combat. With this on, BuffTap remembers when your own buffs run out before a fight and shows their icon about 10 seconds before that time, with your reminder sound if it is on. The time is an estimate: a dispel, death or someone else's recast during the fight is not seen. Buffs under 1 minute are not included.")
     f.classSetup=button(buffs,L("Review class setup"),0,0,150,function() B:ShowOnboarding(true) end)
     f.classSetup:ClearAllPoints(); f.classSetup:SetPoint("BOTTOMLEFT",500,146)
     local resetBuffs=button(buffs,L("Reset default timings"),0,0,184,function()
@@ -2970,6 +2976,11 @@ function B:Options()
   f.profileCheck:SetChecked(self.profileEnabled==true)
   local playerClass=A.Class("player")
   if f.smartShift then f.smartShift:SetShown(playerClass=="DRUID" or playerClass=="SHAMAN"); f.smartShift:SetChecked(self.db.smartShift==true) end
+  if f.combatExpiry then
+    f.combatExpiry:SetChecked(self.db.combatExpiry==true)
+    -- Takes SmartShift's place for classes without it.
+    if f.buffContent then f.combatExpiry:ClearAllPoints(); f.combatExpiry:SetPoint("TOPLEFT",f.buffContent,"TOPLEFT",28,-510) end
+  end
 
   local weaponClass=self.WeaponReminderClass and self:WeaponReminderClass()
   f.weaponUnavailable:Hide()

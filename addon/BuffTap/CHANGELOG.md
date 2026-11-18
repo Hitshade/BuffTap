@@ -1,3 +1,16 @@
+# BuffTap 1.26.8-beta1
+
+### Contribution and adaptation
+- Adapts tinect's PR #6 at 815a94d750d441b0c523a7291c071b333a6b80bb without merging or publishing the PR. Latest revision excludes the earlier Nearby-on-reminder option. Contributor credit is retained in all three note audiences.
+- BuffQueue is optional, off by default. It reuses bounded buff-only EngineSelect passes, excludes already represented recipient/family pairs, suppresses group casts/Greater Blessings and respects blessing exclusivity. Four centered secure up-click buttons retain fresh GUID/payload/need/eligibility checks and secure combat/death/mount drivers. Bindings remain on the main button. Manual consumables offset below the row; detached placement is unchanged.
+- Adaptation starts BeginHelperAttempt only after successful queue PreClick validation, preserving SmartShift intent, self-buff confirmation settling, retry attribution and quiet sequence tracking. All casts require hardware input. Queue and estimate frames use MEDIUM strata alongside main/manual reminders. Bounded 12-pass counts explicitly use a trailing + and lower-bound tooltip when exhausted; counts exclude the main recipient and are not full-raid totals.
+- CombatExpiry records enabled own buffs only out of combat, schedules nonsecure display timers about ten seconds before stored expiry and discards death/loading/identity-stale plans. Combat never queries auras or changes secure actions. Only true self-only cast confirmations can renew an estimate; targeted refreshes and dispels cannot be inferred. It is optional and off by default.
+- PlayAlert accepts an explicit sound-action context for passive estimates without swapping B.action, preserving Personal mute/custom selection and category/rate/pause controls. Estimate visuals honor normal pauses; their combat-only update callback can quietly restore visibility when a pause ends. Cancellation removes timers/update callbacks. A separate footer row reserves space beside class-specific SmartShift controls.
+- PR includes expanded German entries and release-click registration tests. Not every new English label or diagnostic has a German translation; no claim of complete localization or owner live verification is made.
+
+### Compatibility and validation
+- New combatExpiry and buffQueue booleans are profile-shared presentation preferences, both false by default. No existing values or positions are migrated and no WTF/SavedVariables files are edited. Existing per-buff sound schemas are unchanged. Three imported contributor test modules plus adaptation-specific behavior tests run in tests/run_release.py. Final integrated mocked Lua 5.1 release run: **2,923 passed, zero FAIL records**, with terminal FINAL_TOTAL verified (tests/release-1268-beta1-final.txt). Focused adaptation run: 97 passed, 0 failed; queue/imported baseline run: 381 passed, 0 failed. Eleven affected Lua files compiled independently; all loaded modules also compile in the full run. Initial mixed run exposed sound-context forwarding through Cleanse; the final complete rerun includes that fix. No live game testing claimed.
+
 # BuffTap 1.26.7
 
 ### Scoped sound selection
