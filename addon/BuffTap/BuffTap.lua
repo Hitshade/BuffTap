@@ -367,7 +367,8 @@ function B:ShowManaWait()
   b:SetSize(self.db.size,self.db.size); b:ClearAllPoints(); b:SetPoint('CENTER',UIParent,'CENTER',self.db.x,self.db.y)
   b.icon:SetTexture(self.manaWaitIcon or 'Interface\\Icons\\Spell_Nature_Sleep')
   b.icon:SetDesaturated(true); b.icon:SetVertexColor(.55,.55,.55)
-  b.nameLabel:SetText(title); b.label:SetText(self:Text('Resumes when ready'))
+  b.nameLabel:SetText(self.db.showBuffName and title or '')
+  b.label:SetText(self.db.showTargetName and self:Text('Resumes when ready') or '')
   b.timerLabel:SetText(''); b.groupLabel:SetText('')
   if b.swipe then b.swipe:Hide(); b.swipeKey=nil end
   self:ApplyReminderVisibility(); self:UpdatePulse(); b:Show()
@@ -772,6 +773,13 @@ function B:DiagnosticsLines()
     out[#out+1]="Reason: "..tostring(a.reason).." | range: "..tostring(a.rangeSource or "not checked")
   else out[#out+1]="Next: none" end
   out[#out+1]="Solo thanks: "..tostring(self.helperThankStatus or "not observed")
+  out[#out+1]="Resting pause: "..tostring(self.db.pauseResting==true).." | resting read: "..tostring(A.Call(IsResting))
+  if self.lastAlertInfo then
+    local sound=self.lastAlertInfo
+    out[#out+1]="Last sound: "..tostring(sound.kind).." | preview: "..tostring(sound.preview)
+      .." | resting: "..tostring(sound.resting).." | pause enabled: "..tostring(sound.pauseResting)
+      .." | age: "..string.format("%.1fs",math.max(0,GetTime()-sound.at))
+  end
   if self.smartShiftIntent then
     local intent=self.smartShiftIntent
     out[#out+1]="SmartShift: buff "..(intent.verified and "confirmed" or "pending").." | form exit "..(intent.exited and "confirmed" or "pending").." | "..tostring(self.smartShiftStatus or "finishing class maintenance")

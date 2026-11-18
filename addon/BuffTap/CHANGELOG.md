@@ -1,3 +1,20 @@
+# BuffTap 1.26.5-beta1
+
+### Onboarding and preferences
+- One welcome decision and one optional compact selection view replace the required recommendations/review/features sequence. Explicit staged application validates class-applicable booleans, preserves sound selections and unrelated settings, rolls back the character facade and shared-profile table on apply failure, and finishes only on success. Profile copy closes directly on success; errors leave it open. Back is nonmutating; explicit X/ESC finish without applying. Loading-screen hides do not finish.
+- Fresh quick start enables Nearby, reminder sound only, the resting pause, stronger-effect protection and class-capable Cleanse/normal Resurrection. Cleanse-first is enabled with both fresh recommendations. Existing unconfigured Thorns/Paladin plan closures are reused, with extra protection for configured Paladin role plans. Fear Ward, guessed Shaman weapon choices, SmartShift, class readiness, consumables and social automation are not newly enabled. Existing enabled preferences survive. Manual review reflects current values and applies explicit selections; onboarding version remains 1, with completed/returning eligibility preventing replay.
+- Friendly names-only is a separate out-of-combat action, requiring readable visibility and presentation CVars. It establishes presentation before visibility, verifies both by read-back and attempts restoration on failure. No login changes, enemy CVar writes or new scan loop. Unsupported/unknown support gets manual guidance. Public return values do not establish live rendering support on Forever.
+- Fresh characters with no saved positions get a one-time upper-right icon column plus adjacent Nearby, calculated in scaled UIParent space with a bounded group layout. Saved/copied coordinates and later screen changes never trigger repositioning. Edit Mode exposes disabled Camping, Supplies and Nearby without changing feature permissions. Attached consumables retain their shared anchor.
+
+### Click and display fixes
+- Nearby rank-upgrade detection now recognizes an actual Nearby action at the main button's fresh Missing check after the scanning flag has cleared. Fresh identity, current coverage, toggle, eligibility, range and secure macro checks remain. Equal/higher/unknown effects still revoke obsolete payloads.
+- Passive mana/power waiting labels honor showBuffName/showTargetName, preserving the grey display and tooltip without adding actions or sounds. Existing Helpers resting pause already suppresses these states; it is not silently enabled for returning users. Thanks to sevaniuz for reporting the cluttered power-wait text.
+- Automatic non-social sounds now stay silent when an enabled resting pause cannot obtain an explicitly false resting state. Confirmed-city self-buff sound could not be reproduced against the mocked API; this is a bounded unreadable-state safeguard, not proof of the live report's cause. A session-only last-sound record and resting/pause diagnostics distinguish actual reminders, previews and social alerts without names or persistent logging.
+
+### Validation and limits
+- Initial focused onboarding/Nearby/profile/class/nameplate checks: 77 passed. Expanded focused click/resting/edit/placement checks: 134 passed, 0 failed, plus Lua 5.1 compilation of the five touched behavior modules. No live Forever UI, clipboard, friendly-names rendering or reported city sound reproduction is claimed. The integrated full mocked Lua 5.1 run subsequently completed with **2,751 passed, 0 recorded failures**; FINAL_TOTAL and the absence of FAIL records were checked. Both focused and full logs are committed. Initial test-only encoding/escaped-newline issues were corrected before these final runs.
+- Local testing only; no release archive or public publication is authorized for this beta. Existing runtime defaults/coordinates are preserved except the explicitly described fresh setup and fresh unpositioned layout. No WTF/SavedVariables file operation, cast automation or combat-rule change.
+
 # BuffTap 1.26.4
 
 ### Rank selection and optional maintenance

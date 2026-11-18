@@ -1,0 +1,140 @@
+PASS Leave me alone changes nothing and never asks again
+PASS Quick setup preselects useful extras while social thanks stays off
+PASS Paladin quick setup builds unconfigured adaptive plans
+PASS Paladin setup is not offered once blessings were planned
+PASS Classes already at the baseline say so
+PASS Druid quick setup prepares untouched Thorns roles
+PASS Priest situational Fear Ward remains outside quick setup
+PASS Hiding the setup (cinematic, loading screen) does not count as Leave me alone
+PASS Setup waits while the UI is hidden and then appears
+PASS Finishing the setup replaces the old first-use card
+PASS Warlock readiness remains deliberate outside quick setup
+PASS Turning Nearby on the first time shows the introduction instead
+PASS The introduction applies invites and all players, leaves requests off, then turns Nearby on
+PASS Not now leaves Nearby off and does not ask again
+PASS Existing Nearby users never see the introduction
+PASS Shaman quick setup never guesses a weapon preference
+PASS Quick setup leaves appearance in Settings
+PASS Copy page lists other characters and copies one
+PASS Last page offers binding and customization shortcuts
+PASS Nearby pitch fits the class and the setup previews before enabling
+PASS 1.25 class buff configuration is identical at level one and sixty
+PASS Manual quick review preserves the profile and Shaman weapon
+PASS Quick setup selections persist across Back without applying
+PASS Paladin quick review keeps an existing blessing plan
+PASS Pause immediately clears secure action and overrides without changing preferences
+PASS Completed setup suppresses the legacy welcome card
+PASS First-run setup waits until combat ends
+PASS Unavailable Edit Mode is harmless and late manager hooks only once
+PASS Edit Mode drag saves shared position and never opens settings
+PASS Edit Mode interruption cannot write protected frames
+PASS Edit Mode preserves manual pause on exit
+PASS Combat-delayed first-run setup resumes after combat
+PASS Closing Edit Mode mid-drag saves once without reopening settings
+PASS Beta4 fresh setup applies selected class reminders without learning gates
+PASS Beta4 class defaults are visible and apply from the first setup page
+PASS Beta4 class-first setup retains the Paladin blessing recommendation
+PASS Beta4 new player may decline all class recommendations
+PASS Beta4 existing character choices are not preselected or silently changed
+PASS Existing quick review applies only after Apply and finish
+PASS Beta4 leaving setup alone retains disabled class reminders
+PASS Friendly nameplates are mandatory without changing CVar
+PASS Unreadable nameplate setting cannot arm nearby casts
+PASS Enabling seeds existing plates using Blizzard GetUnit
+PASS Nearby keeps nameplate help out of the active list
+PASS Edit Mode moves Nearby and camp placeholders and saves their positions
+PASS Edit Mode includes movers for features that are off
+PASS Nearby page carries the guide and appearance moved to Customization
+PASS Quick start enables only the intended extras in one action
+PASS Welcome includes Get started and no mandatory second page
+PASS Customize Back stages choices without writing settings
+PASS Customize applies explicit deselections and opt-in solo thanks
+PASS Keep current settings and explicit X suppress all welcome cards
+PASS Escape dismisses without committing staged choices
+PASS Loading-screen hide does not finish first run
+PASS Returning and completed legacy characters never replay setup
+PASS Manual review reflects current choices and preserves existing class plans
+PASS Combat and malformed staged selections cannot apply or finish
+PASS Failed normalization restores character and shared profile settings
+PASS Quick start respects existing optional modules and suboptions
+PASS Quick start never writes game CVars
+PASS Explicit names-only action probes writes and verifies both friendly settings
+PASS Unsupported names-only CVar does not change friendly visibility
+PASS Unreadable names-only CVar does not claim support
+PASS Failed names-only readback cannot enable full bars
+PASS Failed friendly visibility readback restores original names presentation
+PASS Combat blocks all names-only writes
+PASS Fallback friendly visibility key is honored without touching enemies
+PASS No friendly names action when friendly plates already work
+PASS Nearby waiting warning remains after setup and Thanks has no hard plate gate
+PASS Quick-start class spot check MAGE
+PASS Quick-start class spot check PALADIN
+PASS Quick-start class spot check DRUID
+PASS Quick-start class spot check SHAMAN
+PASS Quick-start class spot check WARLOCK
+PASS Quick-start class spot check WARRIOR
+PASS Quick-start class spot check PRIEST
+PASS Quick-start class spot check HUNTER
+PASS Quick-start class spot check ROGUE
+PASS Fresh Paladin reuses adaptive plan without replacing configured blessings
+PASS Copied profile closes directly without enabling quick-start extras
+PASS Copy failure keeps the dialog open and never falls back to quick start
+PASS Fresh Paladin role-only preferences are never replaced
+PASS Explicit close button keeps all staged changes unapplied
+PASS Quick-start completion persists after database normalization
+PASS Buff-grade main binding retains exact upgraded macro at real PreClick
+PASS Buff-grade row click retains its safe exact upgraded macro
+PASS Buff-grade click rejects changed toggle coverage or identity B.db.nearbyRankUpgrades=false
+PASS Buff-grade click rejects changed toggle coverage or identity auras.nameplate1[1].spellId=5232
+PASS Buff-grade click rejects changed toggle coverage or identity auras.nameplate1[1].spellId=6756
+PASS Buff-grade click rejects changed toggle coverage or identity C_UnitAuras.GetAuraDataByIndex=function() return {secret=true} end
+PASS Buff-grade click rejects changed toggle coverage or identity local old=UnitGUID; UnitGUID=function(u) return u=='nameplate1' and 'Player-replaced' or old(u) end
+PASS Buff-grade flag cannot upgrade an ordinary targeted buff
+PASS Buff-grade click remains blocked in combat
+PASS All disabled module placeholders remain editable without enabling actions
+PASS Disabled Camping and Supplies save their positions without toggling modules
+PASS Cancel restores positions moved while their modules were disabled
+PASS Detached consumables remain placeable when consumables are disabled
+PASS Disabled mover sessions do not write protected frames if combat interrupts
+PASS Confirmed city pause suppresses a newly missing self Thorns and its sound
+PASS Entering an inn clears the existing self action without a second reminder
+PASS Resting permits opted-in Nearby actions while self buffs stay silent
+PASS Automatic sound is quiet when resting state cannot be read return nil
+PASS Automatic sound is quiet when resting state cannot be read error('temporarily unavailable')
+PASS Automatic sound is quiet when resting state cannot be read return {secret=true}
+PASS Outdoors resting-pause preference permits normal automatic reminders
+PASS Explicit sound previews retain their deliberate resting exception
+PASS Sound diagnostics distinguish the most recent actual sound without player identities
+PASS Power wait can show a grey icon with both visible labels disabled
+PASS Power wait title and lower label each follow their existing visibility switch
+PASS City pause hides an existing resource-wait indicator as well as normal buffs
+PASS Warrior power wait respects city pause independently of Nearby
+PASS Fresh layout keeps the whole group inside scaled UI space (450, 320)
+PASS Fresh layout keeps the whole group inside scaled UI space (640, 480)
+PASS Fresh layout keeps the whole group inside scaled UI space (1024, 768)
+PASS Fresh layout keeps the whole group inside scaled UI space (1920, 1080)
+PASS Fresh layout keeps the whole group inside scaled UI space (2560, 1440)
+PASS Fresh layout keeps the whole group inside scaled UI space (5120, 1440)
+PASS Fresh layout keeps the whole group inside scaled UI space (3840, 2160)
+PASS First-run layout is applied only when all positions are genuinely unset
+PASS Existing coordinates and resized UI never trigger automatic repositioning
+PASS Copied profile keeps its own positions instead of the starter layout
+PASS Unavailable UI geometry falls back without inventing placement coordinates
+PASS Mana status: main reminder explains pause without Nearby or secure action
+PASS Mana status: power recovery restores normal buff action
+PASS Mana status: clicking status cannot cast or begin an attempt
+PASS Mana status: master off hides waiting display
+PASS Mana status: mounted hides waiting display
+PASS Mana status: temporary pause hides waiting display
+PASS Mana status: dead hides waiting display
+PASS Mana status: combat revokes passive display state
+PASS Mana status: unknown usability does not invent a mana shortage
+PASS Mana status: configured reserve has a distinct label
+PASS Mana status: hidden reminder preference is retained
+PASS Mana status: non-mana classes are labelled as power
+SYNTAX Onboarding.lua Lua 5.1 OK
+SYNTAX Convenience.lua Lua 5.1 OK
+SYNTAX Alerts.lua Lua 5.1 OK
+SYNTAX Engine.lua Lua 5.1 OK
+SYNTAX BuffTap.lua Lua 5.1 OK
+Focused result: 134 passed, 0 failed; no full suite run.

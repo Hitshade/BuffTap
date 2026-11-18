@@ -2,6 +2,14 @@
 local _,B=...
 -- Keep the ten most recent releases within a 24 KiB content ceiling.
 B.PatchNotes={
+ {version="1.26.5-beta1",title="Quicker setup and clearer reminders",items={
+  "New players can choose Get started once, Customize first, or Keep current settings. Nearby is included in the recommended setup without requiring a tour.",
+  "Recommended setup enables reminder sounds, a resting pause, stronger-buff error protection and class-appropriate Cleanse and Resurrection. Solo thanks remains your choice; SmartShift and class helpers stay in Settings.",
+  "Friendly names-only setup is a separate choice when supported. Otherwise, setup explains how to enable friendly nameplates. It never changes game settings automatically.",
+  "New characters start with a tidy upper-right stack of reminders and Nearby beside it. Existing positions stay where you put them.",
+  "Edit Mode now lets you place Camping, Supplies and Nearby while those features are off. Moving them does not turn them on.",
+  "Fixed a higher-rank Nearby buff being offered but cancelled when using the main buff button or binding.",
+  "Grey mana and power waits follow your visible-label choices. Hide both labels for just the icon. The Helpers resting pause hides these reminders in cities and inns. Automatic sounds stay quiet if resting information is briefly unavailable."},thanks="Thanks to sevaniuz for the power-wait display feedback."},
  {version="1.26.4",title="Buff-grades, shield charges and smarter setup",items={
   "Nearby > Offer higher rank buffs can offer a buff-grade when someone has a known lower rank and can receive your upgrade. This option starts off.",
   "Ordinary ranked Mage, Priest, Druid and Paladin buffs can offer a stronger appropriate rank to lower-level players.",
@@ -61,13 +69,7 @@ B.PatchNotes={
   "Hover a food, flask or elixir row on the Consumables page to see why nothing is being offered. The food picker also tells you when a different food effect is active. BuffTap never replaces it for you.",
   "Hover the tracking choice under Helpers to see whether it is on, off or not learned yet.",
   "Battlegrounds: your chosen tracking can be reminded again when you are not in combat."}},
- {version="1.24.5",title="Fixes",items={
-  "Fixed: a tracking choice other than Herbs, Minerals or Fish (such as Hunter tracking) was reset on every reload. It now stays.",
-  "When you switch tracking in the minimap menu, BuffTap no longer briefly offers your old tracking before following the new one. Switches made in combat are followed once combat ends, and your choice is checked again after logging in.",
-  "\"Skip when I have none\" now only covers oils, sharpening stones and Rogue poisons, as its help says. Mage scrolls and Warlock stones still remind you when you run out.",
-  "Full check-up reports now also leave out your Oath of Light and Soulstone targets. Your own settings export still keeps them.",
-  "Remembered players from an imported settings string are checked, so a damaged string cannot break the Groups page.",
-  "Full check-up now shows the correct instance type in dungeons and raids."}},
+
 }
 function B:PatchNotesUnread()
   return self.profileDB and self.db.optionsPatchDot~=false and self.profileDB.global.patchNotesSeen~=self.version

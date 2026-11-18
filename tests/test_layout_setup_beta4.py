@@ -43,7 +43,7 @@ B.db.cleanseEnabled=false; B.db.reviveEnabled=false; B.db.cleanseFirst=false; B.
 local function reviewAll(force)
  B:ShowOnboarding(force); B:OnboardingSettingsPage()
  local f=B.onboarding; local pick={}
- for offset=0,#f.recommendations-1,11 do
+ for offset=0,0 do
   B:OnboardingSettingsPage(offset)
   for _,row in ipairs(f.choices) do pick[row.spec.key]=row end
  end
@@ -53,15 +53,15 @@ end
 classes=[('DRUID',True,True,True),('PRIEST',True,True,False),('PALADIN',True,True,False),('SHAMAN',True,True,True),('MAGE',True,False,False),('WARLOCK',False,False,False),('HUNTER',False,False,False),('ROGUE',False,False,False),('WARRIOR',False,False,False)]
 for cls,cleanse,revive,shift in classes:
     checks=[]
-    for field,on in [('cleanseEnabled',cleanse),('reviveEnabled',revive),('cleanseFirst',cleanse and revive),('smartShift',shift)]:
+    for field,on in [('cleanseEnabled',cleanse),('reviveEnabled',revive),('cleanseFirst',False),('smartShift',False)]:
         checks.append(f"assert(pick.{field} and pick.{field}.check:GetChecked())" if on else f"assert(not pick.{field})")
     test('Beta4 fresh unlearned class setup offers appropriate defaults '+cls,SETUP+f"playerClass='{cls}'; B.db.welcomeSeen=false; local pick=reviewAll(false); "+'; '.join(checks))
-test('Beta4 fresh setup applies selected class reminders without learning gates',SETUP+"playerClass='DRUID'; B.db.welcomeSeen=false; local pick,f=reviewAll(false); B:ApplyOnboarding(); assert(B.db.cleanseEnabled and B.db.reviveEnabled and B.db.cleanseFirst and B.db.smartShift and not B:CanRevive())")
-test('Beta4 class defaults are visible and apply from the first setup page',SETUP+"playerClass='DRUID'; B.db.welcomeSeen=false; B:ShowOnboarding(); B:OnboardingSettingsPage(); local pick={}; for _,r in ipairs(B.onboarding.choices) do pick[r.spec.key]=r end; for _,k in ipairs({'cleanseEnabled','reviveEnabled','cleanseFirst','smartShift'}) do assert(pick[k] and pick[k].check:GetChecked()) end; B:ApplyOnboarding(); assert(B.db.cleanseEnabled and B.db.reviveEnabled and B.db.cleanseFirst and B.db.smartShift)")
-test('Beta4 class-first setup retains the Paladin blessing recommendation',SETUP+"playerClass='PALADIN'; B.db.welcomeSeen=false; B:NormalizeGroupContexts(); B:ShowOnboarding(); B:OnboardingSettingsPage(); local pick={}; for _,r in ipairs(B.onboarding.choices) do pick[r.spec.key]=r end; assert(pick.blessings and pick.reviveEnabled and pick.cleanseEnabled)")
-test('Beta4 new player may decline all class recommendations',SETUP+"playerClass='DRUID'; B.db.welcomeSeen=false; local pick,f=reviewAll(false); for _,field in ipairs({'cleanseEnabled','reviveEnabled','cleanseFirst','smartShift'}) do f.selection[field]=false; pick[field].check:SetChecked(false) end; B:ApplyOnboarding(); assert(not B.db.cleanseEnabled and not B.db.reviveEnabled and not B.db.cleanseFirst and not B.db.smartShift)")
-test('Beta4 existing character choices are not preselected or silently changed',SETUP+"playerClass='DRUID'; B.db.welcomeSeen=true; local pick,f=reviewAll(true); for _,field in ipairs({'cleanseEnabled','reviveEnabled','cleanseFirst','smartShift'}) do assert(pick[field] and not pick[field].check:GetChecked()) end; assert(not B.db.cleanseEnabled and not B.db.reviveEnabled and not B.db.cleanseFirst and not B.db.smartShift)")
-test('Beta4 existing class recommendation review still requires confirmation',SETUP+"playerClass='DRUID'; B.db.welcomeSeen=true; local pick,f=reviewAll(true); f.selection.cleanseEnabled=true; pick.cleanseEnabled.check:SetChecked(true); B:ApplyOnboarding(); assert(not B.db.cleanseEnabled); B:ApplyOnboarding(true); assert(B.db.cleanseEnabled)")
+test('Beta4 fresh setup applies selected class reminders without learning gates',SETUP+"playerClass='DRUID'; B.db.welcomeSeen=false; local pick,f=reviewAll(false); B:ApplyOnboarding(); assert(B.db.cleanseEnabled and B.db.reviveEnabled and B.db.cleanseFirst and not B.db.smartShift and not B:CanRevive())")
+test('Beta4 class defaults are visible and apply from the first setup page',SETUP+"playerClass='DRUID'; B.db.welcomeSeen=false; B:ShowOnboarding(); B:OnboardingSettingsPage(); local pick={}; for _,r in ipairs(B.onboarding.choices) do pick[r.spec.key]=r end; for _,k in ipairs({'cleanseEnabled','reviveEnabled'}) do assert(pick[k] and pick[k].check:GetChecked()) end; B:ApplyOnboarding(); assert(B.db.cleanseEnabled and B.db.reviveEnabled and B.db.cleanseFirst and not B.db.smartShift)")
+test('Beta4 class-first setup retains the Paladin blessing recommendation',SETUP+"playerClass='PALADIN'; B.db.welcomeSeen=false; B:NormalizeGroupContexts(); B:ShowOnboarding(); B:OnboardingSettingsPage(); local pick={}; for _,r in ipairs(B.onboarding.choices) do pick[r.spec.key]=r end; assert(pick.reviveEnabled and pick.cleanseEnabled); B:ApplyOnboarding(); assert(B:GroupPreference('blessingAssignments','Party'))")
+test('Beta4 new player may decline all class recommendations',SETUP+"playerClass='DRUID'; B.db.welcomeSeen=false; local pick,f=reviewAll(false); for _,field in ipairs({'cleanseEnabled','reviveEnabled'}) do f.quickSelection[field]=false; pick[field].check:SetChecked(false) end; B:ApplyOnboarding(); assert(not B.db.cleanseEnabled and not B.db.reviveEnabled and not B.db.cleanseFirst and not B.db.smartShift)")
+test('Beta4 existing character choices are not preselected or silently changed',SETUP+"playerClass='DRUID'; B.db.welcomeSeen=true; local pick,f=reviewAll(true); for _,field in ipairs({'cleanseEnabled','reviveEnabled'}) do assert(pick[field] and not pick[field].check:GetChecked()) end; assert(not B.db.cleanseEnabled and not B.db.reviveEnabled and not B.db.cleanseFirst and not B.db.smartShift)")
+test('Existing quick review applies only after Apply and finish',SETUP+"playerClass='DRUID'; B.db.welcomeSeen=true; local pick,f=reviewAll(true); pick.cleanseEnabled.check:SetChecked(true); assert(not B.db.cleanseEnabled); B:ApplyOnboarding(); assert(B.db.cleanseEnabled)")
 test('Beta4 leaving setup alone retains disabled class reminders',SETUP+"playerClass='DRUID'; B.db.welcomeSeen=false; reviewAll(false); B:FinishOnboarding(); assert(not B.db.cleanseEnabled and not B.db.reviveEnabled and not B.db.cleanseFirst and not B.db.smartShift)")
 
 print('LAYOUT_SETUP_BETA4_CASES',len(tests)-start)

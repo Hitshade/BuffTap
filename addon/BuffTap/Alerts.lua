@@ -112,6 +112,9 @@ function B:PlayAlert(kind,preview)
   -- The friend/guild alert has its own switch and pacing (Nearby), and plays in cities and inns.
   local social=kind=="social"
   if not preview and not social and self.ReminderPauseReason and self:ReminderPauseReason() then return false end
+  -- A temporarily unavailable resting read must not let an automatic sound
+  -- escape an enabled pause. Explicit previews and opt-in social alerts differ.
+  if not preview and not social and self.db.pauseResting and A.Call(IsResting)~=false then return false end
   if not preview and not social and not (kind=="supply" and self.db.suppliesSound or kind~="supply" and self.db.sound) then return false end
   local now=GetTime()
   if not preview and not social and self.lastAlertSound and now-self.lastAlertSound<self.db.soundInterval then return false end
@@ -134,6 +137,8 @@ function B:PlayAlert(kind,preview)
     ok,result=pcall(PlaySound,12867,self.db.soundChannel)
   end
   if not ok or result==false then return false end
+  self.lastAlertInfo={kind=kind,preview=preview==true,at=now,
+    resting=A.Call(IsResting),pauseResting=self.db.pauseResting==true}
   if not preview and not social then self.lastAlertSound=now end
   return true
 end

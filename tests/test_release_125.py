@@ -7,11 +7,9 @@ for locale in ('deDE','esES','frFR','ptBR'):
 test('1.25 class buff configuration is identical at level one and sixty',
      "local B=BuffTap; spells={}; book={}; for _,class in ipairs({'DRUID','PALADIN','PRIEST','SHAMAN','MAGE','WARLOCK','WARRIOR','ROGUE','HUNTER'}) do playerClass=class; UnitLevel=function() return 1 end; local low=B:ClassList(); UnitLevel=function() return 60 end; local high=B:ClassList(); assert(#low==#high,class); for i,b in ipairs(low) do assert(b.key==high[i].key,class) end end")
 
-test('1.25 review backup preserves old preferences and active profile',
-     "local B=BuffTap; playerClass='SHAMAN'; B.db.weaponChoices.main='rockbiter'; local original=B.profileDB:GetCurrentProfile(); B:ShowOnboarding(true); B:OnboardingSettingsPage(); for _,c in ipairs(B.onboarding.choices) do if c.spec.key=='shamanCaster' then c.check:SetChecked(true) end end; B:ApplyOnboarding(); assert(B.db.weaponChoices.main=='rockbiter'); B.onboarding.backup=true; B:ApplyOnboarding(true); assert(B.profileDB:GetCurrentProfile()==original); assert(B.db.weaponChoices.main=='flametongue'); assert(B.profileDB.sv.profiles[original..' backup'])")
+test('Manual quick review preserves the profile and Shaman weapon',"local B=BuffTap; playerClass='SHAMAN'; B.db.welcomeSeen=true; B.db.weaponChoices.main='rockbiter'; local original=B.profileDB:GetCurrentProfile(); B:ShowOnboarding(true); B:OnboardingSettingsPage(); B:ApplyOnboarding(); assert(B.profileDB:GetCurrentProfile()==original and B.db.weaponChoices.main=='rockbiter' and not B.profileDB.sv.profiles[original..' backup'])")
 
-test('1.25 setup selections persist across pages and apply together',
-     "local B=BuffTap; B:ShowOnboarding(true); local f=B.onboarding; local applied={}; f.recommendations={}; for i=1,15 do local n=i; f.recommendations[i]={key='test'..i,label='Choice '..i,apply=function() applied[n]=true end} end; B:OnboardingSettingsPage(); f.choices[1].check:SetChecked(true); B:OnboardingSettingsPage(11); f.choices[1].check:SetChecked(true); B:OnboardingSettingsPage(0); assert(f.choices[1].check:GetChecked()); B:ApplyOnboarding(); assert(not next(applied)); B:ApplyOnboarding(true); assert(applied[1] and applied[12] and not applied[2])")
+test('Quick setup selections persist across Back without applying','local B=BuffTap; B:ShowOnboarding(true); B:OnboardingSettingsPage(); B.onboarding.quickSelection.sounds=true; B:OnboardingWelcomePage(); assert(not B.db.sound and B.onboarding.quickSelection.sounds); B:OnboardingSettingsPage(); B:ApplyOnboarding(); assert(B.db.sound)')
 
 test('1.25 UI mock rejects parenting a frame to a texture',
      "local f=CreateFrame('Frame'); local t=f:CreateTexture(); assert(not pcall(function() f:SetParent(t) end))")
@@ -19,8 +17,7 @@ test('1.25 UI mock rejects parenting a frame to a texture',
 test('1.25 Food and Elixir categories open a selectable menu',
      "local B=BuffTap; B:Options(); for _,key in ipairs({'food','ferocity'}) do local family=B:ConsumableFamily(key); assert(family,key); B:ChooseConsumable(family); local f=B.itemPicker; assert(#f.categoryChoices>1,key); f.category.scripts.OnClick(f.category); assert(f.category.menu:IsShown(),key); local row=f.category.menu.rows[2]; assert(row and row.choice); row.scripts.OnClick(row); assert(f.categoryKey~='all' and not f.category.menu:IsShown(),key) end")
 
-test('1.25 Paladin review offers adaptive plan over existing saved choices',
-     "local B=BuffTap; playerClass='PALADIN'; B.db.blessingClasses={WARRIOR='bom'}; B:ShowOnboarding(true); B:OnboardingSettingsPage(); local found; for _,c in ipairs(B.onboarding.choices) do if c.spec.key=='blessings' then found=c; assert(not c.check:GetChecked()) end end; assert(found,'adaptive recommendation missing')")
+test('Paladin quick review keeps an existing blessing plan',"local B=BuffTap; playerClass='PALADIN'; B.db.welcomeSeen=true; B.db.blessingClasses={WARRIOR='bom'}; B:ShowOnboarding(true); B:OnboardingSettingsPage(); B:ApplyOnboarding(); assert(B.db.blessingClasses.WARRIOR=='bom')")
 
 FORM=("local B=BuffTap; playerClass='DRUID'; spell(768,'Cat Form'); "
       "local form=1; GetShapeshiftForm=function() return form end; "

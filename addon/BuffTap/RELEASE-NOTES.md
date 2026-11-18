@@ -1,3 +1,22 @@
+# BuffTap 1.26.5-beta1
+
+### A shorter first run
+Choose **Get started** once to accept the recommended extras, **Customize first** to pick them, or **Keep current settings** to finish without changes. Copying another character's settings finishes immediately after a successful copy. There is no required tour or backup prompt.
+
+Recommended setup includes Nearby, reminder sounds, the city/inn resting pause, stronger-buff error protection, and Cleanse/Resurrection for classes that support them. It uses the existing class setup when unconfigured. Solo thanks remains opt-in; SmartShift, pet/stone/Oath helpers and item use stay deliberate choices in Settings. Existing players are not taken through setup again or given a new preset automatically.
+
+If friendly nameplates are off, setup explains why Nearby is waiting. **Enable friendly names only** is a separate action offered only when the game reports support; both settings are checked after changing. Otherwise, use the game's friendly-nameplate controls. This still needs a live Forever appearance check.
+
+### Easier positioning and cleaner waits
+Fresh characters start with the reminders stacked toward the upper right and Nearby beside them. The layout uses the scaled game UI and keeps the group on screen; saved positions are preserved. Camping, Supplies and Nearby can now be placed in Edit Mode while disabled, without turning them on.
+
+The grey mana/power wait uses your existing name and recipient label switches. Turn both off for an icon-only display. **Helpers > Pause reminders while resting** also hides it in cities and inns. Thanks to **sevaniuz** for the display feedback.
+
+### Fixes under test
+An offered higher-rank Nearby buff now survives the final check on the main buff button/binding. Fresh eligibility and stronger-effect protections remain in place. Automatic sounds stay quiet when resting status cannot be read and the resting pause is enabled. The reported sound during a confirmed city rest has not been reproduced; Diagnostics now includes the most recent sound type and resting state to help investigate.
+
+This is a local testing beta. In-game rendering and names-only behavior still need live verification; every cast continues to require player input.
+
 # BuffTap 1.26.4
 
 ### Optional buff-grades and shield reminders

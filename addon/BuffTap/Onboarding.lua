@@ -1,12 +1,21 @@
 -- This Source Code Form is subject to the Mozilla Public License, v. 2.0.
 -- See LICENSE-MPL-2.0.txt.
--- One-time onboarding: a fresh setup for new players and a single pop-up for existing ones.
--- Nothing changes until the player chooses "Set me up" and applies; "Leave me alone" changes nothing.
+-- First run has one decision, with an optional compact customization screen.
+-- Settings and global game CVars only change through their explicit apply actions.
 local _,B=...
 local A=B.API
 local T=B.OptionsTheme
 local ONBOARDING_VERSION=1
 local WIDTH,HEIGHT=560,600
+local GIVERS={MAGE=true,PRIEST=true,DRUID=true,PALADIN=true}
+local function freshSetup(self)
+  return self.db.welcomeSeen~=true and self.db.onboardingVersion~=ONBOARDING_VERSION
+end
+local function configured(value)
+  if type(value)~="table" then return value~=nil and value~=false end
+  for _,v in pairs(value) do if configured(v) then return true end end
+  return false
+end
 local function describe(value)
   if type(value)~="table" then return value==nil and B:Text("Default") or type(value)=="boolean" and B:Text(value and "On" or "Off") or tostring(value) end
   local keys={}; for key in pairs(value) do keys[#keys+1]=key end; table.sort(keys,function(a,b) return tostring(a)<tostring(b) end)
@@ -75,7 +84,7 @@ local function recommendations(self)
       if type(map)=="table" and map[root]~=nil then untouched=false end
     end
     if untouched or (self.onboarding and self.onboarding.reviewMode) then
-      add({key=spec.buff,label=spec.label,current=false,target=true,untouched=true,group=true,apply=function()
+      add({key=spec.buff,label=spec.label,current=false,target=true,untouched=untouched,group=true,apply=function()
         for _,context in ipairs({"Party","Raid"}) do
           local settings=self:GroupSettings(context,true)
           settings[spec.field]=settings[spec.field] or {}
@@ -100,13 +109,17 @@ local function recommendations(self)
   end
   if class=="PALADIN" then
     local untouched=not self:GroupPreference("blessingAssignments","Party") and not self:GroupPreference("blessingAssignments","Raid") and next(d.blessingClasses or {})==nil
+    if configured(d.groupBlessingPriorities) or configured(d.blessingRoleChoices)
+      or configured(d.blessingRolePriorities) or configured(d.blessingGroupOverrides)
+      or configured(d.blessingRaidDefaults and d.blessingRaidDefaults.classes)
+      or d.blessingPartyMode=="same" then untouched=false end
     if untouched or (self.onboarding and self.onboarding.reviewMode) then
       local plan={
         WARRIOR={"bok","bom"},ROGUE={"bok","bom"},HUNTER={"bok","bom"},
         MAGE={"bok","bow"},WARLOCK={"bok","bow"},PRIEST={"bok","bow"},DRUID={"bok","bow"},SHAMAN={"bok","bow"},
         PALADIN={"bok","bom","bow"},
       }
-      add({key="blessings",untouched=true,current=false,target=true,group=true,
+      add({key="blessings",untouched=untouched,current=false,target=true,group=true,
         label="Adaptive blessing plan: Kings first when learned, with Might or Wisdom fallbacks",
         apply=function()
           for _,key in ipairs({"bok","bom","bow"}) do if d.buffs[key]==nil then d.buffs[key]=true end end
@@ -178,11 +191,11 @@ local function button(parent,label,x,y,width,variant,onClick)
 end
 
 function B:OnboardingPending()
-  return self.db and self.db.onboardingVersion~=ONBOARDING_VERSION
+  return self.db and self.db.welcomeSeen~=true and self.db.onboardingVersion~=ONBOARDING_VERSION
 end
 function B:FinishOnboarding()
   self.db.onboardingVersion=ONBOARDING_VERSION
-  -- The setup replaces the old first-use card; its binding tip is on the last page.
+  -- Explicit dismissal also suppresses the legacy welcome card.
   self.db.welcomeSeen=true
   if self.onboarding then self.onboarding:Hide() end
 end
@@ -193,143 +206,214 @@ local function clearPage(f)
 end
 local function track(f,...) for _,r in ipairs({...}) do f.pageRegions[#f.pageRegions+1]=r end end
 
-function B:OnboardingWelcomePage()
-  local f=self.onboarding; clearPage(f)
-  local returning=self.db.welcomeSeen
-  track(f,text(f,T.fonts.Title,24,-120,WIDTH-48,returning and "BuffTap has a few new tricks" or "Welcome to BuffTap"))
-  track(f,text(f,T.fonts.Note,24,-152,WIDTH-48,returning
-    and "This appears once. BuffTap can switch on a set of recommended settings and point out a few features you may have missed. You will see every change before it applies."
-    or "BuffTap reminds you when a buff is missing and gets the cast ready for one click or key press. Let it switch on sensible settings for your class, or leave everything as it is."))
-  track(f,button(f,f.reviewMode and "Review class recommendations" or "Set me up (recommended)",24,-240,250,"primary",function() B:OnboardingSettingsPage() end))
-  track(f,button(f,"Leave me alone",286,-240,250,nil,function() B:FinishOnboarding() end))
-  if f.reviewMode then
-    track(f,button(f,"Apply recommended class setup",24,-356,512,nil,function()
-      f.recommendations=recommendations(B); f.selection={}
-      for _,spec in ipairs(f.recommendations) do f.selection[spec.key]=spec.group==true or spec.classReminder==true or spec.key=="shamanCaster" or spec.key=="helperPet" or spec.key=="helperHealthstone" or spec.key=="helperSoulstone" or spec.key=="helperOath" end
-      f.choices={}; B:ApplyOnboarding()
-    end))
+-- Keep the policy separate from the older advanced recommendation catalog.
+local QUICK_FIELDS={nearby="nearbyEnabled",sounds="sound",resting="pauseResting",bounce="helperBounce",
+  cleanseEnabled="cleanseEnabled",reviveEnabled="reviveEnabled",thanks="helperThanks"}
+function B:FirstRunChoices()
+  local fresh=freshSetup(self)
+  local list={}
+  local function add(key,label,recommended)
+    local field=QUICK_FIELDS[key]
+    list[#list+1]={key=key,label=label,selected=fresh and recommended or self.db[field]==true}
   end
-  local others={}
-  local current=self.profileDB and self.profileDB:GetCurrentProfile()
-  for _,name in ipairs(self.ProfileNames and self:ProfileNames() or {}) do if name~=current then others[#others+1]=name end end
-  local y=-286
-  if #others>0 then
-    track(f,button(f,"Copy settings from another character",24,-282,512,nil,function() B:OnboardingCopyPage() end))
-    y=-332
+  add("nearby",GIVERS[A.Class("player")] and "Nearby player buffing" or "Nearby players and party assistance",true)
+  add("sounds","Reminder sounds",true)
+  add("resting","Pause reminders while resting",true)
+  add("bounce","Stronger-buff error protection",true)
+  if self:CanCleanseAnything() then add("cleanseEnabled","Cleanse reminders",true) end
+  if self:CanConfigureRevive() then add("reviveEnabled","Resurrection reminders",true) end
+  add("thanks","Automatically thank players who buff me",false)
+  return list
+end
+local function copy(value)
+  if type(value)~="table" then return value end
+  local out={}; for k,v in pairs(value) do out[k]=copy(v) end; return out
+end
+local function restore(target,values)
+  for key in pairs(target) do target[key]=nil end
+  for key,value in pairs(values) do target[key]=copy(value) end
+end
+function B:ApplyFirstRunSetup(selections)
+  local f=self.onboarding
+  if A.Combat() or not f or not f:IsShown() or not self.db or type(selections)~="table" then return false end
+  if self.db.welcomeSeen and not f.reviewMode then return false end
+  local staged={}; local allowed={}
+  for _,spec in ipairs(self:FirstRunChoices()) do allowed[spec.key]=true end
+  for key in pairs(allowed) do if type(selections[key])~="boolean" then return false end end
+  for key,value in pairs(selections) do
+    if not allowed[key] or type(value)~="boolean" then return false end
+    staged[key]=value
   end
-  track(f,text(f,T.fonts.Muted,24,y,WIDTH-48,"Leave me alone changes nothing and will not ask again. Everything stays available in Settings."))
+  -- Capture both the per-character table and the shared-profile backing table.
+  -- Never replace the facade or finish onboarding after a failed apply/refresh.
+  local d=self.db; local old=copy(d); local profile=self.profileDB and self.profileDB.profile
+  local oldProfile=profile and copy(profile)
+  local oldOpened=self.nearbyUserOpened
+  local fresh=freshSetup(self)
+  local ok=pcall(function()
+    if fresh then
+      for _,spec in ipairs(recommendations(self)) do
+        if (spec.key=="thorns" or spec.key=="blessings") and spec.untouched then spec.apply() end
+      end
+    end
+    for key,value in pairs(staged) do d[QUICK_FIELDS[key]]=value end
+    if fresh and staged.cleanseEnabled and staged.reviveEnabled then d.cleanseFirst=true end
+    if staged.nearby then
+      -- Do not call ToggleNearby: its first-use guide is voluntary help.
+      -- Existing invites, whispers, resting policy and safety preferences stay intact.
+      d.nearbyIntroSeen=true; self.nearbyUserOpened=true
+    end
+    self:NormalizeVisualOptions()
+    if self.NormalizeAlerts then self:NormalizeAlerts() end
+    if self.NormalizeGroupContexts then self:NormalizeGroupContexts() end
+    self.situationDirty=true; self.appearance=nil; self.nearbySnapshot=nil
+    self:SyncNearby(); self:UpdateNearbyWindow()
+    if T.Refresh then T.Refresh() end
+    self:RequestRefresh("quick start",0)
+    if self.options and self.options:IsShown() then self:Options() end
+  end)
+  if not ok then
+    restore(d,old); if profile then restore(profile,oldProfile) end
+    self.nearbyUserOpened=oldOpened
+    self.nearbySnapshot=nil
+    pcall(function() self:SyncNearby(); self:UpdateNearbyWindow(); self:RequestRefresh("setup cancelled",0) end)
+    self.Print(self:Text("Setup could not be applied. Your settings were restored. Please try again."))
+    return false
+  end
+  self:FinishOnboarding(); return true
 end
 
--- Alts: copy an existing profile (and, for the same class, its buff and class settings).
+-- Probe a readable 0/1 string, never infer support from a missing CVarBool.
+local NAMES_ONLY="nameplateShowOnlyNameForFriendlyPlayerUnits"
+local function readCVar(name)
+  local value=A.Call(C_CVar and C_CVar.GetCVar,name)
+  if value==nil then value=A.Call(GetCVar,name) end
+  if not A.Public(value) then return end
+  if value=="0" or value==0 then return "0" end
+  if value=="1" or value==1 then return "1" end
+end
+function B:CanEnableFriendlyNamesOnly()
+  local state,key=self:FriendlyPlatesState()
+  return state~=nil and key~="unavailable" and readCVar(key)~=nil and readCVar(NAMES_ONLY)~=nil
+end
+function B:EnableFriendlyNamesOnly()
+  if A.Combat() or not self:CanEnableFriendlyNamesOnly() then return false end
+  local _,key=self:FriendlyPlatesState()
+  local setter=C_CVar and C_CVar.SetCVar or SetCVar
+  if type(setter)~="function" then return false end
+  local oldNames,oldVisible=readCVar(NAMES_ONLY),readCVar(key)
+  -- Establish names-only presentation first, so failure cannot expose full bars.
+  local ok=pcall(setter,NAMES_ONLY,"1")
+  if not ok or readCVar(NAMES_ONLY)~="1" then
+    pcall(setter,NAMES_ONLY,oldNames); return false
+  end
+  ok=pcall(setter,key,"1")
+  if not ok or readCVar(key)~="1" or readCVar(NAMES_ONLY)~="1" then
+    pcall(setter,key,oldVisible); pcall(setter,NAMES_ONLY,oldNames); return false
+  end
+  self.nearbySnapshot=nil; self:UpdateNearbyWindow()
+  return true
+end
+function B:OnboardingPlateRow(y)
+  local f=self.onboarding
+  local nearby=f.quickSelection and f.quickSelection.nearby
+  local thanks=f.quickSelection and f.quickSelection.thanks
+  local state=self:FriendlyPlatesState()
+  if not nearby and not thanks then return end
+  local note
+  if nearby and state~=true then
+    note="Nearby is waiting for friendly nameplates. Use Shift+V or your game's nameplate settings."
+  elseif thanks and state~=true then
+    note="Solo thanks works outdoors and can find some buff casters without nameplates."
+  end
+  if not note then return end
+  track(f,text(f,T.fonts.Muted,24,y,WIDTH-48,note))
+  if self:CanEnableFriendlyNamesOnly() then
+    track(f,button(f,"Enable friendly names only",24,y-42,WIDTH-48,nil,function()
+      if not B:EnableFriendlyNamesOnly() then
+        B.Print(B:Text("Friendly names could not be enabled. Check your game's nameplate settings."))
+      end
+      if f.quickCustomize then B:OnboardingSettingsPage() else B:OnboardingWelcomePage() end
+    end))
+  else
+    track(f,text(f,T.fonts.Muted,24,y-42,WIDTH-48,"Names-only support could not be confirmed. Choose your preferred friendly nameplate appearance in the game settings."))
+  end
+end
+function B:OnboardingWelcomePage()
+  local f=self.onboarding; clearPage(f); f.quickCustomize=false
+  f:SetHeight(600)
+  if not f.quickSelection then
+    f.quickSelection={}; for _,spec in ipairs(self:FirstRunChoices()) do f.quickSelection[spec.key]=spec.selected end
+  end
+  track(f,text(f,T.fonts.Title,24,-120,WIDTH-48,f.reviewMode and "Review recommended settings" or "Welcome to BuffTap"))
+  track(f,text(f,T.fonts.Note,24,-156,WIDTH-48,f.reviewMode
+    and "Review your choices before applying changes."
+    or "Your class buffs are ready. Choose a few recommended extras, or keep BuffTap's current defaults."))
+  track(f,text(f,T.fonts.Body,24,-214,WIDTH-48,"Class and group buffs: ready"))
+  track(f,text(f,T.fonts.Body,24,-246,WIDTH-48,GIVERS[A.Class("player")]
+    and "Nearby buffing: included with recommended setup" or "Nearby party assistance: included with recommended setup"))
+  track(f,text(f,T.fonts.Body,24,-278,WIDTH-48,"Reminders and safeguards: sensible defaults"))
+  self:OnboardingPlateRow(-316)
+  track(f,button(f,f.reviewMode and "Review choices" or "Get started",24,-422,250,"primary",function()
+    if f.reviewMode then B:OnboardingSettingsPage() else B:ApplyFirstRunSetup(f.quickSelection) end
+  end))
+  track(f,button(f,"Customize first",286,-422,250,nil,function() B:OnboardingSettingsPage() end))
+  track(f,button(f,"Keep current settings",24,-462,WIDTH-48,nil,function() B:FinishOnboarding() end))
+  if #self:OnboardingCopySources()>0 then
+    track(f,button(f,"Copy settings from another character",24,-502,WIDTH-48,nil,function() B:OnboardingCopyPage() end))
+  end
+  track(f,text(f,T.fonts.Muted,24,-552,WIDTH-48,"Keep current settings preserves your choices. Change anything later in Settings."))
+end
+function B:OnboardingCopySources()
+  local list={}; local current=self.profileDB and self.profileDB:GetCurrentProfile()
+  for _,name in ipairs(self.ProfileNames and self:ProfileNames() or {}) do
+    if name~=current and self.profileDB and type(self.profileDB.sv.profiles[name])=="table" then list[#list+1]=name end
+  end
+  return list
+end
 function B:OnboardingCopyPage()
   local f=self.onboarding; clearPage(f)
   track(f,text(f,T.fonts.Title,24,-120,WIDTH-48,"Copy settings from"))
-  track(f,text(f,T.fonts.Muted,24,-148,WIDTH-48,"Copies that profile's preferences into this character's profile. Buff and class settings come along when the source is the same class."))
-  local current=self.profileDB and self.profileDB:GetCurrentProfile(); local y=-186; local n=0
-  for _,name in ipairs(self:ProfileNames()) do
-    if name~=current and n<8 then
-      n=n+1
-      track(f,button(f,name,24,y,512,nil,function()
-        local sameClass=B.ClassCopySources and B:ClassCopySources(name)[1] or nil
-        if B:CopySettingsProfile(name,sameClass) then B.Print(B:Text("Copied settings from %s.",name)) end
-        B:OnboardingFeaturesPage()
-      end))
-      y=y-38
-    end
+  track(f,text(f,T.fonts.Muted,24,-150,WIDTH-48,"Copies profile preferences and matching class settings. Recommended extras are not added."))
+  local scroll=CreateFrame("ScrollFrame",nil,f,"UIPanelScrollFrameTemplate")
+  scroll:SetPoint("TOPLEFT",24,-198); scroll:SetSize(WIDTH-68,300); track(f,scroll)
+  local names=self:OnboardingCopySources()
+  local body=CreateFrame("Frame",nil,scroll); body:SetSize(WIDTH-88,math.max(300,#names*38)); scroll:SetScrollChild(body)
+  for i,name in ipairs(names) do
+    button(body,name,0,-(i-1)*38,WIDTH-88,nil,function()
+      local source=B.ClassCopySources and B:ClassCopySources(name)[1] or nil
+      if B:CopySettingsProfile(name,source) then B:FinishOnboarding()
+      else B.Print(B:Text("Settings could not be copied. Choose another source or go back.")) end
+    end)
   end
   track(f,button(f,"Back",24,-540,250,nil,function() B:OnboardingWelcomePage() end))
 end
-
-function B:OnboardingSettingsPage(offset)
-  local f=self.onboarding
-  f.selection=f.selection or {}
-  for _,choice in ipairs(f.choices or {}) do f.selection[choice.spec.key]=choice.check:GetChecked()==true end
-  clearPage(f)
-  local list=f.recommendations or recommendations(self); f.recommendations=list
-  if #list==0 then return self:OnboardingFeaturesPage(true) end
+function B:OnboardingSettingsPage()
+  local f=self.onboarding; clearPage(f); f.quickCustomize=true; f.choices={}
   track(f,text(f,T.fonts.Title,24,-120,WIDTH-48,"Recommended settings"))
-  track(f,text(f,T.fonts.Muted,24,-148,WIDTH-48,"Selected items will change. Settings you changed yourself are listed but not selected."))
-  f.choices={}
-  offset=math.max(0,tonumber(offset) or 0); f.recommendOffset=offset
-  local y=-176
-  for i,spec in ipairs(list) do
-    if i<=offset then -- page starts after this row
-    elseif i>offset+11 then break
-    else
-    local c=CreateFrame("CheckButton",nil,f,"UICheckButtonTemplate"); c:SetSize(24,24); c:SetPoint("TOPLEFT",22,y)
-    -- The template's own label turns the check into a themed switch.
-    local label=B:Text(spec.label)
-    if spec.optional then label=label.."  |cff8a8f99"..B:Text("(optional)").."|r"
-    elseif not spec.untouched then label=label.."  |cff8a8f99"..B:Text("(you changed this)").."|r" end
-    if c.Text then c.Text:SetFontObject(T.fonts.Body); c.Text:SetText(label); c.Text:SetWidth(WIDTH-100); c.Text:SetJustifyH("LEFT") end
-    c:HookScript("OnEnter",function(control)
-      local current=spec.previous or describe(spec.current)
-      T.Tooltip(control,B:Text(spec.label),B:Text("Current: %s",current).."\n"..B:Text("Proposed: %s",B:Text(spec.label)))
+  track(f,text(f,T.fonts.Muted,24,-152,WIDTH-48,"Choose your extras. Nothing changes until Apply & finish."))
+  local y=-190
+  for _,spec in ipairs(self:FirstRunChoices()) do
+    local c=CreateFrame("CheckButton",nil,f,"UICheckButtonTemplate")
+    c:SetSize(24,24); c:SetPoint("TOPLEFT",22,y)
+    c.Text:SetFontObject(T.fonts.Body); c.Text:SetText(self:Text(spec.label)); c.Text:SetWidth(WIDTH-96); c.Text:SetJustifyH("LEFT")
+    c:SetChecked(f.quickSelection[spec.key]==true); T.Check(c)
+    c:SetScript("OnClick",function(check)
+      f.quickSelection[spec.key]=check:GetChecked()==true
+      if spec.key=="nearby" or spec.key=="thanks" then B:OnboardingSettingsPage() end
     end)
-    c:HookScript("OnLeave",function() if GameTooltip then GameTooltip:Hide() end end)
-    if f.selection[spec.key]==nil then f.selection[spec.key]=not f.reviewMode and spec.untouched==true end
-    c:SetChecked(f.selection[spec.key]); T.Check(c)
-    -- Exclusive rows (Shaman spec) behave like a radio group.
-    if spec.exclusive then c:HookScript("OnClick",function(self)
-      if not self:GetChecked() then return end
-      for _,other in ipairs(list) do if other.key~=spec.key and other.exclusive==spec.exclusive then f.selection[other.key]=false end end
-      for _,other in ipairs(f.choices) do if other.check~=self and other.spec.exclusive==spec.exclusive then other.check:SetChecked(false); T.Check(other.check) end end
-    end) end
-    track(f,c); f.choices[#f.choices+1]={check=c,spec=spec}
-    y=y-30
-    end
+    f.choices[#f.choices+1]={spec=spec,check=c}; track(f,c); y=y-30
   end
-  if list.classCovered then track(f,text(f,T.fonts.Muted,24,y-6,WIDTH-48,"No additional class recommendations are listed. Your saved choices are kept.")) end
-  track(f,button(f,"Apply selected",24,-540,250,"primary",function() B:ApplyOnboarding() end))
-  track(f,button(f,"Skip",286,-540,250,nil,function() B:OnboardingFeaturesPage() end))
-  if offset>0 then track(f,button(f,"Previous",24,-502,120,nil,function() B:OnboardingSettingsPage(math.max(0,offset-11)) end)) end
-  if offset+11<#list then track(f,button(f,"Next",416,-502,120,nil,function() B:OnboardingSettingsPage(offset+11) end)) end
+  track(f,text(f,T.fonts.Muted,24,y,WIDTH-48,"Solo thanks is for solo outdoor play. Nearby also offers social and party assistance for classes without buffs for others."))
+  self:OnboardingPlateRow(y-42)
+  track(f,button(f,"Apply & finish",24,-540,250,"primary",function() B:ApplyOnboarding() end))
+  track(f,button(f,"Back",286,-540,250,nil,function() B:OnboardingWelcomePage() end))
 end
-
-function B:ApplyOnboarding(confirmed)
-  if A.Combat() then return end
+function B:ApplyOnboarding()
+  if A.Combat() or not self.onboarding then return false end
   local f=self.onboarding
-  f.selection=f.selection or {}
-  for _,choice in ipairs(f.choices or {}) do f.selection[choice.spec.key]=choice.check:GetChecked()==true end
-  local list=f.recommendations or recommendations(self)
-  if f.reviewMode and not confirmed then
-    clearPage(f)
-    track(f,text(f,T.fonts.Title,24,-120,WIDTH-48,"Confirm selected recommendations"))
-    track(f,text(f,T.fonts.Note,24,-158,WIDTH-48,"Only checked recommendations will replace saved settings. Cancel returns to your review without applying changes."))
-    track(f,text(f,T.fonts.Muted,24,-196,WIDTH-48,B:Text("Profile: %s",self.profileDB:GetCurrentProfile())))
-    local names={}; for _,spec in ipairs(list) do if f.selection[spec.key] then names[#names+1]=B:Text(spec.label) end end
-    local scroll=CreateFrame("ScrollFrame",nil,f,"UIPanelScrollFrameTemplate"); scroll:SetPoint("TOPLEFT",24,-224); scroll:SetSize(WIDTH-76,216)
-    local child=CreateFrame("Frame",nil,scroll); child:SetSize(WIDTH-100,math.max(216,#names*48)); scroll:SetScrollChild(child)
-    text(child,T.fonts.Muted,0,0,WIDTH-100,table.concat(names,"\n\n")); track(f,scroll)
-    local backup=CreateFrame("CheckButton",nil,f,"UICheckButtonTemplate"); backup:SetSize(24,24); backup:SetPoint("TOPLEFT",24,-458)
-    backup.Text:SetText(B:Text("Create a profile backup before applying")); backup:SetChecked(f.backup==true); T.Check(backup)
-    backup:SetScript("OnClick",function(c) f.backup=c:GetChecked()==true end); track(f,backup)
-    track(f,button(f,"Apply selected",24,-500,250,"primary",function() B:ApplyOnboarding(true) end))
-    track(f,button(f,"Cancel",286,-500,250,nil,function() B:OnboardingSettingsPage(f.recommendOffset) end))
-    return
-  end
-  if f.backup then
-    local original=self.profileDB:GetCurrentProfile()
-    local base=original.." backup"; local name=base; local n=1
-    while self.profileDB.sv.profiles[name] do n=n+1; name=base.." "..n end
-    if not self:CreateSettingsProfile(name,true) then self.Print("Could not create profile backup. No recommendations applied."); return end
-    if not self:SelectSettingsProfile(original) then self.Print("Could not restore active profile. No recommendations applied."); return end
-    list=recommendations(self); f.backup=false
-  end
-  local applied=0
-  for _,spec in ipairs(list) do
-    if f.selection[spec.key] then spec.apply(); applied=applied+1 end
-  end
-  if applied>0 then
-    self:NormalizeVisualOptions(); if self.NormalizeAlerts then self:NormalizeAlerts() end
-    if self.NormalizeGroupContexts then self:NormalizeGroupContexts() end
-    self.situationDirty=true; self.appearance=nil
-    if T.Refresh then T.Refresh() end
-    self:RequestRefresh("onboarding",0)
-    if self.options and self.options:IsShown() then self:Options() end
-    self.Print(self:Text("Applied %d recommended settings to profile %s.",applied,self.profileDB and self.profileDB:GetCurrentProfile() or "?"))
-  end
-  self:OnboardingFeaturesPage()
+  for _,choice in ipairs(f.choices or {}) do f.quickSelection[choice.spec.key]=choice.check:GetChecked()==true end
+  return self:ApplyFirstRunSetup(f.quickSelection)
 end
 
 function B:OnboardingSupplyHint(class)
@@ -407,12 +491,20 @@ function B:ShowOnboarding(force)
     -- Only an explicit choice finishes the setup. Hiding alone does not: a new character's intro
     -- cinematic hides the whole UI, and that must not count as "Leave me alone".
     local close=CreateFrame("Button",nil,f,"BackdropTemplate"); close:SetSize(26,26); close:SetPoint("TOPRIGHT",-10,-10)
-    T.Variant(close,"danger"); close.glyph=close:CreateTexture(nil,"ARTWORK"); close.glyph:SetPoint("CENTER"); T.Glyph(close.glyph,"close",14,.80,.82,.86); close:SetScript("OnClick",function() B:FinishOnboarding() end)
-    close:SetScript("OnEnter",function(s) T.Tooltip(s,B:Text("Leave me alone"),B:Text("Leave me alone changes nothing and will not ask again. Everything stays available in Settings.")) end)
+    T.Variant(close,"danger"); close.glyph=close:CreateTexture(nil,"ARTWORK"); close.glyph:SetPoint("CENTER"); T.Glyph(close.glyph,"close",14,.80,.82,.86); close:SetScript("OnClick",function() if not A.Combat() then B:FinishOnboarding() end end)
+    close:SetScript("OnEnter",function(s) T.Tooltip(s,B:Text("Keep current settings"),B:Text("Keep current settings preserves your choices. Change anything later in Settings.")) end)
     close:SetScript("OnLeave",function() GameTooltip:Hide() end)
+    f:EnableKeyboard(true)
+    f:SetPropagateKeyboardInput(true)
+    f:SetScript("OnKeyDown",function(frame,key)
+      local dismiss=key=="ESCAPE" and not A.Combat()
+      frame:SetPropagateKeyboardInput(not dismiss)
+      if dismiss then B:FinishOnboarding() end
+    end)
     self.onboarding=f; f.pageRegions={}
   end
   self.onboarding.reviewMode=force==true
+  self.onboarding.quickSelection=nil
   self.onboarding.selection={}; self.onboarding.choices={}; self.onboarding.recommendations=nil; self.onboarding.backup=false
   if self.HideOptionsPopups then self:HideOptionsPopups() end
   local width,height=UIParent:GetSize()
@@ -558,7 +650,6 @@ function B:DrawNearbyGuide(g,width)
 end
 -- Why Nearby helps, worded for the player's class. Classes without a buff for others still get
 -- one-click invites and polite buff requests to Mages, Priests, Druids and Paladins around them.
-local GIVERS={MAGE=true,PRIEST=true,DRUID=true,PALADIN=true}
 function B:NearbyPitch(class)
   if GIVERS[class] then
     return self:Text("Nearby lists friendly players around you who are missing your buff: one click or your binding buffs them as they pass. You can also invite them or join their group in one click. Every action needs your click.")

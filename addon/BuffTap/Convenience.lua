@@ -274,14 +274,29 @@ function B:ShowWelcome(force)
 end
 function B:ScheduleWelcome()
   if not self.db then return end
-  -- The one-time setup comes first; it schedules the "How to buff" card for new players when it closes.
-  if self.OnboardingPending and self:OnboardingPending() then self:StartTimer("welcome",3,function() B:ShowOnboarding() end); return end
+  -- Onboarding replaces the old welcome card, including completed legacy setups.
+  if self.OnboardingPending then
+    if self:OnboardingPending() then self:StartTimer("welcome",3,function() B:ShowOnboarding() end) end
+    return
+  end
   if self.db.welcomeSeen then return end
   self:StartTimer("welcome",2,function() B:ShowWelcome() end)
 end
 -- Edit Mode placeholders for the Nearby window and the camp reminder. They are plain
 -- frames, so dragging never touches the secure Nearby window; the real frames follow the
 -- saved position when Edit Mode closes.
+function B:ReminderDefaultPositions()
+  if not UIParent or type(UIParent.GetSize)~="function" then return end
+  local width,height=UIParent:GetSize()
+  if not A.Number(width) or not A.Number(height) or width<450 or height<320 then return end
+  -- Work in scaled game-UI coordinates, not physical monitor pixels or a
+  -- per-resolution preset. Shift the whole starter group inside the usable area.
+  local gap=math.min(220,math.max(176,width*.115))
+  local x=math.max(-width/2+126,math.min(width*.20,width/2-gap-148))
+  local y=math.max(-height/2+210,math.min(height*.31,height/2-64))
+  return {x=x,y=y,campX=x,campY=y-76,supplyX=x,supplyY=y-152,
+    nearbyX=x+gap,nearbyY=y-100}
+end
 local function editMover(key,caption,iconTexture)
   local f=window(nil,"",100,40); f.title:SetText(""); f.moverKey=key
   f:SetMovable(true); f:RegisterForDrag("LeftButton")
@@ -291,6 +306,7 @@ local function editMover(key,caption,iconTexture)
     f.label=f:CreateFontString(nil,"OVERLAY","GameFontNormal"); f.label:SetPoint("CENTER"); f.label:SetText(B:Text(key=="manual" and "Consumables" or "Nearby players"))
   end
   f.caption=f:CreateFontString(nil,"OVERLAY","GameFontNormal"); f.caption:SetPoint("TOP",f,"BOTTOM",0,-6); f.caption:SetText(B:Text(caption))
+  f.caption:SetWidth(210); f.caption:SetWordWrap(true)
   f:SetScript("OnDragStart",function(s) if not A.Combat() then s.dragging=true; s:StartMoving() end end)
   local function savePosition(s)
     s:StopMovingOrSizing(); s.dragging=false
@@ -317,25 +333,25 @@ function B:ShowEditMovers()
     local f=self.editManualConsumables; local x,y=self:ManualConsumableAnchor()
     f:SetSize(100,22); f:ClearAllPoints(); f:SetPoint("CENTER",UIParent,"CENTER",x,y); f:Show()
   elseif self.editManualConsumables then self.editManualConsumables:Hide() end
-  if d.nearbyEnabled then
+  do -- Edit placeholders are configurable even while their feature is disabled.
     self.editNearby=self.editNearby or editMover("nearby","BuffTap Nearby: drag to move")
     local f=self.editNearby; local width,rows,scale=240,5,1
     if self.NearbyLayout then width,rows,scale=self:NearbyLayout() end
     f:SetScale(A.Number(scale) and scale or 1); f:SetSize(width+24,29+rows*(self.NearbyRowHeight and self:NearbyRowHeight() or 21))
     local nx,ny=A.Number(d.nearbyX) and d.nearbyX or 240,A.Number(d.nearbyY) and d.nearbyY or 0
     if self.PlaceNearbyFrame then self:PlaceNearbyFrame(f,nx,ny) else f:ClearAllPoints(); f:SetPoint("CENTER",UIParent,"CENTER",nx,ny) end; f:Show()
-  elseif self.editNearby then self.editNearby:Hide() end
-  if d.campReminder==true then
+  end
+  do
     self.editCamp=self.editCamp or editMover("camp","Camp reminder: drag to move",135805)
     local f=self.editCamp; local size=A.Number(d.campSize) and d.campSize or 40
     f:SetSize(size,size); f:ClearAllPoints(); f:SetPoint("CENTER",UIParent,"CENTER",A.Number(d.campX) and d.campX or 100,A.Number(d.campY) and d.campY or 0); f:Show()
-  elseif self.editCamp then self.editCamp:Hide() end
-  if d.supplyReminder~=false then
+  end
+  do
     if self.NormalizeSupplyReminder then self:NormalizeSupplyReminder() end
     self.editSupply=self.editSupply or editMover("supply","Supplies reminder: drag to move",132912)
     local f=self.editSupply; local size=A.Number(d.supplySize) and d.supplySize or 40
     f:SetSize(size,size); f:ClearAllPoints(); f:SetPoint("CENTER",UIParent,"CENTER",d.supplyX or 0,d.supplyY or 0); f:Show()
-  elseif self.editSupply then self.editSupply:Hide() end
+  end
 end
 function B:HideEditMovers()
   for _,f in pairs({self.editNearby,self.editCamp,self.editSupply,self.editManualConsumables}) do

@@ -4,7 +4,7 @@
 
 local _, B = ...
 _G.BuffTap = B
-B.version = "1.26.4"
+B.version = "1.26.5-beta1"
 B.API = {}
 local A = B.API
 
@@ -89,6 +89,15 @@ end
 function B:InitDB()
   if type(BuffTapDB) ~= "table" then BuffTapDB = {} end
   self.db = self:ProfileSettings(BuffTapDB)
+  -- Only genuinely unpositioned new characters get the starter layout. Saved
+  -- coordinates, copied profiles and completed onboarding are never migrated.
+  local unpositioned=self.db.welcomeSeen~=true and self.db.onboardingVersion==nil
+  for _,key in ipairs({"x","y","campX","campY","supplyX","supplyY","nearbyX","nearbyY"}) do
+    if self.db[key]~=nil then unpositioned=false end
+  end
+  if unpositioned and self.ReminderDefaultPositions then
+    for key,value in pairs(self:ReminderDefaultPositions() or {}) do self.db[key]=value end
+  end
   local hadSeconds = type(self.db.seconds) == "number"
   local hadRebuffVersion = type(self.db.rebuffVersion) == "number"
   -- Migrate the short-lived 0.5.x overlay key names before defaults are applied.
@@ -1108,7 +1117,9 @@ end
 -- Nearby-only rank comparison. Unknown coverage, group equivalents and
 -- same/higher ranks cannot justify replacing a healthy effect.
 function B:NearbyRankUpgrade(b,action,auras,ids,names)
-  if not self.nearbyRankUpgradeScan or self.db.nearbyRankUpgrades~=true
+  -- The main button checks the same need again after the Nearby scan has ended.
+  -- An actual Nearby action must retain upgrade eligibility at that fresh click check.
+  if not (self.nearbyRankUpgradeScan or (action and action.nearby==true)) or self.db.nearbyRankUpgrades~=true
     or not recipientRankAllowance[b.key] or auras.incomplete or auras.timingRestricted then return false end
   local order={}; for index,id in ipairs(b.ranks or {}) do order[id]=index end
   local selected=order[action.id]; local selectedLevel=self.RankLevel[action.id]

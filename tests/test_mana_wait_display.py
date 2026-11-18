@@ -4,6 +4,7 @@ WAIT = """
 local B=BuffTap; local low=true
 C_Spell.IsSpellUsable=function() return not low,low end
 B.PlayAlert=function() error('mana wait must be silent') end
+B.db.showBuffName=true; B.db.showTargetName=true
 B.db.sound=true; B:Refresh()
 """
 

@@ -1,4 +1,6 @@
 __import__('test_aura_evidence')
+__import__('test_onboarding_quickstart')
+__import__('test_release_1265')
 __import__('test_blessing_ui')
 __import__('test_blessings')
 __import__('test_branding')
