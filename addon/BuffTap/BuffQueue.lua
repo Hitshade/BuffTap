@@ -118,7 +118,9 @@ function B:CreateQueueButton(index)
   local ok,b=pcall(CreateFrame,"Button","BuffTapQueueButton"..index,UIParent,"SecureActionButtonTemplate,SecureHandlerStateTemplate")
   if not ok or not b then return nil end
   b:Hide(); b:SetFrameStrata("HIGH"); b:SetClampedToScreen(true)
-  b:RegisterForClicks("LeftButtonUp")
+  -- Up-only clicks need useOnKeyDown=false; otherwise the ActionButtonUseKeyDown CVar makes the
+  -- secure template act on key-down only and the release click casts nothing.
+  b:RegisterForClicks("LeftButtonUp"); b:SetAttribute("useOnKeyDown",false)
   b:SetAttribute("checkselfcast",false); b:SetAttribute("checkfocuscast",false); b:SetAttribute("checkmouseovercast",false)
   if not pcall(b.SetAttribute,b,"_onstate-safety",SAFETY) or not RegisterStateDriver
     or not pcall(RegisterStateDriver,b,"safety","[combat][@player,dead][mounted][vehicleui][petbattle] blocked; ready") then

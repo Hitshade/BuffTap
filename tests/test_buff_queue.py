@@ -22,6 +22,8 @@ test('Buff queue groups further recipients of one buff with a count',Q+"B.db.buf
 
 test('Buff queue never offers a group spell and leaves the group family to the main reminder',Q+"spell(21849,'Gift of the Wild',50); UnitLevel=function() return 60 end; B.db.buffQueue=true; B.db.group=true; refresh(); assert(B.action.groupCast); assert(on(1)); assert(q(1).action.key=='thorns' and not q(1).action.groupCast,tostring(q(1).action.key)); for i=1,4 do if on(i) then assert(q(i).action.key~='motw' and q(i).action.key~='gotw') end end")
 
+test('Queue icons act on the click release regardless of the key-down setting',Q+"B.db.buffQueue=true; refresh(); local b=q(1); assert(on(1)); assert(#b.clicks==1 and b.clicks[1]=='LeftButtonUp',tostring(b.clicks[1])); assert(b.attrs.useOnKeyDown==false,'useOnKeyDown must be false for up-only clicks')")
+
 test('Buff queue installs no key bindings',Q+"B.db.buffQueue=true; refresh(); for key,value in pairs(bindings) do assert(not tostring(value):find('Queue',1,true),value) end")
 
 test('Combat clears the queue through the secure driver and refreshes after',Q+"B.db.buffQueue=true; refresh(); assert(on(1)); combat=true; safety('blocked'); local b=q(1); b.secure=true; local fn=assert(loadstring('local self,newstate=...; '..b.attrs['_onstate-safety'])); fn(b,'blocked'); b.secure=false; assert(not b.shown and b.attrs.type1==nil and b.attrs.spell==nil); B.events.scripts.OnEvent(nil,'PLAYER_REGEN_DISABLED'); B:Refresh(); assert(not b.shown); combat=false; safety('ready'); B.events.scripts.OnEvent(nil,'PLAYER_REGEN_ENABLED'); assert(on(1) and q(1).attrs.spell==467)")
