@@ -1,16 +1,10 @@
-# BuffTap 1.26.3-beta2
+# BuffTap 1.26.3
 
-The Nearby success confirmation now clears from left to right as the cooldown ends. Its shading is slightly stronger while staying subtle. The sweep and repeated-input guard use the real cooldown without adding a minimum display tail or a fixed pause after your click. When cooldown timing is unavailable, BuffTap does not invent an extra wait. Real spell cooldowns still apply, and every cast needs your input.
-
-Corrected two paths that could contribute to misleading errors while pressing repeatedly: a running cooldown could be missed when its flag disagreed with its timing, and an unrelated game error could mark a pending row failed. Nearby now requires a matching spell failure, and a matching success clears a provisional failure. Genuine failures still show their reason. The exact reported in-game range incident needs a live recheck. Settings and the beta1 changes below are retained.
-
-# BuffTap 1.26.3-beta1
+### Smoother Nearby feedback
+Successful Nearby confirmations now show a subtle sweep from left to right. Repeated presses wait for the real cooldown without an extra fixed pause. Corrected cases where conflicting cooldown information or an unrelated game error could produce misleading failure messages. Matching successes clear provisional failures; genuine failures still show their reason. Every cast still needs your input.
 
 ### Resurrection and SmartShift
 Druids can use normal **Revive** through the Resurrection helper at every rank. **Also use Rebirth** remains optional and can stay off. A dead group member returning into range is checked again. SmartShift now also offers your previous form after a confirmed successful cleanse, using another click as usual.
-
-### Calmer Nearby casting
-Successful Nearby confirmations show a cooldown sweep. Repeated presses during that wait no longer send another cast that replaces the confirmation with a spell-not-ready error. Genuine failures still show their reason; casting again when ready requires another press. This beta needs live testing of the sweep and repeated-input behavior.
 
 ### Configure class tracking early
 Under **Helpers > Tracking**, Druids can choose Track Humanoids and Warlocks can choose Sense Demons before learning them. The reminder becomes usable once the spell is learned. Druid Track Humanoids still requires Cat Form.
@@ -20,8 +14,7 @@ Added 15 foods, including Goblin Deviled Clams, Clamlette Surprise, Dirge's Kick
 
 Thanks to **shaunpearsondev** for reporting the missing Goblin Deviled Clams.
 
-### Review limits
-The class-spell and consumable review includes refreshed Forever class tables and current tooltips for every included consumable. Database records alone do not prove an older ability can currently be learned or an item obtained, so unverified abilities and quest or combat consumables have not been added as routine reminders. No settings reset is needed. Combat restrictions remain unchanged.
+Your settings are preserved. Combat restrictions remain unchanged. The reported range-error incident has not been reproduced exactly; the related failure-handling cases above are corrected.
 
 # BuffTap 1.26.2
 

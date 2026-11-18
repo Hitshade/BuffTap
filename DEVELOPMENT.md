@@ -8,7 +8,7 @@ Latest review, 2026-11-17: connected GitHub review confirmed open issue [#5: Gob
 
 Work in progress: **1.26.3-beta2**, normal Druid Revive, corpse range recovery, SmartShift after cleansing, Nearby cooldown confirmation, food additions and pre-learning class tracking. Beta2 makes the confirmation sweep horizontal and slightly stronger, removes fixed timing padding and corrects error correlation and contradictory cooldown flags. Its full mocked release suite passes 2,321 scenarios. See [class review](docs/CLASS-SPELL-AUDIT-1.26.3.md) and [consumable review](docs/CONSUMABLE-AUDIT-1.26.3.md). After the initial approval usage limit reset, fresh 70888 class tables and all included consumable tooltips were retrieved. Their current-availability limits still apply; records alone do not prove acquisition or trainability.
 
-Current release: **1.26.2**. Keep class-applicable preferences available regardless of character level or learned spell. Enforce spell eligibility at selection and click time. The UI mock must reject frame parents that are textures. Release documentation has three audiences: in-game PatchNotes.lua, CurseForge RELEASE-NOTES.md, and GitHub CHANGELOG.md.
+Current release preparation: **1.26.3**, owner-authorized for publication on 2026-11-17 and issue #5 closure after publication. Final beta2 passed 2,321 mocked scenarios. Public runtime differs only in version identity. Preserve settings and all three note audiences; do not claim the exact live range incident was reproduced.
 
 1.26.2 fixes repeated reminder sounds during active smooth-buffing sequences. No casting or saved-setting changes. Publication approved by the owner on 2026-11-17.
 

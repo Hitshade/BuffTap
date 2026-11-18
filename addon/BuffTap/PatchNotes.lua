@@ -2,7 +2,7 @@
 local _,B=...
 -- Keep the ten most recent releases within a 24 KiB content ceiling.
 B.PatchNotes={
- {version="1.26.3-beta2",title="Resurrection, cleansing and food fixes",items={
+ {version="1.26.3",title="Resurrection, cleansing and food fixes",items={
   "Druids: Resurrection now includes Revive at every rank. You can leave Also use Rebirth off and still resurrect with Revive.",
   "Helpers > Tracking: Druids can choose Track Humanoids and Warlocks can choose Sense Demons before learning them. Actual use still needs the spell, and Druid tracking needs Cat Form.",
   "Resurrection reminders check again when a dead group member returns into range. SmartShift can now offer your previous form after a successful cleanse.",
