@@ -15,12 +15,19 @@ local bundled={
   {key="hello",name="Happy hello",file=SOUNDS.."BuffTapHello.ogg"},
   {key="twinbells",name="Twin bells",file=SOUNDS.."BuffTapTwinBells.ogg"},
   {key="playful",name="Playful marimba",file=SOUNDS.."BuffTapPlayful.ogg"},
-  {key="softpluck",name="Soft pluck",file=SOUNDS.."BuffTapSoftPluck.ogg"},
-  {key="amber",name="Amber chime",file=SOUNDS.."BuffTapAmber.ogg"},
-  {key="ripple",name="Gentle ripple",file=SOUNDS.."BuffTapRipple.ogg"},
-  {key="wood",name="Wooden bloom",file=SOUNDS.."BuffTapWood.ogg"},
-  {key="silver",name="Silver notes",file=SOUNDS.."BuffTapSilver.ogg"},
+  {key="crystalchime",name="Crystal chime",file=SOUNDS.."BuffTapCrystalChime.ogg"},
+  {key="elvenharp",name="Elven harp",file=SOUNDS.."BuffTapElvenHarp.ogg"},
+  {key="holylight",name="Holy light",file=SOUNDS.."BuffTapHolyLight.ogg"},
+  {key="fairyping",name="Fairy ping",file=SOUNDS.."BuffTapFairyPing.ogg"},
+  {key="celestiallift",name="Celestial lift",file=SOUNDS.."BuffTapCelestialLift.ogg"},
+  {key="softglow",name="Soft glow",file=SOUNDS.."BuffTapSoftGlow.ogg"},
+  {key="moonlitbells",name="Moonlit bells",file=SOUNDS.."BuffTapMoonlitBells.ogg"},
+  {key="gentleharp",name="Gentle harp",file=SOUNDS.."BuffTapGentleHarp.ogg"},
+  {key="warmwelcome",name="Warm welcome",file=SOUNDS.."BuffTapWarmWelcome.ogg"},
+  {key="lullabyping",name="Lullaby ping",file=SOUNDS.."BuffTapLullabyPing.ogg"},
 }
+-- Internal beta3 choices were replaced by the owner's recordings.
+local retiredBetaSounds={softpluck="gentleharp",amber="crystalchime",ripple="holylight",wood="elvenharp",silver="moonlitbells"}
 local definitions={
   {key="default",name="Ding (game)",id=12867},
   {key="ready",name="Ready check",constant="READY_CHECK"},
@@ -102,6 +109,7 @@ function B:NormalizeAlerts()
   end
   for _,key in ipairs({"reminderSound","supplySound","campAlertSound","cleanseSound","socialSound"}) do
     local value=self.db[key]
+    if retiredBetaSounds[value] then value=retiredBetaSounds[value]; self.db[key]=value end
     local shared=type(value)=="string" and value:sub(1,4)=="lsm:" and #value>4 and #value<=512
     -- Unknown or retired choices fall back to the BuffTap default for that alert.
     -- 1.22.0 defaults (new characters): Cleansing wash, Glass chime, Harp arpeggio, Warm bell, Happy hello.
@@ -130,6 +138,7 @@ function B:NormalizeBuffAlerts()
         local record={}
         if type(value.enabled)=="boolean" then record.enabled=value.enabled end
         local sound=value.sound
+        sound=retiredBetaSounds[sound] or sound
         if type(sound)=="string" and #sound<=512 and (sounds[sound] or (sound:sub(1,4)=="lsm:" and #sound>4 and not sound:find("[%c|]"))) then record.sound=sound end
         if next(record) then out[context][key]=record end
       end

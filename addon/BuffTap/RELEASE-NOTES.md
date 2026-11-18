@@ -1,9 +1,11 @@
-# BuffTap 1.26.7-beta3
+# BuffTap 1.26.7-beta4
 
 Enabled speakers now light up in your selected accent colour, while muted speakers stay grey. Party and Raid use the same compact speaker buttons at the top right of the selected buff box.
 
-### Five new sounds
-Preview **Soft pluck**, **Amber chime**, **Gentle ripple**, **Wooden bloom** and **Silver notes** under Customization > Binding & sound. They are short, gentle tonal additions, each under a second, with measured loudness matched to the existing set. Your current sound choices remain selected. The Paladin Buff sounds button also aligns with Casting.
+### Ten new custom sounds
+Preview **Crystal chime**, **Elven harp**, **Holy light**, **Fairy ping**, **Celestial lift**, **Soft glow**, **Moonlit bells**, **Gentle harp**, **Warm welcome** and **Lullaby ping** under Customization > Binding & sound. These owner-created sounds replace the earlier experimental additions. Each lasts just under a second, with volume matched to the existing set while preserving stereo.
+
+Your existing shipped sound choices stay selected. A choice from the rejected experimental beta set moves to a corresponding new sound. The Paladin Buff sounds button also aligns with Casting.
 
 ### Hear the reminders you want
 Use the speaker beside each entry in **My buffs** to silence that personal buff. Its icon and binding stay available. Personal preferences apply whether you are solo or grouped; they do not silence reminders to buff other players.

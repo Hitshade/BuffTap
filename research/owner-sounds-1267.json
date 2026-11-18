@@ -1,0 +1,301 @@
+{
+  "target_lufs": -21.823360485173346,
+  "method": "Gain only, decoded-file gated K-weighted energy; mono/stereo channel energies summed, stereo preserved. No trimming, fades, synthesis, limiting or compression. Ogg Vorbis copies re-encoded for gain adjustment.",
+  "ownerOriginalsUnchanged": true,
+  "reference": {
+    "BuffTapBell.ogg": {
+      "rate": 44100,
+      "channels": 1,
+      "duration": 1.0,
+      "lufs": -23.801657395522074,
+      "peak_db": -8.153265056660834,
+      "bytes": 9813,
+      "sha256": "cc938358aaa55e94a6267388725a40c7ea60d6db4512e8761845b44faa80a85a"
+    },
+    "BuffTapCleanse.ogg": {
+      "rate": 44100,
+      "channels": 1,
+      "duration": 0.95,
+      "lufs": -19.21518029769042,
+      "peak_db": -8.932198833644215,
+      "bytes": 11875,
+      "sha256": "740b84798c3341163f8a874d928b6ff23554de8a0c9dc58c3876308249c82f12"
+    },
+    "BuffTapGlass.ogg": {
+      "rate": 44100,
+      "channels": 1,
+      "duration": 0.9,
+      "lufs": -21.99890362469989,
+      "peak_db": -7.047591359392929,
+      "bytes": 9267,
+      "sha256": "c10c7277463c51bfb40dd95d39dedece91210603902e9802ca279ba6a466c318"
+    },
+    "BuffTapHarp.ogg": {
+      "rate": 44100,
+      "channels": 1,
+      "duration": 0.85,
+      "lufs": -22.364126767310676,
+      "peak_db": -7.313789296701801,
+      "bytes": 9528,
+      "sha256": "802ad4ce8438135a06277be2a091ac8df05adbd10f626e6a66f63b090358dd0a"
+    },
+    "BuffTapHello.ogg": {
+      "rate": 44100,
+      "channels": 1,
+      "duration": 0.85,
+      "lufs": -20.897643408932698,
+      "peak_db": -9.11584032930319,
+      "bytes": 7833,
+      "sha256": "1b729b6a8d31d6027d7003b23393c8397ad258a8e2dcc2795c5e13f362da4dc9"
+    },
+    "BuffTapMarimba.ogg": {
+      "rate": 44100,
+      "channels": 1,
+      "duration": 0.75,
+      "lufs": -21.855951015214284,
+      "peak_db": -7.447329156026596,
+      "bytes": 8282,
+      "sha256": "78ba6fb7ca2005f8880a88cfcfb9286d41ff8f054a00a9bb410e578afc20b932"
+    },
+    "BuffTapPlayful.ogg": {
+      "rate": 44100,
+      "channels": 1,
+      "duration": 0.8,
+      "lufs": -21.79076995513241,
+      "peak_db": -8.655487859021573,
+      "bytes": 7679,
+      "sha256": "94e3505fe17e45ed2466481daa199e544c65ad784280d9f2bd9eceea56a7717f"
+    },
+    "BuffTapTwinBells.ogg": {
+      "rate": 44100,
+      "channels": 1,
+      "duration": 1.0,
+      "lufs": -21.48100518710057,
+      "peak_db": -8.255916375059144,
+      "bytes": 8746,
+      "sha256": "c6f4e213e5b0a55b29267b6611444d39591744052faa202f15d4e4a7b90ba955"
+    }
+  },
+  "new": {
+    "BuffTapCrystalChime.ogg": {
+      "key": "crystalchime",
+      "name": "Crystal chime",
+      "sourceFile": "01_crystal_chime.ogg",
+      "source": {
+        "rate": 44100,
+        "channels": 2,
+        "duration": 0.98,
+        "lufs": -11.079747783731953,
+        "peak_db": -1.148923992696165,
+        "bytes": 21292,
+        "sha256": "56939022968b766bbad3a9c2f2fab98f2d88b42693ce0ee70de39b626838a33b"
+      },
+      "gain_db": -10.743612701441393,
+      "rate": 44100,
+      "channels": 2,
+      "duration": 0.98,
+      "lufs": -21.892886460831143,
+      "peak_db": -11.790047737547354,
+      "bytes": 14244,
+      "sha256": "e176dc76fd7de541c81fc545b509df5a0462a810b28ed667bef0a22fe86fe94b"
+    },
+    "BuffTapElvenHarp.ogg": {
+      "key": "elvenharp",
+      "name": "Elven harp",
+      "sourceFile": "03_elven_harp.ogg",
+      "source": {
+        "rate": 44100,
+        "channels": 2,
+        "duration": 0.98,
+        "lufs": -13.787875152923629,
+        "peak_db": -1.1575547662361494,
+        "bytes": 29839,
+        "sha256": "8a191fcda8b32e7e79ad3791d960acbbeb8d8361fdbf0ced5e6f08545dfa2d12"
+      },
+      "gain_db": -7.857877858307621,
+      "rate": 44100,
+      "channels": 2,
+      "duration": 0.98,
+      "lufs": -21.820623362498438,
+      "peak_db": -8.997370125349724,
+      "bytes": 17957,
+      "sha256": "5131bdde520d7ea3861edab2e40e7fb6d3b5cddb7bb6d067471e179c25bf6ba2"
+    },
+    "BuffTapHolyLight.ogg": {
+      "key": "holylight",
+      "name": "Holy light",
+      "sourceFile": "04_holy_light.ogg",
+      "source": {
+        "rate": 44100,
+        "channels": 2,
+        "duration": 0.98,
+        "lufs": -11.332939078991606,
+        "peak_db": -0.9716167632873403,
+        "bytes": 17382,
+        "sha256": "93baf44c072bd783b768bb493d24097bc144134140321e1eb628ab40cb5d2778"
+      },
+      "gain_db": -10.49042140618174,
+      "rate": 44100,
+      "channels": 2,
+      "duration": 0.98,
+      "lufs": -21.864710714071588,
+      "peak_db": -11.44014796150146,
+      "bytes": 13089,
+      "sha256": "786acdeb8568bec0479a38a89e27762738544a89da9778ed1cf15f4953c9f98e"
+    },
+    "BuffTapFairyPing.ogg": {
+      "key": "fairyping",
+      "name": "Fairy ping",
+      "sourceFile": "05_fairy_ping.ogg",
+      "source": {
+        "rate": 44100,
+        "channels": 2,
+        "duration": 0.98,
+        "lufs": -10.317219508792999,
+        "peak_db": -1.074728864482009,
+        "bytes": 21270,
+        "sha256": "5a3bd9f57077232e69dd6fdcf3a3dc764280c337beaa22aa5b3dd63dc1b21495"
+      },
+      "gain_db": -11.506140976380347,
+      "rate": 44100,
+      "channels": 2,
+      "duration": 0.98,
+      "lufs": -21.819503093289487,
+      "peak_db": -12.512105322220798,
+      "bytes": 13904,
+      "sha256": "431a64d73ade306aff2dc8f55b980e5c9fc3edb666389a054318621d6ba8a406"
+    },
+    "BuffTapCelestialLift.ogg": {
+      "key": "celestiallift",
+      "name": "Celestial lift",
+      "sourceFile": "08_celestial_lift.ogg",
+      "source": {
+        "rate": 44100,
+        "channels": 2,
+        "duration": 0.98,
+        "lufs": -9.677487300544598,
+        "peak_db": -1.354402356103824,
+        "bytes": 17224,
+        "sha256": "16912727c65f39f6af566a941a2af0be8b88a553eec912ec15e2f2b2ba48e24c"
+      },
+      "gain_db": -12.022010193782602,
+      "rate": 44100,
+      "channels": 2,
+      "duration": 0.98,
+      "lufs": -21.78162937372231,
+      "peak_db": -13.589544958166659,
+      "bytes": 12059,
+      "sha256": "86ea50c60926a06738b7be85c9ec231a955db17853f6a343635a4b1ed730dc96"
+    },
+    "BuffTapSoftGlow.ogg": {
+      "key": "softglow",
+      "name": "Soft glow",
+      "sourceFile": "11_soft_glow.ogg",
+      "source": {
+        "rate": 44100,
+        "channels": 2,
+        "duration": 0.98,
+        "lufs": -11.707518301213414,
+        "peak_db": -1.4139646950634799,
+        "bytes": 13097,
+        "sha256": "ba53b6bacb1c705ac4d396f082d5bc31631ab573ba54994b4121f4bad98ec501"
+      },
+      "gain_db": -10.115842183959932,
+      "rate": 44100,
+      "channels": 2,
+      "duration": 0.98,
+      "lufs": -21.77780895098104,
+      "peak_db": -11.59812720101466,
+      "bytes": 9364,
+      "sha256": "63143f2725270ea4e41394521f27d92cd431dc4d4950f686aa7b062121fa0084"
+    },
+    "BuffTapMoonlitBells.ogg": {
+      "key": "moonlitbells",
+      "name": "Moonlit bells",
+      "sourceFile": "12_moonlit_bells.ogg",
+      "source": {
+        "rate": 44100,
+        "channels": 2,
+        "duration": 0.98,
+        "lufs": -11.677619964526238,
+        "peak_db": -1.334312063823742,
+        "bytes": 16229,
+        "sha256": "a8f965d9b44a3be2402bd534c2e81a75d279e905412d46d2e8a62ceea3a92490"
+      },
+      "gain_db": -10.145740520647108,
+      "rate": 44100,
+      "channels": 2,
+      "duration": 0.98,
+      "lufs": -21.78513600573067,
+      "peak_db": -11.407091177033248,
+      "bytes": 11497,
+      "sha256": "1f592cf19381ba1044cb3cc9f3c25345d8b4681b7efe6b5ac0ee1162e7113859"
+    },
+    "BuffTapGentleHarp.ogg": {
+      "key": "gentleharp",
+      "name": "Gentle harp",
+      "sourceFile": "13_gentle_harp.ogg",
+      "source": {
+        "rate": 44100,
+        "channels": 2,
+        "duration": 0.98,
+        "lufs": -12.387644225588065,
+        "peak_db": -1.5346735896337518,
+        "bytes": 26578,
+        "sha256": "48e7fed92976607e8f42548ee92f30a644421adeaae9ff114c13f4b43d702048"
+      },
+      "gain_db": -9.43571625958528,
+      "rate": 44100,
+      "channels": 2,
+      "duration": 0.98,
+      "lufs": -21.859811480708547,
+      "peak_db": -10.852747899587193,
+      "bytes": 16780,
+      "sha256": "a5666e39698b23cb9e74506c8351b557c31dc3d5f765c6e6b071fbef9581ae81"
+    },
+    "BuffTapWarmWelcome.ogg": {
+      "key": "warmwelcome",
+      "name": "Warm welcome",
+      "sourceFile": "14_warm_welcome.ogg",
+      "source": {
+        "rate": 44100,
+        "channels": 2,
+        "duration": 0.98,
+        "lufs": -9.483023194160682,
+        "peak_db": -1.33536193458953,
+        "bytes": 15231,
+        "sha256": "ee2f003efcebe36fa4fbe5366be6cebd644f9769f593bd4808b6bfd831d07e84"
+      },
+      "gain_db": -12.340337291012665,
+      "rate": 44100,
+      "channels": 2,
+      "duration": 0.98,
+      "lufs": -21.808192133171463,
+      "peak_db": -13.55737849954086,
+      "bytes": 10467,
+      "sha256": "ff2406eaa07e4fb5c61fbf7edcbd84d63dd464838722ba1a0b6efd6fd5e0b0fa"
+    },
+    "BuffTapLullabyPing.ogg": {
+      "key": "lullabyping",
+      "name": "Lullaby ping",
+      "sourceFile": "15_lullaby_ping.ogg",
+      "source": {
+        "rate": 44100,
+        "channels": 2,
+        "duration": 0.98,
+        "lufs": -10.862032650042957,
+        "peak_db": -1.356272867230102,
+        "bytes": 13199,
+        "sha256": "66de2a1312d7503f006118fed0fecfff3a614e00ce3efdf9d7247e1217e22caa"
+      },
+      "gain_db": -10.961327835130389,
+      "rate": 44100,
+      "channels": 2,
+      "duration": 0.98,
+      "lufs": -21.79824220859471,
+      "peak_db": -12.345699052055775,
+      "bytes": 9624,
+      "sha256": "b413a66080faeafcd64536e294a3b342b2654ad98165ee821d33cb6b5ab8538e"
+    }
+  }
+}

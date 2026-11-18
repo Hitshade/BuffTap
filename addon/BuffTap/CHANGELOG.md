@@ -1,6 +1,11 @@
-# BuffTap 1.26.7-beta3
+# BuffTap 1.26.7-beta4
 
-### Beta 3 sound additions
+### Beta 4 owner-supplied sounds
+- Replaces the five rejected experimental picker entries with ten owner-created stereo Ogg files. Source originals in Desktop/AI Projects remain byte-identical. Addon copies retain stereo, 44.1 kHz and 0.98 s length; only gain changes, followed by Ogg Vorbis re-encoding. No synthesis, trimming, fades, compression or limiting is applied.
+- Proper mono/stereo BS.1770 front-channel energy summation matches the median of the eight untouched legacy recordings (-21.82 LUFS). Addon copies are within 0.1 dB, with sample peaks below -8.9 dBFS; required attenuation is about 7.9-12.3 dB. Source/output hashes, gain and decoded metrics: research/owner-sounds-1267.json. Rebuild with tools/import_owner_sounds.py. No subjective listening or live-game audibility claimed.
+- Existing shipped selections/defaults are unchanged; only the five rejected internal-beta keys migrate to corresponding new choices, including the inactive reserved per-buff sound field. Rejected preview assets are retained on disk because deletion is not authorized, but are not offered or registered. No files were deleted. Final affected sound/UI regression: 625 passed, 0 failed (tests/owner-sounds-1267-beta4-regression.txt); isolated subset: 74 passed, 0 failed. All ten source hashes, encoded stereo/rate/duration and loudness/headroom assertions passed. Full beta1 validation remains historical; no new full suite run for this catalog/audio update.
+
+### Beta 3 sound additions (superseded internal prototype)
 - Adds five original additive-synthesis mono Ogg Vorbis alerts at 44.1 kHz, 0.76-0.90 s. The build script measures decoded delivery files with gated K-weighted loudness and matches the median of eight unchanged reference assets (-21.82 LUFS); all additions are within 0.1 dB, decoded peaks below -8.7 dBFS. Report: research/extra-sounds-1267.json. Source synthesis: tools/build_extra_sounds.py, MPL-2.0. No subjective listening or live WoW audibility claimed. Audio delivery/registration plus related sound/UI regression: 615 passed, 0 failed (tests/extra-sounds-1267-beta3-regression.txt); isolated final subset: 64 passed, 0 failed. Ogg header/rate/channel/hash checks and original-file preservation passed. Picker-index expectations in three older tests were adjusted for five inserted options. The beta1 full result remains historical; no full release-suite rerun for these assets and alignment changes.
 - Existing category choices/defaults remain unchanged. New choices participate in the existing picker, preview, validation and optional SharedMedia registration without new playback paths. Buff sounds is right-aligned with Paladin Casting.
 
