@@ -1,3 +1,5 @@
+__import__('test_abolish_1267')
+__import__('test_buff_alerts_1267')
 __import__('test_aura_evidence')
 __import__('test_onboarding_quickstart')
 __import__('test_release_1265')

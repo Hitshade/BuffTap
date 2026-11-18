@@ -284,10 +284,16 @@ function B:BuildRefinedOptions(ui,tabs)
   ui.button(binding,"Set Nearby key",398,-82,134,function() B:CaptureBinding("nearby") end)
   T.Confirm(ui.button(binding,"Clear",546,-82,142,function() B.db.nearbyKeys={}; if B.nearbyFrame then B:UpdateNearbyWindow() end; B:RequestRefresh("clear nearby binding",0); B:Options() end))
   ui.label(binding,"Keys work only when a buff is ready. With a Nearby key set, your main key covers only you and your group.",26,-124,"GameFontDisableSmall",650)
-  section(ui,binding,"Sounds",12,-172,692,320)
+  section(ui,binding,"Default sounds",12,-172,692,320)
+  f.categorySounds={}
   for i,entry in ipairs({{f.reminderSoundButton,"Reminder sound","reminder"},{f.supplySoundButton,"Supply sound","supply"},{f.campSoundButton,"Camp sound","camp"},{f.cleanseSoundButton,"Cleanse sound","cleanse"},{f.socialSoundButton,"Friend sound","social"}}) do
     local y=-208-(i-1)*36; ui.label(binding,entry[2],26,y-5,"GameFontHighlightSmall",130); place(entry[1],binding,166,y,330,26)
-    local kind=entry[3]; ui.button(binding,"Preview",510,y,178,function() B:PlayAlert(kind,true) end)
+    local kind=entry[3]; ui.button(binding,"Preview",510,y,124,function() B:PlayAlert(kind,true) end)
+    local toggle=ui.button(binding,"",644,y,44,function() B:SetAlertCategoryEnabled(kind,not B:AlertCategoryEnabled(kind)); B:Options() end)
+    toggle.glyph=toggle:CreateTexture(nil,"ARTWORK"); toggle.glyph:SetSize(18,18); toggle.glyph:SetPoint("CENTER")
+    toggle:SetScript("OnEnter",function(btn) T.Tooltip(btn,B:Text(entry[2]),B:Text(B:AlertCategoryEnabled(kind) and "Sound on. Click to mute this category." or "Sound off. Click to enable this category.").."\n"..B:Text("Only changes sound. Visual reminders and feature settings stay as configured. Preview plays even when muted.")) end)
+    toggle:SetScript("OnLeave",function() if GameTooltip then GameTooltip:Hide() end end)
+    f.categorySounds[kind]=toggle
   end
   -- Friend sound: when a friend or guild member first shows up in Nearby (off by default).
   f.socialAlert=ui.check(binding,"Alert me when a friend or guildmate appears in Nearby",26,-390,function(c)
@@ -299,7 +305,8 @@ function B:BuildRefinedOptions(ui,tabs)
   f.socialGuild=ui.check(binding,"Guild",580,-390,function(c) B.db.nearbySocialGuild=c:GetChecked()==true end)
   ui.label(binding,"Audio channel",26,-430,"GameFontHighlightSmall",130); place(f.channelButton,binding,166,-424,196,26)
   ui.label(binding,"Minimum interval",380,-430,"GameFontHighlightSmall",130); place(f.soundInterval,binding,510,-424,178,24)
-  place(f.soundCheck,binding,26,-462)
+  f.soundCheck:Hide()
+  ui.label(binding,"Default sounds for each category. Per-buff switches control whether they play.",26,-464,"GameFontDisableSmall",650)
   -- Quick access and the buff reminder position share one card: icons and reset on the first row, coordinates on the second.
   section(ui,binding,"Quick access",12,-506,692,118); place(f.minimapCheck,binding,26,-546); place(f.brokerCheck,binding,360,-546)
   place(f.resetAllButton,binding,510,-542,178,26); reparent(f.resetConfirm,binding); f.resetConfirm:ClearAllPoints(); f.resetConfirm:SetPoint("TOPLEFT",16,-546); f.resetConfirm:Hide()
@@ -621,7 +628,8 @@ function B:StandardizeOptionsPages(ui,tabs)
   end
   local groupPage=f.pages[2]; local party=f.partyView or f.groupParty; local raid=f.raidView or f.groupRaid
   place(party,groupPage.refinedCanvas,18,-8,78,26); place(raid,groupPage.refinedCanvas,102,-8,78,26)
-  ui.label(groupPage.refinedCanvas,"Applies automatically when you join a party or raid.",198,-15,"GameFontDisableSmall",488)
+  ui.label(groupPage.refinedCanvas,"Applies automatically when you join a party or raid.",198,-15,"GameFontDisableSmall",f.partyView and 340 or 488)
+  if f.partyView then f.blessingSoundsButton=ui.button(groupPage.refinedCanvas,"Buff sounds",556,-8,132,function() B:ToggleBlessingSounds() end) end
   local master=f.blessingGroupEnable or f.groupEnable
   if master then headerSwitch(master,groupPage) end
   headerSwitch(f.friendlyTarget,f.pages[3])
@@ -743,6 +751,7 @@ function B:UpdateRefinedOptions()
   if f.labelPositionButton then f.labelPositionButton:SetText(self:Text(positions[self.db.labelPosition] or "Split")) end
   if f.swipeCheck then f.swipeCheck:SetChecked(self.db.showSwipe==true) end
   if f.rangeCheck then f.rangeCheck:SetChecked(self.db.showOutOfRange==true) end
+  for kind,control in pairs(f.categorySounds or {}) do control.glyph:SetTexture(T.media..(self:AlertCategoryEnabled(kind) and "UISpeaker" or "UISpeakerMuted")) end
   f.reduceMotion:SetChecked(self.db.optionsReduceMotion); f.nearbyLock:SetChecked(self.db.nearbyLocked==true); if f.nearbyAnimate then f.nearbyAnimate:SetChecked(self.db.nearbyAnimate==true) end; if f.nearbyFavor then f.nearbyFavor:SetChecked(self.db.nearbyReturnFavor~=false) end; if f.nearbyPvp then f.nearbyPvp:SetChecked(self.db.pvpProtection==true) end; if f.nearbyOnTop then f.nearbyOnTop:SetChecked(self.db.nearbyOnTop==true) end; if f.nearbyShowLevel then f.nearbyShowLevel:SetChecked(self.db.nearbyShowLevel==true) end; if f.nearbyMarkSocial then f.nearbyMarkSocial:SetChecked(self.db.nearbyMarkSocial~=false) end; if f.nearbyWhileResting then f.nearbyWhileResting:SetChecked(self.db.nearbyWhileResting==true) end; if f.nearbyCastResult then f.nearbyCastResult:SetChecked(self.db.nearbyCastResult~=false) end; if f.socialAlert then f.socialAlert:SetChecked(self.db.nearbySocialAlert==true); f.socialFriends:SetChecked(self.db.nearbySocialFriends~=false); f.socialGuild:SetChecked(self.db.nearbySocialGuild~=false); f.socialFriends:SetEnabled(self.db.nearbySocialAlert==true); f.socialGuild:SetEnabled(self.db.nearbySocialAlert==true) end; if f.nearbyHoldShort then f.nearbyHoldShort:SetChecked(self.db.nearbyHoldShort==true); f.nearbyHoldShort:SetEnabled(not (self.db.pauseResting and self.db.nearbyWhileResting~=true)) end; if f.nearbyHideHeader then f.nearbyHideHeader:SetChecked(self.db.nearbyHideHeader==true); f.nearbyKeepLine:SetChecked(self.db.nearbyKeepLine~=false); f.nearbyKeepLine:SetEnabled(self.db.nearbyHideHeader==true) end; if f.nearbyFullNames then f.nearbyFullNames:SetChecked(self.db.nearbyFullNames~=false) end
   if f.nearbyFontButton then
     for _,v in ipairs(self:NearbyFonts()) do if v.key==self.db.nearbyFont then f.nearbyFontButton:SetText(self:Text(v.name)) end end

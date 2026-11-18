@@ -467,6 +467,33 @@ local function blessingPick(parent,x,y,width,getChoice,setChoice,player)
   end
   return pick
 end
+function B:ToggleBlessingSounds()
+  if A.Combat() then return end
+  local f=self.options
+  if f.blessingSounds and f.blessingSounds:IsShown() then f.blessingSounds:Hide(); return end
+  if not f.blessingSounds then
+    local p=CreateFrame("Frame","BuffTapBlessingSounds",f.pages[2],"BackdropTemplate"); f.blessingSounds=p
+    p:SetSize(400,100+#self.BlessingFamilies*32); p:SetPoint("CENTER"); p:SetFrameStrata("DIALOG"); p:SetFrameLevel(f:GetFrameLevel()+60); p:SetClampedToScreen(true); p:EnableMouse(true)
+    p:SetBackdrop({bgFile="Interface\\Buttons\\WHITE8X8",edgeFile="Interface\\Buttons\\WHITE8X8",edgeSize=1}); p:SetBackdropColor(unpack(T.menu)); p:SetBackdropBorderColor(unpack(T.border))
+    p.title=label(p,"",18,-16,"GameFontNormalLarge",360); p.checks={}
+    for i,key in ipairs(self.BlessingFamilies) do
+      local def=self:FindBuff(key)
+      local c=check(p,spellLabel(def),18,-48-(i-1)*32,function(c)
+        if B:SetBuffAlertEnabled(p.context,key,c:GetChecked()==true) then c:SetChecked(B:BuffAlertEnabled(p.context,key)) end
+      end)
+      c:SetScript("OnEnter",function(c) T.Tooltip(c,L("Group reminder sound"),B:BuffAlertTooltip(p.context,key)) end)
+      c:SetScript("OnLeave",function() if GameTooltip then GameTooltip:Hide() end end)
+      p.checks[key]=c
+    end
+    button(p,"Done",272,-64-#self.BlessingFamilies*32,110,function() p:Hide() end)
+    if UISpecialFrames then table.insert(UISpecialFrames,"BuffTapBlessingSounds") end
+  end
+  local p=f.blessingSounds; p.context=self:EditingGroupContext():lower()
+  if f.activeSelector and f.activeSelector~=p then f.activeSelector:Hide() end; f.activeSelector=p
+  p.title:SetText(L(p.context=="raid" and "Raid buff sounds" or "Party buff sounds"))
+  for key,c in pairs(p.checks) do c:SetChecked(self:BuffAlertEnabled(p.context,key)) end
+  p:Show()
+end
 function B:BuildBlessingOptions(parent)
   local f=self.options; local p=CreateFrame("Frame",nil,parent); p:SetAllPoints(); f.blessingPanel=p
   f.blessingContext=self:BlessingContext(); f.blessingScope=0; f.blessingScopeButtons={}
@@ -1923,6 +1950,7 @@ function B:Options()
     f.buffInstruction=label(buffs,L("Choose your buffs. Move the most important ones to the top."),18,-42,"GameFontDisableSmall",650)
     -- Column headers line up with the controls in each row (rows start at x=28: rebuff field at 284, arrows at 556).
     f.buffRebuffHeader=label(buffs,L("Rebuff"),28+284,-70,"GameFontDisableSmall",90)
+    f.buffSoundHeader=label(buffs,L("Sound"),28+516,-70,"GameFontDisableSmall",40)
     f.buffPriorityHeader=label(buffs,L("Priority"),28+556,-70,"GameFontDisableSmall",90)
     local scroll=CreateFrame("ScrollFrame",nil,buffs,"UIPanelScrollFrameTemplate")
     scroll:SetPoint("TOPLEFT",28,-90); scroll:SetPoint("BOTTOMRIGHT",-40,186)
@@ -2648,7 +2676,12 @@ function B:Options()
         row=CreateFrame("Frame",nil,f.assignChild); row:SetSize(458,288); row.visualInsetX=8 -- the surrounding card is the only surface
         row.icon=row:CreateTexture(nil,"ARTWORK"); row.icon:SetSize(32,32); row.icon:SetPoint("TOPLEFT",8,-4)
         row.name=label(row,"",48,-5,"GameFontNormalLarge",402)
-        row.detail=label(row,"",48,-29,"GameFontDisableSmall",402)
+        row.detail=label(row,"",48,-29,"GameFontDisableSmall",240)
+        row.sound=check(row,"Reminder sound",304,-25,function(c)
+          if row.def and B:SetBuffAlertEnabled(B:EditingGroupContext():lower(),row.def,c:GetChecked()==true) then B:Options() end
+        end)
+        row.sound:SetScript("OnEnter",function(c) if row.def then T.Tooltip(c,L("Group reminder sound"),B:BuffAlertTooltip(B:EditingGroupContext():lower(),row.def)) end end)
+        row.sound:SetScript("OnLeave",function() if GameTooltip then GameTooltip:Hide() end end)
         row.groupHeading=label(row,L("Raid groups"),8,-60,"GameFontNormal")
         row.checks={}
         for i=1,8 do
@@ -2718,7 +2751,7 @@ function B:Options()
         end)
         f.assignRows[rowIndex]=row
       end
-      row.def=b; row:ClearAllPoints(); row:SetPoint("TOPLEFT",8,-6); row:SetShown(f.selectedAssignment==b.key); row.name:SetText(spellLabel(b)); row.icon:SetTexture(buffIcon(b))
+      row.def=b; row.sound:SetChecked(self:BuffAlertEnabled(B:EditingGroupContext():lower(),b)); row:ClearAllPoints(); row:SetPoint("TOPLEFT",8,-6); row:SetShown(f.selectedAssignment==b.key); row.name:SetText(spellLabel(b)); row.icon:SetTexture(buffIcon(b))
       local select=f.assignButtons[rowIndex]
       if not select then
         select=flatButton(f.assignList,"",0,-(rowIndex-1)*42,174,function(btn) f.selectedAssignment=btn.def.key; B:Options() end)
@@ -3028,7 +3061,7 @@ function B:Options()
       row.name=label(row,"",90,-9,"GameFontHighlight",186)
       row.groupIcon=row:CreateTexture(nil,"ARTWORK"); row.groupIcon:SetSize(16,16); row.groupIcon:SetPoint("TOPLEFT",90,-30)
       row.detail=label(row,"",112,-29,"GameFontDisableSmall",164)
-      row.rebuff=compactSlider(row,0,600,5,196,formatSeconds,function(slider,value)
+      row.rebuff=compactSlider(row,0,600,5,166,formatSeconds,function(slider,value)
         local parent=slider:GetParent(); local def=parent.def
         if def then
           B:EditorSettings("buffs").buffSeconds[def.key]=value
@@ -3037,11 +3070,19 @@ function B:Options()
         end
       end)
       row.rebuff:SetPoint("TOPLEFT",284,-19)
-      row.default=button(row,L("Default"),488,-14,62,function(btn)
+      row.default=button(row,L("Default"),456,-14,58,function(btn)
         local def=btn:GetParent().def
         if def and not A.Combat() then B:EditorSettings("buffs").buffSeconds[def.key]=nil; B:RequestRefresh("rebuff default",0); B:Options() end
       end)
       addHelp(row.default,"Use default timing","Remove this buff's custom refresh time and use its automatic timing. Buff choices and priorities stay unchanged.")
+      row.sound=button(row,"",522,-15,24,function(btn)
+        local def=btn:GetParent().def
+        if def and B:SetBuffAlertEnabled("personal",def,not B:BuffAlertEnabled("personal",def)) then B:Options() end
+      end)
+      row.sound:SetHeight(24)
+      row.sound.glyph=row.sound:CreateTexture(nil,"ARTWORK"); row.sound.glyph:SetSize(16,16); row.sound.glyph:SetPoint("CENTER")
+      row.sound:SetScript("OnEnter",function(btn) if btn:GetParent().def then T.Tooltip(btn,L("Personal reminder sound"),B:BuffAlertTooltip("personal",btn:GetParent().def)) end end)
+      row.sound:SetScript("OnLeave",function() if GameTooltip then GameTooltip:Hide() end end)
       row.chargeLabel=label(row,L("Refresh at charges"),90,-61,"GameFontDisableSmall",180)
       row.charges=selector(row,L("Off"),284,-53,196,function()
         return {{key=0,name=L("Off")},{key=1,name=L("1 charge remaining")},{key=2,name=L("2 charges remaining")}}
@@ -3098,6 +3139,7 @@ function B:Options()
       local groupDef=self:FindBuff(b.groupKey)
       row.detail:SetText((groupName or (groupDef and spellLabel(groupDef)) or L("group spell"))..": "..unlearnedText())
     end
+    row.sound.glyph:SetTexture(T.media..(self:BuffAlertEnabled("personal",b) and "UISpeaker" or "UISpeakerMuted"))
     row.up:SetEnabled(visible>1); row.down:SetEnabled(visible<#list)
     row.order.text:SetText(tostring(visible))
     -- Without its own timing, show what the buff really gets: its length decides (see DefaultRebuffSeconds).

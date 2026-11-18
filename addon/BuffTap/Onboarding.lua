@@ -257,6 +257,9 @@ function B:ApplyFirstRunSetup(selections)
       end
     end
     for key,value in pairs(staged) do d[QUICK_FIELDS[key]]=value end
+    if fresh then
+      for _,key in ipairs({"cleanseSoundEnabled","suppliesSound","campSound","socialSoundEnabled"}) do d[key]=staged.sounds end
+    end
     if fresh and staged.cleanseEnabled and staged.reviveEnabled then d.cleanseFirst=true end
     if staged.nearby then
       -- Do not call ToggleNearby: its first-use guide is voluntary help.

@@ -1,3 +1,22 @@
+# BuffTap 1.26.7-beta1
+
+### Hear the reminders you want
+Use the speaker beside each entry in **My buffs** to silence that personal buff. Its icon and binding stay available. Personal preferences apply whether you are solo or grouped; they do not silence reminders to buff other players.
+
+Under **Groups**, Party and Raid each have their own **Reminder sound** switch for the selected buff, covering its single and group versions. Paladins use **Buff sounds** beside the Party/Raid tabs. Existing buff sounds start enabled.
+
+### Separate category controls
+**Customization > Binding & sound > Default sounds** has a speaker beside every Preview button. Turn ordinary Reminder, Supply, Camp, Cleanse and Friend sounds on or off independently. The old bottom sound switch is gone. Your existing choices are retained, and previews can still be heard while muted.
+
+These are the default sounds used by enabled reminders in each category. Individual sound selections are not available in this beta. Speaker and reminder tooltips explain muted sounds; SmartShift returns and ongoing smooth-buffing sequences retain their quiet behavior.
+
+New users choosing alert sounds in setup enable all five sound categories. This only grants sound permission: Camping, Supplies and friend/guild notifications still follow their own feature switches and normal restrictions. This beta is for local testing; live layout review remains with the owner.
+
+### Simpler Druid and Priest cleansing
+Once learned, Abolish Poison and Abolish Disease replace their Cure counterpart in BuffTap's choices. Each pair costs the same base mana, while Abolish also keeps removing effects afterward. Cure remains available before learning Abolish. The conditional preference switch has been replaced by an explanation of this automatic choice.
+
+Thanks to jimbo1111 for spotting the unnecessary Cure/Abolish distinction.
+
 # BuffTap 1.26.6
 
 Settings also have a more compact Consumables layout, roomier Nearby text selectors and clearer Manual selection, pause and accent-colour labels. Class-specific settings and your saved choices are unchanged.

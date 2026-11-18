@@ -3,7 +3,7 @@ from test_bufftap import test
 SOUND = """
 local B=BuffTap; local heard=0
 B.PlayAlert=function(_,kind) if kind=='reminder' then heard=heard+1 end end
-B.db.sound=true; B.db.soundInterval=0; B:Commit(nil,'start'); B:Refresh()
+B.db.sound=true; B.db.cleanseSoundEnabled=true; B.db.soundInterval=0; B:Commit(nil,'start'); B:Refresh()
 assert(heard==1,'initial reminder should sound')
 """
 

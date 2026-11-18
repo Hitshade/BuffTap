@@ -4,8 +4,8 @@ FRESH="local B=BuffTap; B.db.onboardingVersion=nil; B.db.welcomeSeen=false; B:Sh
 APPLY="assert(B:ApplyFirstRunSetup(B.onboarding.quickSelection)); "
 
 test('Quick start enables only the intended extras in one action',FRESH+
-     "local camp=B.db.campSound; local chime=B.db.reminderSound; local keys=table.concat(B.db.keys,','); "+APPLY+
-     "assert(B.db.nearbyEnabled and B.db.nearbyIntroSeen and B.db.sound and B.db.pauseResting and B.db.helperBounce); assert(B.db.cleanseEnabled and B.db.reviveEnabled and B.db.cleanseFirst); assert(not B.db.helperThanks and not B.db.smartShift and not B.db.reviveRebirth and not B.db.nearbyRequests); assert(B.db.campSound==camp and B.db.reminderSound==chime and table.concat(B.db.keys,',')==keys); assert(not B.db.consumablesEnabled and not B.db.weaponApply and not B.db.helperPet and not B.db.helperSoulstone); assert(not B.onboarding.shown and not (B.nearbyIntro and B.nearbyIntro.shown) and not B:OnboardingPending())")
+     "local chime=B.db.reminderSound; local keys=table.concat(B.db.keys,','); "+APPLY+
+     "assert(B.db.nearbyEnabled and B.db.nearbyIntroSeen and B.db.sound and B.db.pauseResting and B.db.helperBounce); assert(B.db.cleanseEnabled and B.db.reviveEnabled and B.db.cleanseFirst); assert(not B.db.helperThanks and not B.db.smartShift and not B.db.reviveRebirth and not B.db.nearbyRequests); assert(B.db.campSound and B.db.suppliesSound and B.db.cleanseSoundEnabled and B.db.socialSoundEnabled and B.db.reminderSound==chime and table.concat(B.db.keys,',')==keys); assert(not B.db.consumablesEnabled and not B.db.weaponApply and not B.db.helperPet and not B.db.helperSoulstone); assert(not B.onboarding.shown and not (B.nearbyIntro and B.nearbyIntro.shown) and not B:OnboardingPending())")
 test('Welcome includes Get started and no mandatory second page',FRESH+
      "local found; for _,r in ipairs(B.onboarding.pageRegions) do if r.text=='Get started' then found=r end end; assert(found); found.scripts.OnClick(); assert(B.db.welcomeSeen and B.db.nearbyEnabled and not B.onboarding.shown)")
 test('Customize Back stages choices without writing settings',FRESH+

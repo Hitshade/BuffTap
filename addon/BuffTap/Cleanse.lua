@@ -130,18 +130,12 @@ local function pvpUnsafe(self,unit)
   return pvp~=false or ffa~=false
 end
 
--- Pick the spell for one debuff: Abolish when the effect has stacks, when several of that type
--- are on the player, or when it will last a while; a single short one gets the plain cure.
+-- Abolish has the same base cost as its Cure counterpart in Forever and
+-- includes an immediate removal. The abilities list contains learned spells;
+-- use Cure only when Abolish has not been learned. Keep the old argument for
+-- compatibility with callers; stacks/duration no longer affect this choice.
 function B:CleanseSpellFor(debuff,sameType,abilities)
-  local specs=abilities[debuff.type]; if not specs then return nil end
-  local left=debuff.expires>0 and debuff.expires-GetTime() or math.huge
-  local wantAbolish=self.db.cleansePreferAbolish~=false and (debuff.stacks>=2 or sameType>=2 or left>8)
-  for _,spec in ipairs(specs) do
-    if spec.abolish and wantAbolish then return spec[1],true end
-  end
-  for _,spec in ipairs(specs) do
-    if not spec.abolish then return spec[1],false end
-  end
+  local specs=abilities[debuff.type]; if not specs or not specs[1] then return nil end
   return specs[1][1],specs[1].abolish==true
 end
 
@@ -530,12 +524,7 @@ function B:BuildCleansePage(ui,tabs,headerSwitch,section)
     row.spell=ui.label(p,"",260,y-8,"GameFontDisableSmall",420)
     f.cleanseRows[i]=row
   end
-  f.cleansePreferAbolish=ui.check(p,"Prefer Abolish when the debuff has stacks or will last a while",48,-236,function(c)
-    if A.Combat() then return end
-    B.db.cleansePreferAbolish=c:GetChecked()==true; B:RequestRefresh("cleanse abolish",0)
-  end)
-  f.cleansePreferAbolish:HookScript("OnEnter",function(s) T.Tooltip(s,B:Text("Prefer Abolish"),B:Text("Abolish keeps removing the effect as it ticks, so it handles stacks and several poisons or diseases at once. A single short one gets the plain cure.")) end)
-  f.cleansePreferAbolish:HookScript("OnLeave",function() if GameTooltip then GameTooltip:Hide() end end)
+  f.cleanseAbolishInfo=ui.label(p,"",48,-244,"GameFontDisableSmall",620)
   f.cleanseBorder=ui.check(p,"Border colour by type",48,-264,function(c)
     B.db.cleanseBorder=c:GetChecked()==true; B:UpdateOverlay()
   end)
@@ -644,13 +633,9 @@ function B:UpdateCleansePage()
     row.swatch:SetAlpha(classCan and 1 or .3)
     row.spell:SetText(not classCan and self:Text("Your class can't remove this") or #names==0 and self:Text("Not learned yet") or table.concat(names,", "))
   end
-  local abolish=(self:CleanseClassSpells("Poison") or self:CleanseClassSpells("Disease")) and true or false
-  local hasAbolish=false
-  for _,kind in ipairs({"Poison","Disease"}) do
-    for _,spec in ipairs(self:CleanseClassSpells(kind) or {}) do if spec.abolish then hasAbolish=true end end
-  end
-  f.cleansePreferAbolish:SetShown(hasAbolish)
-  f.cleansePreferAbolish:SetChecked(d.cleansePreferAbolish~=false); f.cleansePreferAbolish:SetEnabled(abolish and hasAbolish)
+  local class=A.Class("player")
+  f.cleanseAbolishInfo:SetShown(class=="DRUID" or class=="PRIEST")
+  f.cleanseAbolishInfo:SetText(self:Text(class=="PRIEST" and "Uses Abolish Disease when learned; otherwise Cure Disease." or "Uses Abolish Poison when learned; otherwise Cure Poison."))
   for key,check in pairs(f.cleanseWho) do check:SetChecked(key=="cleanseNearby" and d[key]==true or key~="cleanseNearby" and d[key]~=false) end
   f.cleanseBorder:SetChecked(d.cleanseBorder~=false)
   -- Never list: built-in entries first (locked), then the shared list, by name.

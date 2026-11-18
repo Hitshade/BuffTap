@@ -2,6 +2,13 @@
 local _,B=...
 -- Keep the ten most recent releases within a 24 KiB content ceiling.
 B.PatchNotes={
+ {version="1.26.7-beta1",title="Choose which reminders you hear",items={
+  "My buffs now has a speaker button beside each buff. Mute Aquatic Form, for example, while keeping Mark and Thorns audible. Your reminder icon and binding keep working.",
+  "Party and Raid have separate sound switches for each buff under Groups. Paladins can open Buff sounds beside the Party and Raid tabs.",
+  "Customization > Binding & sound now has a speaker button for each sound category. Reminder, Supply, Camp, Cleanse and Friend sounds can be enabled separately. Preview still plays when a category is muted.",
+  "Hover a speaker or muted reminder to see what is silent. All enabled reminders use the existing default sound for their category. SmartShift and active buffing queues stay quiet.",
+  "New players who choose alert sounds in setup enable all sound categories. This does not turn on optional reminder features.",
+  "Druids and Priests now use Abolish Poison or Abolish Disease when learned, falling back to Cure beforehand. The unnecessary conditional Abolish switch has been removed."},thanks="Thanks to jimbo1111 for pointing out the equal-cost Cure and Abolish choice."},
  {version="1.26.6",title="Quieter pauses and tidier reminders",items={
   "Camping now respects temporary pause, the Helpers city/inn pause, stealth and Edit Mode. Its automatic sounds follow its own sound switch without bypassing pauses.",
   "Manual consumable icons and their heading hide during applicable pauses and outside your chosen dungeon/raid scope. They return when reminders resume, without changing your selections.",
@@ -63,11 +70,6 @@ B.PatchNotes={
   "Fixed: cleanse and resurrection reminders now update when you change target, or when a group member is poisoned or dies, even if Target buffs and group buffing are turned off.",
   "Cleanse and resurrection buttons now double-check the player, the debuff and your settings at the moment you click, so they cannot act on someone who changed in the meantime.",
   "Assigned Soulstones now wait for the player you chose, and player names stay hidden in shared reports. The Soulstone notice is now translated."}},
- {version="1.24.7",title="Soulstone fix and clearer status",items={
-  "Soulstones set to an assigned player now wait for that person. If they are away, dead, offline or out of range, BuffTap shows a note and does not use the stone on someone else. It goes back to them as soon as they are available.",
-  "Hover the Elixirs or Utility rows on the Consumables page to see which of your ticked effects are active, running low, missing or out of stock.",
-  "A pet notice now shows before a weapon-coating notice, so one no longer hides the other.",
-  "Fixed: the resurrection reminder could be offered for a player whose connection status the game would not confirm."}},
 
 }
 function B:PatchNotesUnread()

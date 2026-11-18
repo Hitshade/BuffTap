@@ -1,3 +1,22 @@
+# BuffTap 1.26.7-beta1
+
+### Scoped buff sound controls
+- Adds character/class `buffAlerts` schema version 1, keyed by personal/party/raid and canonical single-buff family. Missing records inherit enabled/default playback. My buffs has a speaker control for personal maintenance across all personal situation setups. Group selected-buff cards control external Party/Raid recipients and group casts independently; Paladin assignment UI uses a context-specific Buff sounds panel. Unlearned class-applicable spells remain configurable.
+- Only ordinary catalog spell actions are matched. Quick-target, Nearby, Cleanse, readiness and consumable actions do not inherit personal mutes. Single/group versions share the canonical family. Sound gates run before reminder timestamps, without changing selection, secure payload, priorities, casts or bindings. Existing SmartShift silence, Nearby quieting and smooth queue suppression remain.
+- Validated optional `sound` values are stored/exported/copied for future customization, but no picker, setter for that field or playback override is active. All actual playback still resolves category defaults. Class allowlists and same-class copying protect unrelated characters; malformed records are sanitized.
+
+### Independent category defaults
+- Existing sound/campSound/suppliesSound switches retain their state and become category permissions. New shared cleanseSoundEnabled initially follows the former sound permission; socialSoundEnabled defaults true to retain existing opt-in social behavior. Category controls synchronize with Camping/Supplies controls. Social detection/highlighting remains separately opt-in.
+- Default sounds card puts compact speaker buttons beside reduced Preview buttons. The former bottom switch is replaced by a padded explanatory row. Explicit previews bypass sound mutes. Fresh quick-start sound selection sets all five category permissions together; existing setup review does not overwrite individual category choices.
+- Tooltips identify personal/group muting and disabled categories while explaining that visuals/bindings remain available. No new polling, automatic actions, saved-position changes or WTF/SavedVariables file edits.
+
+### Automatic Abolish selection
+- Cure/Abolish Poison share a 16% base-mana cost; Cure/Abolish Disease share 15% in the published 1.60.1.70888 client-build spellbook extracts. Preserved local Spell/SpellEffect records confirm both Abolish spells include an immediate dispel plus periodic triggers. The direct SpellPower CSV retrieval returned HTTP 403; the cost evidence is the published client-derived extracts, not a new local SpellPower export. Evidence and exact records: research/abolish-cost-1267.json.
+- CleanseSpellFor now uses the first learned spell in the existing Abolish-first lists for all eligible debuff durations/counts. Cure remains the pre-learning fallback. Existing usability, active-Abolish suppression, never-cleanse, identity, range, PvP and PreClick guards are unchanged. The obsolete cleansePreferAbolish saved field is retained but ignored; the checkbox is replaced by class-specific guidance. Thanks to jimbo1111 for identifying the equal-cost policy issue. No comment reply has been posted.
+
+### Validation and limits
+- Final integrated mocked Lua 5.1 suite: **2,838 passed, zero recorded failures**, with FINAL_TOTAL and absence of FAIL records verified. Final focused run: **76 passed, 0 failed**, including three additional geometry/copy checks added after the full run began; seven focused Lua syntax checks passed. Nine affected Lua files also compiled independently. Logs: tests/release-1267-beta1-full.txt and tests/buff-alerts-1267-focused.txt. Three prior sound/setup test expectations were updated for intentionally independent category permissions; the short-poison test now expects learned Abolish. Mock UI construction is not live client rendering. Owner requested local beta installation; public publication is not authorized. GitHub review found no open/new issues; closed #4 comment and prior #5 resolution remain outside this scope.
+
 # BuffTap 1.26.6
 
 ### Settings polish

@@ -1,0 +1,84 @@
+PASS Cleanse is off by default
+PASS A stacked poison gets Abolish Poison before buffs
+PASS A single short poison uses learned Abolish at equal mana cost
+PASS Abolish already ticking is left to work
+PASS Curse uses Remove Curse and turned-off types are skipped
+PASS Types the class cannot remove are ignored
+PASS Debuffs about to expire are skipped
+PASS Never list by name and the built-in list are honoured
+PASS Group members are cleansed after you
+PASS Right-click adds the debuff to the shared never list
+PASS Click revalidates and drops a cleansed debuff
+PASS Cleanse reminders play the cleanse sound and get a coloured border
+PASS Cleanse page sits after My buffs and lists the class spells
+PASS Classes without cleanses do not see the page
+PASS Sidebar status lights show which features are on
+PASS Old cleanse sounds move to Warm bell once and later choices stay
+PASS Cleanse sound is chosen under Binding & sound, reached from the Cleanse page
+PASS Weapon choices show the item icon when none are carried
+PASS Never list shows icons and every entry can be removed, built-ins too
+PASS Learned Abolish preference DRUID (4, 0)
+PASS Learned Abolish preference DRUID (6, 1)
+PASS Learned Abolish preference DRUID (30, 3)
+PASS Cure fallback before Abolish learning DRUID
+PASS Class-specific automatic Abolish guidance DRUID
+PASS Learned Abolish preference PRIEST (4, 0)
+PASS Learned Abolish preference PRIEST (6, 1)
+PASS Learned Abolish preference PRIEST (30, 3)
+PASS Cure fallback before Abolish learning PRIEST
+PASS Class-specific automatic Abolish guidance PRIEST
+PASS Buff sound defaults preserve all scopes and automatic previews
+PASS Muted personal buff retains actual secure action and binding
+PASS Muted buff does not consume sound pacing for another buff
+PASS Personal mute does not mute Party or Raid versions
+PASS Party and Raid mutes are independent with shared single/group family
+PASS Open-world Target Nearby helpers and consumables do not inherit personal mute
+PASS Personal sound remains independent of selected Solo Party Raid setup
+PASS Sound preference normalizes bad values and class-inapplicable keys
+PASS Sound choices can be saved for future use but never override playback
+PASS Combat blocks buff and category preference edits
+PASS Per-buff choices survive InitDB and same-class export import
+PASS Other-class import does not replace this class buff sounds
+PASS Mute tooltip explains scope default sound and visual availability
+PASS Personal speaker remains configurable for unlearned class spells
+PASS Standard group switches edit only selected Party or Raid buff
+PASS Sound controls construct for WARRIOR
+PASS Sound controls construct for PALADIN
+PASS Sound controls construct for HUNTER
+PASS Sound controls construct for ROGUE
+PASS Sound controls construct for PRIEST
+PASS Sound controls construct for SHAMAN
+PASS Sound controls construct for MAGE
+PASS Sound controls construct for WARLOCK
+PASS Sound controls construct for DRUID
+PASS Paladin Party and Raid sound panel includes unlearned blessings
+PASS Category reminder mute blocks automatic sound but permits preview
+PASS Category supply mute blocks automatic sound but permits preview
+PASS Category camp mute blocks automatic sound but permits preview
+PASS Category cleanse mute blocks automatic sound but permits preview
+PASS Category social mute blocks automatic sound but permits preview
+PASS Cleanse remains audible when ordinary Reminder category is off
+PASS Category permissions preserve existing migration states
+PASS SmartShift remains silent regardless of category and queue state
+PASS Category speaker button updates only its own setting
+PASS Fresh setup applies all sound category permissions true
+PASS Fresh setup applies all sound category permissions false
+PASS Returning setup review leaves individual category choices intact
+PASS Speaker and shortened timing controls stay in separate row columns
+PASS Default sounds card has evenly spaced bounded preview and speaker pairs
+PASS Explicit same-class profile copy includes buff mutes and reserved sound
+PASS Queue sound: next class buff after explicit press does not sound again
+PASS Queue sound: same buff returning after confirmed aura grace stays quiet
+PASS Queue sound: genuinely new need after interaction pause can alert
+PASS Queue sound: higher-priority cleanse alert is not muted by class buffing
+PASS Queue sound: no interaction preserves alert for changed class reminder
+PASS Queue sound: repeated presses keep a sequence longer than five seconds quiet
+PASS Queue sound: combat boundary restores normal reminder alerts
+SYNTAX Alerts.lua Lua 5.1 OK
+SYNTAX BuffTap.lua Lua 5.1 OK
+SYNTAX Profiles.lua Lua 5.1 OK
+SYNTAX Cleanse.lua Lua 5.1 OK
+SYNTAX Onboarding.lua Lua 5.1 OK
+SYNTAX Options.lua Lua 5.1 OK
+SYNTAX OptionsRefinement.lua Lua 5.1 OK
+Focused fix scenarios: 76 passed; 0 failed.

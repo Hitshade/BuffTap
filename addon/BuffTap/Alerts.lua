@@ -106,20 +106,101 @@ function B:NormalizeAlerts()
   local interval=self.db.soundInterval
   if not A.Number(interval) then interval=5 end
   self.db.soundInterval=math.max(5,math.min(60,math.floor(interval)))
+  if type(self.db.cleanseSoundEnabled)~="boolean" then self.db.cleanseSoundEnabled=self.db.sound==true end
+  if type(self.db.socialSoundEnabled)~="boolean" then self.db.socialSoundEnabled=true end
+  self:NormalizeBuffAlerts()
+end
+-- Character/class settings. Missing records inherit the normal reminder sound.
+-- The optional sound field is reserved and validated for a later picker; playback
+-- deliberately ignores it until that feature is implemented.
+function B:NormalizeBuffAlerts()
+  local source=type(self.db.buffAlerts)=="table" and self.db.buffAlerts or {}
+  local out={version=1,personal={},party={},raid={}}
+  local sounds={}; for _,choice in ipairs(self:SoundChoices()) do sounds[choice.key]=true end
+  local class=A.Class("player")
+  for _,context in ipairs({"personal","party","raid"}) do
+    for key,value in pairs(type(source[context])=="table" and source[context] or {}) do
+      local def=type(key)=="string" and self:FindBuff(key)
+      if def and (not class or def.class==class) and not def.singleKey and type(value)=="table" then
+        local record={}
+        if type(value.enabled)=="boolean" then record.enabled=value.enabled end
+        local sound=value.sound
+        if type(sound)=="string" and #sound<=512 and (sounds[sound] or (sound:sub(1,4)=="lsm:" and #sound>4 and not sound:find("[%c|]"))) then record.sound=sound end
+        if next(record) then out[context][key]=record end
+      end
+    end
+  end
+  self.db.buffAlerts=out
+end
+function B:BuffAlertKey(def)
+  if type(def)=="string" then def=self:FindBuff(def) end
+  return def and (def.singleKey or def.key)
+end
+function B:BuffAlertEnabled(context,def)
+  local key=self:BuffAlertKey(def)
+  local root=self.db and self.db.buffAlerts
+  local record=root and root[context] and root[context][key]
+  return not (type(record)=="table" and record.enabled==false)
+end
+function B:SetBuffAlertEnabled(context,def,enabled)
+  if A.Combat() or not self.db or (context~="personal" and context~="party" and context~="raid") or type(enabled)~="boolean" then return false end
+  local key=self:BuffAlertKey(def); local buff=key and self:FindBuff(key)
+  if not buff or buff.class~=A.Class("player") then return false end
+  self:NormalizeBuffAlerts()
+  local map=self.db.buffAlerts[context]; local record=map[key] or {}
+  record.enabled=enabled; map[key]=record
+  return true
+end
+function B:BuffAlertContext(action)
+  if not action or (action.source and action.source~="spell") or action.nearby or action.quickTarget then return end
+  if not self:FindBuff(action.key) then return end
+  if action.groupCast then return self:ActiveGroupContext()=="Raid" and "raid" or "party" end
+  if action.target=="player" or action.target=="pet" then return "personal" end
+  if type(action.target)=="string" and (action.target:match("^party") or action.target:match("^raid")) then
+    return self:ActiveGroupContext()=="Raid" and "raid" or "party"
+  end
+end
+function B:BuffAlertAllowed(action)
+  local context=self:BuffAlertContext(action)
+  return not context or self:BuffAlertEnabled(context,action.key)
+end
+function B:BuffAlertTooltip(context,def)
+  local scope=self:Text(context=="party" and "party" or context=="raid" and "raid" or "personal")
+  local state=self:BuffAlertEnabled(context,def) and self:Text("Sound enabled for this buff.") or self:Text("Sound muted for this buff.")
+  if not self.db.sound then state=state.."\n"..self:Text("The Reminder sound category is off.") end
+  local detail=context=="personal" and self:Text("Controls your personal reminder for this buff. Party and Raid buffing have separate sound switches.") or self:Text("Controls %s buffing reminders for this buff and its group version.",scope)
+  return state.."\n"..detail.."\n"..self:Text("Visual reminders and bindings remain active.")
+    .."\n"..self:Text("Uses your default reminder sound. Resting pauses and silent buffing queues still apply.")
+end
+function B:BuffAlertMuteReason(action)
+  local context=self:BuffAlertContext(action)
+  if context and not self:BuffAlertEnabled(context,action.key) then return self:Text("Sound muted for this buff's %s reminders.",self:Text(context)) end
+  if action and action.source=="smartshift" then return self:Text("SmartShift returns are always silent.") end
+  if not self:ActionAlertEnabled(action) then return self:Text("This reminder sound category is turned off.") end
+end
+local categorySoundFields={reminder="sound",supply="suppliesSound",camp="campSound",cleanse="cleanseSoundEnabled",social="socialSoundEnabled"}
+function B:AlertCategoryEnabled(kind)
+  local key=categorySoundFields[kind or "reminder"] or "sound"
+  return self.db and self.db[key]==true
+end
+function B:SetAlertCategoryEnabled(kind,enabled)
+  local key=categorySoundFields[kind]
+  if A.Combat() or not self.db or not key or type(enabled)~="boolean" then return false end
+  self.db[key]=enabled; return true
+end
+function B:ActionAlertEnabled(action)
+  return self:AlertCategoryEnabled(action and action.source=="cleanse" and "cleanse" or "reminder")
 end
 function B:PlayAlert(kind,preview)
   if not self.db then return false end
   -- The friend/guild alert has its own switch and pacing (Nearby), and plays in cities and inns.
+  if kind=="reminder" and not preview and not self:BuffAlertAllowed(self.action) then return false end
   local social=kind=="social"
   if not preview and not social and self.ReminderPauseReason and self:ReminderPauseReason() then return false end
   -- A temporarily unavailable resting read must not let an automatic sound
   -- escape an enabled pause. Explicit previews and opt-in social alerts differ.
   if not preview and not social and self.db.pauseResting and A.Call(IsResting)~=false then return false end
-  local enabled
-  if kind=="camp" then enabled=self.db.campSound
-  elseif kind=="supply" then enabled=self.db.suppliesSound
-  else enabled=self.db.sound end
-  if not preview and not social and not enabled then return false end
+  if not preview and not self:AlertCategoryEnabled(kind) then return false end
   local now=GetTime()
   if not preview and not social and self.lastAlertSound and now-self.lastAlertSound<self.db.soundInterval then return false end
   local selected=self.db[kind=="supply" and "supplySound" or kind=="camp" and "campAlertSound" or kind=="cleanse" and "cleanseSound" or social and "socialSound" or "reminderSound"]

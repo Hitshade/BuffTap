@@ -240,6 +240,8 @@ function B:CreateButton()
     if action.source=="cleanse" then GameTooltip:AddLine(L("Right-click: never offer to cleanse %s (undo on the Cleanse page).",action.debuffName or "?"),0.8,0.8,0.8,true)
     elseif B:HelperEnabled("helperDismiss") then GameTooltip:AddLine(L("Right-click: dismiss until zone change (restore in Helpers)."),0.8,0.8,0.8,true) end
     if B:HelperEnabled("helperQuick") and action.source=="consumable" then B:ShowQuickChoices(action) end
+    local mute=B:BuffAlertMuteReason(action)
+    if mute then GameTooltip:AddLine(mute,.85,.85,.85,true) end
     GameTooltip:AddLine(table.concat(B.db.keys,", "),0.8,0.8,0.8)
     GameTooltip:Show()
   end)
@@ -443,7 +445,7 @@ function B:Commit(action,reason)
     b.label:SetText(self.db.showTargetName and action.targetName or "")
     self.action=action; self.reason=reason; b:Show()
     self:UpdateOverlay(); self:UpdatePulse()
-    if self.db.sound and action.source~="smartshift" and not action.nearby and not action.outOfRange and (not self.ReminderSoundAllowed or self:ReminderSoundAllowed(action)) and (not previous or previous.key~=action.key) and GetTime()-(self.lastSound or -100)>=(self.db.soundInterval or 5) then
+    if self:ActionAlertEnabled(action) and self:BuffAlertAllowed(action) and action.source~="smartshift" and not action.nearby and not action.outOfRange and (not self.ReminderSoundAllowed or self:ReminderSoundAllowed(action)) and (not previous or previous.key~=action.key) and GetTime()-(self.lastSound or -100)>=(self.db.soundInterval or 5) then
       self:PlayAlert("reminder")
       self.lastSound=GetTime()
     end
@@ -498,7 +500,7 @@ function B:Commit(action,reason)
   self.action=action
   b:Show()
   self:UpdateOverlay(); self:UpdatePulse()
-  if self.db.sound and action.source~="smartshift" and not action.nearby and self:BuffQueueSoundAllowed(action) and (not self.ReminderSoundAllowed or self:ReminderSoundAllowed(action)) and (not previous or previous.key~=action.key or previous.target~=action.target)
+  if self:ActionAlertEnabled(action) and self:BuffAlertAllowed(action) and action.source~="smartshift" and not action.nearby and self:BuffQueueSoundAllowed(action) and (not self.ReminderSoundAllowed or self:ReminderSoundAllowed(action)) and (not previous or previous.key~=action.key or previous.target~=action.target)
     and GetTime()-(self.lastSound or -100)>=(self.db.soundInterval or 5) then
     self:PlayAlert("reminder")
     self.lastSound=GetTime()
