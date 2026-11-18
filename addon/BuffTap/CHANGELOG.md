@@ -1,3 +1,16 @@
+# BuffTap 1.26.4-beta4
+
+### Options layout and copyable diagnostics
+- Correct the screenshot-confirmed Nearby collision: the upgrade control no longer shares the social-marker coordinates. Use six compact rows in the existing Player list card, with Return the favor above the bottom Mana reserve control. Other preferences and visibility rules are retained.
+- Replace the Diagnostics live FontString with a multiline native EditBox, preserving the bounded scroll viewport and using a hidden FontString for height measurement. Mouse selection and native Ctrl+C are available; Select all focuses/highlights whichever live/captured report is visible. Local typing restores the snapshot rather than editing diagnostics. Focused text is not overwritten by background option redraws; explicit Refresh clears focus and recaptures. The live report path applies existing name redaction without recursively refreshing action selection.
+- Remove the Print to chat page button; existing status slash commands are unchanged. Pack Refresh, Select all, Reset metrics, Inspect buffs, Unknown items and Rescan bags into separate bounded action slots, fixing the Inspect/Unknown overlap. The inspector remains included in Full check-up. No clipboard API, game automation or insecure action path was added; copying uses the native editor's keyboard handling.
+
+### Class setup recommendations
+- Offer Cleanse for the existing supported cleanse classes and normal Resurrection for Druid, Priest, Paladin and Shaman independently of learned spells or player level. Offer cleanse-first ordering when both are class-applicable, plus SmartShift for Druid/Shaman. These recommendations are checked when reviewed in fresh-character setup; each can be declined and applies only with the selected recommendations. Existing characters see opt-in choices, with review confirmation retained. The explicit recommended-class-setup shortcut includes them in its review.
+- `CanConfigureRevive` shares the normal resurrection class catalog without treating an unlearned spell as an unsupported class. Runtime learned/resource/identity/combat gates, old baseline defaults, completed onboarding, all stored choices and secure casting rules are unchanged. No forced onboarding replay or migration.
+- Class recommendations precede general appearance/convenience choices, so the fresh player's cleanse/resurrection/ordering/SmartShift choices are visible and applicable on the first review page.
+- Validation: strict full mocked Lua 5.1 suite **2,676 passed, 0 failed**, including 37 new layout/copy/setup cases. The new cases verify Nearby coordinate separation and non-overlapping Diagnostics actions in five locales; native EditBox focus/highlight routing for visible main/captured text; selection preservation, editing rejection, refresh, privacy and no-refresh capture; inspector retention in Full check-up; all nine classes with unlearned abilities; first-page application, declining defaults and existing-character review confirmation. The existing long-diagnostics test now measures the hidden sizing FontString. Log: `tests/layout-setup-beta4-release.txt`. No actual WoW rendering or system-clipboard operation was performed by the agent.
+
 # BuffTap 1.26.4-beta3
 
 ### Optional maintenance controls

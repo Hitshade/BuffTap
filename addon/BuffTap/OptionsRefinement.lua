@@ -372,28 +372,28 @@ function B:RefineNearbyPage(ui,tabs)
   section(ui,p,"Player list",12,-72,692,216)
   -- Left column: who and when you buff. Right column: how the list looks.
   place(f.nearbyBuffing,p,26,-112); place(f.nearbyAll,p,374,-112)
-  f.nearbyFullNames=ui.check(p,"Show full names",374,-146,function(c)
+  f.nearbyFullNames=ui.check(p,"Show full names",374,-140,function(c)
     if A.Combat() then return end
     B.db.nearbyFullNames=c:GetChecked()==true; if B.nearbyFrame then B:UpdateNearbyWindow() end
   end)
   f.nearbyFullNames:HookScript("OnEnter",function(s) T.Tooltip(s,B:Text("Show full names"),B:Text("Show each player's first name and surname.")) end)
   f.nearbyFullNames:HookScript("OnLeave",function() if GameTooltip then GameTooltip:Hide() end end)
-  f.nearbyShowLevel=ui.check(p,"Show level",540,-146,function(c)
+  f.nearbyShowLevel=ui.check(p,"Show level",540,-140,function(c)
     if A.Combat() then return end
     B.db.nearbyShowLevel=c:GetChecked()==true; if B.nearbyFrame then B:UpdateNearbyWindow() end
   end)
-  f.nearbyWhileResting=ui.check(p,"Buff while resting",26,-146,function(c)
+  f.nearbyWhileResting=ui.check(p,"Buff while resting",26,-168,function(c)
     if A.Combat() then return end
     B.db.nearbyWhileResting=c:GetChecked()==true; B.nearbySnapshot=nil; B:RequestRefresh("nearby resting",0); if B.nearbyFrame then B:UpdateNearbyWindow() end
     B:UpdateRefinedOptions()
   end)
-  f.nearbyHoldShort=ui.check(p,"Hold back short buffs, like Thorns",50,-180,function(c)
+  f.nearbyHoldShort=ui.check(p,"Hold back short buffs, like Thorns",50,-196,function(c)
     if A.Combat() then return end
     B.db.nearbyHoldShort=c:GetChecked()==true; B.nearbyNeedCache={}; B.nearbySnapshot=nil; B:RequestRefresh("nearby short buffs",0); if B.nearbyFrame then B:UpdateNearbyWindow() end
   end)
   f.nearbyHoldShort:HookScript("OnEnter",function(s) T.Tooltip(s,B:Text("Hold back short buffs"),B:Text("In cities and inns, don't offer Nearby players buffs that last ten minutes or less, such as Thorns or a single blessing. They would wear off before they mattered. Longer buffs like Mark of the Wild are still offered.")) end)
   f.nearbyHoldShort:HookScript("OnLeave",function() if GameTooltip then GameTooltip:Hide() end end)
-  f.nearbyRankUpgrades=ui.check(p,"Offer higher rank buffs",374,-180,function(c)
+  f.nearbyRankUpgrades=ui.check(p,"Offer higher rank buffs",26,-140,function(c)
     if A.Combat() then return end
     B.db.nearbyRankUpgrades=c:GetChecked()==true; B.nearbyNeedCache=nil; B.nearbySnapshot=nil
     B:RequestRefresh("nearby rank upgrades",0)
@@ -402,27 +402,27 @@ function B:RefineNearbyPage(ui,tabs)
   f.nearbyRankUpgrades:HookScript("OnLeave",function() if GameTooltip then GameTooltip:Hide() end end)
   f.nearbyWhileResting:HookScript("OnEnter",function(s) T.Tooltip(s,B:Text("Buff while resting"),B:Text("Buff nearby players in cities and inns. When off, Nearby pauses there. Also the zZ button on the Nearby window. Your own reminders follow the Helpers resting pause.")) end)
   f.nearbyWhileResting:HookScript("OnLeave",function() if GameTooltip then GameTooltip:Hide() end end)
-  place(f.nearbyInvites,p,26,-214)
-  f.nearbyMarkSocial=ui.check(p,"Mark friends and guild members",374,-180,function(c)
+  place(f.nearbyInvites,p,26,-224)
+  f.nearbyMarkSocial=ui.check(p,"Mark friends and guild members",374,-168,function(c)
     if A.Combat() then return end
     B.db.nearbyMarkSocial=c:GetChecked()==true; if B.nearbyFrame then B:UpdateNearbyWindow() end
   end)
   f.nearbyMarkSocial:HookScript("OnEnter",function(s) T.Tooltip(s,B:Text("Mark friends and guild members"),B:Text("A heart marks friends and a shield marks guild members, next to their buffs. It does not change who gets buffed. A sound when they show up can be turned on under Customization > Binding & sound.")) end)
   f.nearbyMarkSocial:HookScript("OnLeave",function() if GameTooltip then GameTooltip:Hide() end end)
   -- Mana reserve: 0% is off.
-  ui.label(p,"Mana reserve",374,-219,"GameFontHighlightSmall",110)
+  f.nearbyManaLabel=ui.label(p,"Mana reserve",374,-257,"GameFontHighlightSmall",110)
   f.nearbyManaFloor=ui.slider(p,0,50,5,190,function(v) return tostring(v).."%" end,function(_,v) B.db.nearbyManaFloor=v; B:RequestRefresh("mana floor",.2) end)
-  f.nearbyManaFloor:SetPoint("TOPLEFT",484,-216); f.nearbyManaFloor.visualKey="nearbyManaFloor"; f.refinedSliders[#f.refinedSliders+1]=f.nearbyManaFloor
+  f.nearbyManaFloor:SetPoint("TOPLEFT",484,-254); f.nearbyManaFloor.visualKey="nearbyManaFloor"; f.refinedSliders[#f.refinedSliders+1]=f.nearbyManaFloor
   f.nearbyManaFloor:HookScript("OnEnter",function(s) T.Tooltip(s,B:Text("Mana reserve"),B:Text("Stop offering buffs and cleanses to players outside your group when your mana is below this, until it is a little above it again. Your own buffs and your group's are not affected. If the game hides your exact mana, BuffTap judges it from which of your spells you can afford, so it stops close to this value. Set it to 0 to turn it off.")) end)
   f.nearbyManaFloor:HookScript("OnLeave",function() if GameTooltip then GameTooltip:Hide() end end)
   -- The same setting as Helpers > Conveniences, where Nearby users don't look for it.
-  f.nearbyPvp=ui.check(p,"Prevent accidental PvP flagging",26,-248,function(c)
+  f.nearbyPvp=ui.check(p,"Prevent accidental PvP flagging",26,-252,function(c)
     if A.Combat() then return end
     B.db.pvpProtection=c:GetChecked()==true; B.nearbySnapshot=nil; B:Refresh(false); B:Options()
   end)
   f.nearbyPvp:HookScript("OnEnter",function(s) T.Tooltip(s,B:Text("Prevent accidental PvP flagging"),B:Text("Skip flagged or unreadable recipients while unflagged or leaving PvP. Includes group spells. Battlegrounds and arenas are exempt.").."\n"..B:Text("Only while you are unflagged. Same switch as on Helpers.")) end)
   f.nearbyPvp:HookScript("OnLeave",function() if GameTooltip then GameTooltip:Hide() end end)
-  f.nearbyFavor=ui.check(p,"Return the favor",374,-248,function(c)
+  f.nearbyFavor=ui.check(p,"Return the favor",374,-224,function(c)
     B.db.nearbyReturnFavor=c:GetChecked()==true; B.nearbySnapshot=nil; B.nearbyNeedCache=nil; B:Refresh(false)
   end)
   f.nearbyFavor:HookScript("OnEnter",function(s) T.Tooltip(s,B:Text("Return the favor"),B:Text("Someone who buffed you in the last five minutes moves to the top of the list, below cleanses, when they need your buff or theirs is a quarter gone. A buff that answers one of yours does not count, and each player moves up at most once per half hour.")) end)

@@ -2,6 +2,10 @@
 local _,B=...
 -- Keep the ten most recent releases within a 24 KiB content ceiling.
 B.PatchNotes={
+ {version="1.26.4-beta4",title="Clearer controls and setup choices",items={
+  "Nearby: the higher-rank option has its own space. Return the favor now sits above Mana reserve, which stays at the bottom.",
+  "Diagnostics: fixed overlapping buttons and replaced Print to chat with Select all. Select the displayed text and press Ctrl+C to copy it, including captured reports. Full check-up includes Inspect buffs.",
+  "Fresh setup recommends Cleanse, Resurrection, Cleanse before resurrection and SmartShift where they fit your class, even before learning the spells. You can decline each choice. Existing setups stay unchanged unless you select a recommendation."}},
  {version="1.26.4-beta3",title="Shield charges and buff-grades",items={
   "Shamans: My buffs now lets Lightning Shield and Water Shield refresh at one or two charges remaining. This is optional and uses readable information outside combat.",
   "Nearby: turn on Offer higher rank buffs to give a buff-grade when someone has a clearly identified lower rank and can receive your upgrade. It starts off.",
@@ -52,11 +56,6 @@ B.PatchNotes={
   "Fixed: cleanse and resurrection reminders now update when you change target, or when a group member is poisoned or dies, even if Target buffs and group buffing are turned off.",
   "Cleanse and resurrection buttons now double-check the player, the debuff and your settings at the moment you click, so they cannot act on someone who changed in the meantime.",
   "Assigned Soulstones now wait for the player you chose, and player names stay hidden in shared reports. The Soulstone notice is now translated."}},
- {version="1.24.7",title="Soulstone fix and clearer status",items={
-  "Soulstones set to an assigned player now wait for that person. If they are away, dead, offline or out of range, BuffTap shows a note and does not use the stone on someone else. It goes back to them as soon as they are available.",
-  "Hover the Elixirs or Utility rows on the Consumables page to see which of your ticked effects are active, running low, missing or out of stock.",
-  "A pet notice now shows before a weapon-coating notice, so one no longer hides the other.",
-  "Fixed: the resurrection reminder could be offered for a player whose connection status the game would not confirm."}},
 }
 function B:PatchNotesUnread()
   return self.profileDB and self.db.optionsPatchDot~=false and self.profileDB.global.patchNotesSeen~=self.version

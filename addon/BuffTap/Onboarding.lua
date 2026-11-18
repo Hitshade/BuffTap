@@ -139,8 +139,30 @@ local function recommendations(self)
     add({key="shamanHealer",exclusive="shaman",optional=true,untouched=false,current=false,target=true,label="I play a healing Shaman: Flametongue Weapon and Water Shield",
       apply=function() d.weaponChoices.main="flametongue"; d.buffs["water-shield"]=true; d.smartPreset=d.smartPreset or {version=1,managed={}}; d.smartPreset.managed["weapon:main"]=true end})
   end
+  -- New-character recommendations, never gated on learning or player level.
+  -- Existing characters can opt in explicitly without replacing their choices.
+  local fresh=d.welcomeSeen~=true
+  local function classReminder(field,label)
+    add({key=field,label=label,current=d[field]==true,target=true,untouched=fresh,optional=not fresh,classReminder=true,
+      apply=function() d[field]=true end})
+  end
+  local cleanse=self:CanCleanseAnything()
+  local revive=self:CanConfigureRevive()
+  if cleanse then classReminder("cleanseEnabled","Cleanse reminders (outside combat)") end
+  if revive then classReminder("reviveEnabled","Resurrection reminders") end
+  if cleanse and revive then classReminder("cleanseFirst","Cleanse before resurrection") end
+  if class=="DRUID" or class=="SHAMAN" then classReminder("smartShift","SmartShift: offer my previous form") end
   list.classCovered=#list==before
-  return list
+  -- Put the class choices on the first review page, before appearance extras.
+  local ordered={}
+  local function classChoice(spec)
+    return spec.classReminder or spec.group or spec.exclusive=="shaman"
+      or spec.key=="helperPet" or spec.key=="helperHealthstone" or spec.key=="helperSoulstone" or spec.key=="helperOath"
+  end
+  for _,spec in ipairs(list) do if classChoice(spec) then ordered[#ordered+1]=spec end end
+  for _,spec in ipairs(list) do if not classChoice(spec) then ordered[#ordered+1]=spec end end
+  ordered.classCovered=list.classCovered
+  return ordered
 end
 
 local function text(parent,font,x,y,width,value)
@@ -183,7 +205,7 @@ function B:OnboardingWelcomePage()
   if f.reviewMode then
     track(f,button(f,"Apply recommended class setup",24,-356,512,nil,function()
       f.recommendations=recommendations(B); f.selection={}
-      for _,spec in ipairs(f.recommendations) do f.selection[spec.key]=spec.group==true or spec.key=="shamanCaster" or spec.key=="helperPet" or spec.key=="helperHealthstone" or spec.key=="helperSoulstone" or spec.key=="helperOath" end
+      for _,spec in ipairs(f.recommendations) do f.selection[spec.key]=spec.group==true or spec.classReminder==true or spec.key=="shamanCaster" or spec.key=="helperPet" or spec.key=="helperHealthstone" or spec.key=="helperSoulstone" or spec.key=="helperOath" end
       f.choices={}; B:ApplyOnboarding()
     end))
   end

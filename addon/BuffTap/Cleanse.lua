@@ -407,6 +407,9 @@ end
 function B:CanRevive()
   return self:ReviveSpell(false)~=nil or (A.Class("player")=="DRUID" and self:ReviveSpell(true)~=nil)
 end
+function B:CanConfigureRevive()
+  return REVIVE[A.Class("player") or ""]~=nil
+end
 -- True/false when the game answers; nil from a SUCCESSFUL call means no resurrection is incoming.
 -- A failed or secret read stays unknown (returns nil) and keeps blocking the offer.
 local function incomingResurrection(unit)

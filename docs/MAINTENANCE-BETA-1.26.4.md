@@ -1,5 +1,15 @@
 # BuffTap 1.26.4 beta verification
 
+## Follow-up 1.26.4-beta4: layout, copyable text and setup defaults
+
+Owner screenshots confirmed two shared-coordinate collisions: Nearby rank upgrades/social markers and Diagnostics Inspect buffs/Unknown items. Nearby now uses six compact rows within its existing card, with the upgrade switch in the left column, Return the favor above Mana reserve, and mana at the bottom. All six Diagnostics actions have distinct bounded positions; Select all replaces Print to chat.
+
+Main Diagnostics is a native multiline EditBox. Users may select some or all text and copy with Ctrl+C, as with captured reports. Selection is preserved while focused; explicit Refresh recaptures and releases focus. Local typing cannot alter the main snapshot. The existing redaction path also applies to the live text without triggering a recursive refresh. Full check-up still includes the active-buff inspector. Actual clipboard operation remains a client check; tests exercise native editor type, focus and highlight calls without operating WoW.
+
+At owner request, fresh setup preselects class-applicable Cleanse, normal Resurrection, cleanse-first ordering and Druid/Shaman SmartShift. These appear with class choices on the first review page, regardless of learning or level. Recommendations apply only when selected and accepted; declining, leaving setup alone, reviewing an existing character and completed onboarding preserve choices. Unsupported classes do not see irrelevant recommendations. The optional buff-grade/charge features and manually chosen Supplies tracking retain their opt-in behavior.
+
+Strict full release suite: **2,676 passed, 0 failed**, with 37 new cases; `tests/layout-setup-beta4-release.txt`. Focused layout/setup cases also passed separately. Geometry checks cover five locales and exact screenshot collision locations, plus copy selection/focus preservation, privacy, report switching, all class applicability, unlearned configuration, first-page defaults and review safeguards. Existing diagnostics height coverage now targets its hidden sizing font. No secure-action or timing behavior was changed. GitHub review returned no open issues; no public release authorized.
+
 ## Follow-up 1.26.4-beta3: optional maintenance features
 
 Owner selected shield-charge reminders, a read-only buff inspector and onboarding Supplies discovery, then explicitly requested the Nearby buff-grade option and the wording **Offer higher rank buffs**. Preference learning and the other competitor backlog candidates remain deferred.

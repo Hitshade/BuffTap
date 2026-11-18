@@ -1,3 +1,15 @@
+# BuffTap 1.26.4-beta4
+
+### Tidier Nearby and Diagnostics controls
+The Nearby upgrade switch now has its own space. Return the favor sits above Mana reserve, keeping the mana control at the bottom. Diagnostics buttons also have separate spaces, including Inspect buffs and Unknown items.
+
+You can select the text in the main Diagnostics display or a captured report and press **Ctrl+C** to copy. **Select all** replaces Print to chat. Text stays stable while selected; Refresh diagnostics captures current information again. Existing name-hiding applies to the main display too. **Full check-up already includes the active-buff inspection.**
+
+### Helpful choices in fresh setup
+New-character setup recommends Cleanse, normal Resurrection and cleanse-first ordering for classes that support them. Druids and Shamans are also offered SmartShift. These can be selected before the spells or forms are learned, while actual use still requires the relevant ability and normal out-of-combat checks. Each recommendation can be declined.
+
+Existing players keep their choices and are not sent through setup again. They can opt into the recommendations by reviewing setup manually. The earlier beta's optional charge reminders, buff-grades and rank changes are retained, with their existing live-testing limits.
+
 # BuffTap 1.26.4-beta3
 
 ### Shield charge reminders

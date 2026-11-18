@@ -334,6 +334,7 @@ function B:ReportText(kind,hideNames)
   elseif kind=="supplies" then lines=self:CaptureOutput(function() B:ReportSupplies() end)
   elseif kind=="nearby" then lines=self:NearbyDiagnosticsLines()
   elseif kind=="buffs" then lines=self:BuffInspectorLines()
+  elseif kind=="live" then lines=self:DiagnosticsLines()
   else
     if not A.Combat() then self:Refresh(true) end
     lines=self:DiagnosticsLines()
@@ -352,6 +353,12 @@ function B:ShowReport(kind)
   self:ShowDiagnosticsReport(kind or "diagnostics")
 end
 -- Diagnostics page: show captured output in the page's copyable box, selected for Ctrl+C.
+function B:SelectDiagnosticsText()
+  local f=self.options; if not f then return end
+  local text=f.discoveryScroll and f.discoveryScroll:IsShown() and f.discoveryReport or f.diagText
+  if text then text:SetFocus(); text:HighlightText() end
+end
+
 function B:ShowDiagnosticsReport(kind)
   local f=self.options; if A.Combat() or not f or not f.discoveryReport then return end
   local text=self:ReportText(kind,self.reportHideNames~=false)

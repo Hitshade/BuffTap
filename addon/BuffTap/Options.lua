@@ -2490,7 +2490,10 @@ function B:Options()
     end
     f.diagCheckup=button(diag,L("Full check-up"),18,-684,180,function() if not A.Combat() then B:ShowDiagnosticsReport("checkup") end end); T.Variant(f.diagCheckup,"primary")
     addHelp(f.diagCheckup,"Full check-up","Runs every check BuffTap has and puts it all in one box to copy: game and character, diagnostics, debug, Nearby, supplies and your settings. Paste it into a bug report.")
-    f.diagHideNames=check(diag,L("Hide player names"),218,-686,function(c) B.reportHideNames=c:GetChecked()==true end)
+    f.diagHideNames=check(diag,L("Hide player names"),218,-686,function(c)
+      B.reportHideNames=c:GetChecked()==true
+      if f.diagText then f.diagText:ClearFocus(); B:Options() end
+    end)
     addHelp(f.diagHideNames,"Hide player names","Replaces the names BuffTap can see with Player1, Player2 and so on in captured text.")
     f.diagPauseNotes=check(diag,L("Explain pauses in chat"),440,-686,function(c) B.db.pauseNotes=c:GetChecked()==true end)
     addHelp(f.diagPauseNotes,"Explain pauses in chat","When reminders stop because the game is not sharing buff information, say so once per zone.")
@@ -2506,15 +2509,30 @@ function B:Options()
     f.diagScroll:SetPoint("TOPLEFT",18,-116); f.diagScroll:SetSize(654,468); f.diagScroll:Show()
     f.diagContent=CreateFrame("Frame",nil,f.diagScroll); f.diagContent:SetSize(638,468)
     f.diagScroll:SetScrollChild(f.diagContent)
-    f.diagText=label(f.diagContent,"",0,0,"GameFontHighlightSmall",638); f.diagText:SetSpacing(3); f.diagText:Show()
-    button(diag,L("Refresh diagnostics"),18,-604,142,function()
-      if not A.Combat() then f.discoveryScroll:Hide(); f.diagScroll:Show(); f.diagText:Show(); f.diagScroll:SetVerticalScroll(0); B:Refresh(true); B:Options() end
+    f.diagText=CreateFrame("EditBox",nil,f.diagContent)
+    f.diagText:SetMultiLine(true); f.diagText:SetAutoFocus(false); f.diagText:SetFontObject(T.FontName("GameFontHighlightSmall"))
+    f.diagText:SetPoint("TOPLEFT",0,0); f.diagText:SetSize(638,468); f.diagText:SetTextInsets(0,0,0,0); f.diagText:Show()
+    f.diagMeasure=label(f.diagContent,"",0,0,"GameFontHighlightSmall",638); f.diagMeasure:Hide()
+    f.resizeDiagnostics=function()
+      local text=f.diagText:GetText() or ""; f.diagMeasure:SetText(text)
+      local height=f.diagMeasure:GetStringHeight()
+      if type(height)~="number" then local _,lines=text:gsub("\n",""); height=(lines+1)*14 end
+      f.diagText:SetHeight(math.max(468,height+12)); f.diagContent:SetHeight(math.max(468,height+12))
+    end
+    f.diagText:SetScript("OnEscapePressed",function(control) control:ClearFocus() end)
+    f.diagText:SetScript("OnHide",function(control) control:ClearFocus() end)
+    f.diagText:SetScript("OnTextChanged",function(control,userInput)
+      if userInput then control:SetText(control.snapshotText or ""); control:SetCursorPosition(0) end
     end)
-    button(diag,L("Print to chat"),170,-604,108,function() B:Status(true); B:Options() end)
-    button(diag,L("Reset metrics"),288,-604,110,function()
+    f.diagRefresh=button(diag,L("Refresh diagnostics"),18,-604,142,function()
+      if not A.Combat() then f.diagText:ClearFocus(); f.discoveryReport:ClearFocus(); f.discoveryScroll:Hide(); f.diagScroll:Show(); f.diagText:Show(); f.diagScroll:SetVerticalScroll(0); B:Refresh(true); B:Options() end
+    end)
+    f.diagSelectAll=button(diag,L("Select all"),166,-604,88,function() B:SelectDiagnosticsText() end)
+    addHelp(f.diagSelectAll,"Select all","Select the visible diagnostics or captured report, then press Ctrl+C to copy it. You can also select part of the text with the mouse.")
+    f.diagReset=button(diag,L("Reset metrics"),260,-604,100,function()
       B.profileStats=nil; if B.profileEnabled then B:ResetStats() else B.stats=nil end; B:Options()
     end)
-    f.inspectBuffs=button(diag,L("Inspect buffs"),408,-604,126,function() if not A.Combat() then B:ShowDiagnosticsReport("buffs") end end)
+    f.inspectBuffs=button(diag,L("Inspect buffs"),366,-604,106,function() if not A.Combat() then B:ShowDiagnosticsReport("buffs") end end)
     addHelp(f.inspectBuffs,"Inspect buffs","Capture your readable active buffs, ranks, caster unit, charges and the reminders that recognize them. No predictions in combat; no settings or casts are changed.")
 
     local scroll=CreateFrame("ScrollFrame",nil,diag,"UIPanelScrollFrameTemplate")
@@ -2531,12 +2549,12 @@ function B:Options()
       report:SetHeight(math.max(468,height+12))
     end
     report:SetScript("OnTextChanged",f.resizeDiscoveryReport)
-    button(diag,L("Unknown items"),410,-604,124,function() B:ShowDiscoveryReport() end)
-    button(diag,L("Rescan bags"),546,-604,130,function()
+    f.diagUnknown=button(diag,L("Unknown items"),478,-604,106,function() B:ShowDiscoveryReport() end)
+    f.diagRescan=button(diag,L("Rescan bags"),590,-604,104,function()
       if A.Combat() then return end
       B:DiscoverConsumables(); B:ShowDiscoveryReport()
     end)
-    label(diag,"Unknown items is a copyable report for improving item support, not a list of items BuffTap will use.",18,-644,"GameFontDisableSmall",672)
+    label(diag,"Select text, then Ctrl+C to copy. Unknown items reports unsupported items; it never enables them.",18,-644,"GameFontDisableSmall",672)
     self:BuildHelperPage(f)
 
     local function acceptEdit(e,key)
@@ -3091,12 +3109,10 @@ function B:Options()
   if f.diagVersion then f.diagVersion:SetText("BuffTap v"..tostring(self.version or "unknown")) end
   if f.pvpProtection then f.pvpProtection:SetChecked(self.db.pvpProtection==true) end
   if f.diagHideNames then f.diagHideNames:SetChecked(self.reportHideNames~=false); f.diagPauseNotes:SetChecked(self.db.pauseNotes~=false) end
-  if f.diagText then
-    local text=table.concat(self:DiagnosticsLines(),"\n")
-    f.diagText:SetText(text)
-    local height=f.diagText:GetStringHeight()
-    if type(height)~="number" then local _,lines=text:gsub("\n",""); height=(lines+1)*14 end
-    f.diagContent:SetHeight(math.max(468,height+12))
+  if f.diagText and not f.diagText:HasFocus() then
+    local text=self:ReportText("live",self.reportHideNames~=false)
+    f.diagText.snapshotText=text; f.diagText:SetText(text)
+    f.resizeDiagnostics()
   end
   self:UpdateRefinedOptions(); f:Show(); f:Raise(); self:UpdateOptionsPreviews()
 end

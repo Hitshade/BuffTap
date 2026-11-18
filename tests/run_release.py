@@ -91,4 +91,5 @@ import test_review_1263
 import test_regression_1264
 import test_recipient_ranks
 import test_shields_inspector
+import test_layout_setup_beta4
 print('FINAL_TOTAL',len(__import__('test_bufftap').tests))
