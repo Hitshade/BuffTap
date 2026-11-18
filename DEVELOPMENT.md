@@ -1,3 +1,5 @@
+**1.26.6 stable publication authorized**, 2026-11-18. Promotes beta2 without behavior changes. GitHub issue review found no open/new reports; closed #4 comments and #5 resolution reviewed. Validation retained: 2,791 full mocked cases from beta1; 40 focused cases and seven Lua syntax checks after beta2 visual changes. All three note audiences use the stable identity. Package, publication and install receipts are in the parent releases folder.
+
 # BuffTap development
 
 1.26.6-beta1 local installation completed: all 117 runtime files hash-verified in the authorized Forever AddOns folder. No archive, deletion or public publication. Receipt: parent releases/BuffTap-1.26.6-beta1-local-install.json. Live smoke checks remain with the owner; no agent-operated WoW or saved-setting file access.

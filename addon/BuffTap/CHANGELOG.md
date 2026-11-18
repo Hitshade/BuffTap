@@ -1,7 +1,7 @@
-# BuffTap 1.26.6-beta2
+# BuffTap 1.26.6
 
-### Beta 2 settings polish
-- Presentation only: reduce Consumables toolbar spacing by 40 UI units; widen Nearby font and size selectors without changing class-dependent panels; distinguish stored custom hex from active accent; clarify manual selection, disabled weapons and Camping pause status; standardize movement labels. No saved-setting or secure-action changes. GitHub review: no open issues; closed #4/#5 remain outside this visual scope. Lua syntax and the existing focused pause/layout scenarios checked below; live rendering awaits owner review.
+### Settings polish
+- Presentation only: reduce Consumables toolbar spacing by 40 UI units; widen Nearby font and size selectors without changing class-dependent panels; distinguish stored custom hex from active accent; clarify manual selection, disabled weapons and Camping pause status; standardize movement labels. No saved-setting or secure-action changes. GitHub review: no open issues; closed #4/#5 remain outside this visual scope. Beta 2 passed 40 focused pause/layout cases and syntax checks; the owner authorized stable publication after local testing.
 
 ### Pause consistency
 - Camping's normal eligibility now observes ReminderPauseReason, including temporary/resting/stealth/edit states. Entering editing hides the live reminder before showing the mover; temporary pause/cancel/expiry updates it independently. Its own event frame now observes resting and stealth updates, without relying on group/Target/Nearby toggles. Existing snooze, instance, mount, death and combat protections remain.
@@ -15,7 +15,7 @@
 
 ### Evidence and scope
 - Forty focused corrected-behavior scenarios passed, plus Lua 5.1 compilation of seven changed behavior modules. They include actual reset buttons and event handlers, pause/expiry/combat transitions, sound permission/rate/preview distinctions, stale-click disarming and UI-space layout checks. The integrated full mocked Lua 5.1 run completed with **2,791 passed, 0 recorded failures**; FINAL_TOTAL and the absence of FAIL records were checked. Focused and full logs accompany the committed scenarios. Historical 1.26.5 audit probes remain evidence of the old behavior and are not part of the release suite.
-- Owner authorized fixes and local beta testing only, not public publication. All three note audiences and release identity are prepared. No catalog/rank, cast-selection, profile migration or SavedVariables/WTF file changes. No live WoW verification is claimed; actual rendering still needs the owner's smoke check.
+- Owner authorized stable publication on 2026-11-18 after reporting the beta stable and requesting the final visual polish. Stable promotion changes release identity and notes only; beta validation is retained. No catalog/rank, cast-selection, profile migration or SavedVariables/WTF file changes. Automated validation uses the mocked API; the owner reported the beta stable. No exhaustive all-class or all-resolution live verification is claimed.
 
 # BuffTap 1.26.5
 

@@ -1,4 +1,4 @@
-# BuffTap 1.26.6-beta2
+# BuffTap 1.26.6
 
 Settings also have a more compact Consumables layout, roomier Nearby text selectors and clearer Manual selection, pause and accent-colour labels. Class-specific settings and your saved choices are unchanged.
 
@@ -12,7 +12,7 @@ The starter layout now leaves space below the main icon for attached consumables
 
 **Reset look & position** returns the selected reminder to its place in that layout without moving the other reminders. Warrior and Rogue resource-wait status uses the same power wording as the icon.
 
-This is a local testing beta. In-game checks should cover pause/resume with Camping and Manual items enabled together, the small-UI layout and individual resets. Every cast and item use still requires your input.
+Every cast and item use still requires your input. Existing settings and positions are retained; use Reset look & position only when you want the new starting placement.
 
 # BuffTap 1.26.5
 
