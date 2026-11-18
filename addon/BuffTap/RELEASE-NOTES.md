@@ -1,6 +1,11 @@
-# BuffTap 1.26.7-beta4
+# BuffTap 1.26.7-beta5
 
 Enabled speakers now light up in your selected accent colour, while muted speakers stay grey. Party and Raid use the same compact speaker buttons at the top right of the selected buff box.
+
+### A sound for each buff
+Right-click a speaker in My buffs or Groups to open a searchable sound editor. The title identifies the buff and Personal, Party or Raid scope. Select **Use default** to follow the Reminder category, or pick a custom sound. Separate Preview buttons let you listen without changing your selection. Left-click still toggles sound, and muting keeps your custom choice.
+
+Lists open at your current selection and scroll in smaller, smoother steps. Reduce animation keeps scrolling immediate. The ten new recordings are also slightly louder following testing feedback.
 
 ### Ten new custom sounds
 Preview **Crystal chime**, **Elven harp**, **Holy light**, **Fairy ping**, **Celestial lift**, **Soft glow**, **Moonlit bells**, **Gentle harp**, **Warm welcome** and **Lullaby ping** under Customization > Binding & sound. These owner-created sounds replace the earlier experimental additions. Each lasts just under a second, with volume matched to the existing set while preserving stereo.
@@ -15,7 +20,7 @@ Under **Groups**, Party and Raid each have their own speaker button for the sele
 ### Separate category controls
 **Customization > Binding & sound > Default sounds** has a speaker beside every Preview button. Turn ordinary Reminder, Supply, Camp, Cleanse and Friend sounds on or off independently. The old bottom sound switch is gone. Your existing choices are retained, and previews can still be heard while muted.
 
-These are the default sounds used by enabled reminders in each category. Individual sound selections are not available in this beta. Speaker and reminder tooltips explain muted sounds; SmartShift returns and ongoing smooth-buffing sequences retain their quiet behavior.
+These are the default sounds used by enabled reminders in each category. Per-buff custom sounds override the Reminder default only where you choose them. Speaker and reminder tooltips explain muted sounds; SmartShift returns and ongoing smooth-buffing sequences retain their quiet behavior.
 
 New users choosing alert sounds in setup enable all five sound categories. This only grants sound permission: Camping, Supplies and friend/guild notifications still follow their own feature switches and normal restrictions. This beta is for local testing; live layout review remains with the owner.
 

@@ -2,7 +2,9 @@
 local _,B=...
 -- Keep the ten most recent releases within a 24 KiB content ceiling.
 B.PatchNotes={
- {version="1.26.7-beta4",title="Choose which reminders you hear",items={
+ {version="1.26.7-beta5",title="Choose which reminders you hear",items={
+  "Right-click a buff speaker to choose its own sound. Personal, Party and Raid choices stay separate. Use default follows the Reminder sound category; Preview never changes your selection.",
+  "Sound lists open at your current choice, with smoother scrolling. Reduce animation makes scrolling immediate. The ten new custom sounds are slightly louder.",
   "Ten new fantasy sounds, including Crystal chime, Elven harp and Holy light. Preview them under Customization > Binding & sound. Their volume is matched to BuffTap's existing sounds.",
   "My buffs now has a speaker button beside each buff. Mute Aquatic Form, for example, while keeping Mark and Thorns audible. Your reminder icon and binding keep working.",
   "Party and Raid have separate speaker buttons at the top right of each buff box. Enabled speakers use your accent colour. Paladins can open Buff sounds beside the Party and Raid tabs.",

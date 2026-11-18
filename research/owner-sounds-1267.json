@@ -1,5 +1,7 @@
 {
-  "target_lufs": -21.823360485173346,
+  "target_lufs": -20.823360485173346,
+  "reference_median_lufs": -21.823360485173346,
+  "owner_requested_boost_db": 1.0,
   "method": "Gain only, decoded-file gated K-weighted energy; mono/stereo channel energies summed, stereo preserved. No trimming, fades, synthesis, limiting or compression. Ogg Vorbis copies re-encoded for gain adjustment.",
   "ownerOriginalsUnchanged": true,
   "reference": {
@@ -90,14 +92,14 @@
         "bytes": 21292,
         "sha256": "56939022968b766bbad3a9c2f2fab98f2d88b42693ce0ee70de39b626838a33b"
       },
-      "gain_db": -10.743612701441393,
+      "gain_db": -9.743612701441393,
       "rate": 44100,
       "channels": 2,
       "duration": 0.98,
-      "lufs": -21.892886460831143,
-      "peak_db": -11.790047737547354,
-      "bytes": 14244,
-      "sha256": "e176dc76fd7de541c81fc545b509df5a0462a810b28ed667bef0a22fe86fe94b"
+      "lufs": -20.914486491803956,
+      "peak_db": -10.821717515382439,
+      "bytes": 14429,
+      "sha256": "f1f9d8805ff920dfffd2faef1348da1143d1cf423910d16697b4b053a685a3f3"
     },
     "BuffTapElvenHarp.ogg": {
       "key": "elvenharp",
@@ -112,14 +114,14 @@
         "bytes": 29839,
         "sha256": "8a191fcda8b32e7e79ad3791d960acbbeb8d8361fdbf0ced5e6f08545dfa2d12"
       },
-      "gain_db": -7.857877858307621,
+      "gain_db": -6.862857148421284,
       "rate": 44100,
       "channels": 2,
       "duration": 0.98,
-      "lufs": -21.820623362498438,
-      "peak_db": -8.997370125349724,
-      "bytes": 17957,
-      "sha256": "5131bdde520d7ea3861edab2e40e7fb6d3b5cddb7bb6d067471e179c25bf6ba2"
+      "lufs": -20.80682647566236,
+      "peak_db": -7.719353021536502,
+      "bytes": 18008,
+      "sha256": "13d4cddcd7b779f7fbd77725397976ced4658cfc20fb6e9e6bcf14bf75811181"
     },
     "BuffTapHolyLight.ogg": {
       "key": "holylight",
@@ -134,14 +136,14 @@
         "bytes": 17382,
         "sha256": "93baf44c072bd783b768bb493d24097bc144134140321e1eb628ab40cb5d2778"
       },
-      "gain_db": -10.49042140618174,
+      "gain_db": -9.49042140618174,
       "rate": 44100,
       "channels": 2,
       "duration": 0.98,
-      "lufs": -21.864710714071588,
-      "peak_db": -11.44014796150146,
-      "bytes": 13089,
-      "sha256": "786acdeb8568bec0479a38a89e27762738544a89da9778ed1cf15f4953c9f98e"
+      "lufs": -20.859422416310817,
+      "peak_db": -10.412995306912325,
+      "bytes": 13112,
+      "sha256": "08684d078e0676a30ded1aa81147d0f4640b3e5280a85da2c45b01b6e8aec8d1"
     },
     "BuffTapFairyPing.ogg": {
       "key": "fairyping",
@@ -156,14 +158,14 @@
         "bytes": 21270,
         "sha256": "5a3bd9f57077232e69dd6fdcf3a3dc764280c337beaa22aa5b3dd63dc1b21495"
       },
-      "gain_db": -11.506140976380347,
+      "gain_db": -10.506140976380347,
       "rate": 44100,
       "channels": 2,
       "duration": 0.98,
-      "lufs": -21.819503093289487,
-      "peak_db": -12.512105322220798,
-      "bytes": 13904,
-      "sha256": "431a64d73ade306aff2dc8f55b980e5c9fc3edb666389a054318621d6ba8a406"
+      "lufs": -20.798033803598713,
+      "peak_db": -11.159163222849726,
+      "bytes": 13948,
+      "sha256": "31531ea58c450fc6d1aa01ac6a0020300edf135431281f6e1531f2ddbb74909a"
     },
     "BuffTapCelestialLift.ogg": {
       "key": "celestiallift",
@@ -178,14 +180,14 @@
         "bytes": 17224,
         "sha256": "16912727c65f39f6af566a941a2af0be8b88a553eec912ec15e2f2b2ba48e24c"
       },
-      "gain_db": -12.022010193782602,
+      "gain_db": -11.020468726978965,
       "rate": 44100,
       "channels": 2,
       "duration": 0.98,
-      "lufs": -21.78162937372231,
-      "peak_db": -13.589544958166659,
-      "bytes": 12059,
-      "sha256": "86ea50c60926a06738b7be85c9ec231a955db17853f6a343635a4b1ed730dc96"
+      "lufs": -20.783193703977336,
+      "peak_db": -12.723509635186401,
+      "bytes": 12075,
+      "sha256": "1a6b9b62166096c3ebc5734b386bf0ca0d9e00954f4ae9c31b35e024640ad0bb"
     },
     "BuffTapSoftGlow.ogg": {
       "key": "softglow",
@@ -200,14 +202,14 @@
         "bytes": 13097,
         "sha256": "ba53b6bacb1c705ac4d396f082d5bc31631ab573ba54994b4121f4bad98ec501"
       },
-      "gain_db": -10.115842183959932,
+      "gain_db": -9.115842183959932,
       "rate": 44100,
       "channels": 2,
       "duration": 0.98,
-      "lufs": -21.77780895098104,
-      "peak_db": -11.59812720101466,
-      "bytes": 9364,
-      "sha256": "63143f2725270ea4e41394521f27d92cd431dc4d4950f686aa7b062121fa0084"
+      "lufs": -20.778720164678756,
+      "peak_db": -10.464822202772545,
+      "bytes": 9406,
+      "sha256": "cf8ac26dc2a12c45499a273b05ba2cc4bcc19a7c4291262907fbf4ae30f3deff"
     },
     "BuffTapMoonlitBells.ogg": {
       "key": "moonlitbells",
@@ -222,14 +224,14 @@
         "bytes": 16229,
         "sha256": "a8f965d9b44a3be2402bd534c2e81a75d279e905412d46d2e8a62ceea3a92490"
       },
-      "gain_db": -10.145740520647108,
+      "gain_db": -9.145740520647108,
       "rate": 44100,
       "channels": 2,
       "duration": 0.98,
-      "lufs": -21.78513600573067,
-      "peak_db": -11.407091177033248,
-      "bytes": 11497,
-      "sha256": "1f592cf19381ba1044cb3cc9f3c25345d8b4681b7efe6b5ac0ee1162e7113859"
+      "lufs": -20.795897018171022,
+      "peak_db": -10.360473164222206,
+      "bytes": 11556,
+      "sha256": "826a2ca93e812d6e52754d959b3d76d5d537f2213a55577b80b2aa6f0a8c43d8"
     },
     "BuffTapGentleHarp.ogg": {
       "key": "gentleharp",
@@ -244,14 +246,14 @@
         "bytes": 26578,
         "sha256": "48e7fed92976607e8f42548ee92f30a644421adeaae9ff114c13f4b43d702048"
       },
-      "gain_db": -9.43571625958528,
+      "gain_db": -8.43571625958528,
       "rate": 44100,
       "channels": 2,
       "duration": 0.98,
-      "lufs": -21.859811480708547,
-      "peak_db": -10.852747899587193,
-      "bytes": 16780,
-      "sha256": "a5666e39698b23cb9e74506c8351b557c31dc3d5f765c6e6b071fbef9581ae81"
+      "lufs": -20.85131739354252,
+      "peak_db": -9.776456011911431,
+      "bytes": 16955,
+      "sha256": "53bc9cbe4c4abb51b92e1bbce92b5053e6a2b3e3ef31741222382b89b8d4c663"
     },
     "BuffTapWarmWelcome.ogg": {
       "key": "warmwelcome",
@@ -266,14 +268,14 @@
         "bytes": 15231,
         "sha256": "ee2f003efcebe36fa4fbe5366be6cebd644f9769f593bd4808b6bfd831d07e84"
       },
-      "gain_db": -12.340337291012665,
+      "gain_db": -11.340337291012665,
       "rate": 44100,
       "channels": 2,
       "duration": 0.98,
-      "lufs": -21.808192133171463,
-      "peak_db": -13.55737849954086,
-      "bytes": 10467,
-      "sha256": "ff2406eaa07e4fb5c61fbf7edcbd84d63dd464838722ba1a0b6efd6fd5e0b0fa"
+      "lufs": -20.826655438861028,
+      "peak_db": -12.53852584093752,
+      "bytes": 10526,
+      "sha256": "e6da464ca4d0ed5d846c29f4d76d9815d8b675bdf8e837d0be88d0cf8461dcc7"
     },
     "BuffTapLullabyPing.ogg": {
       "key": "lullabyping",
@@ -288,14 +290,14 @@
         "bytes": 13199,
         "sha256": "66de2a1312d7503f006118fed0fecfff3a614e00ce3efdf9d7247e1217e22caa"
       },
-      "gain_db": -10.961327835130389,
+      "gain_db": -9.961327835130389,
       "rate": 44100,
       "channels": 2,
       "duration": 0.98,
-      "lufs": -21.79824220859471,
-      "peak_db": -12.345699052055775,
-      "bytes": 9624,
-      "sha256": "b413a66080faeafcd64536e294a3b342b2654ad98165ee821d33cb6b5ab8538e"
+      "lufs": -20.793300735002276,
+      "peak_db": -11.31536393184945,
+      "bytes": 9675,
+      "sha256": "07a04dfdb983312f7114df798a3c81977cc21947632b9a377c33dab6426f26ce"
     }
   }
 }

@@ -79,7 +79,9 @@ local function selector(parent,text,x,y,width,choices,onSelect,searchable)
     if menu:IsShown() then menu:Hide(); return end
     if B.options and B.options.activeSelector and B.options.activeSelector~=menu and B.options.activeSelector~=control.ownerPanel then B.options.activeSelector:Hide() end
     if B.options then B.options.activeSelector=control.ownerPanel or menu end
-    render(); menu:Show()
+    if menu.search then menu.loading=true; menu.search:SetText(""); menu.loading=nil end
+    menu.openAtSelection=true; render(); menu:Show()
+    if menu.scroll then menu.scroll:UpdateScrollChildRect(); T.ScrollTo(menu.scroll,menu.openScrollOffset or 0,true) end
   end)
   control.arrow=control:CreateTexture(nil,"OVERLAY"); control.arrow:SetSize(16,16); control.arrow:SetPoint("RIGHT",-4,0)
   control.arrow:SetTexture("Interface\\ChatFrame\\UI-ChatIcon-ScrollDown-Up")
@@ -97,7 +99,7 @@ local function selector(parent,text,x,y,width,choices,onSelect,searchable)
     local top=searchable and 34 or 4
     menu:SetSize(menuWidth,top+(scrollable and math.max(28,math.min(visibleRows,count)*28) or count*28)+4)
     if scrollable then
-      menu.content:SetHeight(math.max(1,count*28)); menu.scroll:SetVerticalScroll(0)
+      menu.content:SetHeight(math.max(1,count*28)); menu.scroll.optionsScrollRange=math.max(0,(count-visibleRows)*28)
       menu.empty:SetShown(count==0)
     end
     for _,row in ipairs(menu.rows) do row:Hide() end
@@ -116,21 +118,30 @@ local function selector(parent,text,x,y,width,choices,onSelect,searchable)
       if row.icon then row.icon:SetTexture(entry.icon); row.icon:SetShown(entry.icon~=nil) end
       local fs=row:GetFontString()
       if fs then fs:ClearAllPoints(); fs:SetPoint("LEFT",entry.icon and 30 or 8,0); fs:SetPoint("RIGHT",-6,0); fs:SetJustifyH("LEFT") end
-      local selected=control:GetText()==row:GetText() or (searchable and control:GetText()==L(entry.name))
+      local selected
+      if control.getSelection then selected=control.getSelection()==entry.key
+      else selected=control:GetText()==row:GetText() or (searchable and control:GetText()==L(entry.name)) end
       local r,g,b=T.accent[1],T.accent[2],T.accent[3]
+      if selected and scrollable and menu.openAtSelection then menu.selectionOffset=math.max(0,(i-1-math.floor(visibleRows/2))*28) end
       if selected then row:SetBackdropColor(r*.16+.04,g*.16+.046,b*.16+.056,1); row:SetBackdropBorderColor(r,g,b,.55)
       else row:SetBackdropColor(0,0,0,0); row:SetBackdropBorderColor(0,0,0,0) end
       row:Show()
     end
+    if scrollable then
+      if menu.openAtSelection then menu.openScrollOffset=menu.selectionOffset or 0 end
+      T.ScrollTo(menu.scroll,menu.openAtSelection and (menu.selectionOffset or 0) or 0,true)
+    end
+    menu.openAtSelection=nil; menu.selectionOffset=nil
   end
   if searchable then
     label(menu,L("Search"),8,-10,"GameFontHighlightSmall")
     menu.search=CreateFrame("EditBox",nil,menu,"InputBoxTemplate"); menu.search:SetSize(256,22); menu.search:SetPoint("TOPLEFT",68,-5); menu.search:SetAutoFocus(false)
-    menu.search:SetScript("OnTextChanged",function() render() end)
+    menu.search:SetScript("OnTextChanged",function() if not menu.loading then render() end end)
     menu.search:SetScript("OnEscapePressed",function(box) box:ClearFocus(); menu:Hide() end)
   end
   if scrollable then
     menu.scroll=CreateFrame("ScrollFrame",nil,menu,"UIPanelScrollFrameTemplate")
+    T.SmoothWheel(menu.scroll,20)
     menu.scroll:SetPoint("TOPLEFT",4,searchable and -34 or -4); menu.scroll:SetPoint("BOTTOMRIGHT",-28,4)
     menu.content=CreateFrame("Frame",nil,menu.scroll); menu.content:SetSize(menuWidth-32,1); menu.scroll:SetScrollChild(menu.content)
     menu.empty=label(menu.content,L("No matches"),8,-6,"GameFontDisableSmall"); menu.empty:Hide()
@@ -479,9 +490,11 @@ function B:ToggleBlessingSounds()
     for i,key in ipairs(self.BlessingFamilies) do
       local def=self:FindBuff(key)
       label(p,spellLabel(def),18,-51-(i-1)*32,"GameFontHighlightSmall",326)
-      local c=button(p,"",354,-44-(i-1)*32,28,function(c)
+      local c=button(p,"",354,-44-(i-1)*32,28,function(c,mouseButton)
+        if mouseButton=="RightButton" then B:OpenBuffSoundEditor(p.context,key); return end
         if B:SetBuffAlertEnabled(p.context,key,not B:BuffAlertEnabled(p.context,key)) then T.SoundSpeaker(c,B:BuffAlertEnabled(p.context,key)) end
       end)
+      c:RegisterForClicks("LeftButtonUp","RightButtonUp")
       c:SetHeight(26)
       c:SetScript("OnEnter",function(c) T.Tooltip(c,L("Group reminder sound"),B:BuffAlertTooltip(p.context,key)) end)
       c:SetScript("OnLeave",function() if GameTooltip then GameTooltip:Hide() end end)
@@ -2679,10 +2692,12 @@ function B:Options()
         row.icon=row:CreateTexture(nil,"ARTWORK"); row.icon:SetSize(32,32); row.icon:SetPoint("TOPLEFT",8,-4)
         row.name=label(row,"",48,-5,"GameFontNormalLarge",366)
         row.detail=label(row,"",48,-29,"GameFontDisableSmall",402)
-        row.sound=button(row,"",424,-4,26,function(c)
+        row.sound=button(row,"",424,-4,26,function(c,mouseButton)
           local context=B:EditingGroupContext():lower()
+          if mouseButton=="RightButton" then if row.def then B:OpenBuffSoundEditor(context,row.def) end; return end
           if row.def and B:SetBuffAlertEnabled(context,row.def,not B:BuffAlertEnabled(context,row.def)) then B:Options() end
         end)
+        row.sound:RegisterForClicks("LeftButtonUp","RightButtonUp")
         row.sound:SetHeight(26)
         row.sound:SetScript("OnEnter",function(c) if row.def then T.Tooltip(c,L("Group reminder sound"),B:BuffAlertTooltip(B:EditingGroupContext():lower(),row.def)) end end)
         row.sound:SetScript("OnLeave",function() if GameTooltip then GameTooltip:Hide() end end)
@@ -3079,10 +3094,12 @@ function B:Options()
         if def and not A.Combat() then B:EditorSettings("buffs").buffSeconds[def.key]=nil; B:RequestRefresh("rebuff default",0); B:Options() end
       end)
       addHelp(row.default,"Use default timing","Remove this buff's custom refresh time and use its automatic timing. Buff choices and priorities stay unchanged.")
-      row.sound=button(row,"",522,-15,24,function(btn)
+      row.sound=button(row,"",522,-15,24,function(btn,mouseButton)
         local def=btn:GetParent().def
+        if mouseButton=="RightButton" then if def then B:OpenBuffSoundEditor("personal",def) end; return end
         if def and B:SetBuffAlertEnabled("personal",def,not B:BuffAlertEnabled("personal",def)) then B:Options() end
       end)
+      row.sound:RegisterForClicks("LeftButtonUp","RightButtonUp")
       row.sound:SetHeight(24)
       row.sound.glyph=row.sound:CreateTexture(nil,"ARTWORK"); row.sound.glyph:SetSize(16,16); row.sound.glyph:SetPoint("CENTER")
       row.sound:SetScript("OnEnter",function(btn) if btn:GetParent().def then T.Tooltip(btn,L("Personal reminder sound"),B:BuffAlertTooltip("personal",btn:GetParent().def)) end end)

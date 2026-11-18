@@ -1,3 +1,4 @@
+__import__('test_buff_sound_editor_1267')
 __import__('test_extra_sounds_1267')
 __import__('test_abolish_1267')
 __import__('test_buff_alerts_1267')

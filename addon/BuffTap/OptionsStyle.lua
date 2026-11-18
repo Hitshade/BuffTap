@@ -622,6 +622,48 @@ local function thinVertical(bar)
   local rail=bar:CreateTexture(nil,"BACKGROUND"); rail:SetColorTexture(1,1,1,.04); rail:SetPoint("TOP",0,0); rail:SetPoint("BOTTOM",0,0); rail:SetWidth(4); bar.visualRail=rail
   if thumb then thumb:SetTexture(WHITE); thumb:SetVertexColor(1,1,1,.22); thumb:SetSize(4,40); thumb:SetAlpha(1) end
 end
+function T.ScrollTo(scroll,value,instant)
+  local limit=scroll.optionsScrollRange
+  if type(limit)~="number" then limit=scroll:GetVerticalScrollRange() end
+  limit=type(limit)=="number" and math.max(0,limit) or 0
+  value=math.max(0,math.min(limit,value or 0))
+  local animator=scroll.optionsScrollAnimator
+  if not animator then
+    animator=CreateFrame("Frame",nil,scroll); scroll.optionsScrollAnimator=animator
+    animator:Hide()
+    scroll:HookScript("OnHide",function() animator:SetScript("OnUpdate",nil); animator:Hide(); scroll.optionsScrollTarget=nil end)
+  end
+  local current=scroll:GetVerticalScroll(); current=type(current)=="number" and current or 0
+  if instant or (B.db and B.db.optionsReduceMotion) or math.abs(value-current)<.25 then
+    animator:SetScript("OnUpdate",nil); animator:Hide(); scroll.optionsScrollTarget=nil; scroll:SetVerticalScroll(value); return
+  end
+  scroll.optionsScrollTarget=value; animator:Show()
+  animator:SetScript("OnUpdate",function(_,elapsed)
+    local now=scroll:GetVerticalScroll(); now=type(now)=="number" and now or 0
+    local target=scroll.optionsScrollTarget or now
+    local nextValue=now+(target-now)*math.min(1,(elapsed or 0)*22)
+    if math.abs(target-nextValue)<.25 or (B.db and B.db.optionsReduceMotion) then
+      scroll:SetVerticalScroll(target); scroll.optionsScrollTarget=nil; animator:SetScript("OnUpdate",nil); animator:Hide()
+    else scroll:SetVerticalScroll(nextValue) end
+  end)
+end
+function T.SmoothWheel(scroll,step)
+  scroll:EnableMouseWheel(true)
+  local function wheel(_,delta)
+    local current=scroll.optionsScrollTarget or scroll:GetVerticalScroll(); current=type(current)=="number" and current or 0
+    T.ScrollTo(scroll,current-delta*(step or 20))
+  end
+  scroll:SetScript("OnMouseWheel",wheel)
+  local bar=scroll.ScrollBar
+  if bar then
+    bar:EnableMouseWheel(true); bar:SetScript("OnMouseWheel",wheel)
+    bar:HookScript("OnMouseDown",function()
+      scroll.optionsScrollTarget=nil
+      if scroll.optionsScrollAnimator then scroll.optionsScrollAnimator:SetScript("OnUpdate",nil); scroll.optionsScrollAnimator:Hide() end
+    end)
+  end
+end
+
 function T.ScrollBar(scroll)
   if not scroll or scroll.visualScroll then return end
   local bar=scroll.ScrollBar

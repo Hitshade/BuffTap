@@ -76,11 +76,22 @@ function B:SoundChoices()
   -- BuffTap's own sounds are listed once, above; skip their SharedMedia copies.
   local own={}; for _,sound in ipairs(bundled) do own["BuffTap: "..sound.name]=true end
   for _,name in ipairs(names) do if not own[name] then choices[#choices+1]={key="lsm:"..name,name=name,source="SharedMedia"} end end
-  for _,field in ipairs({"reminderSound","supplySound","campAlertSound","cleanseSound","socialSound"}) do
-    local key=self.db and self.db[field]
-    if type(key)=="string" and key:sub(1,4)=="lsm:" and (not media or not playable(media[key:sub(5)])) then
+  local preserved={}
+  for _,field in ipairs({"reminderSound","supplySound","campAlertSound","cleanseSound","socialSound"}) do preserved[#preserved+1]=self.db and self.db[field] end
+  local settings=self.db and self.db.buffAlerts
+  for _,context in ipairs({"personal","party","raid"}) do
+    local map=type(settings)=="table" and settings[context]
+    for _,record in pairs(type(map)=="table" and map or {}) do
+      if type(record)=="table" and type(record.sound)=="string" then preserved[#preserved+1]=record.sound end
+    end
+  end
+  for _,key in ipairs(preserved) do
+    if type(key)=="string" and key:sub(1,4)=="lsm:" and #key>4 and #key<=512 then
       local found=false; for _,choice in ipairs(choices) do if choice.key==key then found=true; break end end
-      if not found then choices[#choices+1]={key=key,name=key:sub(5).." (unavailable; using default)",source="SharedMedia"} end
+      if not found then
+        local unavailable=not media or not playable(media[key:sub(5)])
+        choices[#choices+1]={key=key,name=key:sub(5)..(unavailable and " (unavailable; using default)" or ""),source="SharedMedia"}
+      end
     end
   end
   return choices
@@ -124,8 +135,7 @@ function B:NormalizeAlerts()
   self:NormalizeBuffAlerts()
 end
 -- Character/class settings. Missing records inherit the normal reminder sound.
--- The optional sound field is reserved and validated for a later picker; playback
--- deliberately ignores it until that feature is implemented.
+-- Optional per-buff sounds inherit the category default when unset.
 function B:NormalizeBuffAlerts()
   local source=type(self.db.buffAlerts)=="table" and self.db.buffAlerts or {}
   local out={version=1,personal={},party={},raid={}}
@@ -165,6 +175,28 @@ function B:SetBuffAlertEnabled(context,def,enabled)
   record.enabled=enabled; map[key]=record
   return true
 end
+function B:SetBuffAlertSound(context,def,sound)
+  if A.Combat() or not self.db or (context~="personal" and context~="party" and context~="raid") then return false end
+  local key=self:BuffAlertKey(def); local buff=key and self:FindBuff(key)
+  if not buff or buff.class~=A.Class("player") then return false end
+  if sound~=nil then
+    local found=false; for _,choice in ipairs(self:SoundChoices()) do if choice.key==sound then found=true; break end end
+    if not found then return false end
+  end
+  self:NormalizeBuffAlerts()
+  local map=self.db.buffAlerts[context]; local record=map[key] or {}; record.sound=sound
+  map[key]=next(record) and record or nil
+  return true
+end
+function B:BuffAlertSound(context,def)
+  local key=self:BuffAlertKey(def); local root=self.db and self.db.buffAlerts
+  local record=root and root[context] and root[context][key]
+  return type(record)=="table" and record.sound or nil
+end
+function B:SoundChoiceName(key)
+  for _,choice in ipairs(self:SoundChoices()) do if choice.key==key then return self:Text(choice.name) end end
+  return self:Text("Unavailable sound")
+end
 function B:BuffAlertContext(action)
   if not action or (action.source and action.source~="spell") or action.nearby or action.quickTarget then return end
   if not self:FindBuff(action.key) then return end
@@ -184,7 +216,8 @@ function B:BuffAlertTooltip(context,def)
   if not self.db.sound then state=state.."\n"..self:Text("The Reminder sound category is off.") end
   local detail=context=="personal" and self:Text("Controls your personal reminder for this buff. Party and Raid buffing have separate sound switches.") or self:Text("Controls %s buffing reminders for this buff and its group version.",scope)
   return state.."\n"..detail.."\n"..self:Text("Visual reminders and bindings remain active.")
-    .."\n"..self:Text("Uses your default reminder sound. Resting pauses and silent buffing queues still apply.")
+    .."\n"..(self:BuffAlertSound(context,def) and self:Text("Sound: %s",self:SoundChoiceName(self:BuffAlertSound(context,def))) or self:Text("Default: %s",self:SoundChoiceName(self.db.reminderSound)))
+    .."\n"..self:Text("Left-click to mute or unmute. Right-click for sound settings. Resting pauses and silent buffing queues still apply.")
 end
 function B:BuffAlertMuteReason(action)
   local context=self:BuffAlertContext(action)
@@ -205,7 +238,7 @@ end
 function B:ActionAlertEnabled(action)
   return self:AlertCategoryEnabled(action and action.source=="cleanse" and "cleanse" or "reminder")
 end
-function B:PlayAlert(kind,preview)
+function B:PlayAlert(kind,preview,previewSound)
   if not self.db then return false end
   -- The friend/guild alert has its own switch and pacing (Nearby), and plays in cities and inns.
   if kind=="reminder" and not preview and not self:BuffAlertAllowed(self.action) then return false end
@@ -218,6 +251,11 @@ function B:PlayAlert(kind,preview)
   local now=GetTime()
   if not preview and not social and self.lastAlertSound and now-self.lastAlertSound<self.db.soundInterval then return false end
   local selected=self.db[kind=="supply" and "supplySound" or kind=="camp" and "campAlertSound" or kind=="cleanse" and "cleanseSound" or social and "socialSound" or "reminderSound"]
+  if preview and previewSound then selected=previewSound
+  elseif kind=="reminder" and not preview then
+    local context=self:BuffAlertContext(self.action)
+    if context then selected=self:BuffAlertSound(context,self.action.key) or selected end
+  end
   local player,value=PlaySound,12867
   if type(selected)=="string" and selected:sub(1,4)=="lsm:" then
     local media=mediaTable(); local sound=media and media[selected:sub(5)]

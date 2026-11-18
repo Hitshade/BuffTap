@@ -288,7 +288,10 @@ function B:BuildRefinedOptions(ui,tabs)
   f.categorySounds={}
   for i,entry in ipairs({{f.reminderSoundButton,"Reminder sound","reminder"},{f.supplySoundButton,"Supply sound","supply"},{f.campSoundButton,"Camp sound","camp"},{f.cleanseSoundButton,"Cleanse sound","cleanse"},{f.socialSoundButton,"Friend sound","social"}}) do
     local y=-208-(i-1)*36; ui.label(binding,entry[2],26,y-5,"GameFontHighlightSmall",130); place(entry[1],binding,166,y,330,26)
-    local kind=entry[3]; ui.button(binding,"Preview",510,y,124,function() B:PlayAlert(kind,true) end)
+    local kind=entry[3]
+    local field=({reminder="reminderSound",supply="supplySound",camp="campAlertSound",cleanse="cleanseSound",social="socialSound"})[kind]
+    entry[1].getSelection=function() return B.db[field] end
+    ui.button(binding,"Preview",510,y,124,function() B:PlayAlert(kind,true) end)
     local toggle=ui.button(binding,"",644,y,44,function() B:SetAlertCategoryEnabled(kind,not B:AlertCategoryEnabled(kind)); B:Options() end)
     toggle.glyph=toggle:CreateTexture(nil,"ARTWORK"); toggle.glyph:SetSize(18,18); toggle.glyph:SetPoint("CENTER")
     toggle:SetScript("OnEnter",function(btn) T.Tooltip(btn,B:Text(entry[2]),B:Text(B:AlertCategoryEnabled(kind) and "Sound on. Click to mute this category." or "Sound off. Click to enable this category.").."\n"..B:Text("Only changes sound. Visual reminders and feature settings stay as configured. Preview plays even when muted.")) end)

@@ -25,8 +25,8 @@ def loudness(y,sr):
 def metrics(path):
  y,sr=sf.read(path,always_2d=True)
  return {'rate':sr,'channels':y.shape[1],'duration':len(y)/sr,'lufs':loudness(y,sr),'peak_db':float(20*np.log10(np.max(np.abs(y)))),'bytes':path.stat().st_size,'sha256':hashlib.sha256(path.read_bytes()).hexdigest()}
-def main(source,report):
- refs={f:metrics(OUT/f) for f in meter.REFERENCE};target=float(np.median([r['lufs'] for r in refs.values()]));new={}
+def main(source,report,offset=1.):
+ refs={f:metrics(OUT/f) for f in meter.REFERENCE};reference_median=float(np.median([r['lufs'] for r in refs.values()]));target=reference_median+offset;new={}
  for src,key,name,dst in FILES:
   original=source/src;before=metrics(original);y,sr=sf.read(original,always_2d=True)
   gain=target-before['lufs'];path=OUT/dst
@@ -39,7 +39,7 @@ def main(source,report):
   assert hashlib.sha256(original.read_bytes()).hexdigest()==before['sha256']
   new[dst]={'key':key,'name':name,'sourceFile':src,'source':before,'gain_db':gain,**after}
  for file,record in refs.items():assert hashlib.sha256((OUT/file).read_bytes()).hexdigest()==record['sha256']
- data={'target_lufs':target,'method':'Gain only, decoded-file gated K-weighted energy; mono/stereo channel energies summed, stereo preserved. No trimming, fades, synthesis, limiting or compression. Ogg Vorbis copies re-encoded for gain adjustment.','ownerOriginalsUnchanged':True,'reference':refs,'new':new}
+ data={'target_lufs':target,'reference_median_lufs':reference_median,'owner_requested_boost_db':offset,'method':'Gain only, decoded-file gated K-weighted energy; mono/stereo channel energies summed, stereo preserved. No trimming, fades, synthesis, limiting or compression. Ogg Vorbis copies re-encoded for gain adjustment.','ownerOriginalsUnchanged':True,'reference':refs,'new':new}
  report.write_text(json.dumps(data,indent=2),encoding='utf-8');print(json.dumps({'target_lufs':target,'clips':[{'name':r['name'],'source_lufs':r['source']['lufs'],'gain_db':r['gain_db'],'lufs':r['lufs'],'peak_db':r['peak_db']} for r in new.values()]},indent=2))
 if __name__=='__main__':
- p=argparse.ArgumentParser();p.add_argument('--source',type=Path,required=True);p.add_argument('--report',type=Path,default=ROOT/'research/owner-sounds-1267.json');args=p.parse_args();main(args.source,args.report)
+ p=argparse.ArgumentParser();p.add_argument('--source',type=Path,required=True);p.add_argument('--report',type=Path,default=ROOT/'research/owner-sounds-1267.json');p.add_argument('--offset-db',type=float,default=1.);args=p.parse_args();main(args.source,args.report,args.offset_db)
