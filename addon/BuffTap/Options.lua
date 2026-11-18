@@ -2510,6 +2510,7 @@ function B:Options()
     f.diagContent=CreateFrame("Frame",nil,f.diagScroll); f.diagContent:SetSize(638,468)
     f.diagScroll:SetScrollChild(f.diagContent)
     f.diagText=CreateFrame("EditBox",nil,f.diagContent)
+    f.diagText.optionsPlainText=true
     f.diagText:SetMultiLine(true); f.diagText:SetAutoFocus(false); f.diagText:SetFontObject(T.FontName("GameFontHighlightSmall"))
     f.diagText:SetPoint("TOPLEFT",0,0); f.diagText:SetSize(638,468); f.diagText:SetTextInsets(0,0,0,0); f.diagText:Show()
     f.diagMeasure=label(f.diagContent,"",0,0,"GameFontHighlightSmall",638); f.diagMeasure:Hide()
@@ -2538,6 +2539,7 @@ function B:Options()
     local scroll=CreateFrame("ScrollFrame",nil,diag,"UIPanelScrollFrameTemplate")
     scroll:SetPoint("TOPLEFT",18,-116); scroll:SetSize(654,468); scroll:Hide(); f.discoveryScroll=scroll
     local report=CreateFrame("EditBox",nil,scroll); report:SetMultiLine(true); report:SetAutoFocus(false)
+    report.optionsPlainText=true
     report:SetFontObject("GameFontHighlightSmall"); report:SetWidth(638); report:SetHeight(468)
     report:SetScript("OnEscapePressed",function(control) control:ClearFocus() end)
     scroll:SetScrollChild(report); f.discoveryReport=report

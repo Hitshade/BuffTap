@@ -2,9 +2,9 @@
 local _,B=...
 -- Keep the ten most recent releases within a 24 KiB content ceiling.
 B.PatchNotes={
- {version="1.26.4-beta4",title="Clearer controls and setup choices",items={
-  "Nearby: the higher-rank option has its own space. Return the favor now sits above Mana reserve, which stays at the bottom.",
-  "Diagnostics: fixed overlapping buttons and replaced Print to chat with Select all. Select the displayed text and press Ctrl+C to copy it, including captured reports. Full check-up includes Inspect buffs.",
+ {version="1.26.4-beta5",title="Clearer controls and setup choices",items={
+  "Nearby: the higher-rank option has its own space. Return the favor sits directly below the other list switches. Mana reserve stays at the bottom.",
+  "Diagnostics text blends into the report pane without an extra box or focus border. Select text or use Select all, then press Ctrl+C to copy. Full check-up includes Inspect buffs.",
   "Fresh setup recommends Cleanse, Resurrection, Cleanse before resurrection and SmartShift where they fit your class, even before learning the spells. You can decline each choice. Existing setups stay unchanged unless you select a recommendation."}},
  {version="1.26.4-beta3",title="Shield charges and buff-grades",items={
   "Shamans: My buffs now lets Lightning Shield and Water Shield refresh at one or two charges remaining. This is optional and uses readable information outside combat.",

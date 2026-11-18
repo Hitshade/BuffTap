@@ -426,6 +426,12 @@ end
 -- Text fields: inset dark field with an accent outline while focused.
 function T.EditFocus(edit)
   if not edit or edit.visualFocus then return end
+  -- Copyable report text blends into its existing pane; no inset/focus box.
+  if edit.optionsPlainText then
+    local object=mappedFont(edit:GetFontObject()); if object then edit:SetFontObject(object) end
+    edit:SetTextColor(unpack(T.text))
+    return
+  end
   edit.visualFocus=true; edit.visualFocusable=true; T.Track(edit,"edit")
   if type(edit.SetBackdrop)=="function" then
     T.Round(edit,5,"surface"); edit:SetBackdropColor(unpack(T.field)); edit:SetBackdropBorderColor(unpack(T.border))

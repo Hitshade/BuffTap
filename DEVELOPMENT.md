@@ -1,5 +1,7 @@
 # BuffTap development
 
+Internal **1.26.4-beta5** is an owner-requested visual-only follow-up: Return the favor moves up beside the other list switches, Mana reserve stays in place, and both copyable Diagnostics editors skip inner-box/focus-border styling. No regression tests rerun, as explicitly requested. Prior beta4 validation remains historical. No publication authorized.
+
 ## Issue review workflow
 
 Check [GitHub issues](https://github.com/Hitshade/BuffTap/issues) at the start of development or review work and before each public release. Read relevant comments, assess reports against the current source and Forever client limits, and record what is reproduced, addressed or deferred. Carry applicable issue references and reporter credits into release preparation. Report any inability to complete the check; do not assume no issues exist. Posting replies and closing issues require owner authorization.

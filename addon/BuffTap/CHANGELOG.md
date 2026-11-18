@@ -1,3 +1,10 @@
+# BuffTap 1.26.4-beta5
+
+### Visual-only follow-up
+- Move Return the favor from row 224 to row 196, directly below the other right-column list switches. Mana reserve remains at its beta4 coordinates.
+- Mark both Diagnostics edit boxes as plain report text. The shared styling pass preserves their font/text colour but skips the inset surface and focus-border decoration. Native selection, Ctrl+C, focus handling, report capture and all addon behavior are unchanged.
+- In-game beta4 notes are folded into the beta5 entry, retaining exactly ten versions. No regression tests were run, at the owner's explicit request. The last full run was beta4's 2,676 passes; that is not a new beta5 validation claim. Packaging hashes verify delivery integrity only.
+
 # BuffTap 1.26.4-beta4
 
 ### Options layout and copyable diagnostics

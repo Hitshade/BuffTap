@@ -1,3 +1,10 @@
+# BuffTap 1.26.4-beta5
+
+### Visual polish
+Return the favor now sits directly beneath the other Nearby list switches. Mana reserve stays at the bottom in its existing position.
+
+Diagnostics text appears directly in its report pane, without an extra inner box or coloured focus border. It remains selectable and copyable with **Ctrl+C**, including through **Select all**. This update changes appearance only; regression tests were not rerun at the owner's request.
+
 # BuffTap 1.26.4-beta4
 
 ### Tidier Nearby and Diagnostics controls
