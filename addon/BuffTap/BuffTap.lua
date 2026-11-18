@@ -256,7 +256,7 @@ function B:CreateButton()
     local paused=B:ActionPauseReason(action); if paused then B:Commit(nil,paused); return end
     if not action then return end
     if action.nearby and B.NearbyClickWaiting and B:NearbyClickWaiting(action) then
-      B:Commit(nil,'Nearby waiting for cooldown'); B:RequestRefresh('nearby cooldown click',.05); return
+      B:Commit(nil,'Nearby waiting for cooldown'); B:RequestRefresh('nearby cooldown click',0); return
     end
     if B:HelperSuppressed(action) then B:Commit(nil,"dismissed"); return end
     if action.source=="smartshift" then

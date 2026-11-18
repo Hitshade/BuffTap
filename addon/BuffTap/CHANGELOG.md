@@ -1,3 +1,10 @@
+# BuffTap 1.26.3-beta2
+
+- Replace the rectangular native cooldown presentation with a horizontal, right-anchored StatusBar shade that reveals the successful Nearby confirmation left to right. Raise black shade opacity from 0.18 to 0.22. The visual uses the absolute cooldown deadline, so row redraws do not restart it. Its brief visual-only OnUpdate stops at expiry or hiding; no action selection or secure attributes are written by the animation.
+- Remove the 0.6-second minimum confirmation tail, invented 1.5-second fallback, two-second pending-input lock and 20/30ms expiry padding. Unknown timing grants no fabricated cooldown; pending deduplication is limited to the same input frame. Each later physical press reads live cooldown state. Future public timing blocks Nearby target/restore macros even when `isActive=false`, avoiding accidental queuing across restored targets. Independent real spell cooldowns still apply. No settings migration.
+- Nearby result errors now require the exact player spell failure and unchanged recipient identity; a global UI error alone cannot mark the row failed. Failure callbacks are bound to the original result, canceled on a new attempt or success, and a matching success can replace a provisional failure. Real failures retain their reasons and immediate explicit retry. This reproduces misleading error correlation and contradictory cooldown-flag paths, not the owner's exact live range incident.
+- Validation: **2,321 mocked Lua 5.1 scenarios passed, 0 failed**, including nine new sweep/timing/error-correlation cases. The mock now supplies actual cooldown evidence on successful Nearby casts instead of relying on the removed production fallback. Coverage checks absolute progress, redraws, hide/expiry cleanup, a one-second GCD confirmed near its end, absent timing, ready input without a fixed lock, contradictory cooldown flags and both error-event orders. The owner confirmed beta1's visible effect and reported range errors; beta2 still needs a live recheck.
+
 # BuffTap 1.26.3-beta1
 
 ### Fixed and added

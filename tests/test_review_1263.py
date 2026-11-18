@@ -176,3 +176,60 @@ assert(B.action and B.action.itemID==food.items[1].id)
 test('Lightning in a Bottle is excluded after fresh tooltip removed Well Fed',"""
 for _,item in ipairs(BuffTap:ConsumableFamily('food').items) do assert(item.id~=248613) end
 """)
+
+test('Confirmation sweep follows absolute progress without restarting on redraw', NEAR+CLICK+"""
+B.nearbyEvents.scripts.OnEvent(nil,'UNIT_SPELLCAST_SUCCEEDED','player','cast',act.id)
+local result=B.nearbyResult; local sweep=r.result.gcdSwipe
+assert(sweep.kind=='StatusBar' and sweep:GetValue()>.99)
+now=now+.75; sweep.scripts.OnUpdate(sweep); assert(math.abs(sweep:GetValue()-.5)<.01)
+B:ShowNearbyRowResult(r,result); assert(math.abs(sweep:GetValue()-.5)<.01)
+now=result.untilTime; sweep.scripts.OnUpdate(sweep); assert(not sweep.shown and not sweep.scripts.OnUpdate)
+""")
+test('Hidden or failed confirmations stop the visual sweep immediately', NEAR+CLICK+"""
+B.nearbyEvents.scripts.OnEvent(nil,'UNIT_SPELLCAST_SUCCEEDED','player','cast',act.id)
+local sweep=r.result.gcdSwipe; assert(sweep.scripts.OnUpdate)
+B:ShowNearbyRowResult(r,nil); assert(not sweep.shown and not sweep.scripts.OnUpdate)
+B:ShowNearbyRowResult(r,B.nearbyResult); assert(sweep.scripts.OnUpdate)
+B:ShowNearbyRowResult(r,{state='fail',at=now,untilTime=now+1.5,reason='Out of range'})
+assert(not sweep.shown and not sweep.scripts.OnUpdate)
+""")
+
+test('Nearby short GCD expires exactly, without a minimum display tail', NEAR+CLICK+"""
+local start=now
+C_Spell.GetSpellCooldown=function() return {startTime=start,duration=1,isEnabled=true,isActive=now<start+1} end
+now=start+.95; B.nearbyEvents.scripts.OnEvent(nil,'UNIT_SPELLCAST_SUCCEEDED','player','cast',act.id)
+assert(math.abs(B.nearbyResult.untilTime-(start+1))<.001)
+assert(B:NearbyClickWaiting(act)); now=start+1; assert(not B:NearbyClickWaiting(act))
+""")
+test('Nearby does not invent a cooldown when the API reports none', NEAR+CLICK+"""
+C_Spell.GetSpellCooldown=function() return {startTime=0,duration=0,isEnabled=true,isActive=false} end
+B.nearbyEvents.scripts.OnEvent(nil,'UNIT_SPELLCAST_SUCCEEDED','player','cast',act.id)
+assert(B.nearbyResult.untilTime==now and B.nearbyCastUntil==now)
+assert(not B:NearbyClickWaiting(act))
+""")
+test('Unconfirmed input cannot add a two-second delay after a ready cooldown', NEAR+CLICK+"""
+now=now+.01; assert(not B:NearbyClickWaiting(act),'pending attempt introduced a fixed wait')
+""")
+test('Nearby macro still waits on GCD timing when isActive is false', NEAR+"""
+C_Spell.GetSpellCooldown=function() return {startTime=now,duration=1,isEnabled=true,isActive=false} end
+r.scripts.PreClick(r,'LeftButton',true); assert(not r.attrs.type1 and not B.nearbyCastAttempt)
+""")
+test('Uncorrelated range message cannot mark a successful Nearby cast failed', NEAR+CLICK+"""
+B.nearbyEvents.scripts.OnEvent(nil,'UI_ERROR_MESSAGE',51,'Out of range.')
+assert(B.nearbyResult.state=='pending' and not (r.result and r.result.shown))
+B.nearbyEvents.scripts.OnEvent(nil,'UNIT_SPELLCAST_SUCCEEDED','player','cast',act.id)
+assert(B.nearbyResult.state=='ok' and r.result.shown)
+""")
+test('Matching failure preserves the range reason in either event order', NEAR+CLICK+"""
+B.nearbyEvents.scripts.OnEvent(nil,'UI_ERROR_MESSAGE',51,'Out of range.')
+B.nearbyEvents.scripts.OnEvent(nil,'UNIT_SPELLCAST_FAILED','player','cast',act.id); advance(.11)
+assert(B.nearbyResult.state=='fail' and B.nearbyResult.reason:find('Out of range',1,true))
+""")
+test('Confirmed success overrides a provisional failure and cancels its timer', NEAR+CLICK+"""
+B.nearbyEvents.scripts.OnEvent(nil,'UNIT_SPELLCAST_FAILED','player','cast',act.id)
+B.nearbyEvents.scripts.OnEvent(nil,'UI_ERROR_MESSAGE',51,'Out of range.')
+assert(B.nearbyResult.state=='fail')
+C_Spell.GetSpellCooldown=function() return {startTime=now,duration=1.5,isEnabled=true,isActive=true} end
+B.nearbyEvents.scripts.OnEvent(nil,'UNIT_SPELLCAST_SUCCEEDED','player','cast',act.id)
+assert(B.nearbyResult.state=='ok'); advance(.11); assert(B.nearbyResult.state=='ok')
+""")

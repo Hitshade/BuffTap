@@ -11,6 +11,23 @@ UnitName=function(u) return u:match('^nameplate%d+$') and ('Ally '..u) or oldNam
 platesEnabled=true
 C_CVar={GetCVarBool=function(name) if name=="nameplateShowFriendlyPlayers" then return platesEnabled end end}
 C_NamePlate={GetNamePlates=function() return {{GetUnit=function() return 'nameplate1' end}} end}
+-- Model the game starting a real 1.5s cooldown on successful Nearby casts.
+-- Production code must not invent that timing when the API reports none.
+local nearbyGCD; local oldNearbyCD=C_Spell.GetSpellCooldown
+C_Spell.GetSpellCooldown=function(id)
+  if nearbyGCD and id==nearbyGCD.id and now<nearbyGCD.start+1.5 then
+    return {startTime=nearbyGCD.start,duration=1.5,isEnabled=true,isActive=true}
+  end
+  return oldNearbyCD(id)
+end
+local originalNearbyEvent=BuffTap.nearbyEvents.scripts.OnEvent
+BuffTap.nearbyEvents:SetScript('OnEvent',function(frame,event,unit,message,id)
+  local attempt=BuffTap.nearbyCastAttempt
+  if event=='UNIT_SPELLCAST_SUCCEEDED' and unit=='player' and attempt and attempt.id==id then
+    nearbyGCD={id=id,start=attempt.at}
+  end
+  return originalNearbyEvent(frame,event,unit,message,id)
+end)
 aura('player',5232,'Mark of the Wild'); aura('player',467,'Thorns')
 BuffTap.db.nearbyEnabled=true; refresh()
 """

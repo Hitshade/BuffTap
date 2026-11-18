@@ -1,3 +1,9 @@
+# BuffTap 1.26.3-beta2
+
+The Nearby success confirmation now clears from left to right as the cooldown ends. Its shading is slightly stronger while staying subtle. The sweep and repeated-input guard use the real cooldown without adding a minimum display tail or a fixed pause after your click. When cooldown timing is unavailable, BuffTap does not invent an extra wait. Real spell cooldowns still apply, and every cast needs your input.
+
+Corrected two paths that could contribute to misleading errors while pressing repeatedly: a running cooldown could be missed when its flag disagreed with its timing, and an unrelated game error could mark a pending row failed. Nearby now requires a matching spell failure, and a matching success clears a provisional failure. Genuine failures still show their reason. The exact reported in-game range incident needs a live recheck. Settings and the beta1 changes below are retained.
+
 # BuffTap 1.26.3-beta1
 
 ### Resurrection and SmartShift

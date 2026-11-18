@@ -2,11 +2,12 @@
 local _,B=...
 -- Keep the ten most recent releases within a 24 KiB content ceiling.
 B.PatchNotes={
- {version="1.26.3-beta1",title="Resurrection, cleansing and food fixes",items={
+ {version="1.26.3-beta2",title="Resurrection, cleansing and food fixes",items={
   "Druids: Resurrection now includes Revive at every rank. You can leave Also use Rebirth off and still resurrect with Revive.",
   "Helpers > Tracking: Druids can choose Track Humanoids and Warlocks can choose Sense Demons before learning them. Actual use still needs the spell, and Druid tracking needs Cat Form.",
   "Resurrection reminders check again when a dead group member returns into range. SmartShift can now offer your previous form after a successful cleanse.",
-  "Nearby: a cooldown sweep appears over successful confirmations. Repeated presses wait through the cooldown without replacing the confirmation with a spell-not-ready error. Every cast still needs a new press.",
+  "Nearby: a slightly clearer cooldown sweep moves left to right over successful confirmations and follows the cooldown without extra waiting time. Repeated presses wait for the real cooldown; every cast still needs a new press.",
+  "Nearby no longer labels a cast failed from an unrelated game error alone. Matching successful casts clear provisional failure messages.",
   "Added 15 missing foods, including Goblin Deviled Clams, Clamlette Surprise and seasonal treats. Find them under Consumables > Food > Choose."},thanks="Thanks to shaunpearsondev for reporting the missing Goblin Deviled Clams."},
  {version="1.26.2",title="Smooth buffing reminder fix",items={
   "Fixed an edge case introduced with smooth buffing that let repeated reminder sounds slip through while moving between class buffs or briefly waiting for buff updates.",
