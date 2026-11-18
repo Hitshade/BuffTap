@@ -4,7 +4,7 @@
 
 local _, B = ...
 _G.BuffTap = B
-B.version = "1.26.3"
+B.version = "1.26.4-beta1"
 B.API = {}
 local A = B.API
 
@@ -1980,6 +1980,28 @@ function B:ScanMissing(b,entries,scans,scanErrors,rebuffSeconds)
   return missing
 end
 
+-- Broadcasts also reach covered recipients outside the missing bucket. Keep
+-- explicit recipient policy and unknown effect state equivalent to singles.
+local function groupRecipientSafe(self,b,entry,scans,scanErrors)
+  if not self:RecipientAllowed(b,entry) then return false,"recipient excluded" end
+  -- A known corpse cannot receive this buff; do not require a corpse aura scan.
+  if A.Call(UnitIsDeadOrGhost,entry.unit)==true then return true end
+  if not scans[entry.unit] and not scanErrors[entry.unit] then
+    scans[entry.unit],scanErrors[entry.unit]=self:GetAuras(entry.unit,false,true)
+  end
+  local auras=scans[entry.unit]
+  if not auras then return false,"buff information unavailable" end
+  if auras.incomplete then
+    local action=self:Resolve(b,entry.unit)
+    local _,why
+    if action then _,why=self:Missing(b,action,auras) end
+    -- Preserve verified positive coverage even when an unrelated aura cannot
+    -- be read. An incomplete scan cannot establish an absent/expiring effect.
+    if not why or not why:find("^present") then return false,"buff information incomplete" end
+  end
+  return true
+end
+
 function B:Select()
   if self.stats then self.stats.selects=(self.stats.selects or 0)+1 end
   self.nextWakeDelay=nil
@@ -2147,11 +2169,15 @@ function B:Select()
         end
         local keys={}; for key in pairs(buckets) do keys[#keys+1]=key end; table.sort(keys)
         for _,key in ipairs(keys) do
-          local bucket=buckets[key]; local safe=true
+          local bucket=buckets[key]; local safe=#bucket>=self:BlessingGroupNeed(groupDef)
           -- A group cast would also hit recipients whose reminder was dismissed.
           for _,entry in ipairs(roster) do
             local affected=(b.kind=="blessing" or b.classWide) and entry.class==key or (b.kind~="blessing" and not b.classWide) and entry.group==key
             if affected and self.HelperSuppressed and self:HelperSuppressed({key=b.key,target=entry.unit,targetGUID=A.Call(UnitGUID,entry.unit)}) then safe=false end
+            if affected and safe then
+              local allowed,why=groupRecipientSafe(self,b,entry,scans,scanErrors)
+              if not allowed then safe=false; self:AddDiag(groupDef.key.." group blocked -> "..entry.unit..": "..why) end
+            end
           end
           if blessingPlan and b.kind=="blessing" and not self:BlessingGreaterSafe(b.key,key,roster) then safe=false end
           if b.kind=="blessing" then

@@ -1,3 +1,16 @@
+# BuffTap 1.26.4-beta1
+
+### Nearby combat safety
+Corrected the combat safeguard on Nearby row buttons so their prepared casts are cleared when combat begins. Their layout and the recent cooldown feedback stay the same.
+
+### Group buffs follow your choices
+Turning **Also on me** off now prevents a group cast that would include you. BuffTap can still use a group buff for another raid subgroup. When an affected member's buff information cannot be verified, it falls back to eligible single-target buffs. Readable, already-covered members do not unnecessarily block a group cast.
+
+### Demonic Pact pet recovery
+Warlocks with **Demonic Pact** can receive a reminder to summon their chosen different demon while a sacrifice effect is active. Summoning the sacrificed demon, including its equivalent form, remains withheld to protect that effect. Existing pet choices, Soul Link upkeep and normal casting requirements are retained. No new setup is needed.
+
+Your settings and appearance are preserved. This beta needs in-game checking of combat transitions and Warlock talent detection. If Pact ownership cannot be verified, the reminder keeps the protective sacrifice behavior.
+
 # BuffTap 1.26.3
 
 ### Smoother Nearby feedback

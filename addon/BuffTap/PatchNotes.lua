@@ -2,6 +2,10 @@
 local _,B=...
 -- Keep the ten most recent releases within a 24 KiB content ceiling.
 B.PatchNotes={
+ {version="1.26.4-beta1",title="Safer group buffs and pet reminders",items={
+  "Nearby buttons now clear their prepared casts reliably when combat starts.",
+  "Group buffs respect Also on me being turned off. If an affected member's buff information cannot be verified, BuffTap offers single buffs where possible.",
+  "Warlocks with Demonic Pact: pet reminders can offer your chosen different demon while a sacrifice effect is active. Summoning the sacrificed demon stays withheld to protect that effect."}},
  {version="1.26.3",title="Resurrection, cleansing and food fixes",items={
   "Druids: Resurrection now includes Revive at every rank. You can leave Also use Rebirth off and still resurrect with Revive.",
   "Helpers > Tracking: Druids can choose Track Humanoids and Warlocks can choose Sense Demons before learning them. Actual use still needs the spell, and Druid tracking needs Cat Form.",
@@ -60,11 +64,6 @@ B.PatchNotes={
   "Full check-up reports now also leave out your Oath of Light and Soulstone targets. Your own settings export still keeps them.",
   "Remembered players from an imported settings string are checked, so a damaged string cannot break the Groups page.",
   "Full check-up now shows the correct instance type in dungeons and raids."}},
- {version="1.24.4",title="Supplies gets its own page",items={
-  "Supplies now has its own page in the sidebar, right under Consumables, with its own status light and a Customize look button. Your tracked items and settings are unchanged.",
-  "A reminder that Supplies can track anything you carry: class reagents, ammo, seeds, profession materials, whatever you like. Drag an item from your bags onto the list, or add it by name, and BuffTap warns you when you run low.",
-  "The Consumables light now follows only \"Enable consumable reminders\", so it no longer shows green when only supply warnings are on.",
-  "The switches on the Supplies page now line up in neat columns."}},
 }
 function B:PatchNotesUnread()
   return self.profileDB and self.db.optionsPatchDot~=false and self.profileDB.global.patchNotesSeen~=self.version

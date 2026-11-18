@@ -33,7 +33,14 @@ local stoneCreation={
 }
 local weaponStoneItems={}
 for _,ranks in pairs(stoneCreation) do for _,entry in ipairs(ranks) do weaponStoneItems[entry[2]]=true end end
-local sacrifice={[18789]=true,[18790]=true,[18791]=true,[18792]=true}
+-- Forever Demonic Pact permits a different demon, but the sacrificed family
+-- still cancels its effect. Succubus and Incubus share that family.
+local sacrifice={
+  [18789]={[688]=true},[18790]={[691]=true},
+  [18791]={[712]=true,[713]=true},[18792]={[697]=true},
+}
+local demonIDs={}; for _,id in ipairs(demons) do demonIDs[id]=true end
+local DEMONIC_PACT=425464 -- verified Forever talent; not the unrelated wrapper record
 local commonEvents={"UNIT_SPELLCAST_START","UNIT_SPELLCAST_STOP","UNIT_SPELLCAST_DELAYED",
   "UNIT_SPELLCAST_CHANNEL_START","UNIT_SPELLCAST_CHANNEL_STOP","UNIT_ENTERED_VEHICLE","UNIT_EXITED_VEHICLE",
   "PLAYER_STARTED_MOVING","PLAYER_STOPPED_MOVING","PLAYER_UNGHOST"}
@@ -213,13 +220,16 @@ function B:PetReadinessCandidate()
   end
   local auras=self:GetAuras("player",false)
   if not auras then return nil,"intentional petless state unreadable" end
+  local id=self.db.helperDemon
+  local pact=A.Known(DEMONIC_PACT) or A.Call(IsPlayerSpell,DEMONIC_PACT)==true
   for _,aura in ipairs(auras) do
     if A.Number(aura.spellId) and sacrifice[aura.spellId] then
-      if A.Number(aura.expirationTime) and aura.expirationTime>GetTime() then self:ConsiderWake(aura.expirationTime-GetTime()+.1) end
-      return nil,"Demonic Sacrifice active"
+      if not pact or not demonIDs[id] or not A.Known(id) or sacrifice[aura.spellId][id] then
+        if A.Number(aura.expirationTime) and aura.expirationTime>GetTime() then self:ConsiderWake(aura.expirationTime-GetTime()+.1) end
+        return nil,"Demonic Sacrifice active"
+      end
     end
   end
-  local id=self.db.helperDemon
   for _,entry in ipairs(self:ReadinessDemons()) do
     if entry.id==id then return self:ReadinessSpell("pet",id,"summon your preferred demon while no living pet is present") end
   end

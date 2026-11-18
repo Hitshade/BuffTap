@@ -1,3 +1,17 @@
+# BuffTap 1.26.4-beta1
+
+### Corrected audit findings
+- `Nearby.lua`: row buttons now inherit `SecureHandlerStateTemplate` alongside `SecureActionButtonTemplate`, connecting the registered combat state to the existing clearing snippet. The earlier tests executed the snippet directly and missed its absent callback wiring. Rows whose state-driver registration errors or explicitly fails remain disarmed, including PreClick. Parent visibility, row layout, ordinary main-button safeguards, macros and GCD/error handling are preserved.
+- `Engine.lua`: the affected-recipient group preflight now uses existing recipient policy, including `SelfRecipientAllowed`, so a broadcast cannot bypass `buffSelf=false`. Checks apply to the actual existing subgroup/class bucket; a cast in another raid subgroup remains permitted when the player is outside that affected set.
+- Covered recipients outside the missing bucket must also have verifiable applicable buff information. Unavailable/incomplete absence evidence causes single-target fallback. Known-positive equivalent coverage survives an unrelated restricted aura. Known corpses do not require helpful-aura scans. Existing scans/errors are reused within selection, and click-time `RevalidateGroupAction` reuses this selection path. Rank counts, thresholds, assignments and reagent checks are retained; captured diagnostics explain the new blocker.
+- `Readiness.lua`: verified Forever Demonic Pact 425464 permits the already-selected different demon while a sacrifice aura is present. Ownership requires a public positive from `C_SpellBook.IsSpellKnown` or `IsPlayerSpell`. Unknown/unlearned ownership retains the existing conservative guard. Sacrifice-to-summon family mappings preserve Imp, Voidwalker, Felhunter and the shared Succubus/Incubus family. Removing Pact or changing the selected family is rechecked at explicit input. Existing shard, movement, identity, cooldown and pet-lifecycle checks remain authoritative. No maintained sacrifice spell, automatic demon preference change or new control.
+- Current primary evidence: Forever Pact tooltip and build 70938 Spell records; native state-handler wiring checked against Forever UI mirror commit 3d8abb1da73acd38e412e24fb3f99454a6392346. The separate 425473 wrapper is not used as a capability signal.
+
+### Compatibility and validation
+- UI layout, appearance, Solo/Party/Raid inheritance, existing preference order, Manual consumables and all saved-variable formats are preserved. No new event subscription or recurring polling, automatic cast, target or item use.
+- Final mocked Lua 5.1 release suite: **2,419 passed, 0 failed**. All 65 audit probes pass, including the five failing acceptance cases from unchanged 1.26.3. Another 33 checks cover native state delivery and ready-state behavior, registration failure, Party/Raid self exclusion, another raid subgroup, healthy/partially readable coverage, corpses, click-time changes, Greater Blessings, all supported sacrifice/demon pairings, Pact ownership/removal and retained shard requirements. New module is imported by the release runner.
+- No live Forever validation claimed. Native combat delivery and passive-talent ownership need owner testing; unknown Pact information continues to suppress potentially destructive resummons.
+
 # BuffTap 1.26.3
 
 ### Nearby confirmations and timing

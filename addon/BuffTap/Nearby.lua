@@ -1074,7 +1074,7 @@ function B:NearbyDisplayList(list)
 end
 function B:SetNearbyRowPayload(row,action)
   if action and action.situationRevision==nil then action.situationRevision=self.situationRevision or 0 end
-  local ready=action and action.ready~=false
+  local ready=action and action.ready~=false and row.nearbySafetyReady==true
   local macro=ready and action.macroText or nil
   local spell=ready and action.nearbyGroup and action.id or nil
   local unit=spell and action.target or nil
@@ -1198,13 +1198,15 @@ function B:CreateNearbyWindow()
   end)
   f.rows={}
   for i=1,MAX_UNITS do
-    local row=CreateFrame("Button","BuffTapNearbyRow"..i,c,"SecureActionButtonTemplate")
+    local row=CreateFrame("Button","BuffTapNearbyRow"..i,c,"SecureActionButtonTemplate,SecureHandlerStateTemplate")
     f.rows[i]=row; row:SetSize(WIDTH,20); row:SetPoint("TOPLEFT",0,-25-(i-1)*ROW_HEIGHT)
     row:RegisterForClicks("AnyDown","AnyUp"); row:SetAttribute("useOnKeyDown",true)
     -- Combat safety: clear the row's cast the moment combat starts, so the Nearby key (an
     -- override binding that can click a hidden button) can never cast a stale buff in combat.
     row:SetAttribute("_onstate-nearbysafety",[[if newstate=="blocked" then self:SetAttribute("type1",nil); self:SetAttribute("macrotext",nil); self:SetAttribute("spell",nil); self:SetAttribute("unit",nil) end]])
-    if type(RegisterStateDriver)=="function" then pcall(RegisterStateDriver,row,"nearbysafety","[combat] blocked; ready") end
+    local stateOK,stateResult=pcall(RegisterStateDriver,row,"nearbysafety","[combat] blocked; ready")
+    row.nearbySafetyReady=stateOK and stateResult~=false
+    if not row.nearbySafetyReady then self.nearbySetupError="Secure Nearby row safety unavailable" end
     row.wash=wash(row,"BACKGROUND",.055,.075,.095,.34); row.wash:SetAllPoints()
     row.hover=wash(row,"HIGHLIGHT",.75,.60,.25,.17); row.hover:SetAllPoints()
     row.marker=wash(row,"BACKGROUND",.75,.60,.25,.075); row.marker:SetAllPoints()
@@ -1281,6 +1283,7 @@ function B:CreateNearbyWindow()
     row:SetScript("PreClick",function(button,mouse,down)
       if A.Combat() then return end
       local action=button.action; self:SetNearbyRowPayload(button,nil)
+      if not button.nearbySafetyReady then return end
       if mouse=='LeftButton' and self:NearbyClickWaiting(action) then return end
       local failed=self.nearbyResult
       if action and failed and failed.state=="fail" and failed.action==action then
