@@ -101,3 +101,6 @@ Exact-instance PLAYER ownership queries, conservative partial buff scans and sup
 ## 1.16.0 Nearby release
 
 Nearby.lua owns the fixed compact list, bounded nameplate tracking, exact-name secure cast/restore payloads, per-spell range heartbeat and nearby-only stronger-effect handling. Helpers.lua and Engine.lua share bounded post-cast aura freshness with normal buffing. No new artwork or dependencies. Run `python tests/run_release.py` for the full suite (1,183 scenarios). Scanning remains optional, out of combat and limited to friendly player nameplates.
+
+## 1.26.7 stable preparation, 2026-11-18
+Owner authorized publication and a thank-you reply to jimbo1111. Promote tested beta5 without behavior changes. Rewrote final technical and intermediate notes; retained simple in-game notes and reporter credit. GitHub issues reviewed: no new open reports. Beta5 evidence: 2,881 integrated mocked checks and 98 focused checks passed. Release archive omits five unregistered rejected prototype recordings without deleting source files.

@@ -2,14 +2,14 @@
 local _,B=...
 -- Keep the ten most recent releases within a 24 KiB content ceiling.
 B.PatchNotes={
- {version="1.26.7-beta5",title="Choose which reminders you hear",items={
+ {version="1.26.7",title="Choose which reminders you hear",items={
   "Right-click a buff speaker to choose its own sound. Personal, Party and Raid choices stay separate. Use default follows the Reminder sound category; Preview never changes your selection.",
   "Sound lists open at your current choice, with smoother scrolling. Reduce animation makes scrolling immediate. The ten new custom sounds are slightly louder.",
   "Ten new fantasy sounds, including Crystal chime, Elven harp and Holy light. Preview them under Customization > Binding & sound. Their volume is matched to BuffTap's existing sounds.",
   "My buffs now has a speaker button beside each buff. Mute Aquatic Form, for example, while keeping Mark and Thorns audible. Your reminder icon and binding keep working.",
   "Party and Raid have separate speaker buttons at the top right of each buff box. Enabled speakers use your accent colour. Paladins can open Buff sounds beside the Party and Raid tabs.",
   "Customization > Binding & sound now has a speaker button for each sound category. Reminder, Supply, Camp, Cleanse and Friend sounds can be enabled separately. Preview still plays when a category is muted.",
-  "Hover a speaker or muted reminder to see what is silent. All enabled reminders use the existing default sound for their category. SmartShift and active buffing queues stay quiet.",
+  "Hover a speaker or muted reminder to see what is silent. Enabled reminders use their category default unless customized. SmartShift and active buffing queues stay quiet.",
   "New players who choose alert sounds in setup enable all sound categories. This does not turn on optional reminder features.",
   "Druids and Priests now use Abolish Poison or Abolish Disease when learned, falling back to Cure beforehand. The unnecessary conditional Abolish switch has been removed."},thanks="Thanks to jimbo1111 for pointing out the equal-cost Cure and Abolish choice."},
  {version="1.26.6",title="Quieter pauses and tidier reminders",items={

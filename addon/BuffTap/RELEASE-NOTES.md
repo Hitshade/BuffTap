@@ -1,33 +1,21 @@
-# BuffTap 1.26.7-beta5
+# BuffTap 1.26.7
 
-Enabled speakers now light up in your selected accent colour, while muted speakers stay grey. Party and Raid use the same compact speaker buttons at the top right of the selected buff box.
+### Choose which buffs you hear
+My buffs now has a speaker beside each buff. Left-click to mute or unmute that reminder while keeping its icon and binding available. Right-click to choose a custom sound in a searchable editor, with separate Preview buttons. **Use default** follows your Reminder sound choice.
 
-### A sound for each buff
-Right-click a speaker in My buffs or Groups to open a searchable sound editor. The title identifies the buff and Personal, Party or Raid scope. Select **Use default** to follow the Reminder category, or pick a custom sound. Separate Preview buttons let you listen without changing your selection. Left-click still toggles sound, and muting keeps your custom choice.
+Personal, Party and Raid preferences are independent. Under Groups, use the speaker at the top right of the selected buff. Paladins use **Buff sounds** beside the Party/Raid tabs. A buff's single and group versions share its group sound preference. Enabled speakers use your accent colour; tooltips explain their scope and controls.
 
-Lists open at your current selection and scroll in smaller, smoother steps. Reduce animation keeps scrolling immediate. The ten new recordings are also slightly louder following testing feedback.
+### Independent default sounds
+Under **Customization > Binding & sound**, Reminder, Supply, Camp, Cleanse and Friend sounds each have their own speaker switch. Previews remain available while muted. Existing choices are retained. New players choosing alert sounds enable all five sound permissions, without turning on optional features.
 
-### Ten new custom sounds
-Preview **Crystal chime**, **Elven harp**, **Holy light**, **Fairy ping**, **Celestial lift**, **Soft glow**, **Moonlit bells**, **Gentle harp**, **Warm welcome** and **Lullaby ping** under Customization > Binding & sound. These owner-created sounds replace the earlier experimental additions. Each lasts just under a second, with volume matched to the existing set while preserving stereo.
+Ten new brief fantasy sounds include Crystal chime, Elven harp, Holy light, Fairy ping, Celestial lift, Soft glow, Moonlit bells, Gentle harp, Warm welcome and Lullaby ping. Sound lists open at the current choice and scroll more smoothly; Reduce animation keeps scrolling immediate.
 
-Your existing shipped sound choices stay selected. A choice from the rejected experimental beta set moves to a corresponding new sound. The Paladin Buff sounds button also aligns with Casting.
+### Simpler cleansing
+Druids and Priests now prefer learned Abolish Poison or Abolish Disease automatically. Each costs the same base mana as its Cure counterpart and continues removing effects afterward. Cure remains the fallback before Abolish is learned. The unnecessary conditional preference has been replaced by an explanation.
 
-### Hear the reminders you want
-Use the speaker beside each entry in **My buffs** to silence that personal buff. Its icon and binding stay available. Personal preferences apply whether you are solo or grouped; they do not silence reminders to buff other players.
+Thanks to **jimbo1111** for pointing out the equal-cost Cure/Abolish choice.
 
-Under **Groups**, Party and Raid each have their own speaker button for the selected buff, covering its single and group versions. Paladins use **Buff sounds** beside the Party/Raid tabs. Existing buff sounds start enabled.
-
-### Separate category controls
-**Customization > Binding & sound > Default sounds** has a speaker beside every Preview button. Turn ordinary Reminder, Supply, Camp, Cleanse and Friend sounds on or off independently. The old bottom sound switch is gone. Your existing choices are retained, and previews can still be heard while muted.
-
-These are the default sounds used by enabled reminders in each category. Per-buff custom sounds override the Reminder default only where you choose them. Speaker and reminder tooltips explain muted sounds; SmartShift returns and ongoing smooth-buffing sequences retain their quiet behavior.
-
-New users choosing alert sounds in setup enable all five sound categories. This only grants sound permission: Camping, Supplies and friend/guild notifications still follow their own feature switches and normal restrictions. This beta is for local testing; live layout review remains with the owner.
-
-### Simpler Druid and Priest cleansing
-Once learned, Abolish Poison and Abolish Disease replace their Cure counterpart in BuffTap's choices. Each pair costs the same base mana, while Abolish also keeps removing effects afterward. Cure remains available before learning Abolish. The conditional preference switch has been replaced by an explanation of this automatic choice.
-
-Thanks to jimbo1111 for spotting the unnecessary Cure/Abolish distinction.
+SmartShift returns and active smooth-buffing queues stay quiet. Sound choices do not change casting, and every cast still requires your input.
 
 # BuffTap 1.26.6
 
