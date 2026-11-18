@@ -1,9 +1,11 @@
-# BuffTap 1.26.7-beta1
+# BuffTap 1.26.7-beta2
+
+Enabled speakers now light up in your selected accent colour, while muted speakers stay grey. Party and Raid use the same compact speaker buttons at the top right of the selected buff box.
 
 ### Hear the reminders you want
 Use the speaker beside each entry in **My buffs** to silence that personal buff. Its icon and binding stay available. Personal preferences apply whether you are solo or grouped; they do not silence reminders to buff other players.
 
-Under **Groups**, Party and Raid each have their own **Reminder sound** switch for the selected buff, covering its single and group versions. Paladins use **Buff sounds** beside the Party/Raid tabs. Existing buff sounds start enabled.
+Under **Groups**, Party and Raid each have their own speaker button for the selected buff, covering its single and group versions. Paladins use **Buff sounds** beside the Party/Raid tabs. Existing buff sounds start enabled.
 
 ### Separate category controls
 **Customization > Binding & sound > Default sounds** has a speaker beside every Preview button. Turn ordinary Reminder, Supply, Camp, Cleanse and Friend sounds on or off independently. The old bottom sound switch is gone. Your existing choices are retained, and previews can still be heard while muted.

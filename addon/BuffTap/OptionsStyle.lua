@@ -19,6 +19,19 @@ B.OptionsTheme=T
 local tracked=setmetatable({}, {__mode="k"})
 function T.Track(control,kind) tracked[control]=kind end
 local function accent() return T.accent[1],T.accent[2],T.accent[3] end
+-- Sound controls share one state-aware glyph and repaint with the active theme.
+function T.SoundSpeaker(control,on)
+  control.soundOn=on==true
+  if not control.glyph then
+    control.glyph=control:CreateTexture(nil,"ARTWORK"); control.glyph:SetSize(18,18); control.glyph:SetPoint("CENTER")
+  end
+  local glyph=control.glyph; glyph.soundEnabled=control.soundOn
+  glyph:SetTexture(MEDIA..(control.soundOn and "UISpeaker" or "UISpeakerMuted"))
+  local color=control.soundOn and T.accent or T.muted
+  glyph:SetVertexColor(color[1],color[2],color[3],1)
+  T.Track(glyph,"soundSpeaker")
+end
+
 
 -- Typography: Inter (SIL Open Font License, Media/Fonts/OFL-Inter.txt), with Arial Narrow as a fallback.
 local FONT_DIR=MEDIA.."Fonts\\Inter-"
@@ -676,6 +689,8 @@ function T.Refresh()
     elseif kind=="edit" or kind=="button" then paint(control)
     elseif kind=="primary" then control:SetBackdropColor(r,g,b,1); control:SetBackdropBorderColor(r,g,b,1)
     elseif kind=="slider" then if control.visualRepaint then control.visualRepaint() end
+    elseif kind=="soundSpeaker" then
+      local color=control.soundEnabled and T.accent or T.muted; control:SetVertexColor(color[1],color[2],color[3],1)
     elseif kind=="accentIcon" then control:SetVertexColor(r,g,b,1)
     elseif kind=="rule" then control:SetColorTexture(unpack(T.rule))
     end

@@ -1,4 +1,7 @@
-# BuffTap 1.26.7-beta1
+# BuffTap 1.26.7-beta2
+
+### Beta 2 visual polish
+- State-aware speaker glyphs use the active accent when enabled and muted grey when off, including live theme repaint. Standard Party/Raid sound switches become 26-unit speaker buttons at the selected card's top right, with header width reserved to avoid overlap. Paladin sound-list controls use matching speakers. No sound policy or saved-setting changes. Beta 2 focused validation: 78 passed, 0 failed, including icon tint and top-right geometry; tests/buff-alerts-1267-beta2-focused.txt. The full 2,838-case beta1 result below is retained; no full rerun for this visual-only change.
 
 ### Scoped buff sound controls
 - Adds character/class `buffAlerts` schema version 1, keyed by personal/party/raid and canonical single-buff family. Missing records inherit enabled/default playback. My buffs has a speaker control for personal maintenance across all personal situation setups. Group selected-buff cards control external Party/Raid recipients and group casts independently; Paladin assignment UI uses a context-specific Buff sounds panel. Unlearned class-applicable spells remain configurable.

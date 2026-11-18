@@ -22,3 +22,5 @@ The selection now prefers learned Abolish and falls back to Cure before learning
 - Reload to check persistence. Druid/ Priest Cleanse page explains automatic Abolish and no longer has a conditional switch.
 
 Integrated mocked Lua 5.1 validation passed 2,838 cases with no recorded failures. The final focused run passed 76 cases, including three geometry/copy checks added after the full run began. Seven focused Lua modules and nine affected Lua files compiled; all five release identities and the ten-entry/24-KiB in-game notes limit were checked. Mock construction cannot verify in-game font metrics or sound audibility.
+
+Beta 2 visual follow-up: enabled speakers track the active accent, muted speakers use grey; the shared theme refresh repaints both states. Party/Raid selected-buff headers reserve space for a top-right 26-unit speaker. Paladin sound-list entries use matching speakers. 78 focused cases passed, including tint and bounds; beta1 full validation retained. Live appearance remains owner-verified.

@@ -478,9 +478,11 @@ function B:ToggleBlessingSounds()
     p.title=label(p,"",18,-16,"GameFontNormalLarge",360); p.checks={}
     for i,key in ipairs(self.BlessingFamilies) do
       local def=self:FindBuff(key)
-      local c=check(p,spellLabel(def),18,-48-(i-1)*32,function(c)
-        if B:SetBuffAlertEnabled(p.context,key,c:GetChecked()==true) then c:SetChecked(B:BuffAlertEnabled(p.context,key)) end
+      label(p,spellLabel(def),18,-51-(i-1)*32,"GameFontHighlightSmall",326)
+      local c=button(p,"",354,-44-(i-1)*32,28,function(c)
+        if B:SetBuffAlertEnabled(p.context,key,not B:BuffAlertEnabled(p.context,key)) then T.SoundSpeaker(c,B:BuffAlertEnabled(p.context,key)) end
       end)
+      c:SetHeight(26)
       c:SetScript("OnEnter",function(c) T.Tooltip(c,L("Group reminder sound"),B:BuffAlertTooltip(p.context,key)) end)
       c:SetScript("OnLeave",function() if GameTooltip then GameTooltip:Hide() end end)
       p.checks[key]=c
@@ -491,7 +493,7 @@ function B:ToggleBlessingSounds()
   local p=f.blessingSounds; p.context=self:EditingGroupContext():lower()
   if f.activeSelector and f.activeSelector~=p then f.activeSelector:Hide() end; f.activeSelector=p
   p.title:SetText(L(p.context=="raid" and "Raid buff sounds" or "Party buff sounds"))
-  for key,c in pairs(p.checks) do c:SetChecked(self:BuffAlertEnabled(p.context,key)) end
+  for key,c in pairs(p.checks) do T.SoundSpeaker(c,self:BuffAlertEnabled(p.context,key)) end
   p:Show()
 end
 function B:BuildBlessingOptions(parent)
@@ -2675,11 +2677,13 @@ function B:Options()
       if not row then
         row=CreateFrame("Frame",nil,f.assignChild); row:SetSize(458,288); row.visualInsetX=8 -- the surrounding card is the only surface
         row.icon=row:CreateTexture(nil,"ARTWORK"); row.icon:SetSize(32,32); row.icon:SetPoint("TOPLEFT",8,-4)
-        row.name=label(row,"",48,-5,"GameFontNormalLarge",402)
-        row.detail=label(row,"",48,-29,"GameFontDisableSmall",240)
-        row.sound=check(row,"Reminder sound",304,-25,function(c)
-          if row.def and B:SetBuffAlertEnabled(B:EditingGroupContext():lower(),row.def,c:GetChecked()==true) then B:Options() end
+        row.name=label(row,"",48,-5,"GameFontNormalLarge",366)
+        row.detail=label(row,"",48,-29,"GameFontDisableSmall",402)
+        row.sound=button(row,"",424,-4,26,function(c)
+          local context=B:EditingGroupContext():lower()
+          if row.def and B:SetBuffAlertEnabled(context,row.def,not B:BuffAlertEnabled(context,row.def)) then B:Options() end
         end)
+        row.sound:SetHeight(26)
         row.sound:SetScript("OnEnter",function(c) if row.def then T.Tooltip(c,L("Group reminder sound"),B:BuffAlertTooltip(B:EditingGroupContext():lower(),row.def)) end end)
         row.sound:SetScript("OnLeave",function() if GameTooltip then GameTooltip:Hide() end end)
         row.groupHeading=label(row,L("Raid groups"),8,-60,"GameFontNormal")
@@ -2751,7 +2755,7 @@ function B:Options()
         end)
         f.assignRows[rowIndex]=row
       end
-      row.def=b; row.sound:SetChecked(self:BuffAlertEnabled(B:EditingGroupContext():lower(),b)); row:ClearAllPoints(); row:SetPoint("TOPLEFT",8,-6); row:SetShown(f.selectedAssignment==b.key); row.name:SetText(spellLabel(b)); row.icon:SetTexture(buffIcon(b))
+      row.def=b; T.SoundSpeaker(row.sound,self:BuffAlertEnabled(B:EditingGroupContext():lower(),b)); row:ClearAllPoints(); row:SetPoint("TOPLEFT",8,-6); row:SetShown(f.selectedAssignment==b.key); row.name:SetText(spellLabel(b)); row.icon:SetTexture(buffIcon(b))
       local select=f.assignButtons[rowIndex]
       if not select then
         select=flatButton(f.assignList,"",0,-(rowIndex-1)*42,174,function(btn) f.selectedAssignment=btn.def.key; B:Options() end)
@@ -3139,7 +3143,7 @@ function B:Options()
       local groupDef=self:FindBuff(b.groupKey)
       row.detail:SetText((groupName or (groupDef and spellLabel(groupDef)) or L("group spell"))..": "..unlearnedText())
     end
-    row.sound.glyph:SetTexture(T.media..(self:BuffAlertEnabled("personal",b) and "UISpeaker" or "UISpeakerMuted"))
+    T.SoundSpeaker(row.sound,self:BuffAlertEnabled("personal",b))
     row.up:SetEnabled(visible>1); row.down:SetEnabled(visible<#list)
     row.order.text:SetText(tostring(visible))
     -- Without its own timing, show what the buff really gets: its length decides (see DefaultRebuffSeconds).

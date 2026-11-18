@@ -2,9 +2,9 @@
 local _,B=...
 -- Keep the ten most recent releases within a 24 KiB content ceiling.
 B.PatchNotes={
- {version="1.26.7-beta1",title="Choose which reminders you hear",items={
+ {version="1.26.7-beta2",title="Choose which reminders you hear",items={
   "My buffs now has a speaker button beside each buff. Mute Aquatic Form, for example, while keeping Mark and Thorns audible. Your reminder icon and binding keep working.",
-  "Party and Raid have separate sound switches for each buff under Groups. Paladins can open Buff sounds beside the Party and Raid tabs.",
+  "Party and Raid have separate speaker buttons at the top right of each buff box. Enabled speakers use your accent colour. Paladins can open Buff sounds beside the Party and Raid tabs.",
   "Customization > Binding & sound now has a speaker button for each sound category. Reminder, Supply, Camp, Cleanse and Friend sounds can be enabled separately. Preview still plays when a category is muted.",
   "Hover a speaker or muted reminder to see what is silent. All enabled reminders use the existing default sound for their category. SmartShift and active buffing queues stay quiet.",
   "New players who choose alert sounds in setup enable all sound categories. This does not turn on optional reminder features.",
