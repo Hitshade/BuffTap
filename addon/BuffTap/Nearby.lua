@@ -112,6 +112,7 @@ function B:PrepareNearbyCast(action)
 end
 function B:NoteNearbyClick(action)
   self.nearbyClickAt=GetTime(); self.nearbyClickError=nil
+  self.nearbyCastAttempt=action and {id=action.id,unit=action.target,guid=action.targetGUID,at=GetTime()} or nil
   self:NoteNearbyResult(action)
   if action then
     self.buffCastAttempt={id=action.id,unit=action.target,guid=action.targetGUID,at=GetTime()}
@@ -138,6 +139,26 @@ local function gcdEnds(id,at)
   end
   return math.max((at or now)+GCD,now+.6)
 end
+-- Nearby casts use a target/restore macro. Do not repeatedly execute it during
+-- an active cooldown; a later physical press can cast once ready. No timer casts.
+function B:NearbyClickWaiting(action)
+  local now=GetTime()
+  if self.nearbyCastUntil and now<self.nearbyCastUntil then return true end
+  local attempt=self.nearbyCastAttempt
+  if attempt and now-attempt.at<2 then return true end
+  if not action or not A.Number(action.id) then return false end
+  local cd=A.Call(C_Spell and C_Spell.GetSpellCooldown,action.id)
+  if type(cd)~='table' then return false end -- the normal validator rejects unknown data
+  local timing=A.Number(cd.startTime) and A.Number(cd.duration)
+  local active
+  if A.Public(cd.isActive) and type(cd.isActive)=='boolean' then active=cd.isActive
+  else active=timing and cd.duration>0 and cd.startTime+cd.duration>now end
+  if active then
+    if timing then self:ConsiderWake(cd.startTime+cd.duration-now) end
+    return true
+  end
+  return false
+end
 function B:NoteNearbyResult(action)
   self.nearbyResult=nil; self:CancelTimer("nearby-result")
   if not action or self.db.nearbyCastResult==false or not A.Text(action.targetGUID) then return end
@@ -154,6 +175,7 @@ function B:SetNearbyResult(state,reason)
   local r=self.nearbyResult
   if not r or r.state~="pending" or GetTime()-r.at>2 then return end
   r.state=state; r.reason=reason; r.untilTime=state=="ok" and gcdEnds(r.id,r.at) or GetTime()+GCD
+  if state=='fail' then self.nearbyCastAttempt=nil end
   -- A buff you gave counts for Return the favor: their reply is not a new favor, and theirs is returned.
   if state=="ok" and A.Text(r.guid) then
     self.favorGiven=self.favorGiven or {}; self.favorGiven[r.guid]=GetTime()
@@ -224,9 +246,23 @@ function B:ShowNearbyRowResult(row,r)
     o.mark=o:CreateTexture(nil,"ARTWORK"); o.mark:SetSize(14,14); o.mark:SetPoint("LEFT",6,0)
     o.text=o:CreateFontString(nil,"OVERLAY","GameFontHighlightSmall"); o.text:SetPoint("LEFT",o.mark,"RIGHT",5,0)
     o.text:SetJustifyH("LEFT"); o.text:SetWordWrap(false); o.text:SetShadowColor(0,0,0,.95); o.text:SetShadowOffset(1,-1)
+    local created,swipe=pcall(CreateFrame,'Cooldown',nil,o,'CooldownFrameTemplate')
+    if created and swipe then
+      o.gcdSwipe=swipe; swipe:SetAllPoints(o); swipe:EnableMouse(false)
+      if swipe.SetHideCountdownNumbers then swipe:SetHideCountdownNumbers(true) end
+      if swipe.SetDrawEdge then swipe:SetDrawEdge(false) end
+      if swipe.SetSwipeColor then swipe:SetSwipeColor(0,0,0,.18) end
+      if swipe.SetReverse then swipe:SetReverse(false) end
+      swipe:Hide()
+    end
     row.result=o
   end
   local ok=r.state=="ok"; local c=ok and {.27,.78,.43} or {.90,.31,.27}
+  if o.gcdSwipe then
+    if ok and A.Number(r.untilTime) and r.untilTime>r.at then
+      pcall(o.gcdSwipe.SetCooldown,o.gcdSwipe,r.at,r.untilTime-r.at); o.gcdSwipe:Show()
+    else o.gcdSwipe:Hide() end
+  end
   o.bg:SetColorTexture(c[1]*.18+.07,c[2]*.18+.07,c[3]*.18+.07,1); o.bar:SetColorTexture(c[1],c[2],c[3],1)
   o.mark:SetTexture(ok and "Interface\\RaidFrame\\ReadyCheck-Ready" or "Interface\\RaidFrame\\ReadyCheck-NotReady")
   local list
@@ -290,6 +326,15 @@ function B:ReminderSoundAllowed(action)
   return true
 end
 function B:NearbyCastSucceeded(unit,id)
+  local attempt=self.nearbyCastAttempt
+  if unit=='player' and A.Number(id) and attempt and id==attempt.id and GetTime()-attempt.at<2
+    and A.Text(attempt.guid) and A.Call(UnitGUID,attempt.unit)==attempt.guid then
+    self.nearbyCastUntil=gcdEnds(id,attempt.at); self.nearbyCastAttempt=nil
+    self:StartTimer('nearby-cast-ready',self.nearbyCastUntil-GetTime()+.03,function()
+      B.nearbyCastUntil=nil; B.nearbySnapshot=nil; B.nearbyNeedCache={}; B:RequestRefresh('nearby cooldown ready',0)
+      if not A.Combat() and B.nearbyFrame then B:UpdateNearbyWindow() end
+    end)
+  end
   self:BuffCastSucceeded(unit,id)
 end
 local function nextAction(entry,readyOnly)
@@ -1227,6 +1272,7 @@ function B:CreateNearbyWindow()
     row:SetScript("PreClick",function(button,mouse,down)
       if A.Combat() then return end
       local action=button.action; self:SetNearbyRowPayload(button,nil)
+      if mouse=='LeftButton' and self:NearbyClickWaiting(action) then return end
       local failed=self.nearbyResult
       if action and failed and failed.state=="fail" and failed.action==action then
         self:ClearCastRetry(action); self.nearbyNeedCache={}; self.nearbySnapshot=nil
@@ -1543,6 +1589,7 @@ for _,event in ipairs({"PLAYER_ENTERING_WORLD","PLAYER_REGEN_ENABLED","PLAYER_RE
 frame:SetScript("OnEvent",function(_,event,unit,message,spellID)
   if not B.db then return end
   if event=="PLAYER_REGEN_DISABLED" then
+    B.nearbyCastAttempt=nil; B.nearbyCastUntil=nil; B:CancelTimer('nearby-cast-ready')
     B.nearbySnapshot=nil
     for _,slot in ipairs({"nearby-range","nearby-settle","nearby-late","nearby-display","buff-aura-early","buff-aura-settle","buff-aura-late"}) do B:CancelTimer(slot) end
     return
@@ -1553,6 +1600,7 @@ frame:SetScript("OnEvent",function(_,event,unit,message,spellID)
     if unit=="player" and B:NearbyResultSpell(spellID) then B:SetNearbyResult("ok") end
     B:NearbyCastSucceeded(unit,spellID); return
   elseif event=="UNIT_SPELLCAST_FAILED" then
+    if unit=='player' and B.nearbyCastAttempt and A.Number(spellID) and B.nearbyCastAttempt.id==spellID then B.nearbyCastAttempt=nil end
     -- The game's reason usually arrives as a UI error just before or after; wait a moment for it.
     if unit=="player" and B:NearbyResultSpell(spellID) then
       B:StartTimer("nearby-result-fail",.1,function() B:SetNearbyResult("fail",B.nearbyClickError) end)

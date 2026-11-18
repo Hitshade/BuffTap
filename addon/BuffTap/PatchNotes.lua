@@ -2,6 +2,12 @@
 local _,B=...
 -- Keep the ten most recent releases within a 24 KiB content ceiling.
 B.PatchNotes={
+ {version="1.26.3-beta1",title="Resurrection, cleansing and food fixes",items={
+  "Druids: Resurrection now includes Revive at every rank. You can leave Also use Rebirth off and still resurrect with Revive.",
+  "Helpers > Tracking: Druids can choose Track Humanoids and Warlocks can choose Sense Demons before learning them. Actual use still needs the spell, and Druid tracking needs Cat Form.",
+  "Resurrection reminders check again when a dead group member returns into range. SmartShift can now offer your previous form after a successful cleanse.",
+  "Nearby: a cooldown sweep appears over successful confirmations. Repeated presses wait through the cooldown without replacing the confirmation with a spell-not-ready error. Every cast still needs a new press.",
+  "Added 15 missing foods, including Goblin Deviled Clams, Clamlette Surprise and seasonal treats. Find them under Consumables > Food > Choose."},thanks="Thanks to shaunpearsondev for reporting the missing Goblin Deviled Clams."},
  {version="1.26.2",title="Smooth buffing reminder fix",items={
   "Fixed an edge case introduced with smooth buffing that let repeated reminder sounds slip through while moving between class buffs or briefly waiting for buff updates.",
   "New reminders after a pause can still alert you. Cleansing and resurrection keep their normal sounds."}},
@@ -58,11 +64,6 @@ B.PatchNotes={
   "A reminder that Supplies can track anything you carry: class reagents, ammo, seeds, profession materials, whatever you like. Drag an item from your bags onto the list, or add it by name, and BuffTap warns you when you run low.",
   "The Consumables light now follows only \"Enable consumable reminders\", so it no longer shows green when only supply warnings are on.",
   "The switches on the Supplies page now line up in neat columns."}},
- {version="1.24.3",title="Tracking for every class",items={
-  "Tracking reminder now covers any tracking you know, not just herbs and minerals: Hunter tracking, Sense Undead and more. Pick one from the new dropdown under Helpers > Tracking, even before you learn it, and BuffTap reminds you when it is off, for example after you die. If you switch tracking in the minimap menu, BuffTap follows your new choice instead of switching you back.",
-  "New \"Skip when I have none\" switch on the Weapons page: no reminder for an oil, sharpening stone or poison you have run out of, the same way buff food works.",
-  "Buffs with no timer, such as Hunter aspects, Trueshot Aura and Paladin auras, no longer show a Rebuff slider that did nothing. They remind you when they are off.",
-  "Fixed two lines overlapping in the Resurrection box for druids who have not learned a resurrection spell yet."},thanks="Thanks to waggz81 for the tracking idea and the Rebirth report, and a big shoutout to noci__, who has been with BuffTap since the beta, for the weapon idea."},
 }
 function B:PatchNotesUnread()
   return self.profileDB and self.db.optionsPatchDot~=false and self.profileDB.global.patchNotesSeen~=self.version

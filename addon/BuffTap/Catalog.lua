@@ -1,6 +1,8 @@
 -- This Source Code Form is subject to the Mozilla Public License, v. 2.0.
 -- See LICENSE-MPL-2.0.txt.
 -- Generated from Forever 1.60.1.70888 client tables by tools/build_catalog.py.
+-- Tracking additions 5225/5500 checked against refreshed 70888 class records;
+-- see docs/CLASS-SPELL-AUDIT-1.26.3.md. Other generated records are unchanged.
 -- Setting keys and ordering preserve BuffTap saved-profile compatibility.
 local _,B=...
 local coverage={wild={"Gift of the Wild","Mark of the Wild"},intellect={"Arcane Brilliance","Arcane Intellect"},magearmor={"Mage Armor","Ice Armor","Frost Armor"},magic={"Dampen Magic","Amplify Magic"},fortitude={"Prayer of Fortitude","Power Word: Fortitude"},spirit={"Prayer of Spirit","Divine Spirit"},shadow={"Prayer of Shadow Protection","Shadow Protection"},kings={"Greater Blessing of Kings","Blessing of Kings"},might={"Greater Blessing of Might","Blessing of Might"},wisdom={"Greater Blessing of Wisdom","Blessing of Wisdom"},paladinaura={"Devotion Aura","Retribution Aura","Concentration Aura","Shadow Resistance Aura","Frost Resistance Aura","Fire Resistance Aura"},seals={"Seal of Righteousness","Seal of the Crusader","Seal of Command","Seal of Justice","Seal of Light","Seal of Wisdom","Seal of Fury"},aspects={"Aspect of the Hawk","Aspect of the Monkey","Aspect of the Cheetah","Aspect of the Beast","Aspect of the Pack","Aspect of the Wild"},hunting={"Track Beasts","Track Humanoids","Track Undead","Track Hidden","Track Elementals","Track Demons","Track Giants","Track Dragonkin"},shields={"Water Shield","Lightning Shield"},imbues={"Windfury Weapon","Flametongue Weapon","Frostbrand Weapon","Rockbiter Weapon"},demonarmor={"Demon Armor","Demon Skin"},gathering={"Find Herbs","Find Minerals","Find Treasure","Find Fish"}}
@@ -9,6 +11,7 @@ B.Buffs={
   {key="motw",class="DRUID",kind="single",name="Mark of the Wild",ranks={9885,9884,8907,5234,6756,5232,1126},icon=136078,defaultOn=true,coverage="wild",groupKey="gotw"},
   {key="thorns",short=true,class="DRUID",kind="single",name="Thorns",ranks={9910,9756,8914,1075,782,467},icon=136104,defaultOn=true,covers={"Thorns"},target={"WARRIOR","ROGUE","PALADIN","DRUID"}},
   {key="natures-grasp",class="DRUID",kind="self",name="Nature's Grasp",ranks={17329,16813,16812,16811,16810,16689},icon=136063,defaultOn=false,covers={"Nature's Grasp"},noTimer=true},
+  {key="druid-track-humanoids",class="DRUID",kind="tracking",name="Track Humanoids",ranks={5225},icon=132328,defaultOn=false,covers={"Track Humanoids"}},
   {key="aquatic-form",class="DRUID",kind="self",name="Aquatic Form",ranks={1066},icon=132112,defaultOn=false,covers={"Aquatic Form"},underwater=true,stance=true},
   {key="ab",class="MAGE",kind="group",name="Arcane Brilliance",ranks={23028},icon=135869,defaultOn=true,coverage="intellect",singleKey="ai",minNeed=3},
   {key="ai",class="MAGE",kind="single",name="Arcane Intellect",ranks={10157,10156,1461,1460,1459},icon=135932,defaultOn=true,coverage="intellect",groupKey="ab",target={"MAGE","WARLOCK","PRIEST","SHAMAN","DRUID","PALADIN","HUNTER"}},
@@ -79,6 +82,7 @@ B.Buffs={
   {key="unending-breath",short=true,class="WARLOCK",kind="single",name="Unending Breath",ranks={5697},icon=136148,defaultOn=false,covers={"Unending Breath"},underwater=true},
   {key="detect-invis",short=true,class="WARLOCK",kind="single",name="Detect Invisibility",ranks={11743,2970,132},icon=136152,defaultOn=false,covers={"Detect Invisibility"}},
   {key="soul-link",class="WARLOCK",kind="self",name="Soul Link",ranks={19028},icon=136160,defaultOn=true,covers={"Soul Link"},auraIDs={25228}},
+  {key="sense-demons",class="WARLOCK",kind="tracking",name="Sense Demons",ranks={5500},icon=136172,defaultOn=false,covers={"Sense Demons"}},
   {key="instant-poison",class="ROGUE",kind="weapon",name="Instant Poison",ranks={11343,11340,11342,11339,11341,11338,8691,8688,8687,8686,8681,8679},icon=132273,defaultOn=true,covers={"Instant Poison"}},
   {key="deadly-poison",class="ROGUE",kind="weapon",name="Deadly Poison",ranks={25351,25347,11358,11356,11357,11355,2837,2824,2835,2823},icon=132290,defaultOn=true,covers={"Deadly Poison"}},
   {key="crippling-poison",class="ROGUE",kind="weapon",name="Crippling Poison",ranks={11202,3421,3420,3408},icon=132274,defaultOn=false,covers={"Crippling Poison"}},
@@ -96,6 +100,8 @@ for _,definition in ipairs(B.Buffs) do
   if definition.coverage then definition.covers=coverage[definition.coverage]; definition.coverage=nil end
 end
 B.RankLevel={
+  [5225]=32,
+  [5500]=24,
   [131]=22,
   [1066]=16,
   [132]=26,

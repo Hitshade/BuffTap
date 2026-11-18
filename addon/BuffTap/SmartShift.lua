@@ -36,12 +36,15 @@ end
 
 function B:SmartShiftBegin(action)
   local allowed=classAllowed()
+  local cleanse=action and action.source=="cleanse"
   if not allowed or not self.db or self.db.smartShift~=true or not action or action.source=="smartshift"
-    or action.manual or (action.source and action.source~="spell") or action.target~="player" then return end
+    or action.manual or (action.source and action.source~="spell" and not cleanse)
+    or (not cleanse and action.target~="player") then return end
+  if cleanse and (not self.ValidateCleanse or not self:ValidateCleanse(action)) then return end
   local form=self:CurrentSmartShiftForm()
   if not form then return end
   local guid=A.Call(UnitGUID,'player')
-  if not A.Text(guid) or not A.Text(action.targetGUID) or guid~=action.targetGUID then return end
+  if not A.Text(guid) or not A.Text(action.targetGUID) or A.Call(UnitGUID,action.target)~=action.targetGUID then return end
   local previous=self.smartShiftIntent
   if previous and not previous.exited and previous.spellID==form.spellID and previous.playerGUID==guid
     and GetTime()-previous.started<=4 then return end

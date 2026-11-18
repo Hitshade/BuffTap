@@ -255,6 +255,9 @@ function B:CreateButton()
     local action=B.action
     local paused=B:ActionPauseReason(action); if paused then B:Commit(nil,paused); return end
     if not action then return end
+    if action.nearby and B.NearbyClickWaiting and B:NearbyClickWaiting(action) then
+      B:Commit(nil,'Nearby waiting for cooldown'); B:RequestRefresh('nearby cooldown click',.05); return
+    end
     if B:HelperSuppressed(action) then B:Commit(nil,"dismissed"); return end
     if action.source=="smartshift" then
       if not B:ValidateSmartShift(action,true) then B:ClearSmartShift("restore changed before click"); B:Commit(nil,"SmartShift changed") end
@@ -289,6 +292,7 @@ function B:CreateButton()
       end
       if action.nearby and B.NoteNearbyResult then
         B.nearbyClickAt=GetTime(); B.nearbyClickError=nil; B:NoteNearbyResult(action)
+        B.nearbyCastAttempt={id=action.id,unit=action.target,guid=action.targetGUID,at=GetTime()}
         -- Same quiet window as a row click: the macro briefly targets this player.
         B.nearbyQuietCast={recipient=action.targetGUID,previous=A.Call(UnitGUID,"target"),untilTime=GetTime()+5}
       end
@@ -614,24 +618,29 @@ end
 function B:ScheduleRangeHeartbeat(action)
   self:CancelRangeTimer()
   if A.Combat() or not (C_Timer and type(C_Timer.After)=="function") then return end
-  local blocked = not action and self.rangeBlockedActions or nil
-  if action and action.target=="player" then return end
+  local blocked = self.rangeBlockedActions
+  if action and action.target=="player" and (type(blocked)~='table' or #blocked==0) then return end
   if not action and (type(blocked)~="table" or #blocked==0) then return end
   local token=self.rangeToken
   local ok=pcall(B.StartTimer,B,"range",1,function()
     guarded("range timer",function()
       if token~=B.rangeToken or A.Combat() then return end
+      local current=B.rangeBlockedActions or blocked
+      for _,candidate in ipairs(current or {}) do
+        local eligible
+        if candidate.source=='revive' then eligible=B:ValidateRevive(candidate)
+        else eligible=B:TargetEligible(candidate,true) end
+        if eligible then B:RequestRefresh('out-of-range target returned',.03); return end
+      end
       if action then
         if B.action~=action then return end
-        local eligible,why=B:TargetEligible(action,true)
+        local eligible,why
+        if action.source=='revive' then eligible=B:ValidateRevive(action)
+        elseif action.target=='player' then eligible=true
+        else eligible,why=B:TargetEligible(action,true) end
         if not eligible then B:RequestRefresh(why or "range/target changed",0.03); return end
         B:ScheduleRangeHeartbeat(action)
         return
-      end
-      local current=B.rangeBlockedActions or blocked
-      for _,candidate in ipairs(current) do
-        local eligible=B:TargetEligible(candidate,true)
-        if eligible then B:RequestRefresh("out-of-range target returned",0.03); return end
       end
       B:ScheduleRangeHeartbeat(nil)
     end)

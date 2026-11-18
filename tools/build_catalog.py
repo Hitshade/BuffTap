@@ -16,6 +16,7 @@ DRUID group gotw 21849 1 wild
 DRUID single motw 1126 1 wild
 DRUID single thorns 467 1
 DRUID self natures-grasp 16689 0
+DRUID tracking druid-track-humanoids 5225 0
 MAGE group ab 23028 1 intellect
 MAGE single ai 1459 1 intellect
 MAGE self mage-armor 6117 1 magearmor
@@ -85,6 +86,7 @@ WARLOCK self demon-skin 687 0 demonarmor
 WARLOCK single unending-breath 5697 0
 WARLOCK single detect-invis 132 0
 WARLOCK self soul-link 19028 1
+WARLOCK tracking sense-demons 5500 0
 ROGUE weapon instant-poison 8679 1
 ROGUE weapon deadly-poison 2835 1
 ROGUE weapon crippling-poison 3408 0

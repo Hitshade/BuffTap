@@ -1,3 +1,22 @@
+# BuffTap 1.26.3-beta1
+
+### Resurrection and SmartShift
+Druids can use normal **Revive** through the Resurrection helper at every rank. **Also use Rebirth** remains optional and can stay off. A dead group member returning into range is checked again. SmartShift now also offers your previous form after a confirmed successful cleanse, using another click as usual.
+
+### Calmer Nearby casting
+Successful Nearby confirmations show a cooldown sweep. Repeated presses during that wait no longer send another cast that replaces the confirmation with a spell-not-ready error. Genuine failures still show their reason; casting again when ready requires another press. This beta needs live testing of the sweep and repeated-input behavior.
+
+### Configure class tracking early
+Under **Helpers > Tracking**, Druids can choose Track Humanoids and Warlocks can choose Sense Demons before learning them. The reminder becomes usable once the spell is learned. Druid Track Humanoids still requires Cat Form.
+
+### Missing foods restored
+Added 15 foods, including Goblin Deviled Clams, Clamlette Surprise, Dirge's Kickin' Chimaerok Chops, regional meals and seasonal treats. Choose them under **Consumables > Food > Choose**. Existing choices and Auto preference order are preserved. Some older foods grant Stamina and Spirit without the experience bonus shown on newer meals; descriptions reflect current tooltips.
+
+Thanks to **shaunpearsondev** for reporting the missing Goblin Deviled Clams.
+
+### Review limits
+The class-spell and consumable review includes refreshed Forever class tables and current tooltips for every included consumable. Database records alone do not prove an older ability can currently be learned or an item obtained, so unverified abilities and quest or combat consumables have not been added as routine reminders. No settings reset is needed. Combat restrictions remain unchanged.
+
 # BuffTap 1.26.2
 
 ### Fixed

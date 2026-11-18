@@ -392,6 +392,8 @@ end
 -- combat, never someone who already has a resurrection coming. Rebirth only when turned on.
 -- Nearby can't offer it: dead players have no nameplate on Forever.
 local REVIVE={
+  -- Forever's normal Druid resurrection; independent of the optional Rebirth.
+  DRUID={437138,1237948,1237949,1237950,1237951},
   PRIEST={2006,2010,10880,10881,20770},
   PALADIN={7328,10322,10324,20772,20773},
   SHAMAN={2008,20609,20610,20776,20777},
@@ -437,7 +439,12 @@ end
 local function tryRevive(self,unit,id,scope)
   if not reviveTargetOk(self,unit) or not usable(id) then return nil end
   local action=self:BuildReviveAction(unit,id,scope)
-  if not action or self:SpellRange(action)==false then return nil end
+  if not action then return nil end
+  if self:SpellRange(action)==false then
+    self.reviveRangeBlocked=self.reviveRangeBlocked or {}
+    if #self.reviveRangeBlocked<48 then self.reviveRangeBlocked[#self.reviveRangeBlocked+1]=action end
+    return nil
+  end
   return action
 end
 function B:SelectRevive()
@@ -477,6 +484,7 @@ function B:ValidateRevive(action)
 end
 -- Revive first by default; "Cleanse before resurrection" swaps the two. Both come before ordinary buffs.
 function B:Select()
+  self.reviveRangeBlocked=nil
   local cleanseFirst=self.db and self.db.cleanseFirst==true
   local firstSelector,firstSource,secondSelector,secondSource
   if cleanseFirst then firstSelector,firstSource,secondSelector,secondSource=self.SelectCleanse,"cleanse",self.SelectRevive,"revive"
@@ -485,7 +493,9 @@ function B:Select()
   if action then return action,source end
   action,source=maintenancePick(self,secondSelector,secondSource)
   if action then return action,source end
-  return baseSelect(self)
+  local ordinary,why=baseSelect(self)
+  for _,candidate in ipairs(self.reviveRangeBlocked or {}) do self:AddRangeBlocked(candidate) end
+  return ordinary,why
 end
 local reviveBaseValidate=B.Validate
 function B:Validate(action)

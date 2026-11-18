@@ -1,3 +1,18 @@
+# BuffTap 1.26.3-beta1
+
+### Fixed and added
+- `Cleanse.lua`: added all five normal Druid Revive ranks (437138, 1237948–1237951), independent of the optional Rebirth setting. Selection prefers the highest known normal rank. The omission was confirmed against preserved Forever class/rank/effect tables; other normal resurrection classes have complete ranks in those inputs.
+- Out-of-range corpse candidates now survive ordinary selection and join the existing conditional range heartbeat. The heartbeat validates resurrection recipients with corpse eligibility rather than the living-buff filter, including while a self buff is displayed. No new permanent poll, weakened identity check or combat action.
+- `SmartShift.lua`: validated cleanse input can capture the current form for self, group and Nearby recipients. Exact player spell success and confirmed form exit are still required; failure grants no return. Ordinary foreign-recipient buffs remain excluded. Every return requires another hardware action.
+- `Nearby.lua` and main PreClick: block repeat target/restore payloads while an attempt is pending or its cooldown remains active. Successful confirmations include a native cooldown sweep. A bounded expiry timer refreshes readiness; it never casts. Real failures remain visible and immediately retryable. The guard also works with result display disabled.
+- `ConsumableData.lua`: append 15 foods to preserve existing Auto order. Add exact food-use and Well Fed mappings, including legacy Stamina/Spirit, seasonal, skill and regional food. Exclude stale Lightning in a Bottle data after a fresh Forever tooltip shows no Well Fed. Preserve region restrictions in descriptions and do not invent an XP bonus for legacy foods. Thanks to **shaunpearsondev**, GitHub #5, for reporting Goblin Deviled Clams.
+- No saved-variable migration or preference reset. Class-applicable options remain configurable before learning. Existing secure-action and combat restrictions remain in force.
+- `Catalog.lua` and generator specification: add Druid Track Humanoids and Warlock Sense Demons to ahead-of-learning tracking choices. Dynamic runtime discovery already supported the learned spells, but the fallback list omitted them. Preserve default-off behavior and the existing Druid Cat Form guard. Supplemental facts were rechecked against refreshed 70888 tables matching the generated manifest's source hashes.
+
+### Audit and validation
+- Repeatable tools review 3,037 class-mask spell records across nine classes in refreshed build 70888 tables, producing 268 maintenance/resurrection/dispel candidates, and 605 consumable candidates against the 207-item visible whitelist. All 207 use-spell mappings match fresh Forever tooltips. There were 378 successful tooltip fetches and 22 failed candidate requests; none of the shipped whitelist requests failed. Candidate records are not proof of current trainability or acquisition. Reports distinguish triggered effects, retired families, separate helpers, non-maintenance abilities and unresolved legacy records.
+- Final mocked Lua 5.1 release suite: **2,312 passed, 0 failed**, including 62 new review scenarios. All 15 Mage item/use/enchant/weapon mappings also match reviewed evidence. No live-client validation claimed. The initial external refresh was blocked by the session usage limit; after the stated reset, the approved refresh completed. See the development audit reports for limits and deferred candidates.
+
 # BuffTap 1.26.2
 
 ### Fixed

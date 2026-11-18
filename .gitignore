@@ -28,3 +28,5 @@ tests/last-run-*.txt
 
 !/docs/RELEASE-REVIEW-1.2.1.md
 !/docs/RELEASE-REVIEW-1.3.0.md
+!/docs/CLASS-SPELL-AUDIT-1.26.3.md
+!/docs/CONSUMABLE-AUDIT-1.26.3.md

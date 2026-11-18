@@ -170,9 +170,30 @@ food.items={
   {id=274976,useSpell=1248393,auraIDs={1248422},name="Plain Ol' Paletusk",note="10 Strength for 15 min. Additionally, experience gained from kills is increased by 5%."},
   {id=286152,useSpell=1319311,auraIDs={1319310},name="Plated Armorfish",note="150 Armor for 15 min. Additionally, experience gained from kills is increased by 5%."},
 }
-food.auraSpellIDs={1248406,1248420,1248421,1248422,1249519,1249520,1249521,1249523,1249926,1249927,1319310}
+-- Ordinary/seasonal legacy meals and zone/skill foods were omitted from the
+-- reworked-stat-food list. Append to preserve existing Auto preference order.
+local supplementalFood={
+  {id=5527,useSpell=5006,auraIDs={19708},name="Goblin Deviled Clams",note="6 Stamina and Spirit for 15 min."},
+  {id=16971,useSpell=10256,auraIDs={19710},name="Clamlette Surprise",note="12 Stamina and Spirit for 15 min."},
+  {id=21023,useSpell=25660,auraIDs={25661},name="Dirge's Kickin' Chimaerok Chops",note="25 Stamina for 15 min."},
+  {id=733,useSpell=1248687,auraIDs={1248688},name="Westfall Stew",note="15% movement speed while in Westfall for 15 min. Additionally, experience gained from kills is increased by 5%."},
+  {id=10841,useSpell=1249906,auraIDs={1249907},name="Goldthorn Tea",note="15 Herbalism skill for 15 min. Additionally, experience gained from kills is increased by 5%."},
+  {id=267341,useSpell=1294006,auraIDs={1294007},name="Sweetpaw Jam",note="15% movement speed while in Hyjal for 15 min. Additionally, experience gained from kills is increased by 5%."},
+  {id=206177,useSpell=5004,auraIDs={19705},name="Pine Nut Butter",note="2 Stamina and Spirit for 15 min."},
+  {id=11584,useSpell=5004,auraIDs={19705},name="Cactus Apple Surprise",note="2 Stamina and Spirit for 15 min."},
+  {id=7806,useSpell=5004,auraIDs={19705},name="Lollipop",note="2 Stamina and Spirit for 15 min."},
+  {id=7807,useSpell=5004,auraIDs={19705},name="Candy Bar",note="2 Stamina and Spirit for 15 min."},
+  {id=7808,useSpell=5004,auraIDs={19705},name="Chocolate Square",note="2 Stamina and Spirit for 15 min."},
+  {id=17197,useSpell=5004,auraIDs={19705},name="Gingerbread Cookie",note="2 Stamina and Spirit for 15 min."},
+  {id=17198,useSpell=21149,auraIDs={19705},name="Egg Nog",note="2 Stamina and Spirit for 15 min. Also an alcoholic drink."},
+  {id=20516,useSpell=24869,auraIDs={24870},name="Bobbing Apple",note="Stamina and Spirit for 15 min; the effect varies with level."},
+  {id=21254,useSpell=24869,auraIDs={24870},name="Winter Veil Cookie",note="Stamina and Spirit for 15 min; the effect varies with level."},
+}
+for _,item in ipairs(supplementalFood) do food.items[#food.items+1]=item end
+food.auraSpellIDs={19705,19708,19710,24870,25661,1248688,1249907,1294007,1248406,1248420,1248421,1248422,1249519,1249520,1249521,1249523,1249926,1249927,1319310}
 B.EatingSpellIDs={[430]=true,[431]=true,[432]=true,[433]=true,[434]=true,[435]=true,[1127]=true,[1129]=true,[1131]=true,[1133]=true,[1135]=true,[1137]=true,[1248377]=true,[1248378]=true,[1248379]=true,[1248380]=true,[1248381]=true,[1248382]=true,[1248383]=true,[1248384]=true,[1248386]=true,[1248387]=true,[1248388]=true,[1248389]=true,[1248390]=true,[1248391]=true,[1248392]=true,[1248393]=true,[1248394]=true,[1248395]=true,[1248396]=true,[1248397]=true,[1248398]=true,[1248399]=true,[1248400]=true,[1248401]=true,[1249500]=true,[1249501]=true,[1249502]=true,[1249503]=true,[1249504]=true,[1249505]=true,[1249506]=true,[1249507]=true,[1249508]=true,[1249509]=true,[1249510]=true,[1249511]=true,[1249512]=true,[1249513]=true,[1249514]=true,[1249515]=true,[1249516]=true,[1249522]=true,[1249914]=true,[1249915]=true,[1249916]=true,[1249917]=true,[1249918]=true,[1249919]=true,[1249920]=true,[1249921]=true,[1249922]=true,[1249923]=true,[1249924]=true,[1249925]=true,[1319311]=true}
 -- One conservative user-selected elixir reminder; not a stacking-rule claim.
+for _,item in ipairs(supplementalFood) do B.EatingSpellIDs[item.useSpell]=true end
 -- Keep the saved key so existing Ferocity opt-ins/preferences survive.
 elixir.name="Elixir (selected)"
 elixir.explicitChoice=true
