@@ -106,7 +106,7 @@ function B:InitDB()
   self.db.showRemaining=nil; self.db.showGroupIndicator=nil
   local defaults = {enabled=true, showReminder=true, size=64, opacity=1, x=0, y=-180,
     seconds=45, rebuffVersion=1, sound=false, combatExpiry=false, buffQueue=false, reminderSound="cleanse", alertSoundVersion=0, supplySound="glass", campAlertSound="harp", cleanseSound="bell", socialSound="hello", nearbySocialAlert=false, nearbySocialFriends=true, nearbySocialGuild=true, cleanseEnabled=false, cleanseTypes={Magic=true,Curse=true,Poison=true,Disease=true}, cleanseSelf=true, cleanseGroup=true, cleanseTarget=true, cleanseNearby=false, cleansePreferAbolish=true, cleanseBorder=true, reviveEnabled=false, reviveGroup=true, reviveTarget=true, reviveRebirth=false, cleanseFirst=false, smartShift=false, soundChannel="Master", soundInterval=5, glow=true, pulse=false, group=true, smartGroup=true,
-    nearbyRankUpgrades=false,
+    nearbyRankUpgrades=false, nearbyShowProviders=false,
     groupNeed=3, blessingNeed=2, friendlyTarget=false, targetSeconds=300, keys={"MOUSEWHEELDOWN"}, buffs={}, priorities={}, buffSeconds={}, buffCharges={},
     pauseResting=false, targetClassBlessings=true, targetClasses={}, targetBlessingFallback=true, targetBlessingClasses={}, targetBlessingPriorities={}, groupBlessingPriorities={}, blessingAssignments=false, blessingClasses={}, blessingGroupOverrides={}, buffGroups={}, buffClasses={}, buffGroupNeed={}, targetBuffs={}, targetBuffSeconds={}, showBuffName=false, showTargetName=true, showTimer=false, showGroupBadge=true,
     pickerBagsOnly=true, supplyCustom={}, consumablesEnabled=false, consumableFamilies={}, consumableChoices={}, consumableSeconds={}, consumableModes={},

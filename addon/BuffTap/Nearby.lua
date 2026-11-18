@@ -713,13 +713,19 @@ function B:NearbyPlayers()
         elseif entry.marker and self.db.pvpProtection==true then self.nearbyCounts.flagged=self.nearbyCounts.flagged+1 end
         local needs=#entry.actions>0
         if needs then self.nearbyCounts.need=self.nearbyCounts.need+1 end
-        if needs or (self.db.nearbyShowAll and not grouped) then out[#out+1]=entry end
+        -- Optional: in the buffs-only view, also list players out of combat who could buff you.
+        entry.provider=nil
+        if not needs and not grouped and not self.db.nearbyShowAll and self.db.nearbyShowProviders==true
+          and entry.marker==nil and A.Call(UnitAffectingCombat,unit)==false then
+          entry.provider=self:BuffsFromPlayer(entry)
+        end
+        if needs or (self.db.nearbyShowAll and not grouped) or entry.provider then out[#out+1]=entry end
       end
     end
   end
   -- Players with nothing needed: friends and guild members first, so they stay in the visible rows.
   -- Tiers: needs a cleanse, needs a buff, then friends and guild members, then everyone else.
-  local function tier(e) return e.actions[1] and e.actions[1].source=="cleanse" and 0 or (#e.actions>0 and e.favor) and .5 or (#e.actions>0 and e.social~=nil) and .7 or #e.actions>0 and 1 or e.social~=nil and 2 or 3 end
+  local function tier(e) return e.actions[1] and e.actions[1].source=="cleanse" and 0 or (#e.actions>0 and e.favor) and .5 or (#e.actions>0 and e.social~=nil) and .7 or #e.actions>0 and 1 or e.provider and 1.5 or e.social~=nil and 2 or 3 end
   table.sort(out,function(a,b)
     local at,bt=tier(a),tier(b)
     if at~=bt then return at<bt end
@@ -841,7 +847,13 @@ function B:RequestBuffChoices()
   return list
 end
 function B:RequestableBuffs(entry)
-  if not self.db.nearbyRequests or not self.db.enabled or not self.db.nearbyEnabled or A.Combat() or not entry or not A.Text(entry.class) then return nil end
+  if not self.db.nearbyRequests then return nil end
+  return self:BuffsFromPlayer(entry)
+end
+-- Buffs this nearby player's class could give you that you are missing, filtered by your request
+-- choices. Shared by the request button and the "players who can buff me" list option.
+function B:BuffsFromPlayer(entry)
+  if not self.db.enabled or not self.db.nearbyEnabled or A.Combat() or not entry or not A.Text(entry.class) then return nil end
   if self:NearbyGroupMember(entry.unit) or A.Call(UnitIsUnit,entry.unit,"player")==true then return nil end
   local myClass=A.Class("player"); if not myClass or entry.class==myClass then return nil end
   local scan=self:GetAuras("player",false); if not scan then return nil end
@@ -1308,6 +1320,10 @@ function B:CreateNearbyWindow()
       self.nearbyHovered=button.entry.guid
       GameTooltip:SetOwner(button,"ANCHOR_RIGHT"); GameTooltip:SetText(button.entry.name)
       if button.action then for _,action in ipairs(button.entry.actions) do GameTooltip:AddLine(action.name,1,1,1) end
+      elseif button.entry.provider then
+        local names={}
+        for _,def in ipairs(button.entry.provider) do names[#names+1]=A.Call(C_Spell and C_Spell.GetSpellName,def.ranks[#def.ranks]) or self:Text(def.name) end
+        GameTooltip:AddLine(self:Text("Can buff you: %s",table.concat(names,", ")),.55,.85,1,true)
       elseif not button.entry.marker then GameTooltip:AddLine("No buff queued. Buffs may be covered, excluded, or unavailable.",.7,.7,.7,true) end
       if button.entry.social=="friend" then GameTooltip:AddLine(self:Text("On your friends list."),.42,.72,1,true)
       elseif button.entry.social=="guild" then GameTooltip:AddLine(self:Text("In your guild."),.35,.9,.42,true) end
@@ -1532,7 +1548,7 @@ function B:UpdateNearbyWindow()
       if i<=ROWS then self:FireNearbySocial(entry) end
       local pulse,pulseUntil=self:NearbySocialPulse(entry)
       socialGlow(row,pulse,pulseUntil)
-      row:SetAlpha(pulse and 1 or row.action and (row.action.ready and 1 or .72) or (self.db.nearbyShowAll and .60 or .40))
+      row:SetAlpha(pulse and 1 or row.action and (row.action.ready and 1 or .72) or ((self.db.nearbyShowAll or entry.provider) and .60 or .40))
       row.idle:SetShown(self.db.nearbyShowAll and not row.action and #entry.actions==0)
       local invited=self.nearbyInvited and self.nearbyInvited[entry.guid]
       local inviteName,inviteMode=self:NearbyInviteName(entry)

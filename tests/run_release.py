@@ -102,4 +102,5 @@ import test_layout_setup_beta4
 import test_combat_expiry
 import test_buff_queue
 import test_button_strata
+import test_nearby_providers
 print('FINAL_TOTAL',len(__import__('test_bufftap').tests))
