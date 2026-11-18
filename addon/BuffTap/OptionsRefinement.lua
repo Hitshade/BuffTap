@@ -406,7 +406,7 @@ function B:RefineNearbyPage(ui,tabs)
     if A.Combat() then return end
     B.db.nearbyHoldShort=c:GetChecked()==true; B.nearbyNeedCache={}; B.nearbySnapshot=nil; B:RequestRefresh("nearby short buffs",0); if B.nearbyFrame then B:UpdateNearbyWindow() end
   end)
-  f.nearbyHoldShort:HookScript("OnEnter",function(s) T.Tooltip(s,B:Text("Hold back short buffs"),B:Text("In cities and inns, don't offer Nearby players buffs that last ten minutes or less, such as Thorns or a single blessing. They would wear off before they mattered. Longer buffs like Mark of the Wild are still offered.")) end)
+  f.nearbyHoldShort:HookScript("OnEnter",function(s) T.Tooltip(s,B:Text("Hold back short buffs"),B:Text("In cities and inns, don't offer Nearby players buffs that last ten minutes or less, such as Thorns. They would wear off before they mattered. Longer buffs like Mark of the Wild and blessings are still offered.")) end)
   f.nearbyHoldShort:HookScript("OnLeave",function() if GameTooltip then GameTooltip:Hide() end end)
   f.nearbyRankUpgrades=ui.check(p,"Offer higher rank buffs",26,-140,function(c)
     if A.Combat() then return end
