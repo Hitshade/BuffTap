@@ -2,22 +2,14 @@
 local _,B=...
 -- Keep the ten most recent releases within a 24 KiB content ceiling.
 B.PatchNotes={
- {version="1.26.4-beta6",title="Clearer controls and setup choices",items={
-  "Nearby controls close the gap when your class has no higher-rank buffs to offer. Return the favor sits directly below the other list switches. Mana reserve stays at the bottom.",
-  "Diagnostics text blends into the report pane without an extra box or focus border. Select text or use Select all, then press Ctrl+C to copy. Full check-up includes Inspect buffs.",
-  "Fresh setup recommends Cleanse, Resurrection, Cleanse before resurrection and SmartShift where they fit your class, even before learning the spells. You can decline each choice. Existing setups stay unchanged unless you select a recommendation."}},
- {version="1.26.4-beta3",title="Shield charges and buff-grades",items={
-  "Shamans: My buffs now lets Lightning Shield and Water Shield refresh at one or two charges remaining. This is optional and uses readable information outside combat.",
-  "Nearby: turn on Offer higher rank buffs to give a buff-grade when someone has a clearly identified lower rank and can receive your upgrade. It starts off.",
-  "Diagnostics > Inspect buffs shows your readable active buffs and which reminders recognize them. You can copy the results into a report.",
-  "Setup now points out Supplies tracking for ammunition, Soul Shards and group-buff reagents, with a shortcut to choose what to track."}},
- {version="1.26.4-beta2",title="Better buff ranks for lower-level players",items={
-  "Mages, Priests, Druids and Paladins: ordinary ranked buffs can now offer a stronger rank to lower-level players, instead of treating the level where you learn it as their requirement.",
-  "This beta tests the usual Classic buff-level allowance. Group versions and unusual spells keep their existing rules; every cast still needs your click or binding."}},
- {version="1.26.4-beta1",title="Safer group buffs and pet reminders",items={
-  "Nearby buttons now clear their prepared casts reliably when combat starts.",
-  "Group buffs respect Also on me being turned off. If an affected member's buff information cannot be verified, BuffTap offers single buffs where possible.",
-  "Warlocks with Demonic Pact: pet reminders can offer your chosen different demon while a sacrifice effect is active. Summoning the sacrificed demon stays withheld to protect that effect."}},
+ {version="1.26.4",title="Buff-grades, shield charges and smarter setup",items={
+  "Nearby > Offer higher rank buffs can offer a buff-grade when someone has a known lower rank and can receive your upgrade. This option starts off.",
+  "Ordinary ranked Mage, Priest, Druid and Paladin buffs can offer a stronger appropriate rank to lower-level players.",
+  "Shamans: My buffs > Refresh at charges can remind for Lightning Shield or Water Shield at one or two charges remaining. It starts off.",
+  "Fresh setup recommends class-appropriate Cleanse, Resurrection, cleanse-first ordering and SmartShift. Supplies guidance helps you choose ammo, Soul Shards and reagents to track.",
+  "Diagnostics > Inspect buffs explains which reminders recognize your active buffs. Full check-up includes it. Select text or use Select all, then Ctrl+C to copy.",
+  "Group buffs respect Also on me and use single buffs when an affected member's buff information cannot be verified. Nearby buttons clear prepared casts when combat starts.",
+  "Warlocks with Demonic Pact can be reminded to summon their chosen different demon while protecting the sacrificed family."}},
  {version="1.26.3",title="Resurrection, cleansing and food fixes",items={
   "Druids: Resurrection now includes Revive at every rank. You can leave Also use Rebirth off and still resurrect with Revive.",
   "Helpers > Tracking: Druids can choose Track Humanoids and Warlocks can choose Sense Demons before learning them. Actual use still needs the spell, and Druid tracking needs Cat Form.",
@@ -56,6 +48,26 @@ B.PatchNotes={
   "Fixed: cleanse and resurrection reminders now update when you change target, or when a group member is poisoned or dies, even if Target buffs and group buffing are turned off.",
   "Cleanse and resurrection buttons now double-check the player, the debuff and your settings at the moment you click, so they cannot act on someone who changed in the meantime.",
   "Assigned Soulstones now wait for the player you chose, and player names stay hidden in shared reports. The Soulstone notice is now translated."}},
+ {version="1.24.7",title="Soulstone fix and clearer status",items={
+  "Soulstones set to an assigned player now wait for that person. If they are away, dead, offline or out of range, BuffTap shows a note and does not use the stone on someone else. It goes back to them as soon as they are available.",
+  "Hover the Elixirs or Utility rows on the Consumables page to see which of your ticked effects are active, running low, missing or out of stock.",
+  "A pet notice now shows before a weapon-coating notice, so one no longer hides the other.",
+  "Fixed: the resurrection reminder could be offered for a player whose connection status the game would not confirm."}},
+ {version="1.24.6",title="Fixes, and clearer reminders",items={
+  "Fixed: the resurrection reminder could fail to show for a dead group member. It now appears as it should.",
+  "New option on the Cleanse page: \"Cleanse before resurrection\", for classes that can do both. It is off by default, so resurrection still comes first unless you change it.",
+  "Soulstone: choosing a player with \"Use current target\" now remembers that exact person, even if someone in your group has a similar name. If an older assignment stops working, choose the player again.",
+  "Pet summons, Healthstones and Soulstones now come before optional food and flasks. A reminder you have to act on by hand no longer hides one you can click.",
+  "Hover a food, flask or elixir row on the Consumables page to see why nothing is being offered. The food picker also tells you when a different food effect is active. BuffTap never replaces it for you.",
+  "Hover the tracking choice under Helpers to see whether it is on, off or not learned yet.",
+  "Battlegrounds: your chosen tracking can be reminded again when you are not in combat."}},
+ {version="1.24.5",title="Fixes",items={
+  "Fixed: a tracking choice other than Herbs, Minerals or Fish (such as Hunter tracking) was reset on every reload. It now stays.",
+  "When you switch tracking in the minimap menu, BuffTap no longer briefly offers your old tracking before following the new one. Switches made in combat are followed once combat ends, and your choice is checked again after logging in.",
+  "\"Skip when I have none\" now only covers oils, sharpening stones and Rogue poisons, as its help says. Mage scrolls and Warlock stones still remind you when you run out.",
+  "Full check-up reports now also leave out your Oath of Light and Soulstone targets. Your own settings export still keeps them.",
+  "Remembered players from an imported settings string are checked, so a damaged string cannot break the Groups page.",
+  "Full check-up now shows the correct instance type in dungeons and raids."}},
 }
 function B:PatchNotesUnread()
   return self.profileDB and self.db.optionsPatchDot~=false and self.profileDB.global.patchNotesSeen~=self.version

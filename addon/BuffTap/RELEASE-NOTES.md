@@ -1,3 +1,19 @@
+# BuffTap 1.26.4
+
+### Optional buff-grades and shield reminders
+- **Nearby > Offer higher rank buffs:** offer an upgrade when someone has a clearly identified lower rank and can receive a higher rank you know. It starts off. Unknown effects, group equivalents and equal or higher ranks do not trigger upgrades. Talent bonuses can affect actual strength; normal stronger-effect protections still apply.
+- **Shamans > My buffs > Refresh at charges:** optionally refresh Lightning Shield or Water Shield at one or two charges remaining. Leave it Off for normal timing. Solo, Party and Raid can differ; unreadable counts keep the existing timing behavior.
+
+### Better ranks, setup and troubleshooting
+- Ordinary ranked Mage, Priest, Druid and Paladin buffs use the usual Classic recipient-level allowance, avoiding unnecessarily weak buffs for lower-level players. Group versions and unusual spells retain their existing rules.
+- Fresh setup recommends class-appropriate Cleanse, Resurrection, cleanse-first ordering and SmartShift, even before learning the abilities. Review and decline any choice. Existing setups keep their preferences. Supplies guidance points out ammo, Soul Shards and reagents without automatically tracking items.
+- **Diagnostics > Inspect buffs** shows readable active effects and which reminders recognize them. Full check-up includes it. Select text or use Select all, then **Ctrl+C** to copy. The report pane and Nearby controls have cleaner spacing.
+
+### Maintenance fixes
+Group buffs respect Also on me and fall back to singles when an affected member's buff information cannot be verified. Nearby buttons clear prepared casts on entering combat. Warlocks with Demonic Pact can recover their chosen different demon while protecting the sacrificed family.
+
+BuffTap still requires readable information and your input for every cast. Existing settings and appearance choices are preserved.
+
 # BuffTap 1.26.4-beta6
 
 ### Nearby spacing for every class

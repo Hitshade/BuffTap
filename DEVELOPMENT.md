@@ -1,5 +1,7 @@
 # BuffTap development
 
+**1.26.4 publication authorized** by the owner on 2026-11-17, using final beta6 runtime behavior. Consolidated player, CurseForge and technical notes are prepared. No new regression run, per owner instruction; beta4's 2,676-pass run remains the last full result. Final edits are version/release identity and notes. GitHub review found no open issues; #4's existing comment and #5's prior resolution were checked. Public platform IDs and package hashes will be recorded after publication.
+
 Internal **1.26.4-beta6** closes the hidden Nearby upgrade-row gap for inapplicable classes. The other left-column switches shift up; Mana reserve and right-column positions remain unchanged. Visual-only, no tests rerun per owner instruction. No publication authorized.
 
 Internal **1.26.4-beta5** is an owner-requested visual-only follow-up: Return the favor moves up beside the other list switches, Mana reserve stays in place, and both copyable Diagnostics editors skip inner-box/focus-border styling. No regression tests rerun, as explicitly requested. Prior beta4 validation remains historical. No publication authorized.

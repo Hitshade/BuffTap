@@ -1,3 +1,26 @@
+# BuffTap 1.26.4
+
+### Rank selection and optional maintenance
+- Ordinary ranked Mark, Thorns, Intellect, Dampen/Amplify Magic, Fortitude, Divine Spirit, Shadow Protection, Might and Wisdom use `max(1, RankLevel[id]-10)` for external recipients, independently of learning API metadata. The 53 catalog ranks retain Forever-derived levels. Individual rank ownership, unknown-level rejection and exact-rank secure casting remain required. Group/Greater versions and unusual spells retain their prior policy.
+- Opt-in Nearby **Offer higher rank buffs** compares complete, readable coverage with the selected known recipient-compatible rank. Only identified lower ranks in the same ordinary family can justify an upgrade; unknown, group-equivalent and equal/higher coverage cannot. Toggle state participates in need caching; fresh click validation revokes obsolete upgrades. Rank ordering does not establish relative strength after every talent bonus; existing stronger-effect refusals/backoff remain applicable.
+- Optional Lightning Shield/Water Shield refresh thresholds use public positive integer applications at one/two remaining charges. Missing, zero or restricted counts retain timing behavior. Settings are class-specific and support Solo/Party/Raid inheritance, same-class transfer and reload persistence. No combat prediction or new polling.
+
+### Safety and class behavior
+- Nearby rows now inherit the native secure state-handler template as well as the action template; failed state registration cannot arm a row. Existing combat clearing, exact targeting and cooldown feedback remain.
+- Group affected-recipient preflight honors explicit self exclusions and verifies usable effect information outside the missing bucket. Unknown affected coverage falls back to singles, while readable covered members, known-positive partial coverage and other raid subgroups retain their intended behavior.
+- Verified Demonic Pact ownership allows the already-selected different demon while sacrifice is active. The sacrificed family remains suppressed, including shared Succubus/Incubus identity; unknown ownership keeps protection. Shards, cooldowns, resources and explicit-input checks remain intact.
+
+### Diagnostics, setup and appearance
+- Read-only self-buff inspection uses the actual class/consumable recognition sets and is included in Full check-up. It reports public IDs, ranks, source unit tokens, counts and timing without caster-name/GUID lookup, persistent history or casting permissions. Incomplete data is labeled; combat cannot create a current snapshot from cached data.
+- Main and captured Diagnostics text remain native selectable/copyable editors without inset/focus-box styling. Select all replaces Print to chat on the page; native Ctrl+C copies selected text. Focused main text survives redraws, explicit Refresh recaptures, and name hiding applies without recursive action refresh.
+- Fresh setup presents class-applicable Cleanse, normal Resurrection, cleanse-first ordering and Druid/Shaman SmartShift recommendations on its first review page, independently of learning/level. Each may be declined. Existing profiles require opt-in/review, and completed onboarding is not replayed. Class-specific Supplies guidance opens existing manual tracking without auto-selecting items or enabling warnings.
+- Nearby switches use distinct compact positions, collapse the unavailable upgrade row for other classes, and keep Mana reserve at the bottom. Diagnostics actions no longer overlap. Existing settings, priorities, positions and secure-action rules are preserved; new optional controls default off outside accepted setup recommendations. No saved-variable migration or deletion.
+
+### Verification and known limits
+- Last strict full mocked Lua 5.1 run: **2,676 passed, 0 failed** on beta4, including 98 audit/fix cases, 134 rank-policy cases, 86 maintenance-feature cases and 37 layout/copy/setup cases added during this release cycle. Tests and run logs are committed. The final beta5/beta6 changes were visual-only; the owner explicitly requested no test rerun, and no fresh final-version test result is claimed.
+- Owner reported rank-2 Mark landing on a level-1 recipient and reviewed the displayed beta UI. No agent-operated live WoW, shield-count API, complete class-boundary matrix, Pact lifecycle or system-clipboard validation is claimed. Unknown data remains conservative. Archive/source delivery hashes are checked independently of regression tests.
+- Owner authorized publication of the final beta6 behavior as 1.26.4. GitHub issue review found no open issues; closed #4/#5 remain previously resolved, with no new issue changes or replies in this release.
+
 # BuffTap 1.26.4-beta6
 
 ### Class-aware visual spacing
