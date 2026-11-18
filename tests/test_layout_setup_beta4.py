@@ -9,7 +9,7 @@ BuffTap:Options(); local f=BuffTap.options
 local function xy(c) local p=c.__draw.points[#c.__draw.points]; return p[2],p[3] end
 local seen={}
 for _,c in ipairs({f.nearbyBuffing,f.nearbyRankUpgrades,f.nearbyWhileResting,f.nearbyHoldShort,f.nearbyInvites,f.nearbyPvp,
- f.nearbyAll,f.nearbyFullNames,f.nearbyShowLevel,f.nearbyMarkSocial,f.nearbyFavor,f.nearbyOnReminder,f.nearbyManaFloor}) do
+ f.nearbyAll,f.nearbyFullNames,f.nearbyShowLevel,f.nearbyMarkSocial,f.nearbyFavor,f.nearbyManaFloor}) do
  local x,y=xy(c); local k=x..':'..y; assert(not seen[k],'overlap at '..k); seen[k]=true
  assert(y<=-112 and y>=-254)
 end

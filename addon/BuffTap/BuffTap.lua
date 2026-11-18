@@ -382,8 +382,7 @@ function B:Commit(action,reason)
   local b=self.button
   if not b then return end
   if action and action.situationRevision==nil then action.situationRevision=self.situationRevision or 0 end
-  -- Nearby casts keep the main icon invisible unless the player opted to see them there; sound stays quiet either way.
-  self.nearbyQuietAction=action and action.nearby==true and self.db.nearbyOnReminder~=true or false
+  self.nearbyQuietAction=action and action.nearby==true or false
   if action and action.source=="consumable" and not self:ValidateConsumable(action,false,true) then action=nil; reason="item changed before preparation" end
   if action and action.source=="weapon-reminder" and not self:ValidateWeaponReminder(action) then action=nil; reason="weapon reminder changed before display" end
   if action and action.source=="readiness" and not self:Validate(action) then action=nil; reason="readiness changed before preparation" end
