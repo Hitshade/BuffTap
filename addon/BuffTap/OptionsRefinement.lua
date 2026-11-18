@@ -629,7 +629,7 @@ function B:StandardizeOptionsPages(ui,tabs)
   local groupPage=f.pages[2]; local party=f.partyView or f.groupParty; local raid=f.raidView or f.groupRaid
   place(party,groupPage.refinedCanvas,18,-8,78,26); place(raid,groupPage.refinedCanvas,102,-8,78,26)
   ui.label(groupPage.refinedCanvas,"Applies automatically when you join a party or raid.",198,-15,"GameFontDisableSmall",f.partyView and 340 or 488)
-  if f.partyView then f.blessingSoundsButton=ui.button(groupPage.refinedCanvas,"Buff sounds",556,-8,132,function() B:ToggleBlessingSounds() end) end
+  if f.partyView then f.blessingSoundsButton=ui.button(groupPage.refinedCanvas,"Buff sounds",571,-8,132,function() B:ToggleBlessingSounds() end) end
   local master=f.blessingGroupEnable or f.groupEnable
   if master then headerSwitch(master,groupPage) end
   headerSwitch(f.friendlyTarget,f.pages[3])

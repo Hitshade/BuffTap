@@ -1,4 +1,8 @@
-# BuffTap 1.26.7-beta2
+# BuffTap 1.26.7-beta3
+
+### Beta 3 sound additions
+- Adds five original additive-synthesis mono Ogg Vorbis alerts at 44.1 kHz, 0.76-0.90 s. The build script measures decoded delivery files with gated K-weighted loudness and matches the median of eight unchanged reference assets (-21.82 LUFS); all additions are within 0.1 dB, decoded peaks below -8.7 dBFS. Report: research/extra-sounds-1267.json. Source synthesis: tools/build_extra_sounds.py, MPL-2.0. No subjective listening or live WoW audibility claimed. Audio delivery/registration plus related sound/UI regression: 615 passed, 0 failed (tests/extra-sounds-1267-beta3-regression.txt); isolated final subset: 64 passed, 0 failed. Ogg header/rate/channel/hash checks and original-file preservation passed. Picker-index expectations in three older tests were adjusted for five inserted options. The beta1 full result remains historical; no full release-suite rerun for these assets and alignment changes.
+- Existing category choices/defaults remain unchanged. New choices participate in the existing picker, preview, validation and optional SharedMedia registration without new playback paths. Buff sounds is right-aligned with Paladin Casting.
 
 ### Beta 2 visual polish
 - State-aware speaker glyphs use the active accent when enabled and muted grey when off, including live theme repaint. Standard Party/Raid sound switches become 26-unit speaker buttons at the selected card's top right, with header width reserved to avoid overlap. Paladin sound-list controls use matching speakers. No sound policy or saved-setting changes. Beta 2 focused validation: 78 passed, 0 failed, including icon tint and top-right geometry; tests/buff-alerts-1267-beta2-focused.txt. The full 2,838-case beta1 result below is retained; no full rerun for this visual-only change.

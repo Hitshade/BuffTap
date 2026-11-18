@@ -2,7 +2,8 @@
 local _,B=...
 -- Keep the ten most recent releases within a 24 KiB content ceiling.
 B.PatchNotes={
- {version="1.26.7-beta2",title="Choose which reminders you hear",items={
+ {version="1.26.7-beta3",title="Choose which reminders you hear",items={
+  "Five new brief sounds: Soft pluck, Amber chime, Gentle ripple, Wooden bloom and Silver notes. Preview them under Customization > Binding & sound. Their volume is matched to BuffTap's existing sounds.",
   "My buffs now has a speaker button beside each buff. Mute Aquatic Form, for example, while keeping Mark and Thorns audible. Your reminder icon and binding keep working.",
   "Party and Raid have separate speaker buttons at the top right of each buff box. Enabled speakers use your accent colour. Paladins can open Buff sounds beside the Party and Raid tabs.",
   "Customization > Binding & sound now has a speaker button for each sound category. Reminder, Supply, Camp, Cleanse and Friend sounds can be enabled separately. Preview still plays when a category is muted.",

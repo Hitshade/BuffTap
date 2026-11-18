@@ -1,0 +1,148 @@
+{
+  "method": "Original additive synthesis; mono Ogg Vorbis, 44.1kHz. Matched to median gated K-weighted loudness of eight existing recordings. No subjective listening claimed.",
+  "target_lufs": -21.823360485173346,
+  "reference": {
+    "BuffTapBell.ogg": {
+      "rate": 44100,
+      "channels": 1,
+      "duration": 1.0,
+      "lufs": -23.801657395522074,
+      "peak_db": -8.153265056660834,
+      "rms_db": -23.31335140388552,
+      "bytes": 9813,
+      "sha256": "cc938358aaa55e94a6267388725a40c7ea60d6db4512e8761845b44faa80a85a"
+    },
+    "BuffTapCleanse.ogg": {
+      "rate": 44100,
+      "channels": 1,
+      "duration": 0.95,
+      "lufs": -19.21518029769042,
+      "peak_db": -8.932198833644215,
+      "rms_db": -22.517775994242143,
+      "bytes": 11875,
+      "sha256": "740b84798c3341163f8a874d928b6ff23554de8a0c9dc58c3876308249c82f12"
+    },
+    "BuffTapGlass.ogg": {
+      "rate": 44100,
+      "channels": 1,
+      "duration": 0.9,
+      "lufs": -21.99890362469989,
+      "peak_db": -7.047591359392929,
+      "rms_db": -22.91114199304912,
+      "bytes": 9267,
+      "sha256": "c10c7277463c51bfb40dd95d39dedece91210603902e9802ca279ba6a466c318"
+    },
+    "BuffTapHarp.ogg": {
+      "rate": 44100,
+      "channels": 1,
+      "duration": 0.85,
+      "lufs": -22.364126767310676,
+      "peak_db": -7.313789296701801,
+      "rms_db": -22.536175347532993,
+      "bytes": 9528,
+      "sha256": "802ad4ce8438135a06277be2a091ac8df05adbd10f626e6a66f63b090358dd0a"
+    },
+    "BuffTapHello.ogg": {
+      "rate": 44100,
+      "channels": 1,
+      "duration": 0.85,
+      "lufs": -20.897643408932698,
+      "peak_db": -9.11584032930319,
+      "rms_db": -22.63206119673102,
+      "bytes": 7833,
+      "sha256": "1b729b6a8d31d6027d7003b23393c8397ad258a8e2dcc2795c5e13f362da4dc9"
+    },
+    "BuffTapMarimba.ogg": {
+      "rate": 44100,
+      "channels": 1,
+      "duration": 0.75,
+      "lufs": -21.855951015214284,
+      "peak_db": -7.447329156026596,
+      "rms_db": -22.191715503196455,
+      "bytes": 8282,
+      "sha256": "78ba6fb7ca2005f8880a88cfcfb9286d41ff8f054a00a9bb410e578afc20b932"
+    },
+    "BuffTapPlayful.ogg": {
+      "rate": 44100,
+      "channels": 1,
+      "duration": 0.8,
+      "lufs": -21.79076995513241,
+      "peak_db": -8.655487859021573,
+      "rms_db": -22.546564264193517,
+      "bytes": 7679,
+      "sha256": "94e3505fe17e45ed2466481daa199e544c65ad784280d9f2bd9eceea56a7717f"
+    },
+    "BuffTapTwinBells.ogg": {
+      "rate": 44100,
+      "channels": 1,
+      "duration": 1.0,
+      "lufs": -21.48100518710057,
+      "peak_db": -8.255916375059144,
+      "rms_db": -22.667659271878364,
+      "bytes": 8746,
+      "sha256": "c6f4e213e5b0a55b29267b6611444d39591744052faa202f15d4e4a7b90ba955"
+    }
+  },
+  "new": {
+    "BuffTapSoftPluck.ogg": {
+      "key": "softpluck",
+      "name": "Soft pluck",
+      "rate": 44100,
+      "channels": 1,
+      "duration": 0.76,
+      "lufs": -21.76998197026506,
+      "peak_db": -9.697340238739734,
+      "rms_db": -20.72825951713591,
+      "bytes": 5790,
+      "sha256": "25a3495e72cf9678a38f67b0ce4833bb5dbe2971b0f253c8ed89b3b1fdb2710b"
+    },
+    "BuffTapAmber.ogg": {
+      "key": "amber",
+      "name": "Amber chime",
+      "rate": 44100,
+      "channels": 1,
+      "duration": 0.9,
+      "lufs": -21.770705091327304,
+      "peak_db": -8.706262958169038,
+      "rms_db": -20.820820458585988,
+      "bytes": 6598,
+      "sha256": "5f793a700f42a26a2d1e07a31de3f59393f5cd4a923263f3e70086ead69c8ef0"
+    },
+    "BuffTapRipple.ogg": {
+      "key": "ripple",
+      "name": "Gentle ripple",
+      "rate": 44100,
+      "channels": 1,
+      "duration": 0.84,
+      "lufs": -21.776304572865442,
+      "peak_db": -9.696756829633202,
+      "rms_db": -21.024536138777272,
+      "bytes": 5792,
+      "sha256": "b9426f2262a5982839b0f407b2db21debb2ecf5641f74f762c5f8a216dc58db6"
+    },
+    "BuffTapWood.ogg": {
+      "key": "wood",
+      "name": "Wooden bloom",
+      "rate": 44100,
+      "channels": 1,
+      "duration": 0.78,
+      "lufs": -21.78037093220519,
+      "peak_db": -10.085824134180392,
+      "rms_db": -21.753359673026978,
+      "bytes": 5763,
+      "sha256": "bab59c9d5a75f836f4bd82aa43d8f2e9703af30267bbcdcb3e8fe9d822f22048"
+    },
+    "BuffTapSilver.ogg": {
+      "key": "silver",
+      "name": "Silver notes",
+      "rate": 44100,
+      "channels": 1,
+      "duration": 0.88,
+      "lufs": -21.772716233565067,
+      "peak_db": -9.66232455507089,
+      "rms_db": -20.91677989103031,
+      "bytes": 6173,
+      "sha256": "e58c0c86c2887e3fd3c4332627df3b99019fe7212ea14a55b553b0c64273fc78"
+    }
+  }
+}

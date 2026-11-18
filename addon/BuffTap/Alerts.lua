@@ -15,6 +15,11 @@ local bundled={
   {key="hello",name="Happy hello",file=SOUNDS.."BuffTapHello.ogg"},
   {key="twinbells",name="Twin bells",file=SOUNDS.."BuffTapTwinBells.ogg"},
   {key="playful",name="Playful marimba",file=SOUNDS.."BuffTapPlayful.ogg"},
+  {key="softpluck",name="Soft pluck",file=SOUNDS.."BuffTapSoftPluck.ogg"},
+  {key="amber",name="Amber chime",file=SOUNDS.."BuffTapAmber.ogg"},
+  {key="ripple",name="Gentle ripple",file=SOUNDS.."BuffTapRipple.ogg"},
+  {key="wood",name="Wooden bloom",file=SOUNDS.."BuffTapWood.ogg"},
+  {key="silver",name="Silver notes",file=SOUNDS.."BuffTapSilver.ogg"},
 }
 local definitions={
   {key="default",name="Ding (game)",id=12867},
