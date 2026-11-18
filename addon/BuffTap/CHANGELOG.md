@@ -1,4 +1,4 @@
-# BuffTap 1.26.5-beta1
+# BuffTap 1.26.5
 
 ### Onboarding and preferences
 - One welcome decision and one optional compact selection view replace the required recommendations/review/features sequence. Explicit staged application validates class-applicable booleans, preserves sound selections and unrelated settings, rolls back the character facade and shared-profile table on apply failure, and finishes only on success. Profile copy closes directly on success; errors leave it open. Back is nonmutating; explicit X/ESC finish without applying. Loading-screen hides do not finish.
@@ -13,7 +13,7 @@
 
 ### Validation and limits
 - Initial focused onboarding/Nearby/profile/class/nameplate checks: 77 passed. Expanded focused click/resting/edit/placement checks: 134 passed, 0 failed, plus Lua 5.1 compilation of the five touched behavior modules. No live Forever UI, clipboard, friendly-names rendering or reported city sound reproduction is claimed. The integrated full mocked Lua 5.1 run subsequently completed with **2,751 passed, 0 recorded failures**; FINAL_TOTAL and the absence of FAIL records were checked. Both focused and full logs are committed. Initial test-only encoding/escaped-newline issues were corrected before these final runs.
-- Local testing only; no release archive or public publication is authorized for this beta. Existing runtime defaults/coordinates are preserved except the explicitly described fresh setup and fresh unpositioned layout. No WTF/SavedVariables file operation, cast automation or combat-rule change.
+- Owner authorized stable publication on 2026-11-18. Runtime behavior is unchanged from the tested beta; final edits are release identity and notes. Existing runtime defaults/coordinates are preserved except the explicitly described fresh setup and fresh unpositioned layout. No WTF/SavedVariables file operation, cast automation or combat-rule change.
 
 # BuffTap 1.26.4
 

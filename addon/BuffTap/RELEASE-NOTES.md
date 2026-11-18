@@ -1,4 +1,4 @@
-# BuffTap 1.26.5-beta1
+# BuffTap 1.26.5
 
 ### A shorter first run
 Choose **Get started** once to accept the recommended extras, **Customize first** to pick them, or **Keep current settings** to finish without changes. Copying another character's settings finishes immediately after a successful copy. There is no required tour or backup prompt.
@@ -12,10 +12,10 @@ Fresh characters start with the reminders stacked toward the upper right and Nea
 
 The grey mana/power wait uses your existing name and recipient label switches. Turn both off for an icon-only display. **Helpers > Pause reminders while resting** also hides it in cities and inns. Thanks to **sevaniuz** for the display feedback.
 
-### Fixes under test
+### Fixes
 An offered higher-rank Nearby buff now survives the final check on the main buff button/binding. Fresh eligibility and stronger-effect protections remain in place. Automatic sounds stay quiet when resting status cannot be read and the resting pause is enabled. The reported sound during a confirmed city rest has not been reproduced; Diagnostics now includes the most recent sound type and resting state to help investigate.
 
-This is a local testing beta. In-game rendering and names-only behavior still need live verification; every cast continues to require player input.
+Names-only appearance still needs live Forever verification. Every cast continues to require player input.
 
 # BuffTap 1.26.4
 

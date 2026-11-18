@@ -2,7 +2,7 @@
 local _,B=...
 -- Keep the ten most recent releases within a 24 KiB content ceiling.
 B.PatchNotes={
- {version="1.26.5-beta1",title="Quicker setup and clearer reminders",items={
+ {version="1.26.5",title="Quicker setup and clearer reminders",items={
   "New players can choose Get started once, Customize first, or Keep current settings. Nearby is included in the recommended setup without requiring a tour.",
   "Recommended setup enables reminder sounds, a resting pause, stronger-buff error protection and class-appropriate Cleanse and Resurrection. Solo thanks remains your choice; SmartShift and class helpers stay in Settings.",
   "Friendly names-only setup is a separate choice when supported. Otherwise, setup explains how to enable friendly nameplates. It never changes game settings automatically.",
