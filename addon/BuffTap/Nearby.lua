@@ -455,7 +455,7 @@ function B:NearbyNeeds(entry,list)
     and (type(UnitIsVisible)~="function" or A.Call(UnitIsVisible,entry.unit)==true)
   local cached=self.nearbyNeedCache[entry.unit]
   if reusable and cached and cached.guid==guid and cached.class==entry.class and cached.level==level
-    and cached.auras==auras and cached.favor==favor and now<cached.untilTime then
+    and cached.auras==auras and cached.favor==favor and cached.upgrades==self.db.nearbyRankUpgrades and now<cached.untilTime then
     if cached.wakeAt then self:ConsiderWake(cached.wakeAt-now) end
     return cached.needs
   end
@@ -473,8 +473,10 @@ function B:NearbyNeeds(entry,list)
       and (explicit and def.kind=="blessing" or (def.kind=="blessing" and fits(def,entry.class)) or (def.kind~="blessing" and self:TargetClassAllowed(def,entry.class,true))) then
       -- Favor: refresh once a quarter of their buff is gone.
       self.favorScan=favor or nil
+      self.nearbyRankUpgradeScan=true
       local ok,missing=pcall(self.ScanMissing,self,def,{entry},scans,errors,favor and 86400 or self:TargetRebuffSeconds(def))
       self.favorScan=nil
+      self.nearbyRankUpgradeScan=nil
       if not ok then error(missing,0) end
       if missing[1] then needs[#needs+1]=missing[1] end
     end
@@ -482,7 +484,7 @@ function B:NearbyNeeds(entry,list)
   local wake=self.nextWakeDelay
   if priorWake then self:ConsiderWake(priorWake) end
   if reusable and not self.ownershipUnavailable and not self.buffDataUnavailable and not self.dataPending then
-    self.nearbyNeedCache[entry.unit]={guid=guid,class=entry.class,level=level,auras=auras,needs=needs,favor=favor,
+    self.nearbyNeedCache[entry.unit]={guid=guid,class=entry.class,level=level,auras=auras,needs=needs,favor=favor,upgrades=self.db.nearbyRankUpgrades,
       untilTime=now+math.min(.5,wake or .5),wakeAt=wake and now+wake}
   else self.nearbyNeedCache[entry.unit]=nil end
   return needs

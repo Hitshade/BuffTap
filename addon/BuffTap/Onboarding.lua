@@ -310,17 +310,32 @@ function B:ApplyOnboarding(confirmed)
   self:OnboardingFeaturesPage()
 end
 
+function B:OnboardingSupplyHint(class)
+  if class=="HUNTER" then return "Supplies: add the arrows or bullets you use from your bags, then choose a low-stock minimum. When you change ammunition, update the tracked item. BuffTap only warns; it never buys or uses ammo." end
+  if class=="WARLOCK" then return "Supplies: add Soul Shards from your bags and choose a low-stock minimum. You can also track your chosen consumables. Stock warnings do not create or use shards." end
+  if class=="MAGE" or class=="PRIEST" or class=="DRUID" or class=="PALADIN" then return "Supplies: add your group-buff reagents from your bags and choose a low-stock minimum. Your chosen consumables and compatible weapon supplies can be tracked too." end
+  return "Supplies: track chosen consumables, weapon supplies or any item from your bags. Choose your own low-stock minimums. These are stock warnings, not automatic item use."
+end
+
 function B:OnboardingFeaturesPage()
   local f=self.onboarding; clearPage(f)
   track(f,text(f,T.fonts.Title,24,-120,WIDTH-48,"Worth knowing"))
   -- The binding is the heart of BuffTap, so it can be changed right here.
-  track(f,button(f,"Change binding",396,-118,140,nil,function() B:CaptureBinding() end))
+  track(f,button(f,"Change binding",24,-156,160,nil,function() B:CaptureBinding() end))
   -- Reminder look: icon style, size, text, glow and effects all live in Customization.
-  track(f,button(f,"Customize reminders",250,-118,140,nil,function()
+  track(f,button(f,"Customize reminders",200,-156,160,nil,function()
     B:Options(); if B.options and B.options.selectTab then B.options.selectTab(8) end
     if B.SetAppearanceView then B:SetAppearanceView("buff") end
   end))
-  local y=-156
+  track(f,button(f,"Set up supplies",376,-156,160,nil,function()
+    B:FinishOnboarding(); B:ShowSuppliesOptions()
+  end))
+  -- Keep the final guide within its pane as class-specific tips are added.
+  local scroll=CreateFrame("ScrollFrame",nil,f,"UIPanelScrollFrameTemplate")
+  scroll:SetPoint("TOPLEFT",24,-198); scroll:SetSize(WIDTH-68,258)
+  local body=CreateFrame("Frame",nil,scroll); body:SetSize(WIDTH-88,258); scroll:SetScrollChild(body)
+  f.featureScroll=scroll; track(f,scroll)
+  local y=0
   local class=A.Class("player")
   local binding=#self.db.keys>0 and table.concat(self.db.keys,", ") or self:Text("none: click the reminder")
   local lines={
@@ -330,6 +345,7 @@ function B:OnboardingFeaturesPage()
     "Right-click a reminder to dismiss it for a while. Right-click the minimap icon for quick controls and pause.",
     "Camp tray sets up a campfire and sleeping bag. Customize look changes the icon, labels and countdown.",
     "Profiles: export your settings and import them on another character or account.",
+    self:OnboardingSupplyHint(class),
   }
   if class=="WARLOCK" or class=="SHAMAN" or class=="DRUID" then
     table.insert(lines,#lines,"Underwater buffs are smart: Unending Breath, Water Breathing and Aquatic Form only remind while you are underwater. A player you target can still get a breathing buff any time.")
@@ -338,10 +354,11 @@ function B:OnboardingFeaturesPage()
     table.insert(lines,#lines,"Class readiness (Helpers page): pet, Healthstone, Soulstone or Oath reminders for your class.")
   end
   for _,line in ipairs(lines) do
-    local fs=text(f,T.fonts.Note,40,y,WIDTH-64,line); track(f,fs)
-    local dot=text(f,T.fonts.Note,24,y,12,"•"); track(f,dot)
+    local fs=text(body,T.fonts.Note,16,y,WIDTH-112,line); track(f,fs)
+    local dot=text(body,T.fonts.Note,0,y,12,"•"); track(f,dot)
     y=y-(fs:GetStringHeight() or 16)-9
   end
+  body:SetHeight(math.max(258,-y))
   if not self.db.nearbyEnabled then
     track(f,text(f,T.fonts.Note,24,-480,WIDTH-48,B:NearbyPitch(class)))
     track(f,button(f,"See how Nearby works",24,-540,250,"primary",function()

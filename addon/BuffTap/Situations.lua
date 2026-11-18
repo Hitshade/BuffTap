@@ -3,13 +3,13 @@ local _,B=...
 local A=B.API
 local groups={solo=true,party=true,raid=true}
 local keys={
-  buffs={"buffs","priorities","buffSeconds","seconds"},
+  buffs={"buffs","priorities","buffSeconds","buffCharges","seconds"},
   weapons={"weaponReminder","weaponMainHand","weaponOffHand","weaponChoices","weaponCoatings","weaponSeconds"},
   consumables={"consumablesEnabled","consumableFamilies","consumableChoices","consumableSeconds","consumableModes"},
 }
 local categoryFor={}; for category,list in pairs(keys) do for _,key in ipairs(list) do categoryFor[key]=category end end
 local limits={seconds={15,180},weaponSeconds={0,300}}
-local maps={buffs=true,priorities=true,buffSeconds=true,weaponChoices=true,weaponCoatings=true,consumableFamilies=true,consumableChoices=true,consumableSeconds=true,consumableModes=true}
+local maps={buffs=true,priorities=true,buffSeconds=true,buffCharges=true,weaponChoices=true,weaponCoatings=true,consumableFamilies=true,consumableChoices=true,consumableSeconds=true,consumableModes=true}
 local function clone(value)
   if type(value)~="table" then return value end
   local copy={}; for key,v in pairs(value) do if type(key)=="string" and (type(v)=="boolean" or A.Text(v) or A.Number(v)) then copy[key]=v end end
@@ -25,13 +25,14 @@ function B:CleanSituationCategory(category,source)
       local clean={}
       for name,v in pairs(value) do
         if type(name)=="string" then
-          if key=="buffs" or key=="priorities" or key=="buffSeconds" then
+          if key=="buffs" or key=="priorities" or key=="buffSeconds" or key=="buffCharges" then
             local def=self:FindBuff(name)
             if def and (not class or def.class==class) then
               if key=="buffs" and (type(v)=="boolean" or v=="default") then clean[name]=v
               elseif (key=="priorities" or key=="buffSeconds") and v==false then clean[name]=false
               elseif key=="priorities" then clean[name]=bounded(v,1,999)
-              elseif key=="buffSeconds" then clean[name]=bounded(v,0,600) end
+              elseif key=="buffSeconds" then clean[name]=bounded(v,0,600)
+              elseif key=="buffCharges" and (name=="lightning-shield" or name=="water-shield") then clean[name]=bounded(v,0,2) end
             end
           elseif key=="weaponChoices" or key=="weaponCoatings" then
             if (name=="main" or name=="off") and v==false then clean[name]=false

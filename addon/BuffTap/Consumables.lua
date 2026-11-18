@@ -338,6 +338,12 @@ local function familyCoverage(B,family)
   return names,ids
 end
 
+-- Share the actual recognition sets with the read-only inspector.
+function B:ConsumableCoverage(family)
+  local names,ids=familyCoverage(self,family)
+  return ids,names
+end
+
 -- Informational ONLY: never an eligibility gate. An effect ID names a food category, not the exact meal
 -- or its strength, so the wording never claims more than that.
 function B:FoodPreferenceStatus(settings)

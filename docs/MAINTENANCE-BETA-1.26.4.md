@@ -1,4 +1,21 @@
-# BuffTap 1.26.4-beta1 verification
+# BuffTap 1.26.4 beta verification
+
+## Follow-up 1.26.4-beta3: optional maintenance features
+
+Owner selected shield-charge reminders, a read-only buff inspector and onboarding Supplies discovery, then explicitly requested the Nearby buff-grade option and the wording **Offer higher rank buffs**. Preference learning and the other competitor backlog candidates remain deferred.
+
+- Shield policy: Lightning Shield and Water Shield only, opt-in per spell at one/two charges, with 0=off and Solo/Party/Raid inheritance. Public integer applications are optional aura metadata; missing, restricted, zero, fractional or negative values cannot trigger a charge refresh. Normal time-based behavior is retained. Other shield families are not replaced merely for having low charges. All existing runtime validation remains in place.
+- Inspector: one explicit fresh self-buff snapshot in the existing Diagnostics report pane and Full check-up. The real class and consumable recognition sets supply matches. Unknown rank/count/caster/timing is labeled. No new casting permissions, event subscription, prediction, recurring scan, player-name/GUID lookup or persistent snapshot. Combat refuses inspection rather than presenting cached state as current.
+- Setup: class-specific guidance for actual Hunter ammo, Warlock Soul Shards and group-buff reagents, plus a shortcut to existing Supplies controls. Users choose the items and minimums themselves. Warnings remain off unless chosen; no new automatic supply choice, purchase or item use. The final guide has a bounded scroll area. Existing onboarding completion is respected.
+- Nearby upgrades: opt-in, ordinary ranked-family allowlist only, applied inside the existing Nearby need scan. An identified lower rank can justify replacing healthy coverage; unknown/group/same/higher coverage cannot. All matching effects must establish lower rank, the scan must be complete/readable, and existing Resolve chooses a known recipient-compatible action. The preference participates in the need-cache key; scope resets after errors. Fresh PreClick validation revokes upgrades that another player already supplied or that have been switched off. Talent bonuses can affect actual relative potency; this is rank comparison, with existing stronger-effect refusal/backoff preserved.
+
+Primary shield evidence: current [Lightning Shield tooltip](https://nether.wowhead.com/forever/tooltip/spell/324) and [Water Shield tooltip](https://nether.wowhead.com/forever/tooltip/spell/408510), retrieved into `../research/shield-inspector-1.26.4/`. Both specify three charges. Inner Fire's current tooltip also describes charges, but it is not included in this bounded first implementation. API exposure of actual shield applications remains a live-client check.
+
+Owner reported Mark rank 2's 88 armor/+3 attributes landing on a level-1 recipient during beta2 testing. This confirms that individual case, not all rank-family boundaries. The representative four-class beta2 gate remains below.
+
+Live checks: enable a Shaman shield charge threshold and verify readable counts, an out-of-combat low-count reminder and recovery to full charges; open Diagnostics > Inspect buffs and verify its snapshot and recognition labels; review onboarding's Supplies guidance/shortcut; enable Offer higher rank buffs and give a nearby eligible player a lower rank, then confirm one higher-rank offer that stops after the upgrade. No agent-operated WoW testing is claimed. No publication authorized.
+
+Validation: strict full mocked suite **2,634 passed, 0 failed** with 81 added feature cases. The final refinement hides the buff-grade control for Hunter, Shaman, Warlock, Warrior and Rogue, while retaining it for the four ordinary-buff classes regardless of learning/level. All **86 focused cases** passed on that final source, including the five added class controls. The focused launcher imports fixture definitions without rerunning their unrelated top-level scenarios; final tests remain in the normal release runner. Both full and final-focused logs are committed. Exactly ten in-game note versions remain. No runtime polling, saved-variable deletion, publication or game automation occurred.
 
 ## Follow-up 1.26.4-beta2: ordinary recipient ranks
 

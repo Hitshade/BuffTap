@@ -2514,6 +2514,8 @@ function B:Options()
     button(diag,L("Reset metrics"),288,-604,110,function()
       B.profileStats=nil; if B.profileEnabled then B:ResetStats() else B.stats=nil end; B:Options()
     end)
+    f.inspectBuffs=button(diag,L("Inspect buffs"),408,-604,126,function() if not A.Combat() then B:ShowDiagnosticsReport("buffs") end end)
+    addHelp(f.inspectBuffs,"Inspect buffs","Capture your readable active buffs, ranks, caster unit, charges and the reminders that recognize them. No predictions in combat; no settings or casts are changed.")
 
     local scroll=CreateFrame("ScrollFrame",nil,diag,"UIPanelScrollFrameTemplate")
     scroll:SetPoint("TOPLEFT",18,-116); scroll:SetSize(654,468); scroll:Hide(); f.discoveryScroll=scroll
@@ -2986,7 +2988,7 @@ function B:Options()
     pick.menu.child:SetHeight(#choices*28)
   end
   for _,r in ipairs(f.buffRows) do r:Hide() end
-  local list=logicalBuffs(); local visible=0
+  local list=logicalBuffs(); local visible=0; local buffRowY=0
   for _,b in ipairs(list) do
     visible=visible+1
     local row=f.buffRows[visible]
@@ -3016,6 +3018,17 @@ function B:Options()
         if def and not A.Combat() then B:EditorSettings("buffs").buffSeconds[def.key]=nil; B:RequestRefresh("rebuff default",0); B:Options() end
       end)
       addHelp(row.default,"Use default timing","Remove this buff's custom refresh time and use its automatic timing. Buff choices and priorities stay unchanged.")
+      row.chargeLabel=label(row,L("Refresh at charges"),90,-61,"GameFontDisableSmall",180)
+      row.charges=selector(row,L("Off"),284,-53,196,function()
+        return {{key=0,name=L("Off")},{key=1,name=L("1 charge remaining")},{key=2,name=L("2 charges remaining")}}
+      end,function(value)
+        local def=row.def
+        if def and not A.Combat() then
+          B:EditorSettings("buffs").buffCharges[def.key]=value
+          B:RequestRefresh("shield charge preference",0)
+        end
+      end)
+      addHelp(row.charges,"Refresh at charges","Optional extra refresh trigger for this shield, outside combat. Off keeps time-based behavior. Unreadable or zero stack values are never assumed to mean low charges. Solo, Party and Raid can differ.")
       for _,direction in ipairs({-1,1}) do
         local delta=direction
         local arrow=arrowButton(row,"",delta<0 and 556 or 582,-15,24,function(btn)
@@ -3035,11 +3048,17 @@ function B:Options()
       addHelp(row.order,"Buff priority","Lower numbers are checked first. Use the arrows to move a buff earlier or later.")
       row.applyDim=function(on)
         local alpha=on and 1 or .5
-        for _,part in ipairs({row.icon,row.name,row.detail,row.groupIcon,row.rebuff,row.default,row.up,row.down,row.order}) do if part then part:SetAlpha(alpha) end end
+        for _,part in ipairs({row.icon,row.name,row.detail,row.groupIcon,row.rebuff,row.default,row.up,row.down,row.order,row.chargeLabel,row.charges}) do if part then part:SetAlpha(alpha) end end
       end
       f.buffRows[visible]=row
     end
-    row.def=b; row:ClearAllPoints(); row:SetPoint("TOPLEFT",0,-(visible-1)*60); row:Show(); row.check:SetChecked(self:Enabled(b,self:EditorSettings("buffs"))); row.name:SetText(spellLabel(b)); row.icon:SetTexture(buffIcon(b))
+    local shield=b.key=="lightning-shield" or b.key=="water-shield"
+    row.def=b; row:ClearAllPoints(); row:SetPoint("TOPLEFT",0,-buffRowY); row:SetHeight(shield and 86 or 54)
+    buffRowY=buffRowY+(shield and 92 or 60)
+    row:Show(); row.check:SetChecked(self:Enabled(b,self:EditorSettings("buffs"))); row.name:SetText(spellLabel(b)); row.icon:SetTexture(buffIcon(b))
+    row.chargeLabel:SetShown(shield); row.charges:SetShown(shield)
+    local chargeLimit=self:ShieldChargeLimit(b,self:EditorSettings("buffs"))
+    row.charges:SetText(chargeLimit==0 and L("Off") or chargeLimit==1 and L("1 charge remaining") or L("2 charges remaining"))
     local groupName=pairedGroupName(b)
     if b.groupKey then
       local groupDef=self:FindBuff(b.groupKey)
@@ -3068,7 +3087,7 @@ function B:Options()
     row.applyDim(row.check:GetChecked()==true)
   end
   f.emptyBuffs:SetShown(visible==0)
-  f.buffChild:SetHeight(math.max(1,visible*60))
+  f.buffChild:SetHeight(math.max(1,buffRowY))
   if f.diagVersion then f.diagVersion:SetText("BuffTap v"..tostring(self.version or "unknown")) end
   if f.pvpProtection then f.pvpProtection:SetChecked(self.db.pvpProtection==true) end
   if f.diagHideNames then f.diagHideNames:SetChecked(self.reportHideNames~=false); f.diagPauseNotes:SetChecked(self.db.pauseNotes~=false) end

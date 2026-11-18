@@ -90,4 +90,5 @@ import test_buff_queue_sound
 import test_review_1263
 import test_regression_1264
 import test_recipient_ranks
+import test_shields_inspector
 print('FINAL_TOTAL',len(__import__('test_bufftap').tests))

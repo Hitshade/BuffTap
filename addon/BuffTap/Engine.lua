@@ -4,7 +4,7 @@
 
 local _, B = ...
 _G.BuffTap = B
-B.version = "1.26.4-beta2"
+B.version = "1.26.4-beta3"
 B.API = {}
 local A = B.API
 
@@ -97,7 +97,8 @@ function B:InitDB()
   self.db.showRemaining=nil; self.db.showGroupIndicator=nil
   local defaults = {enabled=true, showReminder=true, size=64, opacity=1, x=0, y=-180,
     seconds=45, rebuffVersion=1, sound=false, reminderSound="cleanse", alertSoundVersion=0, supplySound="glass", campAlertSound="harp", cleanseSound="bell", socialSound="hello", nearbySocialAlert=false, nearbySocialFriends=true, nearbySocialGuild=true, cleanseEnabled=false, cleanseTypes={Magic=true,Curse=true,Poison=true,Disease=true}, cleanseSelf=true, cleanseGroup=true, cleanseTarget=true, cleanseNearby=false, cleansePreferAbolish=true, cleanseBorder=true, reviveEnabled=false, reviveGroup=true, reviveTarget=true, reviveRebirth=false, cleanseFirst=false, smartShift=false, soundChannel="Master", soundInterval=5, glow=true, pulse=false, group=true, smartGroup=true,
-    groupNeed=3, blessingNeed=2, friendlyTarget=false, targetSeconds=300, keys={"MOUSEWHEELDOWN"}, buffs={}, priorities={}, buffSeconds={},
+    nearbyRankUpgrades=false,
+    groupNeed=3, blessingNeed=2, friendlyTarget=false, targetSeconds=300, keys={"MOUSEWHEELDOWN"}, buffs={}, priorities={}, buffSeconds={}, buffCharges={},
     pauseResting=false, targetClassBlessings=true, targetClasses={}, targetBlessingFallback=true, targetBlessingClasses={}, targetBlessingPriorities={}, groupBlessingPriorities={}, blessingAssignments=false, blessingClasses={}, blessingGroupOverrides={}, buffGroups={}, buffClasses={}, buffGroupNeed={}, targetBuffs={}, targetBuffSeconds={}, showBuffName=false, showTargetName=true, showTimer=false, showGroupBadge=true,
     pickerBagsOnly=true, supplyCustom={}, consumablesEnabled=false, consumableFamilies={}, consumableChoices={}, consumableSeconds={}, consumableModes={},
     suppliesEnabled=false, suppliesChat=false, suppliesSound=false, suppliesReadyCheck=false, supplySettings={},
@@ -221,6 +222,11 @@ function B:InitDB()
     else self.db.consumableSeconds[key]=math.max(30,math.min(1800,math.floor(value/30+0.5)*30)) end
   end
   self.consumableDirty=true
+  if type(self.db.buffCharges)~="table" then self.db.buffCharges={} end
+  for key,value in pairs(self.db.buffCharges) do
+    if (key~="lightning-shield" and key~="water-shield") or not A.Number(value) then self.db.buffCharges[key]=nil
+    else self.db.buffCharges[key]=math.max(0,math.min(2,math.floor(value))) end
+  end
   for key,value in pairs(self.db.buffSeconds) do
     if type(value) ~= "number" or value ~= value then self.db.buffSeconds[key] = nil
     else self.db.buffSeconds[key] = math.max(0, math.min(600, value)) end
@@ -927,6 +933,7 @@ local function compactAura(data)
   local publicID=A.Number(spellId) and spellId or nil
   if not publicName and not publicID then return nil,"aura identity unreadable" end
   return {sourceUnit=A.Text(data.sourceUnit) and data.sourceUnit or nil, name=publicName,spellId=publicID,
+    applications=A.Number(data.applications) and data.applications>=0 and data.applications==math.floor(data.applications) and data.applications or nil,
     auraInstanceID=A.Number(data.auraInstanceID) and data.auraInstanceID or nil,
     timingRestricted=not A.Public(duration) or not A.Public(expirationTime),
     duration=A.Number(duration) and duration or nil,expirationTime=A.Number(expirationTime) and expirationTime or nil}
@@ -1066,10 +1073,7 @@ function B:SelectBGSelf()
   return nil,"Battleground self buffs: nothing actionable"
 end
 
-function B:Missing(b,action,auras,rebuffSeconds)
-  -- Breath buffs and Aquatic Form are only worth a reminder while the breath timer runs.
-  -- A friendly player you target yourself can still get one any time, for fun or before a swim.
-  if b.underwater and not self.underwater and not (b.kind~="self" and action and action.target=="target") then return false,"not underwater",0,nil,nil end
+function B:BuffCoverage(b,action)
   self.coverCache=self.coverCache or {}
   local cacheKey=b.key .. ":" .. action.id
   local cached=self.coverCache[cacheKey]
@@ -1091,6 +1095,43 @@ function B:Missing(b,action,auras,rebuffSeconds)
     end
     self.coverCache[cacheKey]={ids=ids,names=names}
   end
+  return ids,names
+end
+
+function B:ShieldChargeLimit(b,settings)
+  if not b or (b.key~="lightning-shield" and b.key~="water-shield") then return 0 end
+  local values=settings and settings.buffCharges or self:Preference("buffCharges")
+  local value=type(values)=="table" and values[b.key]
+  return A.Number(value) and math.max(0,math.min(2,math.floor(value))) or 0
+end
+
+-- Nearby-only rank comparison. Unknown coverage, group equivalents and
+-- same/higher ranks cannot justify replacing a healthy effect.
+function B:NearbyRankUpgrade(b,action,auras,ids,names)
+  if not self.nearbyRankUpgradeScan or self.db.nearbyRankUpgrades~=true
+    or not recipientRankAllowance[b.key] or auras.incomplete or auras.timingRestricted then return false end
+  local order={}; for index,id in ipairs(b.ranks or {}) do order[id]=index end
+  local selected=order[action.id]; local selectedLevel=self.RankLevel[action.id]
+  if not selected or not A.Number(selectedLevel) then return false end
+  local found=false
+  for _,aura in ipairs(auras) do
+    if ids[aura.spellId] or names[fold(aura.name)] then
+      local current=order[aura.spellId]; local level=self.RankLevel[aura.spellId]
+      if not current or current<=selected or not A.Number(level) or level>=selectedLevel
+        or not A.Number(aura.duration) or aura.duration<=0
+        or not A.Number(aura.expirationTime) or aura.expirationTime<=GetTime() then return false end
+      found=true
+    end
+  end
+  return found
+end
+
+function B:Missing(b,action,auras,rebuffSeconds)
+  -- Breath buffs and Aquatic Form are only worth a reminder while the breath timer runs.
+  -- A friendly player you target yourself can still get one any time, for fun or before a swim.
+  if b.underwater and not self.underwater and not (b.kind~="self" and action and action.target=="target") then return false,"not underwater",0,nil,nil end
+  local ids,names=self:BuffCoverage(b,action)
+  if self:NearbyRankUpgrade(b,action,auras,ids,names) then return true,"rank upgrade",0,nil,nil end
 
   local now=GetTime()
   local matched=false
@@ -1098,6 +1139,8 @@ function B:Missing(b,action,auras,rebuffSeconds)
   local latestCrossing=nil
   local bestRemaining=nil
   local shownThreshold=0
+  local chargeLimit=action.target=="player" and self:ShieldChargeLimit(b) or 0
+  local lowCharges=false
   for _,a in ipairs(auras) do
     if ids[a.spellId] or names[fold(a.name)] then
       matched=true
@@ -1127,7 +1170,11 @@ function B:Missing(b,action,auras,rebuffSeconds)
       local remaining=math.max(0,a.expirationTime-now)
       shownThreshold=math.max(shownThreshold,threshold)
       bestRemaining=math.max(bestRemaining or 0,remaining)
-      if remaining>threshold then
+      local ownShield=false
+      if chargeLimit>0 then for _,id in ipairs(b.ranks or {}) do if id==a.spellId then ownShield=true; break end end end
+      local chargeLow=ownShield and A.Number(a.applications) and a.applications>0 and a.applications<=chargeLimit
+      if chargeLow then lowCharges=true
+      elseif remaining>threshold then
         anySafe=true
         local crossing=remaining-threshold
         -- Coverage is still safe while ANY equivalent matching aura remains above threshold.
@@ -1137,6 +1184,7 @@ function B:Missing(b,action,auras,rebuffSeconds)
   end
   if anySafe then return false,"present",shownThreshold,bestRemaining,latestCrossing end
   if auras.incomplete then return false,"aura scan incomplete",0,nil,nil end
+  if lowCharges then return true,"low charges",shownThreshold,bestRemaining,0 end
   if matched then return true,"expiring",shownThreshold,bestRemaining,0 end
   return true,"missing",0,nil,nil
 end

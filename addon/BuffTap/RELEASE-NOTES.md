@@ -1,3 +1,18 @@
+# BuffTap 1.26.4-beta3
+
+### Shield charge reminders
+Shamans can choose **Refresh at charges** beneath Lightning Shield or Water Shield in **My buffs**. Select one or two remaining charges, or leave it **Off** for the existing timing behavior. Solo, Party and Raid may use different choices. Charge reminders use readable information outside combat and retain normal casting requirements.
+
+### Optional Nearby buff-grades
+Enable **Offer higher rank buffs** on the Nearby page to offer a better rank when someone already has a clearly identified lower one and can receive your known upgrade. It starts off. Unknown ranks, group equivalents and equal or higher ranks are left alone by the upgrade check. Comparing ranks cannot account for every talent bonus; normal stronger-effect protections still apply. Each cast needs your input.
+
+### Easier troubleshooting and Supplies setup
+**Diagnostics > Inspect buffs** captures your readable active buffs and explains which reminders recognize them. Copy the result from the existing report box; Full check-up includes it too. Information hidden by the game is marked unavailable, and combat does not show an old snapshot as current.
+
+The final setup page now explains Supplies for your class, including Hunter ammo, Warlock Soul Shards and group-buff reagents. **Set up supplies** opens the existing tracking page so you can choose items and warning minimums. Nothing is automatically tracked or enabled, and existing users are not sent through setup again.
+
+Earlier beta fixes and ordinary recipient-rank changes are included. These additions still need in-game checks, including whether Forever exposes shield charge counts as expected. The four-class recipient-boundary check remains a public-release gate.
+
 # BuffTap 1.26.4-beta2
 
 ### More appropriate buffs for lower-level players

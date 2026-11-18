@@ -393,6 +393,13 @@ function B:RefineNearbyPage(ui,tabs)
   end)
   f.nearbyHoldShort:HookScript("OnEnter",function(s) T.Tooltip(s,B:Text("Hold back short buffs"),B:Text("In cities and inns, don't offer Nearby players buffs that last ten minutes or less, such as Thorns or a single blessing. They would wear off before they mattered. Longer buffs like Mark of the Wild are still offered.")) end)
   f.nearbyHoldShort:HookScript("OnLeave",function() if GameTooltip then GameTooltip:Hide() end end)
+  f.nearbyRankUpgrades=ui.check(p,"Offer higher rank buffs",374,-180,function(c)
+    if A.Combat() then return end
+    B.db.nearbyRankUpgrades=c:GetChecked()==true; B.nearbyNeedCache=nil; B.nearbySnapshot=nil
+    B:RequestRefresh("nearby rank upgrades",0)
+  end)
+  f.nearbyRankUpgrades:HookScript("OnEnter",function(s) T.Tooltip(s,B:Text("Offer higher rank buffs"),B:Text("Offer a known higher rank when a Nearby player has a clearly identified lower rank and their level allows the upgrade. Unknown effects and group equivalents are left alone. Compares ranks, not talent bonuses. Each cast still needs your input.")) end)
+  f.nearbyRankUpgrades:HookScript("OnLeave",function() if GameTooltip then GameTooltip:Hide() end end)
   f.nearbyWhileResting:HookScript("OnEnter",function(s) T.Tooltip(s,B:Text("Buff while resting"),B:Text("Buff nearby players in cities and inns. When off, Nearby pauses there. Also the zZ button on the Nearby window. Your own reminders follow the Helpers resting pause.")) end)
   f.nearbyWhileResting:HookScript("OnLeave",function() if GameTooltip then GameTooltip:Hide() end end)
   place(f.nearbyInvites,p,26,-214)
@@ -690,6 +697,11 @@ function B:UpdateNavStatus()
   end
 end
 function B:UpdateRefinedOptions()
+  if self.options and self.options.nearbyRankUpgrades then
+    local class=A.Class("player")
+    self.options.nearbyRankUpgrades:SetShown(class=="DRUID" or class=="MAGE" or class=="PRIEST" or class=="PALADIN")
+    self.options.nearbyRankUpgrades:SetChecked(self.db.nearbyRankUpgrades==true)
+  end
   if self.options and self.options.detachConsumables then
     self.options.detachConsumables:SetChecked(self.db.manualConsumablesDetached==true)
   end

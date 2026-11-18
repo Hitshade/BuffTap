@@ -2,6 +2,11 @@
 local _,B=...
 -- Keep the ten most recent releases within a 24 KiB content ceiling.
 B.PatchNotes={
+ {version="1.26.4-beta3",title="Shield charges and buff-grades",items={
+  "Shamans: My buffs now lets Lightning Shield and Water Shield refresh at one or two charges remaining. This is optional and uses readable information outside combat.",
+  "Nearby: turn on Offer higher rank buffs to give a buff-grade when someone has a clearly identified lower rank and can receive your upgrade. It starts off.",
+  "Diagnostics > Inspect buffs shows your readable active buffs and which reminders recognize them. You can copy the results into a report.",
+  "Setup now points out Supplies tracking for ammunition, Soul Shards and group-buff reagents, with a shortcut to choose what to track."}},
  {version="1.26.4-beta2",title="Better buff ranks for lower-level players",items={
   "Mages, Priests, Druids and Paladins: ordinary ranked buffs can now offer a stronger rank to lower-level players, instead of treating the level where you learn it as their requirement.",
   "This beta tests the usual Classic buff-level allowance. Group versions and unusual spells keep their existing rules; every cast still needs your click or binding."}},
@@ -52,14 +57,6 @@ B.PatchNotes={
   "Hover the Elixirs or Utility rows on the Consumables page to see which of your ticked effects are active, running low, missing or out of stock.",
   "A pet notice now shows before a weapon-coating notice, so one no longer hides the other.",
   "Fixed: the resurrection reminder could be offered for a player whose connection status the game would not confirm."}},
- {version="1.24.6",title="Fixes, and clearer reminders",items={
-  "Fixed: the resurrection reminder could fail to show for a dead group member. It now appears as it should.",
-  "New option on the Cleanse page: \"Cleanse before resurrection\", for classes that can do both. It is off by default, so resurrection still comes first unless you change it.",
-  "Soulstone: choosing a player with \"Use current target\" now remembers that exact person, even if someone in your group has a similar name. If an older assignment stops working, choose the player again.",
-  "Pet summons, Healthstones and Soulstones now come before optional food and flasks. A reminder you have to act on by hand no longer hides one you can click.",
-  "Hover a food, flask or elixir row on the Consumables page to see why nothing is being offered. The food picker also tells you when a different food effect is active. BuffTap never replaces it for you.",
-  "Hover the tracking choice under Helpers to see whether it is on, off or not learned yet.",
-  "Battlegrounds: your chosen tracking can be reminded again when you are not in combat."}},
 }
 function B:PatchNotesUnread()
   return self.profileDB and self.db.optionsPatchDot~=false and self.profileDB.global.patchNotesSeen~=self.version

@@ -250,6 +250,51 @@ function B:CaptureOutput(run)
   if not ok then lines[#lines+1]="Error: "..tostring(err) end
   return lines
 end
+-- Explicit snapshot only. No subscriptions, predictions, casts or preference writes.
+function B:BuffInspectorLines()
+  local out={"Your active buffs (read-only snapshot). Coverage lists recognition, not stacking compatibility."}
+  if A.Combat() then out[#out+1]="Unavailable in combat; no stored buff snapshot is shown."; return out end
+  local auras=self:GetAuras("player",true,true)
+  if not auras then out[#out+1]="Buff information unavailable; nothing inferred."; return out end
+  if auras.incomplete or auras.timingRestricted then out[#out+1]="Partial information: unreadable effects or timing are omitted/marked unknown." end
+  local class=A.Class("player")
+  local sets={}
+  for _,def in ipairs(self.Buffs or {}) do
+    if (def.class==class or def.class=="ALL") and not def.singleKey then
+      local id=def.ranks and def.ranks[1]
+      if id then
+        local name=A.Call(C_Spell and C_Spell.GetSpellName,id)
+        local ids,names=self:BuffCoverage(def,{id=id,name=A.Text(name) and name or def.name})
+        sets[#sets+1]={ids=ids,names=names,label=def.name..(self:Enabled(def) and " [on]" or " [off]")}
+      end
+    end
+  end
+  for _,family in ipairs(self.ConsumableFamilies or {}) do
+    if not family.multi and self:ConsumableFamilySelected(family) then
+      local ids,names=self:ConsumableCoverage(family)
+      sets[#sets+1]={ids=ids,names=names,label=(family.parent and (family.parent.name..": ") or "")..family.name..
+        (self:ConsumableFamilyEnabled(family) and " [on]" or " [off]")}
+    end
+  end
+  for _,aura in ipairs(auras) do
+    local name=A.Text(aura.name) and aura.name or "Unknown name"
+    local matches={}
+    local normalized=name:lower():gsub("%s*%b()$","")
+    for _,set in ipairs(sets) do
+      if (aura.spellId and set.ids[aura.spellId]) or set.names[normalized] then matches[#matches+1]=set.label end
+    end
+    local rank=aura.spellId and A.Call(C_Spell and C_Spell.GetSpellSubtext,aura.spellId)
+    local caster=A.Text(aura.sourceUnit) and aura.sourceUnit or nil
+    if caster and caster~="player" and caster~="pet" and not caster:match("^party%d+$") and not caster:match("^raid%d+$") then caster="other unit" end
+    local remaining=A.Number(aura.expirationTime) and (aura.expirationTime==0 and "no expiration" or string.format("%.0fs",math.max(0,aura.expirationTime-GetTime()))) or "unknown"
+    out[#out+1]=name.." | spell "..tostring(aura.spellId or "unknown").." | "..(A.Text(rank) and rank~="" and rank or "rank unavailable")..
+      " | caster "..(caster or "unknown").." | stacks/charges "..tostring(aura.applications or "unknown").." | remaining "..remaining
+    out[#out+1]="  Recognized by: "..(#matches>0 and table.concat(matches,", ") or "no class-buff or selected-consumable match")
+  end
+  if #auras==0 then out[#out+1]="No readable helpful buffs." end
+  return out
+end
+
 -- Full check-up: every report BuffTap has, in one box, so a bug report needs one copy.
 function B:CheckupLines()
   local out={}
@@ -271,6 +316,7 @@ function B:CheckupLines()
   local function safe(fn) local ok,lines=pcall(fn); if ok then return lines end; return {"(unavailable: "..tostring(lines)..")"} end
   if not A.Combat() then pcall(self.Refresh,self,true) end
   add("Diagnostics",safe(function() return self:DiagnosticsLines() end))
+  add("Active buffs",safe(function() return self:BuffInspectorLines() end))
   add("Debug",safe(function() return self:CaptureOutput(function() B:Status(true) end) end))
   add("Nearby",safe(function() return self:NearbyDiagnosticsLines() end))
   add("Supplies",safe(function() return self:CaptureOutput(function() B:ReportSupplies() end) end))
@@ -287,11 +333,12 @@ function B:ReportText(kind,hideNames)
   elseif kind=="debug" then lines=self:CaptureOutput(function() B:Status(true) end)
   elseif kind=="supplies" then lines=self:CaptureOutput(function() B:ReportSupplies() end)
   elseif kind=="nearby" then lines=self:NearbyDiagnosticsLines()
+  elseif kind=="buffs" then lines=self:BuffInspectorLines()
   else
     if not A.Combat() then self:Refresh(true) end
     lines=self:DiagnosticsLines()
   end
-  local text="BuffTap "..tostring(self.version).." | "..L(kind=="checkup" and "Full check-up" or kind=="status" and "Status" or kind=="debug" and "Debug" or kind=="supplies" and "Supplies" or kind=="nearby" and "Nearby" or "Diagnostics").."\n"..table.concat(lines or {},"\n")
+  local text="BuffTap "..tostring(self.version).." | "..L(kind=="checkup" and "Full check-up" or kind=="status" and "Status" or kind=="debug" and "Debug" or kind=="supplies" and "Supplies" or kind=="nearby" and "Nearby" or kind=="buffs" and "Active buffs" or "Diagnostics").."\n"..table.concat(lines or {},"\n")
   text=text:gsub("|c%x%x%x%x%x%x%x%x",""):gsub("|r","")
   if hideNames then
     -- Whole words only, so a short name like "Bo" does not rewrite "Boss".
