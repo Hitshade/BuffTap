@@ -2,7 +2,8 @@
 local _,B=...
 -- Keep the ten most recent releases within a 24 KiB content ceiling.
 B.PatchNotes={
- {version="1.26.8-beta1",title="Try an optional buff queue",items={
+ {version="1.26.8-beta2",title="Try an optional buff queue",items={
+  "Consumable bar and buff queue icons now follow your Classic or Modern square icon choice, including the preview. These smaller icons have no reminder glow.",
   "Customization > Buff reminder > Show next buffs below adds up to four clickable buff icons beneath your reminder. It starts off. Your binding stays on the main icon; queued icons hide in combat.",
   "Queue icons stay centered and leave room for attached consumables. Counts ending in + mean at least that many players need the buff.",
   "My buffs > Combat expiry warning is a separate optional estimate. It remembers your buffs before combat and warns near their expected expiry. It cannot detect combat dispels or another player's refresh.",

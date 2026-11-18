@@ -135,6 +135,7 @@ function B:UpdateOptionsPreviews()
         local start=42+math.max(0,(available-block-strip)/2)
         icon:ClearAllPoints(); icon:SetPoint("TOP",preview,"TOP",0,-start-top)
         for i,sample in ipairs(preview.manualSamples or {}) do
+          self:ApplyIconStyle(sample,sample.icon,d.iconStyle)
           sample:ClearAllPoints(); sample:SetPoint("TOPLEFT",preview,"TOPLEFT",93+(i-1)*26,-start-block-28); sample:SetAlpha(d.opacity)
         end
         if preview.manualCaption then

@@ -204,6 +204,7 @@ function B:UpdateManualConsumables()
     if not button and i<=total then button=newButton(i,holder); self.manualConsumableButtons[i]=button end
     if button then
       self:DisarmManualButton(button); button.entry=nil; button.overflow=nil
+      self:ApplyIconStyle(button,button.icon,self.db.iconStyle)
       local entry=entries[i]
       if i<=shown and entry and not button.driverFailed then
         local family=entry.family; local action,why

@@ -201,6 +201,7 @@ function B:UpdateBuffQueue(main)
           b:SetPoint("CENTER",UIParent,"CENTER",self.db.x-width/2+size/2+(i-1)*(size+GAP),y)
           b:SetAlpha(A.Number(self.db.opacity) and self.db.opacity or 1)
           b.icon:SetTexture(action.icon)
+          self:ApplyIconStyle(b,b.icon,self.db.iconStyle)
           b.count:SetText((entry.count>1 or entry.atLeast) and (tostring(entry.count)..(entry.atLeast and "+" or "")) or "")
           b:Show(); self.buffQueueShown=self.buffQueueShown+1
         else clear(b) end

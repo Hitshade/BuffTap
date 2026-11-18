@@ -1,3 +1,9 @@
+# BuffTap 1.26.8-beta2
+
+The consumable bar and optional buff queue now follow **Customization > Buff reminder > Style**. Classic and Modern square apply to the smaller icons and consumable preview too. These secondary icons remain free of reminder glows. Existing positions, clicks and selections are unchanged.
+
+This local beta includes the optional queue and estimated combat warnings described below. Both still start off. Thanks to tinect for the original contribution.
+
 # BuffTap 1.26.8-beta1
 
 ### Optional clickable buff queue

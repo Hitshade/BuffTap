@@ -1,3 +1,9 @@
+# BuffTap 1.26.8-beta2
+
+### Secondary icon consistency
+- ManualConsumables, BuffQueue and the consumable preview now reuse ApplyIconStyle with the main reminder iconStyle. Runtime refresh updates existing buttons, including unavailable stock and overflow, without changing secure payloads, centering or counts. Classic restores full texture coordinates and hides modern borders; Modern applies the same crop and frame as the main icon. No glow or animated effects are added.
+- Presentation-only change; beta1 behavior validation remains historical. Focused mocked regression: 143 passed, zero FAIL records, including six Classic/Modern live-update, preview and no-glow cases (tests/secondary-style-1268-beta2-focused.txt). Four affected Lua files compiled. Full beta1 suite is not rerun for this visual-only change.
+
 # BuffTap 1.26.8-beta1
 
 ### Contribution and adaptation
