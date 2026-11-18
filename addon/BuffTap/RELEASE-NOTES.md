@@ -1,3 +1,8 @@
+# BuffTap 1.26.4-beta6
+
+### Nearby spacing for every class
+Classes without the higher-rank buff option no longer have an empty row in their Nearby settings. The remaining switches move up together; Mana reserve stays in place. This is a visual-only adjustment, with no tests rerun as requested.
+
 # BuffTap 1.26.4-beta5
 
 ### Visual polish

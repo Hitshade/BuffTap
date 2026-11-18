@@ -1,3 +1,9 @@
+# BuffTap 1.26.4-beta6
+
+### Class-aware visual spacing
+- Collapse the hidden Nearby upgrade row for classes outside Druid/Mage/Priest/Paladin by shifting the remaining four left-column controls up one row. Supported classes keep the existing positions; Mana reserve and right-column controls do not move. No setting or action logic changes.
+- Visual-only follow-up. No tests rerun at owner request; beta4's 2,676-pass result remains historical. In-game visual beta notes are folded into the latest entry.
+
 # BuffTap 1.26.4-beta5
 
 ### Visual-only follow-up

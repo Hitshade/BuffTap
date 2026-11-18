@@ -1,5 +1,7 @@
 # BuffTap development
 
+Internal **1.26.4-beta6** closes the hidden Nearby upgrade-row gap for inapplicable classes. The other left-column switches shift up; Mana reserve and right-column positions remain unchanged. Visual-only, no tests rerun per owner instruction. No publication authorized.
+
 Internal **1.26.4-beta5** is an owner-requested visual-only follow-up: Return the favor moves up beside the other list switches, Mana reserve stays in place, and both copyable Diagnostics editors skip inner-box/focus-border styling. No regression tests rerun, as explicitly requested. Prior beta4 validation remains historical. No publication authorized.
 
 ## Issue review workflow

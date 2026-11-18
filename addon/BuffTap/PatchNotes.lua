@@ -2,8 +2,8 @@
 local _,B=...
 -- Keep the ten most recent releases within a 24 KiB content ceiling.
 B.PatchNotes={
- {version="1.26.4-beta5",title="Clearer controls and setup choices",items={
-  "Nearby: the higher-rank option has its own space. Return the favor sits directly below the other list switches. Mana reserve stays at the bottom.",
+ {version="1.26.4-beta6",title="Clearer controls and setup choices",items={
+  "Nearby controls close the gap when your class has no higher-rank buffs to offer. Return the favor sits directly below the other list switches. Mana reserve stays at the bottom.",
   "Diagnostics text blends into the report pane without an extra box or focus border. Select text or use Select all, then press Ctrl+C to copy. Full check-up includes Inspect buffs.",
   "Fresh setup recommends Cleanse, Resurrection, Cleanse before resurrection and SmartShift where they fit your class, even before learning the spells. You can decline each choice. Existing setups stay unchanged unless you select a recommendation."}},
  {version="1.26.4-beta3",title="Shield charges and buff-grades",items={

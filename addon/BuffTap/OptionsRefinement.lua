@@ -699,8 +699,14 @@ end
 function B:UpdateRefinedOptions()
   if self.options and self.options.nearbyRankUpgrades then
     local class=A.Class("player")
-    self.options.nearbyRankUpgrades:SetShown(class=="DRUID" or class=="MAGE" or class=="PRIEST" or class=="PALADIN")
+    local upgrades=class=="DRUID" or class=="MAGE" or class=="PRIEST" or class=="PALADIN"
+    self.options.nearbyRankUpgrades:SetShown(upgrades)
     self.options.nearbyRankUpgrades:SetChecked(self.db.nearbyRankUpgrades==true)
+    -- Collapse the hidden upgrade row without moving the bottom mana control.
+    for _,row in ipairs({{self.options.nearbyWhileResting,26,-168},{self.options.nearbyHoldShort,50,-196},
+      {self.options.nearbyInvites,26,-224},{self.options.nearbyPvp,26,-252}}) do
+      row[1]:ClearAllPoints(); row[1]:SetPoint("TOPLEFT",row[2],row[3]+(upgrades and 0 or 28))
+    end
   end
   if self.options and self.options.detachConsumables then
     self.options.detachConsumables:SetChecked(self.db.manualConsumablesDetached==true)
