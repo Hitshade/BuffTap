@@ -1,73 +1,28 @@
-# BuffTap 1.26.8-beta8
+# BuffTap 1.26.8
 
-### Provider control placement
-- Moves the provider toggle from the request heading to the empty ninth grid slot, shortens its label to Prioritize providers, and retains its full tooltip and behavior. Card height and eight-unit gaps are unchanged. 98 focused mocked checks passed, including provider grid placement and unchanged panel gaps for four classes in two locales. Log: tests/helpers-spacing-1268-beta8-focused.txt. No full rerun for this placement-only change.
+### Optional queue and combat estimates
+- Adapts tinect's PR #6 with existing selection, identity and protected-action safeguards. buffQueue and combatExpiry are shared profile preferences, both off by default. Existing settings and positions are preserved.
+- BuffQueue shows up to four centered clickable canonical buff families from bounded selection passes. Group spells and Greater Blessings stay on the main icon; bindings remain there. A trailing + denotes a lower-bound count, excluding the main recipient. PreClick revalidates live identity, payload, eligibility, cooldown, range and missing-buff state before helper tracking, preserving SmartShift and quiet sequences. Secure state drivers disarm restricted actions. Every cast requires hardware input.
+- CombatExpiry records enabled own buffs out of combat and schedules nonsecure warnings about ten seconds before predicted expiry. No combat aura reads or secure action writes. Death/loading clears plans; only confirmed true self-only casts renew estimates. Dispels and another player's refresh cannot be inferred. Explicit sound context preserves Personal mute/custom choices and category, pause and rate gates.
 
-# BuffTap 1.26.8-beta7
+### Nearby and Paladin corrections
+- Optional nearbyProviderSort, false by default, lives under Helpers > Buff requests > Prioritize providers. It uses existing RequestableBuffs and blocked-row rules without new level/learned-spell validation. Providers can appear in buffs-only view after existing action, cleanse, favor and social priorities. Mouse freezes remain. Cast selection and binding recipients are unchanged; no automatic requests. Existing-buff and click-time checks remain authoritative. Potential provider status does not prove a spell is learned.
+- Removes obsolete short flags from Kings, Might and Wisdom; updates five locale tooltips. Other short-buff handling is unchanged. Paladin priorities skip nil Resolve results for unlearned blessings before Missing; spells remain configurable.
 
-### Helpers footer clearance
-- Uses consistent eight-unit horizontal and vertical card gaps. Request/Tracking/readiness sections move up cumulatively, freeing twelve units above the footer without changing control sizes, behavior or saved settings. Both top cards retain their outer margins. 98 focused mocked checks passed, including equal card gaps and footer bounds for Druid, Warlock, Hunter and Paladin in English and German. Log: tests/helpers-spacing-1268-beta7-focused.txt. No full behavior rerun for this layout-only update.
+### Solo Thanks recovery and evidence
+- Known incoming caster identities get up to ten seconds for live-unit resolution; unknown identities retain the shorter window. Retries remain bounded with no idle polling. Queued providers can rebind only to the same GUID and original full name. Initial baselines discard pending candidates; final identity checks, pauses and cooldowns remain.
+- ThanksDiagnostics adds bounded session-only recent stages to Debug, Diagnostics and Full check-up: effective settings, context/activity observations, status/lookup ages, pending retries, lookup outcomes and actual emote API attempts. Activity observations add no gates. New trace contains no raw names/GUIDs; profile labels use existing redaction. Nothing is persisted or transmitted.
+- waggz81's exact live failure remains unreproduced and unconfirmed fixed. A caster never exposed as a live unit still cannot safely receive a directed thank.
 
-# BuffTap 1.26.8-beta6
+### Presentation and compatibility
+- Main/manual/queue/estimate frames use MEDIUM strata. Secondary icons and consumable preview reuse Classic/Modern style without glows; attached consumables sit below the queue.
+- Helpers uses even eight-unit card gaps, aligned controls and footer clearance for class-dependent layouts. Provider sorting occupies the unused ninth request-grid slot. All ten in-game entries use friendlier wording while preserving scope and credits.
+- German translations are expanded, not complete. Existing sound schemas and saved choices remain compatible. No direct WTF/SavedVariables edits or destructive migration.
 
-### Player-facing history and Helpers spacing
-- Rewrites the nine older in-game entries to match the approved current tone, preserving per-version scope, limitations and all contributor thanks. Historical technical and intermediate records are unchanged. Exactly ten in-game entries remain.
-- Aligns Solo Thanks emote/delay controls with the neighbouring bottom control row, removes a redundant divider above readiness, and adjusts Tracking height by two units for consistent twelve-unit card gaps. No behavior or saved-setting changes. 98 focused mocked checks passed, including eight class/locale card-gap and bottom-alignment cases. All ten note entries load, remain below 24 KiB and retain their contributor credits; nine historical versions retain their identities. Log: tests/helpers-spacing-1268-beta6-focused.txt. No full behavior-suite rerun for this presentation-only update.
-
-# BuffTap 1.26.8-beta5
-
-### Helpers layout correction
-- Moves provider sorting into the right side of the Buff requests heading, restores the original request-card height and Tracking offset, and retains the authored readiness position. This removes the 32-unit overlap introduced by beta4 for classes with readiness controls. No behavior or saved-setting changes. Focused mocked checks: 98 passed, zero FAIL records, including eight card-boundary checks across Druid, Warlock, Hunter and Paladin in English/German. Two affected Lua files compile (tests/helpers-spacing-1268-beta5-focused.txt); the beta4 full suite remains historical.
-
-# BuffTap 1.26.8-beta4
-
-### Optional request-provider ordering
-- Owner-approved adaptation of PR #6's provider proposal: shared nearbyProviderSort is false by default and lives under Helpers > Buff requests, enabled with existing requests. NearbyPlayers computes provider visibility from RequestableBuffs itself, with the same existing blocked-row exclusion as request buttons. No provider level, learned-spell or new request-eligibility validator is added.
-- Providers without castable actions can appear in buffs-only view, below cleanse/buff/favor/social tiers. All-players view uses provider status only after existing action, cleanse, favor and social precedence. Arrival/order tie-breaks and mouse-hover freezes remain. SelectNearby and NearbyCandidates are unchanged, so provider rows cannot become casts or alter the binding's recipient. No automatic whisper is introduced; request cooldown and click behavior are unchanged.
-- Regression tests cover existing buffs, buff arrival before request click, explicit sends/cooldown, disabled feature filtering, own-recipient priority, existing friend priority and mouse-frozen ordering. Request card gains a separate bottom row, with Tracking shifted down to preserve spacing.
-
-### Paladin Nearby short-buff classification
-- Owner approved the additional PR #6 correction: remove obsolete short flags from single Kings/Might/Wisdom. Nearby hold-short filtering retains its existing behaviour for other families, without adding the proposed provider-list feature. Updated help text in English and four locales. No numeric duration data is inferred from the report. The priority loop also skips nil Resolve results for unlearned blessings instead of passing them into Missing; those spells remain configurable. Focused Nearby regression passed for Kings, Might and Wisdom while holding short buffs.
-
-### Solo Thanks evidence for character comparisons
-- Adds ThanksDiagnostics.lua, a read-only, session-only observer with twelve bounded, coalesced recent stages. Both Debug and Diagnostics/Full check-up include current class/level/profile, effective enable/resting/emote/delay settings, current block and casting/channeling observations, status-change and observation ages, pending known-ID count/age/retries/queue size, last lookup path/count/readable IDs/nameplate enumeration and linked spell/instance IDs. Current activity is explicitly observational and adds no new gates.
-- Records actual emote API attempts independently of eligibility, expired pending and queued candidates, and combat/world/group context resets. Fresh lookup timestamps separate a repeatedly unresolved provider from an old status. No raw player GUIDs/names are added to trace entries; profile labels participate in existing hidden-name report redaction. Trace is not saved or transmitted and adds no polling or action decisions.
-- Added coverage for Warrior settings/activity, unknown caster lookup, status age versus new observations, bounded history, emote attempt recording, arbitrary profile-label privacy, debug/checkup inclusion and restricted activity APIs. The original waggz81 report remains unconfirmed in the live client; these diagnostics are intended to capture missing evidence.
-
-### Contributor attribution
-- Credit [@tinect](https://github.com/tinect) and [PR #6](https://github.com/Hitshade/BuffTap/pull/6) in CREDITS.md and release notes. Integration commit 98a4234 retains Co-authored-by using the email GitHub maps to tinect. Attribution grants no repository permissions. The tested contribution is pinned to 815a94d750d441b0c523a7291c071b333a6b80bb; subsequently approved Paladin classification and provider proposal are now adapted separately from head 6940036. No wholesale import of newer PR code is implied; PR stays open.
-
-### Validation
-Final integrated mocked Lua 5.1 release suite: **2,961 passed, zero FAIL records**, terminal FINAL_TOTAL verified in tests/release-1268-beta4-complete.txt. Focused provider run: 240 passed; focused diagnostics: 170 passed; Paladin short-buff run: 241 passed, all zero failures. All 48 TOC Lua files compiled independently. Earlier beta4 runs were stopped for owner pause/follow-up changes and are not represented as completed validation. Owner requested local installation and a visual once-over; public publication remains held.
-
-# BuffTap 1.26.8-beta3
-
-### Solo Thanks delayed-caster recovery
-- Investigation of waggz81's 1.26.6 diagnostic identifies a readable aura caster GUID with no live emote unit. It does not implicate Warrior resource state or fishing/crafting. The exact live report is not reproduced.
-- Preserve an incoming aura's unresolved caster GUID and allow up to ten seconds for live-unit resolution. Existing unknown/secret-ID cases retain the short two-second window. Settling remains bounded: first retries at 0.2 s, then 0.5 s after ten attempts, at most thirty attempts for a known pending GUID, no idle timer. Pauses/combat/profile/group transitions continue to discard or prevent sends.
-- At delayed dispatch a previously live unit token can be replaced only by a live token with the same GUID and original full name. Final player/existence/ignore/name/GUID checks remain; no name-only fallback, automatic targeting, crafting interruption or emote API retry is introduced. Per-provider cooldown and pacing remain.
-- Explicit initial baselines discard pending candidates, preventing an already present unresolved buff from creating a retroactive thank when its caster becomes visible later. Regression covers late resolution, timeout, wrong identity, combat/disabled cancellation, initial baseline and token replacement.
-- Report scope: a bounded recovery improvement, not a confirmed fix for the reporter. A caster never exposed as a live unit still cannot safely be thanked. Targeted mocked Lua 5.1 regression: **1,049 passed, 0 failed**, including existing thanks identity/robustness, helper, review-correction and profile scenarios plus seven new delayed-caster cases. FINAL_TOTAL/FINAL_FAILED and absence of FAIL records verified in tests/thanks-1268-beta3-regression.txt. Three affected Lua files compiled independently. Full beta1 suite is historical, not rerun for this scoped change.
-
-# BuffTap 1.26.8-beta2
-
-### Secondary icon consistency
-- ManualConsumables, BuffQueue and the consumable preview now reuse ApplyIconStyle with the main reminder iconStyle. Runtime refresh updates existing buttons, including unavailable stock and overflow, without changing secure payloads, centering or counts. Classic restores full texture coordinates and hides modern borders; Modern applies the same crop and frame as the main icon. No glow or animated effects are added.
-- Presentation-only change; beta1 behavior validation remains historical. Focused mocked regression: 143 passed, zero FAIL records, including six Classic/Modern live-update, preview and no-glow cases (tests/secondary-style-1268-beta2-focused.txt). Four affected Lua files compiled. Full beta1 suite is not rerun for this visual-only change.
-
-# BuffTap 1.26.8-beta1
-
-### Contribution and adaptation
-- Adapts tinect's PR #6 at 815a94d750d441b0c523a7291c071b333a6b80bb without merging or publishing the PR. Latest revision excludes the earlier Nearby-on-reminder option. Contributor credit is retained in all three note audiences.
-- BuffQueue is optional, off by default. It reuses bounded buff-only EngineSelect passes, excludes already represented recipient/family pairs, suppresses group casts/Greater Blessings and respects blessing exclusivity. Four centered secure up-click buttons retain fresh GUID/payload/need/eligibility checks and secure combat/death/mount drivers. Bindings remain on the main button. Manual consumables offset below the row; detached placement is unchanged.
-- Adaptation starts BeginHelperAttempt only after successful queue PreClick validation, preserving SmartShift intent, self-buff confirmation settling, retry attribution and quiet sequence tracking. All casts require hardware input. Queue and estimate frames use MEDIUM strata alongside main/manual reminders. Bounded 12-pass counts explicitly use a trailing + and lower-bound tooltip when exhausted; counts exclude the main recipient and are not full-raid totals.
-- CombatExpiry records enabled own buffs only out of combat, schedules nonsecure display timers about ten seconds before stored expiry and discards death/loading/identity-stale plans. Combat never queries auras or changes secure actions. Only true self-only cast confirmations can renew an estimate; targeted refreshes and dispels cannot be inferred. It is optional and off by default.
-- PlayAlert accepts an explicit sound-action context for passive estimates without swapping B.action, preserving Personal mute/custom selection and category/rate/pause controls. Estimate visuals honor normal pauses; their combat-only update callback can quietly restore visibility when a pause ends. Cancellation removes timers/update callbacks. A separate footer row reserves space beside class-specific SmartShift controls.
-- PR includes expanded German entries and release-click registration tests. Not every new English label or diagnostic has a German translation; no claim of complete localization or owner live verification is made.
-
-### Compatibility and validation
-- New combatExpiry and buffQueue booleans are profile-shared presentation preferences, both false by default. No existing values or positions are migrated and no WTF/SavedVariables files are edited. Existing per-buff sound schemas are unchanged. Three imported contributor test modules plus adaptation-specific behavior tests run in tests/run_release.py. Final integrated mocked Lua 5.1 release run: **2,923 passed, zero FAIL records**, with terminal FINAL_TOTAL verified (tests/release-1268-beta1-final.txt). Focused adaptation run: 97 passed, 0 failed; queue/imported baseline run: 381 passed, 0 failed. Eleven affected Lua files compiled independently; all loaded modules also compile in the full run. Initial mixed run exposed sound-context forwarding through Cleanse; the final complete rerun includes that fix. No live game testing claimed.
-
+### Validation and credit
+- Final integrated mocked Lua 5.1 behavior run: **2,961 passed, zero FAIL records**, terminal FINAL_TOTAL verified in tests/release-1268-beta4-complete.txt. All 48 TOC Lua files compiled independently. Subsequent changes were presentation/wording only; final beta8 focused run passed **98 checks**, including Druid, Warlock, Hunter and Paladin in English/German (tests/helpers-spacing-1268-beta8-focused.txt). Owner reviewed the local beta and approved publication. Not exhaustive live Forever API or all-class rendering verification.
+- Thanks to [tinect](https://github.com/tinect) and [PR #6](https://github.com/Hitshade/BuffTap/pull/6) for the queue, combat estimate, layering, translations, provider proposal and Paladin correction; to waggz81 for the Solo Thanks report. Integration commit 98a4234 retains linked Co-authored-by attribution. No access granted or wholesale merge of the newer PR.
+- Pre-release issue review found only PR #6 open, no new issue requiring closure. Stable promotion changes identity and notes only.
 # BuffTap 1.26.7
 
 ### Scoped sound selection

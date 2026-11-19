@@ -1,73 +1,22 @@
-# BuffTap 1.26.8-beta8
+# BuffTap 1.26.8
 
-The provider-sorting option now sits with the buff choices in the bottom-right slot, labelled **Prioritize providers**. The explanation remains in its tooltip. Feature behavior and panel sizes are unchanged.
+### See what is next
+An optional row of up to four clickable buff icons sits below your main reminder. Turn on **Customization > Buff reminder > Show next buffs below** to try it. Your binding and group spells stay on the main icon, and every cast still needs your input. Attached consumables tuck beneath the queue. A count ending in **+** means at least that many additional recipients were found.
 
-# BuffTap 1.26.8-beta7
+### An early heads-up in combat
+**My buffs > Combat expiry warning** is a separate optional warning for your own enabled buffs, about ten seconds before expected expiry. Personal sound choices and normal pauses apply.
 
-Helpers now uses smaller, even gaps between its panels, leaving more breathing room above the footer when Class readiness is present. Controls and feature behavior are unchanged.
+This is an estimate: the game hides buffs from addons in combat, so dispels and another player's refresh can make it inaccurate. Death or loading clears it. Both new reminder features start off.
 
-# BuffTap 1.26.8-beta6
+### Find a helping hand
+Under **Helpers > Buff requests**, optional **Prioritize providers** surfaces potential providers of selected missing buffs in Nearby. Existing buff, cleanse, favor and friend/guild priorities come first. It cannot change your next cast or send a request automatically. Buffs you already have are not offered as requests. A potential provider is not a guarantee they have learned the spell.
 
-The in-game Patch notes history is now shorter and easier to read, with useful menu directions and contributor thanks kept intact. Helpers has more consistent spacing: the response selectors line up with the neighbouring controls, and Tracking has a cleaner gap above Class readiness.
+### Better recovery, clearer settings
+Solo Thanks gives a briefly unavailable buff giver more time to appear. **Diagnostics > Full check-up** now includes more useful settings, timing and lookup details. If a thank is missed, capture it soon afterward with **Hide player names** enabled. We have not reproduced waggz81's exact problem, so this is a recovery improvement rather than a confirmed fix.
 
-This is a wording and layout update; feature behavior is unchanged.
+Paladins can offer Kings, Might and Wisdom in town without those blessings being held back as short buffs. Smaller consumable and queue icons follow Classic/Modern styling, Helpers has cleaner spacing, and in-game notes are easier to read. German translations have also been expanded.
 
-# BuffTap 1.26.8-beta5
-
-Helpers has room for Tracking and Class readiness again. The provider-sorting switch sits beside the Buff requests heading, keeping its related settings together without adding another row. No settings or feature behavior changed.
-
-# BuffTap 1.26.8-beta4
-
-### Optional provider sorting with Buff requests
-Under **Helpers > Buff requests**, turn on **Prioritize potential buff providers** if you want Nearby to surface people you could ask for a missing selected buff. It starts off and follows the existing request feature switch and buff choices.
-
-Cleanses, people needing your buffs and existing friend/guild priorities stay ahead. Sorting cannot change the next cast or send a whisper. Existing requests already check your buffs, so buffs you have do not become request offers. A potential provider is not proof that they have learned the spell. Rows stay still while your mouse is over the window.
-
-### Paladin Nearby correction
-**Hold back short buffs** no longer suppresses Kings, Might or Wisdom in cities and inns. The tooltip now reflects that distinction. Thanks to tinect for catching the outdated classification.
-
-### More useful Solo Thanks reports
-Diagnostics and **Full check-up** now show your thanks settings, character context, how recent the recorded problem is, pending retries, and whether BuffTap found the player who buffed you. Recent events distinguish a missing caster from a thank that actually reached the game's emote system. Current casting or channeling is shown as context, without changing when thanks is allowed.
-
-If you miss a thank, capture **Diagnostics > Full check-up** soon afterward. Leave **Hide player names** on when sharing it. Comparing the affected character with one that works should help identify a difference we are currently missing.
-
-This improves evidence collection and retains beta3's recovery tweaks. We have not reproduced waggz81's exact live problem or confirmed that it is fixed.
-
-Thanks to **tinect** for the optional buff queue, combat estimates, window layering and expanded German translation contribution in PR #6, and to **waggz81** for the diagnostic report. Both new reminder features remain off by default.
-
-# BuffTap 1.26.8-beta3
-
-### Better recovery for delayed Solo Thanks
-If the game identifies an incoming buff's caster before making that player available, BuffTap now waits up to ten seconds for a verified player to thank. It can also follow the same person to a different nameplate while a thank is waiting to be sent.
-
-It still skips players whose identity cannot be verified. Thanks stays quiet during its normal restrictions, keeps its existing cooldown, and does not change your target or cast a spell. Existing buffs when starting or reloading are not thanked retroactively.
-
-Thanks to **waggz81** for the diagnostic capture. The reported live failure has not been reproduced; this beta improves recovery but cannot guarantee that an unavailable caster will become visible to the addon.
-
-The optional queue and combat estimates remain off by default, and secondary Classic/Modern icon styling from beta2 is retained.
-
-# BuffTap 1.26.8-beta2
-
-The consumable bar and optional buff queue now follow **Customization > Buff reminder > Style**. Classic and Modern square apply to the smaller icons and consumable preview too. These secondary icons remain free of reminder glows. Existing positions, clicks and selections are unchanged.
-
-This local beta includes the optional queue and estimated combat warnings described below. Both still start off. Thanks to tinect for the original contribution.
-
-# BuffTap 1.26.8-beta1
-
-### Optional clickable buff queue
-Try **Customization > Buff reminder > Show next buffs below**. It starts off. Up to four smaller buff icons appear centered beneath your main reminder; click one to cast that buff. The normal binding stays on the main reminder. Group spells remain on the main icon, and queue icons disappear in combat. Attached manual consumables move below the queue.
-
-A count shows additional recipients for that queued buff, excluding the main reminder's recipient. A trailing **+** means the displayed count is a lower bound from a limited scan. Queue clicks follow normal safety checks, SmartShift recovery and quiet sequence behavior.
-
-### Optional combat estimates
-**My buffs > Combat expiry warning** starts off separately. It remembers your own enabled buffs before combat, then shows a non-clickable warning about ten seconds before expected expiry. Personal per-buff mute/custom sound choices and normal pauses apply.
-
-This is an estimate, not live buff detection: Forever hides combat auras. Dispels and another player's recasts cannot be detected. Successful recasts of a true self-only buff can restart its estimate; targeted spells cannot safely be assumed to have landed on you. Death or loading clears the plan.
-
-Reminder windows use a lower layer, and German translations have been expanded. Some diagnostic and newly added wording remains English. Existing choices and positions are retained.
-
-Thanks to **tinect** for PR #6: the queue, combat estimates, window layering and German translation contribution. This is a local testing beta, with in-game layout and combat behavior still to verify.
-
+Thanks to **tinect** for the contribution and follow-up ideas in PR #6, and to **waggz81** for the diagnostic report.
 # BuffTap 1.26.7
 
 ### Choose which buffs you hear

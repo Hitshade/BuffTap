@@ -148,3 +148,6 @@ Beta7 geometry validation: 98 focused checks passed with no failures. Install lo
 
 ## 1.26.8-beta8 provider control position
 Owner disliked provider switch in the section heading. Move it to the unused bottom-right slot of the eight-buff request grid, shorten visible label to Prioritize providers, retain full tooltip, card geometry and behavior. GitHub: only PR #6 open. Install after focused geometry checks.
+
+## 1.26.8 stable preparation
+Owner approved publication after beta8 review. Promote identity and audience notes without behavior changes. GitHub issues/comments reviewed: only PR #6 open. Preserve linked tinect coauthor credit without access or wholesale PR merge. Evidence: 2,961 integrated mocked checks; later presentation-only beta8 98 focused checks. Authorized waggz81 reply retains unconfirmed-resolution caveat.
