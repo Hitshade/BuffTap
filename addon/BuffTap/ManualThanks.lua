@@ -51,7 +51,7 @@ function B:OfferManualThanks(aura)
   if now-(cooldown["guid:"..guid] or -1000)<60 or now-(cooldown["name:"..name] or -1000)<60 then return end
   self.manualThanksQueue=self.manualThanksQueue or {}
   local queue=self.manualThanksQueue; local entry=queue[guid]
-  if entry and (entry.name~=name or now-entry.at>30) then queue[guid]=nil; entry=nil end
+  if entry and (entry.name~=name or now-entry.at>=15) then queue[guid]=nil; entry=nil end
   if not entry then
     local count=0; for _ in pairs(queue) do count=count+1 end; if count>=8 then return end
     entry={guid=guid,name=name,at=now,buffs={}}; queue[guid]=entry
@@ -61,7 +61,7 @@ function B:OfferManualThanks(aura)
 end
 function B:SendManualThanks(entry)
   if not entry or not self:ManualThanksAllowed() or self.action then return false end
-  if not self.manualThanksQueue or self.manualThanksQueue[entry.guid]~=entry or GetTime()-entry.at>30 then return false end
+  if not self.manualThanksQueue or self.manualThanksQueue[entry.guid]~=entry or GetTime()-entry.at>=15 then return false end
   if self:ManualThanksName(entry.guid)~=entry.name then self:DropManualThanks(entry.guid); return false end
   local text=self:ManualThanksText(entry); local send=C_ChatInfo and C_ChatInfo.SendChatMessage or SendChatMessage
   if not text or type(send)~="function" then return false end
@@ -87,7 +87,7 @@ function B:CreateManualThanksButton()
   f:SetScript("OnClick",function(_,button)
     local entry=f.entry
     if button=="RightButton" and entry then
-      B.manualThanksDismissed=B.manualThanksDismissed or {}; B.manualThanksDismissed[entry.guid]=GetTime()+30
+      B.manualThanksDismissed=B.manualThanksDismissed or {}; B.manualThanksDismissed[entry.guid]=GetTime()+15
       B:DropManualThanks(entry.guid)
     elseif button=="LeftButton" then B:SendManualThanks(entry) end
   end)
@@ -111,9 +111,9 @@ function B:UpdateManualThanks()
   local entry,expiry; local now=GetTime()
   for guid,untilTime in pairs(self.manualThanksDismissed or {}) do if untilTime<=now then self.manualThanksDismissed[guid]=nil end end
   for guid,candidate in pairs(self.manualThanksQueue or {}) do
-    if now-candidate.at>=30 then self.manualThanksQueue[guid]=nil
+    if now-candidate.at>=15 then self.manualThanksQueue[guid]=nil
     else
-      expiry=math.min(expiry or candidate.at+30,candidate.at+30)
+      expiry=math.min(expiry or candidate.at+15,candidate.at+15)
       if not entry or candidate.at<entry.at then entry=candidate end
     end
   end

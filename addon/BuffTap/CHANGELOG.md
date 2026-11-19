@@ -3,7 +3,7 @@
 ### Optional manual whisper fallback
 - Adds ManualThanks.lua with profile-shared manualThanks (default false) and thankMessage (default Thank you for [buff]!). Existing saved choices remain unchanged.
 - Genuine unresolved incoming buffs offer a click-only THANK button immediately when UnitNameFromGUID supplies a readable full Forever name. The captured GUID must resolve to the identical full name again at click. Unknown, restricted and changed identities fail closed.
-- Session queue merges buff names per giver, caps at eight givers and expires after 30 seconds. Solo, combat, chat, ignored-player and Keep thanking while resting gates apply. Ready buffs take precedence. Right-click dismissal suppresses repeated offers for 30 seconds. No scroll binding sends whispers.
+- Session queue merges buff names per giver, caps at eight givers and expires after 15 seconds. Solo, combat, chat, ignored-player and Keep thanking while resting gates apply. Ready buffs take precedence. Right-click dismissal suppresses repeated offers for 15 seconds. No scroll binding sends whispers.
 - Manual dispatch cancels automatic pending/queued thanks for that provider; successful automatic emote requests remove the manual offer. Both routes share provider cooldowns. An API request does not prove delivery.
 - Controls fit the existing Solo Thanks card. Handshake candidate Achievement_Reputation_01 needs owner visual review. Reminder follows main size, style, opacity, position and layering without glow.
 - Validation: 59 focused mocked checks passed, zero failed (tests/manual-thanks-12612-focused.txt), including real unresolved-aura integration and automatic/manual duplicate prevention. No full suite or live-client claim. Local beta only; no public upload.
