@@ -3446,7 +3446,7 @@ function B:UpdateClassAwarePages()
         for _,o in ipairs({page:GetChildren()}) do if o~=page.classEmpty then page.classHidden[#page.classHidden+1]={o,o:IsShown()} end end
         local h=f.pageHeaders[index]
         for _,o in ipairs({page:GetRegions()}) do
-          if o~=h.title and o~=h.description and o~=page.headerIcon then page.classHidden[#page.classHidden+1]={o,o:IsShown()} end
+          if o~=h.title and o~=h.description and o~=page.headerIcon and o~=page.headerRule then page.classHidden[#page.classHidden+1]={o,o:IsShown()} end
         end
       end
       for _,entry in ipairs(page.classHidden) do entry[1]:Hide() end

@@ -174,3 +174,5 @@ Local beta2 installation independently verified: 139 source files and all 134 ar
 
 ## 1.26.9-beta3 visual consistency, 2026-11-19
 Owner screenshots showed inconsistent Groups card offset/font, first-opening orange labels instead of active accent, and a mixed Nearby grid. Standardized the three info cards and two-button footers, apply theme after new labels exist, and align non-casting Nearby into clear display/social columns with a separate full-width hint. No behavior/settings changes. GitHub review: only PR #6 open. Focused checks 158 passed, zero failed; 49 Lua modules compile; ten notes retained. No full suite rerun for this visual pass, as owner requested. Install locally for visual review, no publication.
+
+Beta3 divider correction: retain the shared page header rule when hiding inactive My buffs/Target body regions. Two-line visual fix, verified both rules are excluded from hidden body regions. No full suite rerun or behavior change.

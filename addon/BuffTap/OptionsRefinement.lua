@@ -608,7 +608,7 @@ function B:StandardizeOptionsPages(ui,tabs)
       end
     end
     -- Open header: accent icon, large title, muted description and a hairline, without a boxed card.
-    T.Rule(page,12,-63,692)
+    page.headerRule=T.Rule(page,12,-63,692)
     local icon=page:CreateTexture(nil,"ARTWORK"); icon:SetSize(22,22); icon:SetPoint("TOPLEFT",14,-14)
     icon:SetTexture(T.media.."Nav"..(f.navIcons and f.navIcons[index] or "Buffs")); T.Track(icon,"accentIcon"); page.headerIcon=icon
     -- Header right column, same on every page: the page switch on top (x 480, y -14),
