@@ -1,3 +1,9 @@
+# BuffTap 1.26.8-beta6
+
+The in-game Patch notes history is now shorter and easier to read, with useful menu directions and contributor thanks kept intact. Helpers has more consistent spacing: the response selectors line up with the neighbouring controls, and Tracking has a cleaner gap above Class readiness.
+
+This is a wording and layout update; feature behavior is unchanged.
+
 # BuffTap 1.26.8-beta5
 
 Helpers has room for Tracking and Class readiness again. The provider-sorting switch sits beside the Buff requests heading, keeping its related settings together without adding another row. No settings or feature behavior changed.

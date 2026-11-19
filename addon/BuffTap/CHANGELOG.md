@@ -1,3 +1,9 @@
+# BuffTap 1.26.8-beta6
+
+### Player-facing history and Helpers spacing
+- Rewrites the nine older in-game entries to match the approved current tone, preserving per-version scope, limitations and all contributor thanks. Historical technical and intermediate records are unchanged. Exactly ten in-game entries remain.
+- Aligns Solo Thanks emote/delay controls with the neighbouring bottom control row, removes a redundant divider above readiness, and adjusts Tracking height by two units for consistent twelve-unit card gaps. No behavior or saved-setting changes. 98 focused mocked checks passed, including eight class/locale card-gap and bottom-alignment cases. All ten note entries load, remain below 24 KiB and retain their contributor credits; nine historical versions retain their identities. Log: tests/helpers-spacing-1268-beta6-focused.txt. No full behavior-suite rerun for this presentation-only update.
+
 # BuffTap 1.26.8-beta5
 
 ### Helpers layout correction

@@ -135,3 +135,8 @@ Owner screenshot showed Tracking/readiness overlap from the added provider row. 
 
 ## In-game wording review for beta5
 Owner clarified the layout change was fine; its housekeeping note was unnecessary. Rewrote only the current in-game release entry with shorter, friendlier feature-first copy, useful menu paths, opt-in/estimate caveats and contributor thanks. Historical entries, release identity, technical/intermediate notes and behavior are unchanged. This is a wording preview installed on the existing beta, not a new release.
+
+## 1.26.8-beta6 history wording and Helpers polish
+Owner approved the new in-game tone and requested the remaining entries plus spacing polish from a Warlock screenshot. Rewrote nine historical in-game entries, retaining version scope and credits; no historical technical/CurseForge notes altered. Aligned Solo Thanks bottom selectors with Dismiss, removed the extra readiness divider and set a consistent twelve-unit gap by reducing Tracking card height two units. No behavior or settings changes. GitHub review: only PR #6 open. Focused results follow on completion.
+
+Beta6 checks: 98 focused mocked cases passed, no failures. Loaded and compared ten note records against prior source: all contributor credits preserved, nine historical version identities unchanged, all historical entries rewritten; total under 24 KiB. Install beta6 for owner review, no publication.
