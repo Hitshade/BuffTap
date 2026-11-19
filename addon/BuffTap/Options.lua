@@ -1295,8 +1295,8 @@ function B:BuildHelperPage(parent)
     {"helperCoverage",L("Show missing party buffs"),L("Shows buffs your five-player party may be missing and who might provide them. Information only: no casting or chat messages.")},
     {"helperDiscovery",L("Find unrecognized consumables"),L("Lists bag consumables missing from BuffTap's supported list for review. It does not add or use them. View the report in Diagnostics.")},
   }
-  card(gr,364,-74,340,252)
-  T.SectionTitle(label(gr,L("Conveniences"),380,-88,T.fonts.Section))
+  f.conveniencesCard=card(gr,362,-74,342,252)
+  T.SectionTitle(label(gr,L("Conveniences"),378,-88,T.fonts.Section))
   for i,spec in ipairs(settings) do
     local key=spec[1]
     f.checks[key]=check(gr,spec[2],378,-108-(i-1)*25,function(c)
@@ -1308,7 +1308,7 @@ function B:BuildHelperPage(parent)
     end)
     addHelp(f.checks[key],spec[2],spec[3])
   end
-  label(gr,L("Dismiss lasts"),380,-292,"GameFontHighlightSmall",130)
+  label(gr,L("Dismiss lasts"),378,-292,"GameFontHighlightSmall",130)
   f.dismissMinutes=selector(gr,"",520,-286,170,function() return B:DismissChoices() end,function(v) B.db.helperDismissMinutes=v; B:Options() end)
   addHelp(f.dismissMinutes,L("Dismiss a reminder for now"),L("How long a right-click dismiss lasts. Restore reminders brings everything back sooner."))
   parent.pauseResting=check(gr,"Pause reminders while resting",378,-233,function(c)
@@ -1321,7 +1321,7 @@ function B:BuildHelperPage(parent)
     setAndRefresh("pvpProtection",c:GetChecked()==true); B:Refresh(false); B:Options()
   end)
   addHelp(parent.pvpProtection,"Prevent accidental PvP flagging","Skip flagged or unreadable recipients while unflagged or leaving PvP. Includes group spells. Battlegrounds and arenas are exempt.")
-  card(th,12,-74,340,252)
+  f.thanksCard=card(th,12,-74,342,252)
   T.SectionTitle(label(th,L("Solo thanks"),28,-88,T.fonts.Section))
   label(th,L("Say thanks when another player buffs you while you play solo."),28,-108,T.fonts.Sub,308)
   f.checks.helperThanks=check(th,L("Thank players who buff me solo"),28,-150,function(c)
@@ -1345,9 +1345,9 @@ function B:BuildHelperPage(parent)
   end,"scroll")
   addHelp(f.thankEmote,L("Solo response emote"),L("Directed reactions only. No sitting, sleeping or looping animations. Changing this never sends an emote."))
   -- Class readiness keeps its authored coordinates; the frame is moved up as one block below Tracking.
-  f.readiness=CreateFrame("Frame",nil,f); f.readiness:SetSize(712,1); f.readiness:SetPoint("TOPLEFT",0,-216)
-  -- The top two cards are 40 px taller than before; the sections below move down with them.
-  q:ClearAllPoints(); q:SetPoint("TOPLEFT",0,-40); tr:ClearAllPoints(); tr:SetPoint("TOPLEFT",0,-40)
+  f.readiness=CreateFrame("Frame",nil,f); f.readiness:SetSize(712,1); f.readiness:SetPoint("TOPLEFT",0,-204)
+  -- Eight-unit gaps between cards leave clearance above the footer, including class readiness.
+  q:ClearAllPoints(); q:SetPoint("TOPLEFT",0,-36); tr:ClearAllPoints(); tr:SetPoint("TOPLEFT",0,-32)
   -- Buff requests (Nearby): whisper a nearby player for a class buff you are missing. Off by default.
   f.requests=q
   f.requestCard=card(q,12,-298,692,148)

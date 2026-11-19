@@ -1,3 +1,8 @@
+# BuffTap 1.26.8-beta7
+
+### Helpers footer clearance
+- Uses consistent eight-unit horizontal and vertical card gaps. Request/Tracking/readiness sections move up cumulatively, freeing twelve units above the footer without changing control sizes, behavior or saved settings. Both top cards retain their outer margins. 98 focused mocked checks passed, including equal card gaps and footer bounds for Druid, Warlock, Hunter and Paladin in English and German. Log: tests/helpers-spacing-1268-beta7-focused.txt. No full behavior rerun for this layout-only update.
+
 # BuffTap 1.26.8-beta6
 
 ### Player-facing history and Helpers spacing

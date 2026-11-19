@@ -140,3 +140,8 @@ Owner clarified the layout change was fine; its housekeeping note was unnecessar
 Owner approved the new in-game tone and requested the remaining entries plus spacing polish from a Warlock screenshot. Rewrote nine historical in-game entries, retaining version scope and credits; no historical technical/CurseForge notes altered. Aligned Solo Thanks bottom selectors with Dismiss, removed the extra readiness divider and set a consistent twelve-unit gap by reducing Tracking card height two units. No behavior or settings changes. GitHub review: only PR #6 open. Focused results follow on completion.
 
 Beta6 checks: 98 focused mocked cases passed, no failures. Loaded and compared ten note records against prior source: all contributor credits preserved, nine historical version identities unchanged, all historical entries rewritten; total under 24 KiB. Install beta6 for owner review, no publication.
+
+## 1.26.8-beta7 Helpers card rhythm
+Owner screenshot showed the lowest card touching the footer. Set all card gaps to eight units horizontally/vertically; move requests up four units, tracking up eight and readiness up twelve. Frees twelve units at the footer without shrinking controls or changing behavior. Current in-game feature wording retained. GitHub: only PR #6 open. Focused geometry checks include equal gaps and footer clearance for all four relevant class layouts.
+
+Beta7 geometry validation: 98 focused checks passed with no failures. Install locally for owner visual review; no publication.

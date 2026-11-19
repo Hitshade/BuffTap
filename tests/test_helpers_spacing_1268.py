@@ -10,8 +10,13 @@ local requestBottom=requestTop-f.requestCard.__draw.h
 local trackingTop=y(f.helperSections.tracking)+y(f.trackerCard)
 local trackingBottom=trackingTop-f.trackerCard.__draw.h
 local readyTop=y(f.readiness)+y(f.readinessCard)
-assert(requestBottom>=trackingTop+10,'request/tracking overlap')
-assert(trackingBottom>=readyTop+12,'tracking/readiness spacing')
+assert(requestBottom-trackingTop==8,'request/tracking gap')
+assert(trackingBottom-readyTop==8,'tracking/readiness gap')
+local topBottom=y(f.thanksCard)-f.thanksCard.__draw.h
+assert(topBottom-requestTop==8,'top/request gap')
+local left=f.thanksCard.__draw; local right=f.conveniencesCard.__draw
+assert(right.points[1][2]-(left.points[1][2]+left.w)==8,'horizontal gap')
+assert(readyTop-f.readinessCard.__draw.h>=-722,'footer clearance')
 assert(y(f.thankEmote)==y(f.dismissMinutes) and y(f.thankDelay)==y(f.dismissMinutes),'bottom controls misaligned')
 local p=f.providerSort.__draw.points[#f.providerSort.__draw.points]
 assert(p[2]>=374 and p[3]==-306 and f.providerSort:GetParent()==f.requests)

@@ -1,3 +1,7 @@
+# BuffTap 1.26.8-beta7
+
+Helpers now uses smaller, even gaps between its panels, leaving more breathing room above the footer when Class readiness is present. Controls and feature behavior are unchanged.
+
 # BuffTap 1.26.8-beta6
 
 The in-game Patch notes history is now shorter and easier to read, with useful menu directions and contributor thanks kept intact. Helpers has more consistent spacing: the response selectors line up with the neighbouring controls, and Tracking has a cleaner gap above Class readiness.
