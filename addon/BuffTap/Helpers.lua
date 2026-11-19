@@ -426,8 +426,9 @@ function B:SoloThanksBlockReason()
   if not self:HelperEnabled("helperThanks") or not self.db.enabled then return "disabled" end
   if A.Combat() then return "combat" end
   local paused=self:ReminderPauseReason()
-  -- Resting only pauses reminders; thanks may continue in cities and inns when the player chooses.
-  if paused and not (paused=="resting" and self.db.helperThanksResting) then return paused end
+  -- Mounting pauses buff actions, not thanks. Resting remains an independent thanks choice.
+  if paused and paused~="mounted" and not (paused=="resting" and self.db.helperThanksResting) then return paused end
+  if self.db.helperThanksResting~=true and A.Call(IsResting)==true then return "resting" end
   if A.Call(IsInGroup)~=false or A.Call(IsInRaid)~=false or A.Call(IsInInstance)~=false then return "solo outdoor play required" end
   if A.Call(UnitIsDeadOrGhost,"player")~=false then return "player dead or unavailable" end
   if type(IsStealthed)=="function" and A.Call(IsStealthed)~=false then return "stealthed or hiding state unavailable" end

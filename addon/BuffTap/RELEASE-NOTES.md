@@ -7,7 +7,7 @@ Enable **Offer a manual thank-you** under Helpers > Solo Thanks. When automatic 
 
 The message starts as **Thank you for %s!**. Edit it inside Solo Thanks and press Enter to save; %s inserts received buff names. Several buffs from one giver share a thank-you. Reset restores the original message.
 
-**Keep thanking while resting** applies to this backup too. A reliable full name is required, and normal solo and chat restrictions still apply. This is an extra courtesy option, not a guarantee of delivery. Local beta for owner testing; not published.
+Automatic thanks and the manual backup both work while mounted, while buff actions remain paused. **Keep thanking while resting** still applies, including when riding through a town. A reliable full name is required, and normal solo and chat restrictions still apply. This is an extra courtesy option, not a guarantee of delivery. Local beta for owner testing; not published.
 
 # BuffTap 1.26.12-beta1
 

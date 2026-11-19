@@ -1,12 +1,13 @@
 # BuffTap 1.26.12-beta2
 
 ### Optional manual whisper fallback
+- Automatic and manual Solo Thanks ignore the buff-action mounted pause. An independent resting check preserves the thanks resting preference when mounted. Other pauses, identity, solo and chat checks remain in force; ordinary spell/item selection remains mounted-paused.
 - Adds ManualThanks.lua with profile-shared manualThanks (default false) and thankMessage (default Thank you for %s!). Existing saved choices remain unchanged.
 - Genuine unresolved incoming buffs offer a user-triggered THANK button immediately when UnitNameFromGUID supplies a readable full Forever name. The captured GUID must resolve to the identical full name again at click. Unknown, restricted and changed identities fail closed.
-- Session queue merges buff names per giver, caps at eight givers and expires after 15 seconds. Solo, combat, chat, ignored-player and Keep thanking while resting gates apply. Ready buffs take precedence. Right-click dismissal suppresses repeated offers for 15 seconds. The regular main binding targets THANK only while it occupies the reminder. The main secure binding owner retains combat/death/mount cleanup; normal Commit restores buff bindings.
+- Session queue merges buff names per giver, caps at eight givers and expires after 15 seconds. Solo, combat, chat, ignored-player and Keep thanking while resting gates apply. Ready buffs take precedence. Right-click dismissal suppresses repeated offers for 15 seconds. The regular main binding targets THANK only while it occupies the reminder. A dedicated secure binding owner clears thanks overrides for combat/death/vehicle/pet-battle states but intentionally excludes mounting; normal Commit restores buff bindings.
 - Manual dispatch cancels automatic pending/queued thanks for that provider; successful automatic emote requests remove the manual offer. Both routes share provider cooldowns. An API request does not prove delivery.
 - Controls fit the existing Solo Thanks card. Handshake candidate Achievement_Reputation_01 needs owner visual review. Reminder follows main size, style, opacity, position and layering without glow.
-- Validation: 67 focused mocked checks passed, zero failed (tests/manual-thanks-12612-focused.txt), including real unresolved-aura integration and automatic/manual duplicate prevention. No full suite or live-client claim. Local beta only; no public upload.
+- Validation: 72 focused mocked checks passed, zero failed (tests/manual-thanks-12612-focused.txt), including real unresolved-aura integration and automatic/manual duplicate prevention. No full suite or live-client claim. Local beta only; no public upload.
 
 # BuffTap 1.26.12-beta1
 

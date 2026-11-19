@@ -65,4 +65,9 @@ PASS Ready buff replaces THANK binding with ordinary spell binding
 PASS THANK key rechecks resting gate before dispatch
 PASS THANK key rechecks combat before dispatch
 PASS THANK key follows configured keys without replacing Nearby key
-FOCUSED_TOTAL 67 FAILURES 0
+PASS Mounted automatic thanks keeps directed emote and buffs paused
+PASS Mounted manual thanks displays binds and sends
+PASS Mounted thanks does not bypass resting choice
+PASS Thanks safety owner excludes mount but clears binding on combat
+PASS Mounted thanks still respects temporary pause and stealth
+FOCUSED_TOTAL 72 FAILURES 0

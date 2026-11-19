@@ -91,11 +91,11 @@ function B:SendManualThanks(entry)
 end
 function B:ClearManualThanksBinding()
   if A.Combat() then return end
-  if self.manualThanksBound and self.button and type(ClearOverrideBindings)=="function" then pcall(ClearOverrideBindings,self.button) end
+  if self.manualThanksBound and self.manualThanksBindingOwner and type(ClearOverrideBindings)=="function" then pcall(ClearOverrideBindings,self.manualThanksBindingOwner) end
   self.manualThanksBound=nil
 end
--- Share the main secure owner so its existing combat/death/mount safety driver
--- releases this override too. Commit always restores ordinary buff bindings first.
+-- Thanks has a separate safety owner because mounting must still block spells,
+-- while allowing a user-triggered whisper. Commit restores ordinary buff bindings first.
 local commit=B.Commit
 function B:Commit(...)
   self:ClearManualThanksBinding()
@@ -125,6 +125,12 @@ function B:CreateManualThanksButton()
   end)
   f:SetScript("OnLeave",function() if GameTooltip then GameTooltip:Hide() end end)
   f:Hide(); self.manualThanksButton=f
+  local owner=CreateFrame("Frame",nil,UIParent,"SecureHandlerStateTemplate")
+  owner:SetAttribute("_onstate-safety",[[if newstate == "blocked" then self:ClearBindings() end]])
+  if type(RegisterStateDriver)=="function" then
+    local ok=pcall(RegisterStateDriver,owner,"safety","[combat][@player,dead][vehicleui][petbattle] blocked; ready")
+    if ok then self.manualThanksBindingOwner=owner end
+  end
 end
 function B:UpdateManualThanks()
   local f=self.manualThanksButton
@@ -153,13 +159,13 @@ function B:UpdateManualThanks()
   f.entry=entry
   if self.button then self.button:Hide(); self.manaWaitVisible=nil end
   f:Show()
-  if self.button and type(SetOverrideBindingClick)=="function" and type(ClearOverrideBindings)=="function" then
+  if self.manualThanksBindingOwner and self.manualThanksBindingOwner:GetAttribute("state-safety")~="blocked" and type(SetOverrideBindingClick)=="function" and type(ClearOverrideBindings)=="function" then
     self:ClearManualThanksBinding()
-    local cleared=pcall(ClearOverrideBindings,self.button)
+    local cleared=pcall(ClearOverrideBindings,self.manualThanksBindingOwner)
     if cleared then
       self.manualThanksBound=true
       for _,key in ipairs(self.db.keys or {}) do
-        if type(key)=="string" and key~="" then pcall(SetOverrideBindingClick,self.button,true,key,"BuffTapManualThanks","LeftButton") end
+        if type(key)=="string" and key~="" then pcall(SetOverrideBindingClick,self.manualThanksBindingOwner,true,key,"BuffTapManualThanks","LeftButton") end
       end
     end
   end

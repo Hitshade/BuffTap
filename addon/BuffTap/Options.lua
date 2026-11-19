@@ -1339,7 +1339,7 @@ function B:BuildHelperPage(parent)
     if A.Combat() then return end
     B.db.manualThanks=c:GetChecked()==true; B:UpdateManualThanks(); B:Options()
   end)
-  addHelp(f.manualThanks,"Offer a manual thank-you","If an incoming buff giver cannot be reached for automatic thanks, offer a thank-you whisper once their full name is known. Appears when no buff action is ready, expires after 15 seconds, and follows Keep thanking while resting. Use your regular BuffTap binding or click to send; right-click to dismiss this thank-you.")
+  addHelp(f.manualThanks,"Offer a manual thank-you","If an incoming buff giver cannot be reached for automatic thanks, offer a thank-you whisper once their full name is known. Appears when no buff action is ready, expires after 15 seconds, and follows Keep thanking while resting. Works while mounted. Use your regular BuffTap binding or click to send; right-click to dismiss this thank-you.")
   f.thankMessage=editbox(th,28,-232,222,false); f.thankMessage:SetFontObject(T.fonts.Small); f.thankMessage:SetJustifyH("LEFT"); f.thankMessage:SetMaxLetters(180)
   f.thankMessage:SetScript("OnEnterPressed",function(control)
     local ok,why=B:SetManualThanksMessage(control:GetText())

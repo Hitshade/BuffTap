@@ -221,3 +221,7 @@ Optional immediate click-only whisper fallback with full-name revalidation, shar
 
 ### Manual THANK binding follow-up
 Owner requested regular main binding support while THANK occupies the reminder. Shares the main secure binding owner and its existing safety cleanup; restores buff bindings through Commit. Right-click remains giver-specific. 67 focused mocked checks pass, including handoff, expiry, resting/combat recheck and key-down/up duplicate prevention. No full suite, publication or live-client verification.
+
+
+### Mounted thanks
+Automatic and manual thanks now bypass only the mounted buff-action pause. Mounted resting does not bypass the thanks resting choice. Manual binding uses a dedicated secure owner with combat/death/vehicle/petbattle cleanup, leaving main spell safety unchanged. 72 focused mocked checks pass; no full suite, live validation or public upload.
