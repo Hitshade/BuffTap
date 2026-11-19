@@ -6,7 +6,7 @@
 - Session queue merges buff names per giver, caps at eight givers and expires after 15 seconds. Solo, combat, chat, ignored-player and Keep thanking while resting gates apply. Ready buffs take precedence. Right-click dismissal suppresses repeated offers for 15 seconds. No scroll binding sends whispers.
 - Manual dispatch cancels automatic pending/queued thanks for that provider; successful automatic emote requests remove the manual offer. Both routes share provider cooldowns. An API request does not prove delivery.
 - Controls fit the existing Solo Thanks card. Handshake candidate Achievement_Reputation_01 needs owner visual review. Reminder follows main size, style, opacity, position and layering without glow.
-- Validation: 59 focused mocked checks passed, zero failed (tests/manual-thanks-12612-focused.txt), including real unresolved-aura integration and automatic/manual duplicate prevention. No full suite or live-client claim. Local beta only; no public upload.
+- Validation: 60 focused mocked checks passed, zero failed (tests/manual-thanks-12612-focused.txt), including real unresolved-aura integration and automatic/manual duplicate prevention. No full suite or live-client claim. Local beta only; no public upload.
 
 # BuffTap 1.26.12-beta1
 
