@@ -676,7 +676,7 @@ function B:NearbyPauseReason()
   return reason
 end
 -- "Hold back short buffs": in cities and inns, Nearby does not offer buffs of ten minutes or
--- less (Thorns, single blessings); they would wear off before they mattered.
+-- less (for example Thorns); Forever blessings are not in this short-buff set.
 function B:NearbyHoldsShort()
   return self.db and self.db.nearbyHoldShort==true and A.Call(IsResting)==true
 end
@@ -711,9 +711,10 @@ function B:NearbyPlayers()
         if socialKind and not grouped then self:NoteNearbySocial(entry) end
         if entry.marker=="blocked" then self.nearbyCounts.blocked=self.nearbyCounts.blocked+1
         elseif entry.marker and self.db.pvpProtection==true then self.nearbyCounts.flagged=self.nearbyCounts.flagged+1 end
+        entry.requestProvider=self.db.nearbyProviderSort==true and entry.marker~="blocked" and self:RequestableBuffs(entry)~=nil or false
         local needs=#entry.actions>0
         if needs then self.nearbyCounts.need=self.nearbyCounts.need+1 end
-        if needs or (self.db.nearbyShowAll and not grouped) then out[#out+1]=entry end
+        if needs or entry.requestProvider or (self.db.nearbyShowAll and not grouped) then out[#out+1]=entry end
       end
     end
   end
@@ -723,6 +724,7 @@ function B:NearbyPlayers()
   table.sort(out,function(a,b)
     local at,bt=tier(a),tier(b)
     if at~=bt then return at<bt end
+    if #a.actions==0 and #b.actions==0 and a.requestProvider~=b.requestProvider then return a.requestProvider end
     if a.order==b.order then return a.guid<b.guid end return a.order<b.order
   end)
   return out
@@ -1045,6 +1047,10 @@ function B:NearbyDisplayList(list)
   for _,entry in ipairs(list) do
     if not seen[entry.guid] and #out<MAX_UNITS then out[#out+1]={entry=entry,fresh=true}; seen[entry.guid]=true end
   end
+  if not frozen and not self.db.nearbyShowAll and self.db.nearbyProviderSort then
+    local rank={}; for i,entry in ipairs(list) do rank[entry.guid]=i end
+    table.sort(out,function(a,b) return (rank[a.entry.guid] or 999)<(rank[b.entry.guid] or 999) end)
+  end
   if not frozen and self.db.nearbyShowAll then
     table.sort(out,function(a,b)
       local an=a.fresh and #a.entry.actions>0 or false
@@ -1059,6 +1065,7 @@ function B:NearbyDisplayList(list)
       -- nothing needed, the newest arrival comes first, so newcomers always appear in the same place.
       local as,bs=(a.entry.socialKind or a.entry.social)~=nil,(b.entry.socialKind or b.entry.social)~=nil
       if as~=bs then return as end
+      if not an and self.db.nearbyProviderSort and a.entry.requestProvider~=b.entry.requestProvider then return a.entry.requestProvider==true end
       if not an then
         local at,bt=arrived[a.entry.guid] or 0,arrived[b.entry.guid] or 0
         if at~=bt then return at>bt end

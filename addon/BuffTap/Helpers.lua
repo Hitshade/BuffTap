@@ -486,29 +486,38 @@ local function thankRecipient(source)
   if ignoredProvider(source,guid,name) then return nil,"provider is ignored",false end
   return {unit=source,guid=guid,name=name,key=guid and ("guid:"..guid) or ("name:"..name),nameKey="name:"..name,identity="source unit"}
 end
-function B:FindCasterUnit(guid)
+function B:FindCasterUnit(guid,spellID)
   local seen={}
+  local lookup={at=GetTime(),spell=A.Number(spellID) and spellID or nil,native="unavailable",checked=0,readable=0,result="no live match"}
+  self.thanksLookup=lookup
+  local function found(unit,path) if unit then lookup.result=path; return unit end end
   local function match(unit)
     if not A.Text(unit) or seen[unit] then return end
     seen[unit]=true
-    if A.Call(UnitExists,unit)==true and A.Call(UnitGUID,unit)==guid then return unit end
+    lookup.checked=lookup.checked+1
+    local exists=A.Call(UnitExists,unit)==true
+    local id=exists and A.Call(UnitGUID,unit) or nil
+    if A.Text(id) then lookup.readable=lookup.readable+1 end
+    if exists and id==guid then return unit end
   end
-  local native=match(A.Call(UnitTokenFromGUID,guid))
-  if native then return native end
-  for _,unit in ipairs({"player","target","mouseover","focus"}) do local found=match(unit); if found then return found end end
+  local token=A.Call(UnitTokenFromGUID,guid); lookup.native=type(UnitTokenFromGUID)~="function" and "API unavailable" or A.Text(token) and "token returned" or "no readable token"
+  local native=match(token)
+  if native then return found(native,"native token") end
+  for _,unit in ipairs({"player","target","mouseover","focus"}) do local unitFound=match(unit); if unitFound then return found(unitFound,"direct unit") end end
   local raid=A.Call(IsInRaid)==true
   local count=A.Call(raid and GetNumGroupMembers or GetNumSubgroupMembers)
   if A.Number(count) then
     for i=1,math.min(count,raid and 40 or 4) do
-      local found=match((raid and "raid" or "party")..i); if found then return found end
+      local found=match((raid and "raid" or "party")..i); if found then lookup.result="group unit"; return found end
     end
   end
-  for unit in pairs(self.nearbyUnits or {}) do local found=match(unit); if found then return found end end
+  for unit in pairs(self.nearbyUnits or {}) do local unitFound=match(unit); if unitFound then return found(unitFound,"tracked nearby unit") end end
   local plates=A.Call(C_NamePlate and C_NamePlate.GetNamePlates)
   if type(plates)=="table" then
+    lookup.plates=#plates
     for i=1,math.min(40,#plates) do
       local unit=plates[i].namePlateUnitToken or A.Call(function() return plates[i]:GetUnit() end)
-      local found=match(unit); if found then return found end
+      local found=match(unit); if found then lookup.result="nameplate unit"; return found end
     end
   end
 end
@@ -524,7 +533,7 @@ function B:ThanksAuraRecipient(aura,cache)
   if guid==own or not guid:match("^Player%-") then return nil,nil,false end
   if ignoredProvider(nil,guid) then return nil,"provider is ignored",false end
   local found=cache[guid]
-  if found==nil then found=self:FindCasterUnit(guid) or false; cache[guid]=found end
+  if found==nil then found=self:FindCasterUnit(guid,aura.spellId) or false; cache[guid]=found end
   if found then
     local candidate,reason,again=thankRecipient(found)
     if candidate then candidate.identity="aura GUID / live unit" end
@@ -572,7 +581,7 @@ function B:DispatchSoloThanks()
   local queue=self.helperThankQueue or {}
   while #queue>0 do
     local candidate=queue[1]
-    if now-candidate.at>10 or (self.helperThankCooldowns[candidate.key] or self.helperThankCooldowns[candidate.nameKey]) then table.remove(queue,1)
+    if now-candidate.at>10 or (self.helperThankCooldowns[candidate.key] or self.helperThankCooldowns[candidate.nameKey]) then self:ThanksTrace("queued thanks discarded",now-candidate.at>10 and "queue expired" or "provider cooldown"); table.remove(queue,1)
     else
       local wait=1-(now-(self.helperLastThank or -1000))
       -- Optional human-like pause: a random wait chosen once per thank, inside the 10 second window.
@@ -596,6 +605,7 @@ function B:DispatchSoloThanks()
         local emote=C_ChatInfo and C_ChatInfo.PerformEmote or DoEmote
         if type(emote)~="function" then self.helperThankStatus="Emote API unavailable"; self.helperThankQueue={}; return end
         self.helperLastThank=now
+        self:ThanksTrace("emote API attempted",(C_ChatInfo and C_ChatInfo.PerformEmote==emote) and "PerformEmote" or "DoEmote")
         local ok,result=pcall(emote,self:SoloThankEmote(),candidate.unit)
         if ok then
           self.helperThankCooldowns[candidate.key]=now; self.helperThankCooldowns[candidate.nameKey]=now
@@ -642,8 +652,12 @@ function B:ObserveSoloThanks(baseline)
         or (previous.name and record.name and previous.name~=record.name)
         or (A.Number(previous.expires) and A.Number(record.expires) and previous.expires>0 and record.expires>previous.expires+1))
       local pending=self.helperThankPending[key]
-      if pending and (pending.id~=record.id or GetTime()-pending.at>(A.Text(pending.guid) and 10 or 2)) then self.helperThankPending[key]=nil; pending=nil end
+      if pending and (pending.id~=record.id or GetTime()-pending.at>(A.Text(pending.guid) and 10 or 2)) then
+        self:ThanksTrace("pending caster discarded",pending.id~=record.id and "buff changed" or (A.Text(pending.guid) and "10s window expired" or "2s window expired"))
+        self.helperThankPending[key]=nil; pending=nil
+      end
       if changed or pending then
+        self.thanksIncoming={at=GetTime(),spell=A.Number(aura.spellId) and aura.spellId or nil,instance=A.Number(aura.auraInstanceID) and aura.auraInstanceID or nil,known=A.Text(aura.casterGUID)==true,live=recipient~=nil}
         if recipient then
           candidates[#candidates+1]=recipient; self.helperThankPending[key]=nil
         else

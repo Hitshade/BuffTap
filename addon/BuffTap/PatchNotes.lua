@@ -2,7 +2,10 @@
 local _,B=...
 -- Keep the ten most recent releases within a 24 KiB content ceiling.
 B.PatchNotes={
- {version="1.26.8-beta3",title="Try an optional buff queue",items={
+ {version="1.26.8-beta4",title="Try an optional buff queue",items={
+  "Helpers > Buff requests: Prioritize potential buff providers is an optional sorting choice. It uses your missing-buff selections, keeps existing priorities ahead and sends nothing automatically.",
+  "Paladins: Nearby no longer treats Kings, Might and Wisdom as short buffs when holding back short buffs in cities and inns.",
+  "Missed a Solo Thanks? Diagnostics > Full check-up now includes your thanks settings, recent timing and whether BuffTap could find the person who buffed you. Capture it soon after the problem.",
   "Solo Thanks now waits longer when the game identifies a buff caster before making that player available. It can also follow the same player to another nameplate while thanks is queued. Unverified players are never thanked.",
   "Consumable bar and buff queue icons now follow your Classic or Modern square icon choice, including the preview. These smaller icons have no reminder glow.",
   "Customization > Buff reminder > Show next buffs below adds up to four clickable buff icons beneath your reminder. It starts off. Your binding stays on the main icon; queued icons hide in combat.",

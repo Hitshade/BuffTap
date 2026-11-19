@@ -4,7 +4,7 @@
 
 local _, B = ...
 _G.BuffTap = B
-B.version = "1.26.8-beta3"
+B.version = "1.26.8-beta4"
 B.API = {}
 local A = B.API
 
@@ -106,7 +106,7 @@ function B:InitDB()
   self.db.showRemaining=nil; self.db.showGroupIndicator=nil
   local defaults = {enabled=true, showReminder=true, size=64, opacity=1, x=0, y=-180,
     seconds=45, rebuffVersion=1, sound=false, combatExpiry=false, buffQueue=false, reminderSound="cleanse", alertSoundVersion=0, supplySound="glass", campAlertSound="harp", cleanseSound="bell", socialSound="hello", nearbySocialAlert=false, nearbySocialFriends=true, nearbySocialGuild=true, cleanseEnabled=false, cleanseTypes={Magic=true,Curse=true,Poison=true,Disease=true}, cleanseSelf=true, cleanseGroup=true, cleanseTarget=true, cleanseNearby=false, cleansePreferAbolish=true, cleanseBorder=true, reviveEnabled=false, reviveGroup=true, reviveTarget=true, reviveRebirth=false, cleanseFirst=false, smartShift=false, soundChannel="Master", soundInterval=5, glow=true, pulse=false, group=true, smartGroup=true,
-    nearbyRankUpgrades=false,
+    nearbyRankUpgrades=false,nearbyProviderSort=false,
     groupNeed=3, blessingNeed=2, friendlyTarget=false, targetSeconds=300, keys={"MOUSEWHEELDOWN"}, buffs={}, priorities={}, buffSeconds={}, buffCharges={},
     pauseResting=false, targetClassBlessings=true, targetClasses={}, targetBlessingFallback=true, targetBlessingClasses={}, targetBlessingPriorities={}, groupBlessingPriorities={}, blessingAssignments=false, blessingClasses={}, blessingGroupOverrides={}, buffGroups={}, buffClasses={}, buffGroupNeed={}, targetBuffs={}, targetBuffSeconds={}, showBuffName=false, showTargetName=true, showTimer=false, showGroupBadge=true,
     pickerBagsOnly=true, supplyCustom={}, consumablesEnabled=false, consumableFamilies={}, consumableChoices={}, consumableSeconds={}, consumableModes={},
@@ -518,10 +518,12 @@ function B:PickBlessingPriority(entry,choices,target)
   end
   for _,def in ipairs(choices) do
     local action=self:Resolve(def,entry.unit)
-    local missing,_,_,_,wake=self:Missing(def,action,auras,target and self:TargetRebuffSeconds(def) or nil)
-    self:ConsiderWake(wake)
-    if missing and not (self.HelperSuppressed and self:HelperSuppressed(action)) then return def.key end
-    if missing then self:AddDiag("blessings -> "..entry.unit..": "..def.key.." suppressed; evaluating next allowed priority (Restore reminders in Helpers)") end
+    if action then
+      local missing,_,_,_,wake=self:Missing(def,action,auras,target and self:TargetRebuffSeconds(def) or nil)
+      self:ConsiderWake(wake)
+      if missing and not (self.HelperSuppressed and self:HelperSuppressed(action)) then return def.key end
+      if missing then self:AddDiag("blessings -> "..entry.unit..": "..def.key.." suppressed; evaluating next allowed priority (Restore reminders in Helpers)") end
+    end
   end
   self:AddDiag("blessings -> "..entry.unit..": no eligible missing blessing in selected priorities")
   return "skip"

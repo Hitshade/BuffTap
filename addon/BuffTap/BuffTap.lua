@@ -780,6 +780,7 @@ function B:DiagnosticsLines()
     out[#out+1]="Reason: "..tostring(a.reason).." | range: "..tostring(a.rangeSource or "not checked")
   else out[#out+1]="Next: none" end
   out[#out+1]="Solo thanks: "..tostring(self.helperThankStatus or "not observed")
+  if self.SoloThanksDiagnostics then for _,line in ipairs(self:SoloThanksDiagnostics()) do out[#out+1]=line end end
   out[#out+1]="Resting pause: "..tostring(self.db.pauseResting==true).." | resting read: "..tostring(A.Call(IsResting))
   if self.lastAlertInfo then
     local sound=self.lastAlertInfo
@@ -845,6 +846,7 @@ function B:Status(verbose)
   say("Rebuff default: " .. tostring(self:Preference("seconds")) .. " seconds")
   say("Friendly target buffing: " .. (self.db.friendlyTarget and "on" or "off") .. " | default target refresh: " .. tostring(self.db.targetSeconds or 300) .. " seconds")
   say("Solo thanks: "..tostring(self.helperThankStatus or "not observed"))
+  if self.SoloThanksDiagnostics then for _,line in ipairs(self:SoloThanksDiagnostics()) do say(line) end end
   say("PvP protection: "..(self.db.pvpProtection and "on" or "off").." | blocked="..tostring(self.pvpBlocked==true).." | aura data unavailable="..tostring(self.buffDataUnavailable==true).." | ownership unknown="..tostring(self.ownershipUnavailable==true).." | temporary retry="..tostring(self.deferredBlocked==true))
   say("Consumables: " .. (self:Preference("consumablesEnabled") and "on" or "off") .. " | curated data build " .. tostring(self.ForeverDataBuild or "unknown"))
   if self:GroupPreference("group") then

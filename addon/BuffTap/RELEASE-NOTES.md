@@ -1,3 +1,22 @@
+# BuffTap 1.26.8-beta4
+
+### Optional provider sorting with Buff requests
+Under **Helpers > Buff requests**, turn on **Prioritize potential buff providers** if you want Nearby to surface people you could ask for a missing selected buff. It starts off and follows the existing request feature switch and buff choices.
+
+Cleanses, people needing your buffs and existing friend/guild priorities stay ahead. Sorting cannot change the next cast or send a whisper. Existing requests already check your buffs, so buffs you have do not become request offers. A potential provider is not proof that they have learned the spell. Rows stay still while your mouse is over the window.
+
+### Paladin Nearby correction
+**Hold back short buffs** no longer suppresses Kings, Might or Wisdom in cities and inns. The tooltip now reflects that distinction. Thanks to tinect for catching the outdated classification.
+
+### More useful Solo Thanks reports
+Diagnostics and **Full check-up** now show your thanks settings, character context, how recent the recorded problem is, pending retries, and whether BuffTap found the player who buffed you. Recent events distinguish a missing caster from a thank that actually reached the game's emote system. Current casting or channeling is shown as context, without changing when thanks is allowed.
+
+If you miss a thank, capture **Diagnostics > Full check-up** soon afterward. Leave **Hide player names** on when sharing it. Comparing the affected character with one that works should help identify a difference we are currently missing.
+
+This improves evidence collection and retains beta3's recovery tweaks. We have not reproduced waggz81's exact live problem or confirmed that it is fixed.
+
+Thanks to **tinect** for the optional buff queue, combat estimates, window layering and expanded German translation contribution in PR #6, and to **waggz81** for the diagnostic report. Both new reminder features remain off by default.
+
 # BuffTap 1.26.8-beta3
 
 ### Better recovery for delayed Solo Thanks

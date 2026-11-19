@@ -1,3 +1,24 @@
+# BuffTap 1.26.8-beta4
+
+### Optional request-provider ordering
+- Owner-approved adaptation of PR #6's provider proposal: shared nearbyProviderSort is false by default and lives under Helpers > Buff requests, enabled with existing requests. NearbyPlayers computes provider visibility from RequestableBuffs itself, with the same existing blocked-row exclusion as request buttons. No provider level, learned-spell or new request-eligibility validator is added.
+- Providers without castable actions can appear in buffs-only view, below cleanse/buff/favor/social tiers. All-players view uses provider status only after existing action, cleanse, favor and social precedence. Arrival/order tie-breaks and mouse-hover freezes remain. SelectNearby and NearbyCandidates are unchanged, so provider rows cannot become casts or alter the binding's recipient. No automatic whisper is introduced; request cooldown and click behavior are unchanged.
+- Regression tests cover existing buffs, buff arrival before request click, explicit sends/cooldown, disabled feature filtering, own-recipient priority, existing friend priority and mouse-frozen ordering. Request card gains a separate bottom row, with Tracking shifted down to preserve spacing.
+
+### Paladin Nearby short-buff classification
+- Owner approved the additional PR #6 correction: remove obsolete short flags from single Kings/Might/Wisdom. Nearby hold-short filtering retains its existing behaviour for other families, without adding the proposed provider-list feature. Updated help text in English and four locales. No numeric duration data is inferred from the report. The priority loop also skips nil Resolve results for unlearned blessings instead of passing them into Missing; those spells remain configurable. Focused Nearby regression passed for Kings, Might and Wisdom while holding short buffs.
+
+### Solo Thanks evidence for character comparisons
+- Adds ThanksDiagnostics.lua, a read-only, session-only observer with twelve bounded, coalesced recent stages. Both Debug and Diagnostics/Full check-up include current class/level/profile, effective enable/resting/emote/delay settings, current block and casting/channeling observations, status-change and observation ages, pending known-ID count/age/retries/queue size, last lookup path/count/readable IDs/nameplate enumeration and linked spell/instance IDs. Current activity is explicitly observational and adds no new gates.
+- Records actual emote API attempts independently of eligibility, expired pending and queued candidates, and combat/world/group context resets. Fresh lookup timestamps separate a repeatedly unresolved provider from an old status. No raw player GUIDs/names are added to trace entries; profile labels participate in existing hidden-name report redaction. Trace is not saved or transmitted and adds no polling or action decisions.
+- Added coverage for Warrior settings/activity, unknown caster lookup, status age versus new observations, bounded history, emote attempt recording, arbitrary profile-label privacy, debug/checkup inclusion and restricted activity APIs. The original waggz81 report remains unconfirmed in the live client; these diagnostics are intended to capture missing evidence.
+
+### Contributor attribution
+- Credit [@tinect](https://github.com/tinect) and [PR #6](https://github.com/Hitshade/BuffTap/pull/6) in CREDITS.md and release notes. Integration commit 98a4234 retains Co-authored-by using the email GitHub maps to tinect. Attribution grants no repository permissions. The tested contribution is pinned to 815a94d750d441b0c523a7291c071b333a6b80bb; subsequently approved Paladin classification and provider proposal are now adapted separately from head 6940036. No wholesale import of newer PR code is implied; PR stays open.
+
+### Validation
+Final integrated mocked Lua 5.1 release suite: **2,961 passed, zero FAIL records**, terminal FINAL_TOTAL verified in tests/release-1268-beta4-complete.txt. Focused provider run: 240 passed; focused diagnostics: 170 passed; Paladin short-buff run: 241 passed, all zero failures. All 48 TOC Lua files compiled independently. Earlier beta4 runs were stopped for owner pause/follow-up changes and are not represented as completed validation. Owner requested local installation and a visual once-over; public publication remains held.
+
 # BuffTap 1.26.8-beta3
 
 ### Solo Thanks delayed-caster recovery

@@ -64,6 +64,9 @@ import test_group_contexts
 import test_pr6_adaptation
 import test_secondary_icon_style
 import test_thanks_late_caster
+import test_thanks_diagnostics
+import test_paladin_nearby_short
+import test_provider_sort
 print('FINAL_TOTAL',len(__import__('test_bufftap').tests))
 import test_release_119
 import test_release_1194
@@ -108,4 +111,7 @@ import test_button_strata
 import test_pr6_adaptation
 import test_secondary_icon_style
 import test_thanks_late_caster
+import test_thanks_diagnostics
+import test_paladin_nearby_short
+import test_provider_sort
 print('FINAL_TOTAL',len(__import__('test_bufftap').tests))

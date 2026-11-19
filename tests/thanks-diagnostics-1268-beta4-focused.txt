@@ -1,0 +1,171 @@
+PASS Highest known rank, exact secure spell and binding
+PASS Applied buffs advance and release overrides
+PASS Aura failures and secret records fail closed
+PASS Global secrecy cannot reuse cached auras
+PASS Mouse click refuses changed target identity
+PASS Combat clears payload, bindings and timers without insecure writes
+PASS Quick target uses its own threshold at click
+PASS Unrelated target changes are idle with target mode off
+PASS Unwatched raid auras and unrelated item/spell loads are ignored
+PASS Repeated wake replacement leaves only one timer
+PASS Rapid target changes keep a bounded timer set
+PASS Threshold wake restores action at the configured time
+PASS Unknown external range is never a castable action
+PASS Smart group does not count out of range members
+PASS Smart group chooses group spell for verified recipients
+PASS Higher priority single stays ahead of lower group family
+PASS Mark recipient accepts rank trained ten levels higher
+PASS Malformed saved keys, priorities and group maps recover
+PASS Old overlay and threshold settings migrate
+PASS All options pages build and move control opens
+PASS Consumables default off and never query inventory at idle
+PASS Whitelist item creates exact secure item action
+PASS Physical mouse down does not block mouse up item use
+PASS Right click never marks an item consumed
+PASS Successful item spell confirms settling, failed clicks do not
+PASS Disappearing bag item rejected during prepare and click
+PASS Unloaded metadata cannot create an item action
+PASS Questionmark icon cannot create an item action
+PASS Changed mapping is quarantined locally and Auto falls back
+PASS A broken preferred item does not block another family
+PASS Food eating aura suppresses repeated use until Well Fed
+PASS Existing flask recognized by ID regardless of language
+PASS Inventory cache is not rescanned on ordinary aura refreshes
+PASS Water Shield satisfies Lightning Shield without overwriting
+PASS Missing rogue poison is a manual unbound alert
+PASS Weapon enchant event clears a satisfied manual alert
+PASS Coated main hand advances reminder to off hand
+PASS Shield off hand does not request a poison
+PASS Unreadable weapon enchant state fails closed
+PASS Unreadable main hand does not hide missing off hand
+PASS Zero item sentinel is treated as an empty hand
+PASS Unchanged manual reminder uses the safe fast path
+PASS Castable class buff precedes manual weapon reminder
+PASS Castable consumable precedes manual weapon reminder
+PASS Camp Benefits reports exact granted additions
+PASS Catalog excludes known wrong spell IDs
+PASS New Aspect and Seal IDs remain known-spell gated
+PASS No permanent OnUpdate on supported client
+PASS Group reagent missing falls back to single
+PASS Confirmed flask use pauses after bounded second observation
+PASS Confirmed flask with effect does not quarantine
+PASS Saved per-buff group overrides retain mixed state
+PASS Greater blessing never replaces higher-priority owned family
+PASS Raid subgroup assignments exclude unassigned recipients
+PASS Dead and offline targets skipped without blocking other members
+PASS Empty spellbook retry stops and book event recovers
+PASS Metadata changes in combat applied safely on exit
+PASS Missing optional item APIs do not break class spell selection
+PASS Appearance changes preserve selected secure action
+PASS Hundreds of idle aura refreshes reuse rank and roster caches
+PASS Every target class advances Mark to Thorns
+PASS Group class defaults and overrides share single and group families
+PASS Party class and group filters intersect
+PASS Class filters leave personal buffs independent
+PASS Group cast falls back when subgroup contains excluded class
+PASS Paladin opt-out target follows priority without class filters
+PASS Paladin group sorting skips filtered higher priority family
+PASS Malformed class maps recover safely
+PASS Class option toggles and reset persist correctly
+PASS Priest multiple explicit target buffs advance in order
+PASS Divine Spirit is not offered to a Warrior target by default
+PASS Egg is offered and Well Fed clears it
+PASS Manual low level eating suppresses all buff actions
+PASS Manual nutritious food does not prompt repeated consumption
+PASS Different Well Fed effect preserves the existing meal
+PASS XP bonus alone does not substitute for a food buff
+PASS Explicit missing food never substitutes another item
+PASS Selected elixir uses exact spell mapping
+PASS A different active elixir no longer blocks the chosen one (elixirs stack)
+PASS Elixir default preserves legacy Ferocity preference
+PASS Removed potion family cannot become a secure item action
+PASS Picker keeps absent choices and filters inventory
+PASS Expanded inventory uses cache on ordinary aura refresh
+PASS Picker scrolling clamps and search resets the visible range
+PASS Auto and explicit selection remain mutually exclusive
+PASS Missing selected food remains visible in selection summary
+PASS Group buff selection and all-classes controls keep other assignments
+PASS Picker closes with options and combat prevents changes
+PASS Item data event replaces placeholder with the native item icon
+PASS Personal consumable is aimed at yourself (audit 1.24.1 #6)
+PASS Helpers default off and preserve existing saved choices
+PASS Dismiss advances to next buff and restores on zone change
+PASS Dismissal is recipient specific and restores manually
+PASS Right click down does not dismiss two consecutive actions
+PASS Dismissed consumable family does not block another family
+PASS Only recent stronger-effect errors suppress a BuffTap action
+PASS Successful cast clears error attribution
+PASS Explicit tracker queues one validated secure spell
+PASS Tracker changes before click are rejected
+PASS Unknown or restricted tracking never queues an action
+PASS Party coverage works without enabling party casting
+PASS Party coverage never calls unknown data missing or claims raid support
+PASS Coverage treats another blessing as occupied
+PASS Discovery is informational and cached across aura events
+PASS Discovery excludes verified items and equipment
+PASS Solo thanks requires known caster and coalesces consecutive buffs
+PASS Thanks skips self and unknown caster while accepting other helpful effects
+PASS Thanks stays off in party raid instance and combat
+PASS Thanks respects global limit across different providers
+PASS Unknown grouping and secret caster fail closed
+PASS Helpers UI builds, updates and closes safely in combat
+PASS Quick choices change preference only and preserve secure validation
+PASS Modern emote API receives a verified unit and never retries a restriction
+PASS Auto thanks remains silent when disabled
+PASS Existing auras at login do not generate a delayed thank
+PASS All optional helpers suspend cleanly at combat entry
+PASS Tracking events are idle when the feature is disabled
+PASS Unknown item load failures do not create retry loops
+PASS Unrelated item loads do not schedule discovery
+PASS Group dismissal shares the single family and prevents group bypass
+PASS Dismissing main hand still offers missing off hand manually
+HELPER REGRESSIONS COMPLETE
+PASS Helpers opens the main options tab without a second window
+PASS Helper setting preserves selected tab and existing buff choices
+PASS Discovery report is inside Diagnostics and disabled scan is explained
+PASS Upgrade removes only retired potion settings
+PASS Consumable options have only maintainable buff families
+PASS Bounce requires matching failure and reason in either order
+PASS Late and interrupted failures cannot suppress reminders
+PASS Consumable bounce matches use spell rather than item ID
+PASS Tracker selection is explicit and invalid preferences reset
+PASS Party coverage includes Shadow Protection
+PASS Selected solo emote is directed at the verified provider
+PASS Unsafe and malformed stored emotes fall back to thank
+PASS Curated choices exclude posture commands and use client localized aliases
+PASS Changing solo response preserves cooldowns and sends nothing
+PASS Modern emote failure makes one attempt without retry
+PASS Solo response selector stores choices without emitting chat
+PASS Solo emote remains configurable while automatic thanks is off
+PASS Questionable directed emotes remain selectable
+PASS Solo emote dropdown scrolls without a search box
+PASS Class tracking appears and is reminded (waggz81)
+PASS Buffs without a timer hide the Rebuff slider
+PASS Unlearned class tracking can be chosen ahead of time
+PASS Switching tracking in the minimap menu is followed, not fought
+PASS Minimap switch never offers the old tracking before adopting the new one (audit 1.24.4)
+PASS Private diagnostics leave out Oath and Soulstone targets (audit 1.24.4)
+PASS Imported remembered players are cleaned (audit 1.24.4)
+PASS Reported name-only driveby never calls the emote API
+PASS Readable name never goes to emote API even if API would accept it
+PASS Native GUID lookup resolves verified live provider
+PASS Missing or secret native token remains silent nil
+PASS Missing or secret native token remains silent {secret=true}
+PASS Throwing native token lookup remains silent
+PASS Wrong GUID returned by native token lookup is refused
+PASS Native token still needs a current unit
+PASS Native lookup can find a unit outside enumerated plate list
+PASS Briefly delayed native unit can settle into directed thanks
+PASS Legacy queued name-only record cannot emit a general emote
+PASS Caster leaving before queued dispatch cannot emit a general emote
+PASS Unavailable caster cannot fall back to current hostile or other target
+PASS Thanks diagnostics show Warrior settings and current activity without extra gates
+PASS Unresolved caster diagnostics link lookup to spell and retry window
+PASS Status ages are distinguishable from fresh observations
+PASS Thanks timeout is retained in bounded history without names or GUIDs
+PASS Actual emote API attempt is recorded separately from eligibility
+PASS Hidden-name reports anonymize an arbitrary profile label
+PASS Debug and full checkup both include detailed thanks observations
+PASS Unreadable activity APIs are diagnostic only and stay safe
+PASS Thanks caster lookup records native and group result paths
+PASS Thanks diagnostics tolerate unavailable class identity
