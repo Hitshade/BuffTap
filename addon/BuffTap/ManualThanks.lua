@@ -1,7 +1,7 @@
 -- Click-only whisper fallback. A captured GUID must resolve to the same full name at send time.
 local _,B=...
 local A=B.API
-local DEFAULT="Thank you for [buff]!"
+local DEFAULT="Thank you for %s!"
 local ICON="Interface\\Icons\\Achievement_Reputation_01"
 function B:ManualThanksAllowed()
   if not (self.db and self.db.manualThanks==true) or not self:SoloThanksAllowed() then return false end
@@ -20,7 +20,11 @@ function B:ManualThanksName(guid)
   if C_FriendList and (A.Call(C_FriendList.IsIgnoredByGuid,guid)==true or A.Call(C_FriendList.IsIgnored,name)==true) then return end
   return name
 end
-function B:ManualThanksTemplate() return A.Text(self.db.thankMessage) and self.db.thankMessage or DEFAULT end
+function B:ManualThanksTemplate()
+  local text=self.db.thankMessage
+  if text=="Thank you for [buff]!" then return DEFAULT end
+  return A.Text(text) and text or DEFAULT
+end
 function B:SetManualThanksMessage(text)
   if A.Combat() or type(text)~="string" then return false end
   text=text:gsub("[%c|]",""):match("^%s*(.-)%s*$")
@@ -31,7 +35,15 @@ end
 function B:ManualThanksText(entry)
   local names={}; for _,name in pairs(entry.buffs or {}) do names[#names+1]=name end; table.sort(names)
   if #names==0 then return end
-  local text=self:ManualThanksTemplate():gsub("%[buff%]",function() return table.concat(names,", ") end)
+  local template=self:ManualThanksTemplate()
+  local replacement=table.concat(names,", "); local pieces={}; local at=1
+  while at<=#template do
+    local first,last=template:find("%%s",at); local oldFirst,oldLast=template:find("%[buff%]",at)
+    if oldFirst and (not first or oldFirst<first) then first,last=oldFirst,oldLast end
+    if not first then pieces[#pieces+1]=template:sub(at); break end
+    pieces[#pieces+1]=template:sub(at,first-1); pieces[#pieces+1]=replacement; at=last+1
+  end
+  local text=table.concat(pieces)
   if #text>255 or text:find("[%c|]") or text:match("^%s*$") then return end
   return text
 end

@@ -58,4 +58,5 @@ PASS Manual controls fit existing Helpers card
 PASS Actual unresolved aura offers manual before retry timeout
 PASS Automatic thanks removes manual fallback
 PASS Dismiss affects only selected giver and advances manual queue
-FOCUSED_TOTAL 60 FAILURES 0
+PASS Percent s replaces literally and preserves legacy messages
+FOCUSED_TOTAL 61 FAILURES 0

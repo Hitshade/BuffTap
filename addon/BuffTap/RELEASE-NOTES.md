@@ -5,7 +5,7 @@ For the really, really polite players who never want to miss a chance to say tha
 
 Enable **Offer a manual thank-you** under Helpers > Solo Thanks. When automatic thanks cannot reach a buff giver but their full name is known, a handshake marked THANK can appear at your reminder position. Click to whisper, or right-click to dismiss. The offer lasts 15 seconds and waits behind ready buff actions. Your normal buff binding never sends it, and automatic and manual thanks avoid doubling up.
 
-The message starts as **Thank you for [buff]!**. Edit it inside Solo Thanks and press Enter to save; [buff] inserts received buff names. Several buffs from one giver share a thank-you. Reset restores the original message.
+The message starts as **Thank you for %s!**. Edit it inside Solo Thanks and press Enter to save; %s inserts received buff names. Several buffs from one giver share a thank-you. Reset restores the original message.
 
 **Keep thanking while resting** applies to this backup too. A reliable full name is required, and normal solo and chat restrictions still apply. This is an extra courtesy option, not a guarantee of delivery. Local beta for owner testing; not published.
 

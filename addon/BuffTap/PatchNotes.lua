@@ -5,7 +5,7 @@ B.PatchNotes={
  {version="1.26.12-beta2",title="For the especially polite",items={
   "Really, really don't want to miss a thank-you? Helpers > Solo Thanks has a very optional manual backup. It starts off and offers a THANK icon when automatic thanks cannot reach a buff giver whose full name is known.",
   "Click THANK to whisper, or right-click to dismiss. The offer lasts 15 seconds, waits behind ready buffs and follows Keep thanking while resting. Your buff binding never sends it.",
-  "Make the message your own in Solo Thanks. It starts as Thank you for [buff]! and combines buffs from the same giver."}},
+  "Make the message your own in Solo Thanks. It starts as Thank you for %s! and combines buffs from the same giver."}},
  {version="1.26.11",title="Reminders that make room",items={
   "Reminders now sit below ordinary game windows by default. Under Customization, Buff reminder, Camping and Supplies each offer Keep above other windows. Nearby keeps its own switch.",
   "The main reminder's choice also covers queue icons, consumable icons and combat expiry warnings. Settings and popup menus stay easy to reach."},thanks="Thanks to WareWolf44 for the layering feedback."},
