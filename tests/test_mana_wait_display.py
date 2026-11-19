@@ -49,5 +49,5 @@ B.db.showReminder=false; B:Refresh(); assert(B.button.testAlpha==0 and B.button.
 """)
 
 test('Mana status: non-mana classes are labelled as power', WAIT+"""
-playerClass='WARRIOR'; B:ShowManaWait(); assert(B.button.nameLabel.text=='Waiting for power')
+playerClass='ROGUE'; B:ShowManaWait(); assert(B.button.nameLabel.text=='Waiting for power')
 """)

@@ -363,6 +363,8 @@ function B:ShowManaWait()
   local b=self.button
   if not b or b:GetAttribute('state-safety')=='blocked' or b:GetAttribute('type1')~=nil then return end
   local class=A.Class('player')
+  -- Rage is earned by fighting, not passively replenished while travelling.
+  if class=='WARRIOR' then return end
   local usesMana=class~='WARRIOR' and class~='ROGUE'
   local title=self.manaFloorBlocked and self:Text('Saving mana') or self:Text(usesMana and 'Waiting for mana' or 'Waiting for power')
   self.manaWaitVisible=true; self.manaWaitTitle=title

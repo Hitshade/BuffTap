@@ -127,3 +127,5 @@ import test_class_followup_1269
 import test_class_card_polish_1269
 import test_blacklist_sharing_1269
 print('FINAL_TOTAL',len(__import__('test_bufftap').tests))
+
+import test_warrior_rage_wait_12610

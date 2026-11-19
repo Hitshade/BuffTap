@@ -1,3 +1,10 @@
+# BuffTap 1.26.10-beta1
+
+### Fixed
+- ShowManaWait suppresses its passive resource-shortage icon for Warriors. Rage-blocked work retains powerBlocked so the existing UNIT_POWER_UPDATE path restores normal eligible Battle Shout actions. No polling, schema migration or settings changes. Other classes and ordinary casting/combat safeguards remain unchanged.
+- Thanks to ichkruchka for reporting unwanted grey Battle Shout reminders outside fighting.
+- Validation: 15 focused resource-display/event/combat checks passed, 0 failed (tests/warrior-rage-12610-focused.txt); 49 TOC modules compile and ten in-game entries load. No full suite or live client verification claimed.
+
 # BuffTap 1.26.9
 
 ### Added

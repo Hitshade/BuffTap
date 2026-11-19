@@ -2,6 +2,8 @@
 local _,B=...
 -- Keep the ten most recent releases within a 24 KiB content ceiling.
 B.PatchNotes={
+ {version="1.26.10-beta1",title="A quieter Warrior reminder",items={
+  "Battle Shout stays out of sight when you lack rage. Its normal reminder returns when you can cast it. Mana reminders are unchanged."},thanks="Thanks to ichkruchka for the Warrior feedback."},
  {version="1.26.9",title="Useful choices, shared blacklists",items={
   "Keep one blacklist across your characters. Turn on Share across all characters under Blacklist, or choose another profile and Add entries. Existing entries are kept; sharing starts off. Newly blocked targets are skipped immediately.",
   "Less clutter, more relevant choices. Groups hides pet, role and group-spell options your class or selected buff cannot use, so you only see the controls that make sense.",
@@ -59,14 +61,6 @@ B.PatchNotes={
   "SmartShift offers your previous form after class buffs, ahead of optional reminders. It also handles rapid buffing and mana recovery more reliably.",
   "The main icon now stays dimmed with a waiting message when mana is low, even with Nearby closed. Reminders resume when you have enough.",
   "Rapid presses are less likely to repeat a successful self buff while the game catches up. Other buffs can follow normally, and every cast still needs your input."},thanks="Thanks to Mechrite for the responsiveness suggestion and jimbo1111 for the repeated Thorns report."},
- {version="1.26.0",title="Consumables at your own pace",items={
-  "Choose Auto or Manual for Food, Flask, Elixirs and Utility. Manual gives you separate clickable item icons, keeping those items out of your normal binding and mouse-wheel buffing.",
-  "Consumable icons and stock counts stay centered beneath the reminder, even when its main icon is hidden. Active effects step aside until they need refreshing; unavailable items stay dimmed.",
-  "Give consumables their own spot. Use Customization > Buff reminder > Detach consumables, then Move reminders or Edit Mode. Cancel undoes that move session; Reset look & position restores the defaults.",
-  "Up to eight effects can be clicked from the bar. Hover +N for additional items to use from your bags. Manual icons hide in combat and whenever you cannot safely use them.",
-  "Set refresh times directly in My buffs. The bottom panel explains the defaults, and Reset default timings restores them without changing buff choices or priorities.",
-  "The settings are tidier too: selected items no longer cover their labels, label visibility comes before text styling, and Camping and Supplies have fuller layouts. Timers are centered, group counts sit at the top right, and Modern glows fit their icons better.",
-  "Disabling BuffTap stops prepared clicks immediately. SmartShift follows pauses and form cooldowns, manual icons return at their refresh time, and appearance reset restores all visual choices."},thanks="Thanks to Xprit44 for suggesting reminders without accidental mouse-wheel consumption."},
 
 }
 function B:PatchNotesUnread()
