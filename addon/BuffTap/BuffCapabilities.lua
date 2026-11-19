@@ -36,3 +36,18 @@ function B:HasTargetedGroupBuffs() return self:ClassGroupCapabilities().targeted
 function B:HasGroupSpellPairs() return self:ClassGroupCapabilities().pairs end
 function B:HasPetEligibleBuffs() return self:ClassGroupCapabilities().pets end
 function B:DefaultGroupEnabled() return self:ClassGroupCapabilities().maintenance==true end
+
+function B:NearbyCapabilities()
+  local out={buffs=self:HasTargetedGroupBuffs(),short=false,upgrades=false}
+  for _,b in ipairs(self:TargetAssignableBuffs()) do
+    out.short=out.short or b.short==true
+    out.upgrades=out.upgrades or (self.BuffSupportsRankUpgrades and self:BuffSupportsRankUpgrades(b)) or false
+  end
+  out.actions=out.buffs or (self.CanCleanseAnything and self:CanCleanseAnything()) or false
+  return out
+end
+
+function B:HasPersonalReminderBuffs()
+  for _,b in ipairs(self:ClassList()) do if not b.singleKey and self:Supported(b) then return true end end
+  return false
+end

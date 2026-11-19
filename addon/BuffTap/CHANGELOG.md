@@ -1,3 +1,20 @@
+# BuffTap 1.26.9-beta2
+
+### Extend capability-aware presentation
+- NearbyCapabilities derives external-buff, short-buff, verified-rank and cleanse applicability independently of learned status. Nearby hides inapplicable casting controls and actively reflows retained display/invite controls, card height and guide placement. The social/buff-request view preference remains available and saved values are not overwritten. No new request validation or automatic sends.
+- My buffs shows a compact explanation for classes with no supported personal reminder families. Target does likewise for classes without assignable friendly buffs, including Hunter/Warrior/Rogue. Class-applicable unlearned spells retain the full UI. Sidebar positions remain stable; inapplicable mode status dots are omitted. Existing cards/fonts/buttons provide relevant Weapons/My buffs/Nearby shortcuts.
+- Browsing for classes without external actions no longer inherits hidden casting-specific resting/mana pauses. Their unused rest shortcut is hidden and favor aura observation is skipped. Other pause/identity safeguards remain.
+
+### Weapon reminder eligibility
+- Clean defaults still select no oils/stones. The reported level-one Rogue screenshot contains explicit saved selections; their origin is unconfirmed. Existing valid choices are preserved.
+- WeaponChoiceSource validates public client item minimum level and player level, in addition to usability and exact effect mapping, and can fall through to a lower carried eligible rank. Unusable carried ranks do not become manual alerts.
+- Empty saved coating/poison preferences require at least one verified level-eligible item before a manual notice. Missing metadata requests use the existing bounded item loader/event path and remain silent until verified. No hard-coded level guess, preference reset, stock-default migration or arbitrary Rogue level gate.
+- Generic Rogue poison reminders remain behind learned/usable capability. Explicit usable Forever item poisons remain supported without a spellbook entry. Disabled hands are excluded from availability probes; eligible out-of-stock notices and Skip when I have none remain supported.
+
+### Validation
+- New all-nine-class/two-locale learned/unlearned page checks and weapon regressions cover level-one saved stones, clean Rogue defaults, unknown metadata, unusable stock, lower rank fallback, explicit usable poisons and preserved choices. Final integrated mocked Lua 5.1 run: **3,116 passed, 0 failed**, terminal VERIFIED_TOTAL/VERIFIED_FAILED and zero FAIL records verified in tests/release-1269-beta2-verified.txt. All 49 TOC modules compile and exactly ten in-game entries load. No live Forever verification or public publication claimed.
+- Start-of-work GitHub review: only PR #6 open; no new report in this scope.
+
 # BuffTap 1.26.9-beta1
 
 ### Class-appropriate controls with less clutter

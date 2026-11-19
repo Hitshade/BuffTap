@@ -4,7 +4,7 @@
 
 local _, B = ...
 _G.BuffTap = B
-B.version = "1.26.9-beta1"
+B.version = "1.26.9-beta2"
 B.API = {}
 local A = B.API
 
@@ -1114,6 +1114,7 @@ end
 
 -- Nearby-only rank comparison. Unknown coverage, group equivalents and
 -- same/higher ranks cannot justify replacing a healthy effect.
+function B:BuffSupportsRankUpgrades(b) return b and recipientRankAllowance[b.key]==true or false end
 function B:NearbyRankUpgrade(b,action,auras,ids,names)
   -- The main button checks the same need again after the Nearby scan has ended.
   -- An actual Nearby action must retain upgrade eligibility at that fresh click check.

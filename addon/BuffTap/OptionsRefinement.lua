@@ -37,6 +37,7 @@ end
 local function section(ui,parent,title,x,y,w,h)
   local bg=ui.card(parent,x,y,w,h)
   local titleText=ui.label(parent,title,x+16,y-16,T.fonts.Section,w-32); T.SectionTitle(titleText)
+  bg.sectionTitle=titleText
   return bg
 end
 function B:VisualSetting(key,value)
@@ -385,7 +386,7 @@ end
 function B:RefineNearbyPage(ui,tabs)
   local f=self.options; local p=f.pages[tabs.Nearby]; clearPage(p)
   headerSwitch(f.nearbyEnable,p)
-  section(ui,p,"Player list",12,-72,692,216)
+  f.nearbySettingsCard=section(ui,p,"Player list",12,-72,692,216)
   -- Left column: who and when you buff. Right column: how the list looks.
   place(f.nearbyBuffing,p,26,-112); place(f.nearbyAll,p,374,-112)
   f.nearbyFullNames=ui.check(p,"Show full names",374,-140,function(c)
@@ -401,7 +402,7 @@ function B:RefineNearbyPage(ui,tabs)
   f.nearbyWhileResting=ui.check(p,"Buff while resting",26,-168,function(c)
     if A.Combat() then return end
     B.db.nearbyWhileResting=c:GetChecked()==true; B.nearbySnapshot=nil; B:RequestRefresh("nearby resting",0); if B.nearbyFrame then B:UpdateNearbyWindow() end
-    B:UpdateRefinedOptions()
+    B:UpdateRefinedOptions(); B:UpdateClassAwarePages()
   end)
   f.nearbyHoldShort=ui.check(p,"Hold back short buffs, like Thorns",50,-196,function(c)
     if A.Combat() then return end
@@ -444,9 +445,10 @@ function B:RefineNearbyPage(ui,tabs)
   f.nearbyFavor:HookScript("OnEnter",function(s) T.Tooltip(s,B:Text("Return the favor"),B:Text("Someone who buffed you in the last five minutes moves to the top of the list, below cleanses, when they need your buff or theirs is a quarter gone. A buff that answers one of yours does not count, and each player moves up at most once per half hour.")) end)
   f.nearbyFavor:HookScript("OnLeave",function() if GameTooltip then GameTooltip:Hide() end end)
   -- How it works: the same drawn guide as the first-time introduction.
-  section(ui,p,"How Nearby works",12,-306,692,418)
+  f.nearbyGuideCard=section(ui,p,"How Nearby works",12,-306,692,418)
   local guide=CreateFrame("Frame",nil,p); guide:SetPoint("TOPLEFT",26,-346); guide:SetSize(664,366)
-  self:DrawNearbyGuide(guide,664)
+  f.nearbyGuide=guide; self:DrawNearbyGuide(guide,664)
+  f.nearbyClassHint=ui.label(p,"Nearby still supports player browsing, invitations and buff requests for your class.",374,-150,"GameFontDisableSmall",294)
   self:BuildNearbyAppearance(ui,f.appearancePanes.nearby)
 end
 -- Customization > Nearby window: size, rows, text, button side and position.
@@ -677,10 +679,10 @@ end
 -- Pages with nothing to switch on have no light.
 function B:NavStatus(index)
   local f,d=self.options,self.db
-  if index==1 then return d.enabled==true
+  if index==1 then if not self:HasPersonalReminderBuffs() then return nil end; return d.enabled==true
   elseif index==14 then return d.cleanseEnabled==true
   elseif index==2 then if not self:HasTargetedGroupBuffs() then return nil end; local c=f.blessingGroupEnable or f.groupEnable; if c then return c:GetChecked()==true end; return d.group==true
-  elseif index==3 then return d.friendlyTarget==true
+  elseif index==3 then if not self:HasTargetedGroupBuffs() then return nil end; return d.friendlyTarget==true
   elseif index==4 then return d.nearbyEnabled==true
   elseif index==5 then return d.consumablesEnabled==true
   elseif index==15 then return d.suppliesEnabled==true

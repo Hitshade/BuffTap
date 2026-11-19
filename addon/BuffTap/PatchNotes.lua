@@ -2,8 +2,10 @@
 local _,B=...
 -- Keep the ten most recent releases within a 24 KiB content ceiling.
 B.PatchNotes={
- {version="1.26.9-beta1",title="Groups that fit your class",items={
+ {version="1.26.9-beta2",title="Groups that fit your class",items={
   "Less clutter, more relevant choices. Groups hides pet, role and group-spell options your class or selected buff cannot use, so you only see the controls that make sense.",
+  "Nearby keeps useful browsing and invitation controls together, without casting options your class cannot use. Empty My buffs and Target pages explain where to go instead, including for Hunters and Warriors.",
+  "Weapon reminders stay quiet for items you cannot use at your level, unusable carried items or unknown level requirements. Your saved choices are kept for later.",
   "Battle Shout and Trueshot Aura stay under My buffs. Their Groups page explains how they affect nearby group members automatically. Rogues get a shortcut to Weapons.",
   "Pet buffs use an approved list, with mana-only buffs reserved for mana-using pets. Utility spells no longer become pet-maintenance jobs.",
   "Role choices fit each buff: Thorns offers Tanks, and Fear Ward offers Tanks or Healers. Other buffs keep their class choices. Hidden old preferences stay saved.",

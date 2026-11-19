@@ -2141,10 +2141,10 @@ function B:Options()
       f.assignChild=assignChild; f.assignRows={}
       f.assignEmpty=label(assignChild,"No party / raid buffs available for this class.",8,-12,"GameFontHighlight",440)
       f.groupInfo=CreateFrame("Frame",nil,groupPage); f.groupInfo:SetAllPoints()
-      card(f.groupInfo,12,-46,692,108)
+      card(f.groupInfo,12,-46,692,148)
       f.groupInfoTitle=label(f.groupInfo,"",28,-64,"GameFontNormalLarge",654)
       f.groupInfoText=label(f.groupInfo,"",28,-96,"GameFontHighlight",654)
-      f.groupWeapons=button(f.groupInfo,L("Open Weapons"),28,-118,148,function() f.selectTab(TAB.Weapons) end)
+      f.groupWeapons=button(f.groupInfo,L("Open Weapons"),28,-156,148,function() f.selectTab(TAB.Weapons) end)
       f.groupInfo:Hide()
 
     end
@@ -3213,7 +3213,7 @@ function B:Options()
     f.diagText.snapshotText=text; f.diagText:SetText(text)
     f.resizeDiagnostics()
   end
-  self:UpdateRefinedOptions(); self:UpdateGroupCapabilityOptions(); f:Show(); f:Raise(); self:UpdateOptionsPreviews()
+  self:UpdateRefinedOptions(); self:UpdateGroupCapabilityOptions(); self:UpdateClassAwarePages(); f:Show(); f:Raise(); self:UpdateOptionsPreviews()
 end
 
 
@@ -3362,13 +3362,13 @@ function B:UpdateGroupCapabilityOptions()
   f.groupParty:SetShown(targeted); f.groupRaid:SetShown(targeted)
   if f.groupContextHint then f.groupContextHint:SetShown(targeted) end
   if not targeted then
-    if f.pageHeaders and f.pageHeaders[2] then f.pageHeaders[2].description:SetText(L("Group effects without recipient assignments.")) end
+    if f.pageHeaders and f.pageHeaders[2] then f.pageHeaders[2].description:SetText(L(c.broadcast and "Group effects without recipient assignments." or "Your class has useful options elsewhere in BuffTap.")) end
     if c.broadcast then
       f.groupInfoTitle:SetText(spellLabel(c.broadcast))
       f.groupInfoText:SetText(L("This buff affects nearby party and raid members automatically. Keep it enabled under My buffs; there are no recipient assignments to configure."))
     else
       f.groupInfoTitle:SetText(L("No party or raid buffs to assign"))
-      f.groupInfoText:SetText(L("Your poisons and weapon coatings are configured under Weapons."))
+      f.groupInfoText:SetText(L("Your class has no party or raid buffs to assign. Use Weapons for poisons and coatings, or Nearby for invitations and buff requests."))
     end
     f.groupWeapons:SetShown(not c.broadcast)
     return
@@ -3391,5 +3391,67 @@ function B:UpdateGroupCapabilityOptions()
     row:SetHeight(288+shift)
     row.allClasses:ClearAllPoints(); row.allClasses:SetPoint("TOPLEFT",280,-258-shift)
     row.resetClasses:ClearAllPoints(); row.resetClasses:SetPoint("TOPLEFT",374,-258-shift)
+  end
+end
+
+function B:UpdateClassAwarePages()
+  local f=self.options; if not f then return end
+  local c=self:NearbyCapabilities()
+  local function at(o,x,y) o:ClearAllPoints(); o:SetPoint("TOPLEFT",x,y) end
+  local function movedCard(o,x,y,height)
+    at(o,x,y); o:SetHeight(height)
+    if o.sectionTitle then at(o.sectionTitle,x+16,y-16) end
+  end
+  for _,o in ipairs({f.nearbyAll,f.nearbyInvites,f.nearbyFullNames,f.nearbyShowLevel,f.nearbyMarkSocial}) do o:Show() end
+  f.nearbyBuffing:SetShown(c.buffs); f.nearbyWhileResting:SetShown(c.actions)
+  f.nearbyHoldShort:SetShown(c.buffs and c.short); f.nearbyRankUpgrades:SetShown(c.upgrades)
+  f.nearbyFavor:SetShown(c.buffs); f.nearbyPvp:SetShown(c.actions)
+  f.nearbyManaLabel:SetShown(c.actions); f.nearbyManaFloor:SetShown(c.actions); f.nearbyManaFloor.valueText:SetShown(c.actions)
+  f.nearbyClassHint:SetShown(not c.actions)
+  if not c.actions then
+    at(f.nearbyAll,26,-112); at(f.nearbyFullNames,26,-140); at(f.nearbyShowLevel,192,-140)
+    at(f.nearbyMarkSocial,26,-168); at(f.nearbyInvites,374,-112)
+    movedCard(f.nearbySettingsCard,12,-72,138)
+    movedCard(f.nearbyGuideCard,12,-228,418); at(f.nearbyGuide,26,-268)
+    f.pageHeaders[4].description:SetText(L("Browse nearby players, invite someone or ask for a buff."))
+  else
+    at(f.nearbyAll,374,-112); at(f.nearbyFullNames,374,-140); at(f.nearbyShowLevel,540,-140); at(f.nearbyMarkSocial,374,-168)
+    movedCard(f.nearbySettingsCard,12,-72,216); movedCard(f.nearbyGuideCard,12,-306,418); at(f.nearbyGuide,26,-346)
+    local y=-112
+    for _,spec in ipairs({{f.nearbyBuffing,c.buffs,26},{f.nearbyRankUpgrades,c.upgrades,26},
+      {f.nearbyWhileResting,c.actions,26},{f.nearbyHoldShort,c.buffs and c.short,50},
+      {f.nearbyInvites,true,26},{f.nearbyPvp,c.actions,26}}) do
+      if spec[2] then at(spec[1],spec[3],y); y=y-28 end
+    end
+  end
+  local personal=self:HasPersonalReminderBuffs()
+  for _,spec in ipairs({{1,personal,"No personal buff reminders for this class"},
+      {3,#self:TargetAssignableBuffs()>0,"No friendly-target buffs for this class"}}) do
+    local index,applicable,title=spec[1],spec[2],spec[3]; local page=f.pages[index]
+    if not page.classEmpty then
+      local box=CreateFrame("Frame",nil,page); box:SetAllPoints(); page.classEmpty=box
+      card(box,12,-84,692,172)
+      T.SectionTitle(label(box,title,28,-104,T.fonts.Section,650))
+      label(box,L(personal and "Your buffs are maintained under My buffs rather than cast on individual friendly targets. Nearby still offers player browsing, invitations and buff requests." or "Your class uses other parts of BuffTap. Poisons and weapon coatings are under Weapons; Nearby offers player browsing, invitations and buff requests."),28,-136,"GameFontHighlight",650)
+      button(box,L(personal and "Open My buffs" or "Open Weapons"),28,-206,148,function() f.selectTab(personal and TAB.Buffs or TAB.Weapons) end)
+      button(box,L("Open Nearby"),188,-206,148,function() f.selectTab(TAB.Nearby) end)
+      box:Hide()
+    end
+    if not applicable then
+      if not page.classHidden then
+        page.classHidden={}
+        for _,o in ipairs({page:GetChildren()}) do if o~=page.classEmpty then page.classHidden[#page.classHidden+1]={o,o:IsShown()} end end
+        local h=f.pageHeaders[index]
+        for _,o in ipairs({page:GetRegions()}) do
+          if o~=h.title and o~=h.description and o~=page.headerIcon then page.classHidden[#page.classHidden+1]={o,o:IsShown()} end
+        end
+      end
+      for _,entry in ipairs(page.classHidden) do entry[1]:Hide() end
+      page.classEmpty:Show()
+      f.pageHeaders[index].description:SetText(L("Your class has useful options elsewhere in BuffTap."))
+    else
+      page.classEmpty:Hide()
+      if page.classHidden then for _,entry in ipairs(page.classHidden) do entry[1]:SetShown(entry[2]) end; page.classHidden=nil end
+    end
   end
 end

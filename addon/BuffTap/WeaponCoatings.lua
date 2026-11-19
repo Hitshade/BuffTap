@@ -172,11 +172,11 @@ function B:WeaponReminderAvailable()
     -- Forever's newer poisons are item-use effects, not learned spellbook entries.
     -- An explicitly selected carried item is sufficient to make the feature available.
     for _,hand in ipairs({"main","off"}) do
-      local choice=self:WeaponPreference(hand)
-      if choice then for _,pair in ipairs(choice.items or {}) do
-        local count=A.Call(C_Item and C_Item.GetItemCount,pair[1],false,false,false,false)
-        if A.Number(count) and count>0 then return true end
-      end end
+      local choice=self:Preference(hand=="main" and "weaponMainHand" or "weaponOffHand")~=false and self:WeaponPreference(hand)
+      if choice then
+        local source,_,empty=self:WeaponChoiceSource(choice)
+        if source or (empty and self:WeaponChoiceLevelEligible(choice)==true) then return true end
+      end
     end
   end
   -- Do not warn characters that have not learned any supported poison/imbue.
@@ -286,6 +286,22 @@ function B:WeaponChoiceIcon(choice)
     if (A.Number(icon) or A.Text(icon)) and icon~=134400 then return icon end
   end
 end
+-- A saved unavailable preference is configurable, but must not become an impossible alert.
+function B:WeaponChoiceLevelEligible(choice)
+  local level=A.Call(UnitLevel,"player")
+  if not A.Number(level) or level<1 then return nil,"Player level is unavailable." end
+  local fn=C_Item and C_Item.GetItemInfo
+  if type(fn)~="function" then return nil,"Weapon consumable level data is unavailable." end
+  local unknown=false
+  for _,pair in ipairs(choice.items or {}) do
+    local ok,name,_,_,_,minLevel=pcall(fn,pair[1])
+    if ok and A.Text(name) and A.Number(minLevel) and minLevel>=0 then
+      if level>=minLevel then return true end
+    else unknown=true; self:RequestItemData(pair[1]) end
+  end
+  if unknown then return nil,"Weapon consumable level data is loading." end
+  return false,"Player is below the preferred weapon consumable's required level."
+end
 function B:WeaponChoiceSource(choice)
   if not choice then return nil,"Choose a weapon buff in Weapons options." end
   if choice.class=="SHAMAN" then
@@ -324,15 +340,18 @@ function B:WeaponChoiceSource(choice)
       if type(fn)=="function" then
         local ok,name,link,quality,itemLevel,minLevel,itemType,itemSubType,stackCount,equipLoc,icon=pcall(fn,id)
         if ok and A.Text(name) and (A.Text(icon) or A.Number(icon)) and icon~=0 and icon~=134400 then
-          return {id=pair[2],itemID=id,itemToken="item:"..id,name=name,icon=icon,count=count,secureType="item"}
+          local level=A.Call(UnitLevel,"player")
+          if not A.Number(minLevel) or not A.Number(level) then return nil,"Weapon consumable level data is unavailable.",nil,"unknown" end
+          if level>=minLevel then return {id=pair[2],itemID=id,itemToken="item:"..id,name=name,icon=icon,count=count,secureType="item"} end
+        else
+          self:RequestItemData(id)
+          return nil,"Preferred weapon consumable item data is loading."
         end
-        self:RequestItemData(id)
-        return nil,"Preferred weapon consumable item data is loading."
       end
     end
   end
   if unknown then return nil,"Preferred weapon consumable inventory or usability data is unavailable." end
-  if carried>0 then return nil,"Preferred weapon consumable is carried, but no carried rank is usable." end
+  if carried>0 then return nil,"Preferred weapon consumable is carried, but no carried rank is usable.",nil,"unusable" end
   return nil,"Preferred weapon consumable is out of stock.",true
 end
 
@@ -359,7 +378,12 @@ function B:WeaponActionFor(hand)
   local needed,need,remaining=self:WeaponNeed(state,choice)
   if not needed then return nil,state.reason end
   if choice and itemImbueClasses[choice.class] and (hand.slot~=16 or self:CoatingWeaponMatches(hand.slot,choice)~=true) then return nil,(choice.class=="MAGE" and "Mage scroll" or choice.name).." does not match the equipped main-hand weapon." end
-  local source,why,empty=self:WeaponChoiceSource(choice)
+  local source,why,empty,sourceState=self:WeaponChoiceSource(choice)
+  if sourceState=="unusable" then return nil,why end
+  if not source and choice and (hand.coating or choice.class=="ROGUE") then
+    local eligible,reason=self:WeaponChoiceLevelEligible(choice)
+    if eligible~=true then return nil,reason end
+  end
   -- Optional: no reminder for oils, stones or poisons you have none of, like buff food (noci__).
   -- Oils, stones and Rogue poisons only; Mage scrolls and Warlock stones keep their out-of-stock reminder.
   if empty and self.db.weaponSkipEmpty and (hand.coating or (choice and choice.class=="ROGUE")) then return nil,"out of stock; reminder skipped" end
@@ -405,6 +429,7 @@ function B:WeaponActionFor(hand)
 end
 
 function B:SelectImbueReminder()
+  if not self:WeaponReminderAvailable() then return nil,"no learned coating ability" end
   if not self.db.weaponApply and not itemImbueClasses[self:WeaponReminderClass()] then return selectManualReminder(self) end
   if itemImbueClasses[self:WeaponReminderClass()] and not self:WeaponPreference("main") then return nil,"no learned coating ability" end
   if not self:Preference("weaponReminder") or not self:WeaponReminderClass() then return nil,"weapon reminders disabled" end

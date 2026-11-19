@@ -646,7 +646,11 @@ function B:DrawNearbyGuide(g,width)
   item(3,"Ask for a buff",self:Text("Whispers a polite request for a class buff you are missing. Three-minute cooldown per player."))
   item(4,"All players view",self:Text("The people icon switches between players who need your buff and everyone nearby. Gold shows everyone, which invites and requests need."))
   heading("On each row")
-  item(5,"Needs your buff",self:Text("Click the row or press your BuffTap binding to cast it. The gold row is the one your binding buffs next. Want a separate key for Nearby? Set one under Customization > Binding & sound."))
+  if self:HasTargetedGroupBuffs() then
+    item(5,"Needs your buff",self:Text("Click the row or press your BuffTap binding to cast it. The gold row is the one your binding buffs next. Want a separate key for Nearby? Set one under Customization > Binding & sound."))
+  else
+    item(5,"Buff offers on other classes",self:Text("Your class has no buffs to offer here. Use Nearby to browse players, invite them or request a buff instead."))
+  end
   item(6,"Nothing needed",self:Text("A dash means that player already has what you can give."))
   local plates=g:CreateFontString(nil,"OVERLAY",T.fonts.Muted); plates:SetWidth(290); plates:SetJustifyH("LEFT"); plates:SetWordWrap(true)
   plates:SetPoint("TOPLEFT",note,"BOTTOMLEFT",0,-12); plates:SetText(self:Text("Nearby needs friendly nameplates (normally Shift+V). Window size, text and position: Customization > Nearby window."))

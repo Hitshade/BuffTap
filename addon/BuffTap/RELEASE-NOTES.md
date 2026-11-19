@@ -1,3 +1,15 @@
+# BuffTap 1.26.9-beta2
+
+### Useful options for every class
+Nearby now rearranges its remaining controls when your class cannot offer buffs. Player browsing, invitations and buff requests stay useful, without an empty block of casting settings. Your view and saved choices are preserved.
+
+My buffs and Target show a short explanation and useful shortcuts when your class has nothing to configure there. Hunters and Warriors get this treatment on Target; Rogues get it on both. Classes that simply have not learned their spells still see their normal settings.
+
+### Quieter weapon reminders
+A saved oil, stone or poison choice no longer produces an impossible reminder below its required level, while carried but unusable items and unknown requirements stay quiet. Your preference remains saved for later. Usable poisons, lower eligible ranks and deliberate out-of-stock reminders still work; Skip when I have none remains available.
+
+New characters do not have oils or stones selected by default. This beta corrects reminder eligibility rather than clearing existing choices. Please review the updated pages in game; it has not been published.
+
 # BuffTap 1.26.9-beta1
 
 ### Groups that make sense for your class

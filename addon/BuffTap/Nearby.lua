@@ -641,7 +641,7 @@ function B:NoteFavor(guid)
 end
 -- Watches your own buffs (out of combat) for new or refreshed ones cast by another player.
 function B:ScanFavors()
-  if not self.db or self.db.nearbyReturnFavor==false or not self.db.nearbyEnabled or A.Combat() then return end
+  if not self.db or not self:NearbyCapabilities().buffs or self.db.nearbyReturnFavor==false or not self.db.nearbyEnabled or A.Combat() then return end
   self.favorAuras=self.favorAuras or {}
   local seen,primed={},self.favorAurasPrimed
   for i=1,40 do
@@ -670,9 +670,9 @@ end
 function B:NearbyPauseReason()
   local reason=self:ReminderPauseReason()
   if reason=="resting" then reason=self:Stealthed() and "stealthed" or nil end
-  if not reason and self.db and self.db.nearbyWhileResting~=true and A.Call(IsResting)==true then return "resting" end
+  if not reason and self:NearbyCapabilities().actions and self.db and self.db.nearbyWhileResting~=true and A.Call(IsResting)==true then return "resting" end
   -- Mana reserve: only when BuffTap can tell you are below it (never in cat or bear form).
-  if not reason and self.ManaFloorReached and self:ManaFloorReached() then return "mana" end
+  if not reason and self:NearbyCapabilities().actions and self.ManaFloorReached and self:ManaFloorReached() then return "mana" end
   return reason
 end
 -- "Hold back short buffs": in cities and inns, Nearby does not offer buffs of ten minutes or
@@ -1473,6 +1473,7 @@ function B:UpdateNearbyWindow()
   local pin=paused and 1 or 0
   self:ShowNearbyPauseRow(f,paused,browse~=nil)
   f.count:SetText(counts.need.."/"..counts.total..note)
+  f.resting:SetShown(self:NearbyCapabilities().actions)
   if self.db.nearbyWhileResting then f.resting.icon:SetVertexColor(1,.82,0,1) else f.resting.icon:SetVertexColor(.65,.65,.62,1) end
   f.lock.icon:SetTexture(self.db.nearbyLocked and "Interface\\AddOns\\BuffTap\\Media\\UILock" or "Interface\\AddOns\\BuffTap\\Media\\UIUnlock")
   if self.db.nearbyLocked then f.lock.icon:SetVertexColor(1,.82,0,1) else f.lock.icon:SetVertexColor(.65,.65,.62,1) end
