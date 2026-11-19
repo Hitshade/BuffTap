@@ -132,3 +132,6 @@ Full final mocked Lua 5.1 run completed: 2,961 passed, no FAIL records; terminal
 
 ## 1.26.8-beta5 Helpers layout
 Owner screenshot showed Tracking/readiness overlap from the added provider row. Moved provider switch to request heading at right, restored 148-unit request card and original Tracking offset. Added card references for meaningful geometry checks. 98 focused mocked checks passed, including eight class/locale boundaries; Options and PatchNotes compile. Presentation only; full beta4 results remain historical. GitHub review: only PR #6 open. Install updated local beta, no publication.
+
+## In-game wording review for beta5
+Owner clarified the layout change was fine; its housekeeping note was unnecessary. Rewrote only the current in-game release entry with shorter, friendlier feature-first copy, useful menu paths, opt-in/estimate caveats and contributor thanks. Historical entries, release identity, technical/intermediate notes and behavior are unchanged. This is a wording preview installed on the existing beta, not a new release.

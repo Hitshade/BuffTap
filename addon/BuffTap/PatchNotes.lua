@@ -2,18 +2,14 @@
 local _,B=...
 -- Keep the ten most recent releases within a 24 KiB content ceiling.
 B.PatchNotes={
- {version="1.26.8-beta5",title="Try an optional buff queue",items={
-  "Helpers: provider sorting now sits beside the Buff requests heading, leaving Tracking and Class readiness room without overlapping.",
-  "Helpers > Buff requests: Prioritize potential buff providers is an optional sorting choice. It uses your missing-buff selections, keeps existing priorities ahead and sends nothing automatically.",
-  "Paladins: Nearby no longer treats Kings, Might and Wisdom as short buffs when holding back short buffs in cities and inns.",
-  "Missed a Solo Thanks? Diagnostics > Full check-up now includes your thanks settings, recent timing and whether BuffTap could find the person who buffed you. Capture it soon after the problem.",
-  "Solo Thanks now waits longer when the game identifies a buff caster before making that player available. It can also follow the same player to another nameplate while thanks is queued. Unverified players are never thanked.",
-  "Consumable bar and buff queue icons now follow your Classic or Modern square icon choice, including the preview. These smaller icons have no reminder glow.",
-  "Customization > Buff reminder > Show next buffs below adds up to four clickable buff icons beneath your reminder. It starts off. Your binding stays on the main icon; queued icons hide in combat.",
-  "Queue icons stay centered and leave room for attached consumables. Counts ending in + mean at least that many players need the buff.",
-  "My buffs > Combat expiry warning is a separate optional estimate. It remembers your buffs before combat and warns near their expected expiry. It cannot detect combat dispels or another player's refresh.",
-  "Estimated warnings follow your personal buff sound choices and normal pauses. Queue clicks retain SmartShift and repeat-cast protection.",
-  "Reminders use a lower window layer, and German translations have been expanded."},thanks="Thanks to tinect for the contribution and waggz81 for the Solo Thanks diagnostic report."},
+ {version="1.26.8-beta5",title="Your next buff, at a glance",items={
+  "Pick your next buff. An optional row of smaller, clickable icons shows what else is due. Turn on Show next buffs below under Customization > Buff reminder. Your usual binding stays on the main icon.",
+  "Find a helping hand. Helpers > Buff requests now offers optional provider sorting for buffs you are missing. Your existing priorities come first, and every request still needs your click.",
+  "An early heads-up in combat. My buffs > Combat expiry warning can remind you when a buff may be running out. It is an estimate: dispels and another player's refresh can make it inaccurate. It starts off.",
+  "A little more time to say thanks. Solo Thanks waits longer for a briefly unavailable caster. If it still misses someone, capture Diagnostics > Full check-up soon afterward to help us investigate.",
+  "Paladins: Kings, Might and Wisdom are welcome in town again. Nearby no longer holds them back with short buffs such as Thorns.",
+  "Small icons, same style. Consumable and queue icons now follow your Classic or Modern choice, without reminder glows. Reminders also sit below more interface windows.",
+  "German translations have been expanded."},thanks="Thank you to tinect for the queue, combat warnings, window improvements and German translations, and to waggz81 for helping investigate Solo Thanks."},
  {version="1.26.7",title="Choose which reminders you hear",items={
   "Right-click a buff speaker to choose its own sound. Personal, Party and Raid choices stay separate. Use default follows the Reminder sound category; Preview never changes your selection.",
   "Sound lists open at your current choice, with smoother scrolling. Reduce animation makes scrolling immediate. The ten new custom sounds are slightly louder.",
