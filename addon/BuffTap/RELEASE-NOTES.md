@@ -1,3 +1,9 @@
+# BuffTap 1.26.12-beta1
+
+A local style experiment for the Groups page: deeper blue panels, subtle highlights, stronger fantasy-style headings and clearer selected buff rows. It uses the existing layout and controls, with class and custom accent colours.
+
+Buffing, preferences and other pages are unchanged. This preview is intentionally easy to discard and has not been published. Please judge it in game before we extend the style.
+
 # BuffTap 1.26.11
 
 ### Let game windows take priority

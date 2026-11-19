@@ -1,3 +1,11 @@
+# BuffTap 1.26.12-beta1
+
+### Disposable Groups visual experiment
+- Adds one presentation-only module at the end of the TOC. It decorates Groups after existing options/theme updates, without changing global theme colours, saved data, layout coordinates, control callbacks or casting policy.
+- Uses existing textures/fonts, navy surfaces, subtle gradient washes, class/custom-accent borders, brighter selected rows and Friz Quadrata headings. Decorations follow existing card visibility and adaptive sizes. Other pages, navigation and header artwork are unchanged.
+- Rollback: remove the GroupsVisualPreview.lua TOC entry and file, then restore the prior version identity. This is a local exploratory beta, not a public release.
+- Validation: syntax-only inspection; no behavior or layout test runs requested for this disposable visual pass. Owner live visual review pending. GitHub #6/#5/#4 remain closed, no new issue scope.
+
 # BuffTap 1.26.11
 
 ### Overlay layering

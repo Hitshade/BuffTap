@@ -2,6 +2,8 @@
 local _,B=...
 -- Keep the ten most recent releases within a 24 KiB content ceiling.
 B.PatchNotes={
+ {version="1.26.12-beta1",title="A new look for Groups",items={
+  "Try an experimental Groups page with richer panels, clearer selections and fantasy-style headings. Controls and buffing behavior stay the same. This is a local visual preview."}},
  {version="1.26.11",title="Reminders that make room",items={
   "Reminders now sit below ordinary game windows by default. Under Customization, Buff reminder, Camping and Supplies each offer Keep above other windows. Nearby keeps its own switch.",
   "The main reminder's choice also covers queue icons, consumable icons and combat expiry warnings. Settings and popup menus stay easy to reach."},thanks="Thanks to WareWolf44 for the layering feedback."},
@@ -56,9 +58,6 @@ B.PatchNotes={
   "SmartShift can offer your previous form after a successful cleanse.",
   "Nearby confirmations have a clearer left-to-right cooldown sweep. Repeated presses follow the real cooldown, and unrelated game errors no longer make a successful cast look failed. Every cast still needs your input.",
   "Fifteen more foods are on the menu, including Goblin Deviled Clams, Clamlette Surprise and seasonal treats. Find them under Consumables > Food > Choose."},thanks="Thanks to shaunpearsondev for reporting the missing Goblin Deviled Clams."},
- {version="1.26.2",title="Keep smooth buffing quiet",items={
-  "Fixed a smooth-buffing edge case that let repeat reminder sounds slip through between buffs or while waiting for a buff to appear.",
-  "Fresh reminders after a pause can still alert you. Cleansing and resurrection keep their usual sounds."}},
 
 }
 function B:PatchNotesUnread()
