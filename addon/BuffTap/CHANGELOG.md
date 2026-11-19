@@ -1,4 +1,4 @@
-# BuffTap 1.26.10-beta1
+# BuffTap 1.26.10
 
 ### Fixed
 - ShowManaWait suppresses its passive resource-shortage icon for Warriors. Rage-blocked work retains powerBlocked so the existing UNIT_POWER_UPDATE path restores normal eligible Battle Shout actions. No polling, schema migration or settings changes. Other classes and ordinary casting/combat safeguards remain unchanged.

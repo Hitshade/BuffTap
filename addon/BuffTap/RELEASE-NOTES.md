@@ -1,8 +1,8 @@
-# BuffTap 1.26.10-beta1
+# BuffTap 1.26.10
 
 Warriors no longer see the grey waiting-for-power icon when they lack rage for Battle Shout. When enough rage is available, its usual missing-buff reminder returns. Your existing settings, mana reminders and combat restrictions stay the same.
 
-Thanks to ichkruchka for explaining why this reminder was distracting while travelling and gathering. Local beta for review; not published.
+Thanks to ichkruchka for explaining why this reminder was distracting while travelling and gathering. This change is specific to the Warrior waiting icon; other classes keep their existing reminders.
 
 # BuffTap 1.26.9
 

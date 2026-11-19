@@ -2,7 +2,7 @@
 local _,B=...
 -- Keep the ten most recent releases within a 24 KiB content ceiling.
 B.PatchNotes={
- {version="1.26.10-beta1",title="A quieter Warrior reminder",items={
+ {version="1.26.10",title="A quieter Warrior reminder",items={
   "Battle Shout stays out of sight when you lack rage. Its normal reminder returns when you can cast it. Mana reminders are unchanged."},thanks="Thanks to ichkruchka for the Warrior feedback."},
  {version="1.26.9",title="Useful choices, shared blacklists",items={
   "Keep one blacklist across your characters. Turn on Share across all characters under Blacklist, or choose another profile and Add entries. Existing entries are kept; sharing starts off. Newly blocked targets are skipped immediately.",

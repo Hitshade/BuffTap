@@ -193,3 +193,6 @@ Published GitHub release 450935230 from abe0d9d, tag v1.26.9; uploaded asset dig
 
 ## 1.26.10-beta1 Warrior resource display
 Owner requested a quick fix before visual beta, based on ichkruchka report of grey Battle Shout during nonfighting travel/gathering. ShowManaWait now returns for Warriors; resource-blocked flags and existing power event wake remain. No setting/schema/polling change. Focused 15 checks pass, zero failures: mana display and recovery, passive nonaction state, Warrior hidden low-rage state, real power-event recovery, refresh on resource loss, combat disarm/postcombat. 49 Lua modules compile, ten notes load. Initial test incorrectly expected unblocked power-loss event to refresh; corrected to existing refresh behavior, not expanded event scope. No full suite or live client verification. GitHub review: #6 closed with explanation; #5/#4 closed, no new issue scope. Local beta only, not published.
+
+## 1.26.10 stable preparation
+Owner authorized efficient publication and a reply to ichkruchka. Reviewed runtime diff against v1.26.9: only ShowManaWait Warrior return plus comment. Stable identity/notes only after the 15 focused checks; no additional tests run. GitHub review #6/#5/#4 closed, no new scope.
