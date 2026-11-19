@@ -1,13 +1,13 @@
 # BuffTap 1.26.12-beta2
 
-### A manual thank-you when automatic thanks cannot reach someone
-Under Helpers > Solo Thanks, enable **Offer a manual thank-you** to try the fallback. It starts off. If the game provides a reliable full name for an otherwise unreachable buff giver, a handshake marked THANK appears at your reminder position when no buff is ready.
+### An extra thank-you backup for the especially polite
+For the really, really polite players who never want to miss a chance to say thanks, Solo Thanks now has a **very optional manual backup**. It starts off; ordinary automatic thanks needs no extra setup.
 
-Click to whisper, or right-click to dismiss. The offer lasts 15 seconds. Your buff binding never sends it. Automatic thanks continues trying; either successful route removes the other offer.
+Enable **Offer a manual thank-you** under Helpers > Solo Thanks. When automatic thanks cannot reach a buff giver but their full name is known, a handshake marked THANK can appear at your reminder position. Click to whisper, or right-click to dismiss. The offer lasts 15 seconds and waits behind ready buff actions. Your normal buff binding never sends it, and automatic and manual thanks avoid doubling up.
 
 The message starts as **Thank you for [buff]!**. Edit it inside Solo Thanks and press Enter to save; [buff] inserts received buff names. Several buffs from one giver share a thank-you. Reset restores the original message.
 
-Keep thanking while resting applies to both the offer and click. Normal solo restrictions still apply. A trustworthy full name is required, and chat restrictions can prevent delivery. Local beta for owner testing, not published.
+**Keep thanking while resting** applies to this backup too. A reliable full name is required, and normal solo and chat restrictions still apply. This is an extra courtesy option, not a guarantee of delivery. Local beta for owner testing; not published.
 
 # BuffTap 1.26.12-beta1
 
