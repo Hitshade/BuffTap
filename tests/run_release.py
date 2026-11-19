@@ -67,6 +67,7 @@ import test_thanks_late_caster
 import test_thanks_diagnostics
 import test_paladin_nearby_short
 import test_provider_sort
+import test_helpers_spacing_1268
 print('FINAL_TOTAL',len(__import__('test_bufftap').tests))
 import test_release_119
 import test_release_1194
@@ -114,4 +115,5 @@ import test_thanks_late_caster
 import test_thanks_diagnostics
 import test_paladin_nearby_short
 import test_provider_sort
+import test_helpers_spacing_1268
 print('FINAL_TOTAL',len(__import__('test_bufftap').tests))

@@ -1,3 +1,7 @@
+# BuffTap 1.26.8-beta5
+
+Helpers has room for Tracking and Class readiness again. The provider-sorting switch sits beside the Buff requests heading, keeping its related settings together without adding another row. No settings or feature behavior changed.
+
 # BuffTap 1.26.8-beta4
 
 ### Optional provider sorting with Buff requests

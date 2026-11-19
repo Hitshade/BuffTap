@@ -1,3 +1,8 @@
+# BuffTap 1.26.8-beta5
+
+### Helpers layout correction
+- Moves provider sorting into the right side of the Buff requests heading, restores the original request-card height and Tracking offset, and retains the authored readiness position. This removes the 32-unit overlap introduced by beta4 for classes with readiness controls. No behavior or saved-setting changes. Focused mocked checks: 98 passed, zero FAIL records, including eight card-boundary checks across Druid, Warlock, Hunter and Paladin in English/German. Two affected Lua files compile (tests/helpers-spacing-1268-beta5-focused.txt); the beta4 full suite remains historical.
+
 # BuffTap 1.26.8-beta4
 
 ### Optional request-provider ordering

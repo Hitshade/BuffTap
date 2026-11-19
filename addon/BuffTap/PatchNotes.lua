@@ -2,7 +2,8 @@
 local _,B=...
 -- Keep the ten most recent releases within a 24 KiB content ceiling.
 B.PatchNotes={
- {version="1.26.8-beta4",title="Try an optional buff queue",items={
+ {version="1.26.8-beta5",title="Try an optional buff queue",items={
+  "Helpers: provider sorting now sits beside the Buff requests heading, leaving Tracking and Class readiness room without overlapping.",
   "Helpers > Buff requests: Prioritize potential buff providers is an optional sorting choice. It uses your missing-buff selections, keeps existing priorities ahead and sends nothing automatically.",
   "Paladins: Nearby no longer treats Kings, Might and Wisdom as short buffs when holding back short buffs in cities and inns.",
   "Missed a Solo Thanks? Diagnostics > Full check-up now includes your thanks settings, recent timing and whether BuffTap could find the person who buffed you. Capture it soon after the problem.",

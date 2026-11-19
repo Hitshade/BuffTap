@@ -1350,7 +1350,7 @@ function B:BuildHelperPage(parent)
   q:ClearAllPoints(); q:SetPoint("TOPLEFT",0,-40); tr:ClearAllPoints(); tr:SetPoint("TOPLEFT",0,-40)
   -- Buff requests (Nearby): whisper a nearby player for a class buff you are missing. Off by default.
   f.requests=q
-  card(q,12,-298,692,180)
+  f.requestCard=card(q,12,-298,692,148)
   T.SectionTitle(label(q,L("Buff requests"),28,-312,T.fonts.Section))
   f.requestEnable=check(q,L("Offer buff requests in Nearby"),28,-332,function(c)
     if A.Combat() then return end
@@ -1371,14 +1371,14 @@ function B:BuildHelperPage(parent)
     local c=check(q,def.name,28+((i-1)%3)*228,-362-math.floor((i-1)/3)*26,function(s) if not A.Combat() then B.db.requestBuffs[key]=s:GetChecked()==true; if B.nearbyFrame then B:UpdateNearbyWindow() end end end)
     f.requestChecks[key]=c
   end
-  f.providerSort=check(q,L("Prioritize potential buff providers"),28,-444,function(c)
+  f.providerSort=check(q,L("Prioritize potential buff providers"),374,-306,function(c)
     if A.Combat() then return end
     B.db.nearbyProviderSort=c:GetChecked()==true; B.nearbySnapshot=nil
     if B.nearbyFrame then B:UpdateNearbyWindow() end
   end)
   addHelp(f.providerSort,L("Prioritize potential buff providers"),L("Uses your existing buff-request choices to show potential providers, below players needing your buffs and existing friend/guild priorities. Requires buff requests to be enabled. Nothing is sent automatically; this does not check whether another player has learned a spell."))
   local r=f.readiness
-  card(r,12,-374,692,144)
+  f.readinessCard=card(r,12,-374,692,144)
   line(r,-369)
   f.readinessIcon=r:CreateTexture(nil,"ARTWORK")
   f.readinessIcon:SetSize(24,24); f.readinessIcon:SetPoint("TOPLEFT",18,-378)
@@ -1610,7 +1610,7 @@ function B:UpdateHelperOptions()
   for _,entry in ipairs(trackers) do if entry.id==self.db.helperTracker then selected=true end end
   f.trackerHeading:SetText(L("Tracking")); T.SectionTitle(f.trackerHeading)
   f.treasure:SetShown(A.Known(2481)); f.treasure:SetChecked(self:HelperEnabled("helperTreasure"))
-  local trackerY=-500
+  local trackerY=-468
   f.trackerCard:ClearAllPoints(); f.trackerCard:SetPoint("TOPLEFT",12,trackerY+10)
   f.trackerLine:Hide()
   f.treasure:ClearAllPoints(); f.treasure:SetPoint("TOPLEFT",490,trackerY+2)

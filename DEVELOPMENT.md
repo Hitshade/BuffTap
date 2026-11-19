@@ -129,3 +129,6 @@ Owner approved Paladin short-buff correction, then optional provider sorting gro
 
 ## 1.26.8-beta4 final checks and local test handoff
 Full final mocked Lua 5.1 run completed: 2,961 passed, no FAIL records; terminal FINAL_TOTAL 2961. Focused provider/diagnostic/Paladin runs 240/170/241 passed with no failures. All 48 TOC Lua files compile. Prior incomplete beta4 runs were interrupted during owner pause and scope steering; they are not success evidence. Owner explicitly requested beta installation for a visual review. Package/install receipts go to ../releases. No public push, merge, upload, reply or repository access change is authorized/performed at this handoff. Contributor Co-authored-by email linkage verified, credits retained.
+
+## 1.26.8-beta5 Helpers layout
+Owner screenshot showed Tracking/readiness overlap from the added provider row. Moved provider switch to request heading at right, restored 148-unit request card and original Tracking offset. Added card references for meaningful geometry checks. 98 focused mocked checks passed, including eight class/locale boundaries; Options and PatchNotes compile. Presentation only; full beta4 results remain historical. GitHub review: only PR #6 open. Install updated local beta, no publication.
