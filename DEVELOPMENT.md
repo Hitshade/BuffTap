@@ -187,3 +187,6 @@ Beta4 visual follow-up: split Add to blacklist and Sharing & profile copy into s
 
 ## 1.26.9 stable preparation
 Owner approved publication after beta4 UI review. Stable identity and independently authored consolidated release notes; no behavior changes and no full suite rerun. Prior final 3158 behavior checks plus one later focused UI check remain evidence. GitHub pre-publication review: PR #6 open, no comments; recent issues closed. Owner explicitly authorized explanatory closure of #6 after publishing, retaining tinect coauthor credit from 1.26.8.
+
+## 1.26.9 publication receipt
+Published GitHub release 450935230 from abe0d9d, tag v1.26.9; uploaded asset digest b6a31d655928f0ea3c8635b1a47211bc2a976c4a9ca8d8b3cac69b5f30424079 matches local archive. First CurseForge attempt interrupted before submission by browser URL-verification guard; owner authorized retry. Retry submitted file 9696011 as Release for 1.60.1, automatic publication after approval; last observed Processing. Saved changelog read back from file editor. PR #6 closed (not merged) after posting thank-you/explanation comment 7001138346, linking 1.26.8 and coauthored adaptation 98a4234. No permissions changed. Installed stable locally and independently verified all 139 source files and 134 archive entries. No settings touched; no full test rerun.
