@@ -151,3 +151,6 @@ Owner disliked provider switch in the section heading. Move it to the unused bot
 
 ## 1.26.8 stable preparation
 Owner approved publication after beta8 review. Promote identity and audience notes without behavior changes. GitHub issues/comments reviewed: only PR #6 open. Preserve linked tinect coauthor credit without access or wholesale PR merge. Evidence: 2,961 integrated mocked checks; later presentation-only beta8 98 focused checks. Authorized waggz81 reply retains unconfirmed-resolution caveat.
+
+## 1.26.8 publication receipt
+Published tag v1.26.8 from 81d10f5. GitHub release 450751899 independently read back as public, archive digest verified: f6efd8883bdc126885751bd82364c4bc6ded89835761e75f6f0519950c3abb1e. CurseForge file 9693902 submitted as Release for 1.60.1, automatic publication after approval; last observed Processing File. Independently verified local stable identity, all 138 source files and 133 archive entries. No settings touched. tinect coauthor commit is now on default main; no access granted. waggz81 reply remains pending: refreshed public comments page exposes 97 comments but no matching user/report thread, so no reply posted elsewhere. Receipts and audience notes saved in ../releases. No behavior changes after owner-tested beta8.
