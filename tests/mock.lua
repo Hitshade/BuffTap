@@ -74,6 +74,8 @@ function methods:SetChecked(v) self.checked=v end
 function methods:GetChecked() return self.checked end
 function methods:GetParent() return self.parent end
 function methods:GetFrameLevel() return 1 end
+function methods:SetFrameStrata(value) self.strata=value end
+function methods:GetFrameStrata() return self.strata end
 function methods:GetCenter() return 500,500 end
 function methods:SetSize(w,h) assert(not combat or not self.protected,'protected resize'); self.width=w; self.height=h end
 function methods:SetPoint() assert(not combat or not self.protected,'protected move') end

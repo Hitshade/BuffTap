@@ -225,3 +225,9 @@ Owner requested regular main binding support while THANK occupies the reminder. 
 
 ### Mounted thanks
 Automatic and manual thanks now bypass only the mounted buff-action pause. Mounted resting does not bypass the thanks resting choice. Manual binding uses a dedicated secure owner with combat/death/vehicle/petbattle cleanup, leaving main spell safety unchanged. 72 focused mocked checks pass; no full suite, live validation or public upload.
+
+
+## 1.26.12 stable preparation
+Owner authorized publication, prominently highlighting mounted thanks and optional, user-triggered whisper backup only when automatic thanks has not fired. Owner requested full suite for final release before weekly reset; afterward emergency maintenance only until reset. Prepublication GitHub review: #6/#5/#4 remain closed, #6 sole comment confirms previously adapted contribution; no new scope. Mounting as the cause of waggz81's old report is unconfirmed and is not claimed fixed.
+
+Final stable validation: 3,213 integrated mocked checks passed, VERIFIED_FAILED 0, zero FAIL lines in tests/release-12612-verified.txt. First run had one stale strata mock failure; added recording of the actual API call and reran the full suite clean. All 50 TOC modules compile, ten note versions remain. No live-client validation claimed.

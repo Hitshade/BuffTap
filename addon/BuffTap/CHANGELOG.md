@@ -1,13 +1,14 @@
-# BuffTap 1.26.12-beta2
+# BuffTap 1.26.12
 
-### Optional manual whisper fallback
+### Mounted thanks and optional whisper backup
 - Automatic and manual Solo Thanks ignore the buff-action mounted pause. An independent resting check preserves the thanks resting preference when mounted. Other pauses, identity, solo and chat checks remain in force; ordinary spell/item selection remains mounted-paused.
+- Includes the preceding local experiment: matching nameplate, target, mouseover and focus events wake a known-GUID pending automatic thank within its existing ten-second limit. Temporary verified unit hint is cleared even on errors. Session diagnostics retain first/last lookup and outcome without adding player identities to reports.
 - Adds ManualThanks.lua with profile-shared manualThanks (default false) and thankMessage (default Thank you for %s!). Existing saved choices remain unchanged.
 - Genuine unresolved incoming buffs offer a user-triggered THANK button immediately when UnitNameFromGUID supplies a readable full Forever name. The captured GUID must resolve to the identical full name again at click. Unknown, restricted and changed identities fail closed.
 - Session queue merges buff names per giver, caps at eight givers and expires after 15 seconds. Solo, combat, chat, ignored-player and Keep thanking while resting gates apply. Ready buffs take precedence. Right-click dismissal suppresses repeated offers for 15 seconds. The regular main binding targets THANK only while it occupies the reminder. A dedicated secure binding owner clears thanks overrides for combat/death/vehicle/pet-battle states but intentionally excludes mounting; normal Commit restores buff bindings.
 - Manual dispatch cancels automatic pending/queued thanks for that provider; successful automatic emote requests remove the manual offer. Both routes share provider cooldowns. An API request does not prove delivery.
 - Controls fit the existing Solo Thanks card. Handshake candidate Achievement_Reputation_01 needs owner visual review. Reminder follows main size, style, opacity, position and layering without glow.
-- Validation: 72 focused mocked checks passed, zero failed (tests/manual-thanks-12612-focused.txt), including real unresolved-aura integration and automatic/manual duplicate prevention. No full suite or live-client claim. Local beta only; no public upload.
+- Validation: 72 focused mocked checks passed, zero failed (tests/manual-thanks-12612-focused.txt), including real unresolved-aura integration and automatic/manual duplicate prevention. No full suite or live-client claim. Full release validation: 3,213 integrated mocked Lua 5.1 checks passed, VERIFIED_FAILED 0, zero FAIL records (tests/release-12612-verified.txt). All 50 TOC modules compile and ten in-game versions remain. Initial run exposed one stale mock expectation after cached layering; tests/mock.lua now records actual SetFrameStrata calls, then the full suite was rerun clean. No live-client claim. Owner-approved stable release.
 
 # BuffTap 1.26.12-beta1
 

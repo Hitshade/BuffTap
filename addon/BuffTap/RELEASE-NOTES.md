@@ -1,13 +1,18 @@
-# BuffTap 1.26.12-beta2
+# BuffTap 1.26.12
+
+### Say thanks without dismounting
+Automatic thank-you emotes and the optional whisper backup now work while mounted. Riding no longer pauses Solo Thanks. Your ordinary buff actions still wait until you dismount, and **Keep thanking while resting** still controls thanks in towns and inns, mounted or on foot.
 
 ### An extra thank-you backup for the especially polite
 For the really, really polite players who never want to miss a chance to say thanks, Solo Thanks now has a **very optional manual backup**. It starts off; ordinary automatic thanks needs no extra setup.
 
-Enable **Offer a manual thank-you** under Helpers > Solo Thanks. When automatic thanks cannot reach a buff giver but their full name is known, a handshake marked THANK can appear at your reminder position. Use your regular BuffTap binding or click to whisper; right-click to dismiss this thank-you. The offer lasts 15 seconds and waits behind ready buff actions. Automatic and manual thanks avoid doubling up.
+Enable **Offer a manual thank-you** under Helpers > Solo Thanks. This is only a backup when automatic thanks has not fired and the buff giver's full name is known. BuffTap never sends these whispers automatically. A handshake marked THANK can appear at your reminder position. Use your regular BuffTap binding or click to whisper; right-click to dismiss this thank-you. The offer lasts 15 seconds and waits behind ready buff actions. Automatic and manual thanks avoid doubling up.
 
 The message starts as **Thank you for %s!**. Edit it inside Solo Thanks and press Enter to save; %s inserts received buff names. Several buffs from one giver share a thank-you. Reset restores the original message.
 
-Automatic thanks and the manual backup both work while mounted, while buff actions remain paused. **Keep thanking while resting** still applies, including when riding through a town. A reliable full name is required, and normal solo and chat restrictions still apply. This is an extra courtesy option, not a guarantee of delivery. Local beta for owner testing; not published.
+**Keep thanking while resting** applies to this backup too. A reliable full name is required, and normal solo and chat restrictions still apply. This is an extra courtesy option, not a guarantee of delivery.
+
+Thanks to waggz81 for helping us refine Solo Thanks.
 
 # BuffTap 1.26.12-beta1
 
