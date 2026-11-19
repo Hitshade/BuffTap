@@ -1,3 +1,12 @@
+# BuffTap 1.26.12-beta1
+
+### Event-driven Solo Thanks retry
+- Independent bounded event listener observes nameplate add/remove, target, mouseover and focus changes. It retries only while a known-GUID incoming thanks record remains within its existing ten-second window and a live event unit matches that GUID. No polling, new settings, cached-name fallback or extension of eligibility/expiry gates.
+- A temporary GUID-verified event-unit hint lets FindCasterUnit use the newly available nameplate before Nearby or the plate enumeration catches up. Normal recipient/name/GUID/ignore validation and dispatch cooldowns remain authoritative. Hint is cleared after observation even on failure. Idle/unrelated events do not rescan auras.
+- Session diagnostics retain first/last lookup snapshots for the latest incoming incident, ever-matched state, matching-event retry count and outcome. Queued nameplate departure and pre-send identity loss remain distinguishable. No added caster names/GUIDs in report text; first observation time is not the actual server buff timestamp.
+- Validation: 43 focused mocked directed-thanks, late-caster, diagnostic and event cases passed, zero failed (tests/thanks-events-12612-focused.txt). No full suite or live behavior claim. Existing ten-second discard, wrong-target prevention, disabled/group/combat gates and baseline behavior remain covered.
+- GitHub start review: #6/#5/#4 closed, no new scope. Local beta only, no publication.
+
 # BuffTap 1.26.11
 
 ### Overlay layering

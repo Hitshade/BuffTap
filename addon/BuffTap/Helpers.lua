@@ -488,7 +488,7 @@ local function thankRecipient(source)
 end
 function B:FindCasterUnit(guid,spellID)
   local seen={}
-  local lookup={at=GetTime(),spell=A.Number(spellID) and spellID or nil,native="unavailable",checked=0,readable=0,result="no live match"}
+  local lookup={guid=guid,at=GetTime(),spell=A.Number(spellID) and spellID or nil,native="unavailable",checked=0,readable=0,result="no live match"}
   self.thanksLookup=lookup
   local function found(unit,path) if unit then lookup.result=path; return unit end end
   local function match(unit)
@@ -511,6 +511,7 @@ function B:FindCasterUnit(guid,spellID)
       local found=match((raid and "raid" or "party")..i); if found then lookup.result="group unit"; return found end
     end
   end
+  local eventUnit=match(self.thanksEventUnit); if eventUnit then return found(eventUnit,"event unit") end
   for unit in pairs(self.nearbyUnits or {}) do local unitFound=match(unit); if unitFound then return found(unitFound,"tracked nearby unit") end end
   local plates=A.Call(C_NamePlate and C_NamePlate.GetNamePlates)
   if type(plates)=="table" then
@@ -562,7 +563,9 @@ function B:ReadSoloThanksAuras()
       local instance=A.Number(raw.auraInstanceID) and raw.auraInstanceID or nil
       if id or instance then
         local recipient,why,retry,casterGUID=self:ThanksAuraRecipient(raw,casters)
-        out[#out+1]={spellId=id,auraInstanceID=instance,expirationTime=A.Number(raw.expirationTime) and raw.expirationTime or nil,
+        local identity=recipient and recipient.guid or casterGUID
+        local lookup=self.thanksLookup
+        out[#out+1]={casterLookup=lookup and lookup.guid==identity and lookup or nil,spellId=id,auraInstanceID=instance,expirationTime=A.Number(raw.expirationTime) and raw.expirationTime or nil,
           recipient=recipient,casterReason=why,casterRetry=retry,casterGUID=recipient and recipient.guid or casterGUID}
       else out.incomplete=true end
     end
@@ -602,6 +605,7 @@ function B:DispatchSoloThanks()
       if ignoredProvider(candidate.unit,candidate.guid,candidate.name) then
         self.helperThankStatus="Skipped thanks: provider is ignored"
       elseif held then
+        if candidate.resolution then candidate.resolution.outcome="emote attempted" end
         local emote=C_ChatInfo and C_ChatInfo.PerformEmote or DoEmote
         if type(emote)~="function" then self.helperThankStatus="Emote API unavailable"; self.helperThankQueue={}; return end
         self.helperLastThank=now
@@ -617,7 +621,10 @@ function B:DispatchSoloThanks()
         else self.helperThankStatus="Emote call failed; no retry" end
         if #queue>0 then self:StartTimer("thanks-send",1,function() B:DispatchSoloThanks() end) end
         return
-      else self.helperThankStatus="Caster identity changed; no emote sent" end
+      else
+        if candidate.resolution then candidate.resolution.outcome="live identity lost before send" end
+        self.helperThankStatus="Caster identity changed; no emote sent"
+      end
     end
   end
 end
@@ -654,11 +661,14 @@ function B:ObserveSoloThanks(baseline)
       local pending=self.helperThankPending[key]
       if pending and (pending.id~=record.id or GetTime()-pending.at>(A.Text(pending.guid) and 10 or 2)) then
         self:ThanksTrace("pending caster discarded",pending.id~=record.id and "buff changed" or (A.Text(pending.guid) and "10s window expired" or "2s window expired"))
+        if pending.resolution then pending.resolution.outcome="window expired or buff changed" end
         self.helperThankPending[key]=nil; pending=nil
       end
       if changed or pending then
         self.thanksIncoming={at=GetTime(),spell=A.Number(aura.spellId) and aura.spellId or nil,instance=A.Number(aura.auraInstanceID) and aura.auraInstanceID or nil,known=A.Text(aura.casterGUID)==true,live=recipient~=nil}
+        local resolution=self:RecordThanksResolution(aura,pending)
         if recipient then
+          recipient.resolution=resolution
           candidates[#candidates+1]=recipient; self.helperThankPending[key]=nil
         else
           if aura.casterReason and not aura.casterRetry then skipped=aura.casterReason end
@@ -666,7 +676,7 @@ function B:ObserveSoloThanks(baseline)
             unidentified=aura.casterReason.." (spell "..tostring(aura.spellId or "unreadable")..", instance "..tostring(aura.auraInstanceID or "unavailable")..")"
           end
           if aura.casterRetry then
-            self.helperThankPending[key]=pending or {id=record.id,at=GetTime(),guid=aura.casterGUID}; pendingCaster=true
+            self.helperThankPending[key]=pending or {id=record.id,at=GetTime(),guid=aura.casterGUID,resolution=resolution}; pendingCaster=true
           end
         end
       end

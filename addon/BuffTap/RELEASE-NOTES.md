@@ -1,3 +1,12 @@
+# BuffTap 1.26.12-beta1
+
+### Catch a brief chance to say thanks
+If BuffTap knows who gave a buff but cannot yet reach them for a directed thank-you, a matching nameplate, target, mouseover or focus update now prompts another immediate lookup. It still stops after ten seconds and never substitutes an unverified player name.
+
+Diagnostics also keeps the first and last lookup for the latest incoming buff, whether its giver was ever matched, and what happened afterward. This should help distinguish an inaccessible giver from one who became available and then disappeared.
+
+Existing thanks preferences, pauses and cooldowns are unchanged. This cannot thank someone who remains inaccessible to the game API. Local beta for testing; not published.
+
 # BuffTap 1.26.11
 
 ### Let game windows take priority
