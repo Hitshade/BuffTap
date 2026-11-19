@@ -595,7 +595,7 @@ function B:UpdateBlacklistPage()
     list.title:SetText(L(list.kind=="guild" and "Guilds (%d)" or "Players (%d)",#names)); B.OptionsTheme.SectionTitle(list.title)
     for i,name in ipairs(names) do local row=f.blackRow(list,i); row.name=name; row.text:SetText(name); row:Show() end
     for i=#names+1,#list.rows do list.rows[i].name=nil; list.rows[i]:Hide() end
-    list.child:SetHeight(math.max(208,#names*32)); list.empty:SetShown(#names==0)
+    list.child:SetHeight(math.max(166,#names*32)); list.empty:SetShown(#names==0)
   end
 end
 function B:ShowBlacklist()
