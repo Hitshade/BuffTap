@@ -1,6 +1,7 @@
 # BuffTap 1.26.9-beta1
 
-### Capability-driven Groups
+### Class-appropriate controls with less clutter
+- Hides inapplicable controls rather than leaving disabled options visible, reclaiming their layout space. Visibility follows class and selected-buff capabilities; supported unlearned spells remain configurable.
 - Adds BuffCapabilities.lua after generated Catalog data. Canonical-family policy distinguishes targeted assignments, genuine single/group pairs, broadcast self effects, approved pet recipients, utility effects and role modes. Options consumes shared helpers rather than maintaining class-specific copies. Paladin keeps the specialized blessing workflow.
 - Warlock/Shaman shared cards collapse without smart-group, threshold, pet or role controls. Druid/Mage/Priest retain supported capabilities ahead of learning. Warrior/Hunter show broadcast guidance; Rogue shows a Weapons shortcut. Existing visual primitives only, no new art. Class-dependent headings, cards and footer spacing adapt together.
 

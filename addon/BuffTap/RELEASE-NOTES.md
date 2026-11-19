@@ -1,7 +1,7 @@
 # BuffTap 1.26.9-beta1
 
 ### Groups that make sense for your class
-The Groups page now keeps only the choices your buffs can use. Warlocks and Shamans get a shorter utility layout, without group-spell thresholds, pet controls or role choices. Druids, Mages and Priests keep their real single/group-spell options. Paladins retain their dedicated blessing plans.
+Less clutter on Groups: classes no longer have to look past pet, role or group-spell controls they cannot use. Options also adapt to the selected buff, keeping the useful choices in view. Warlocks and Shamans get a shorter utility layout, without group-spell thresholds, pet controls or role choices. Druids, Mages and Priests keep their real single/group-spell options. Paladins retain their dedicated blessing plans.
 
 Battle Shout and Trueshot Aura are maintained through My buffs: they affect nearby group members automatically, so their Groups pages explain this instead of offering recipient assignments. Rogues get a shortcut to Weapons.
 

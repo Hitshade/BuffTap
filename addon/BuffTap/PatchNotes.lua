@@ -3,7 +3,7 @@ local _,B=...
 -- Keep the ten most recent releases within a 24 KiB content ceiling.
 B.PatchNotes={
  {version="1.26.9-beta1",title="Groups that fit your class",items={
-  "Groups now shows the options your class can use. Warlock and Shaman utility buffs have a simpler layout; group-spell thresholds appear only for real single/group pairs.",
+  "Less clutter, more relevant choices. Groups hides pet, role and group-spell options your class or selected buff cannot use, so you only see the controls that make sense.",
   "Battle Shout and Trueshot Aura stay under My buffs. Their Groups page explains how they affect nearby group members automatically. Rogues get a shortcut to Weapons.",
   "Pet buffs use an approved list, with mana-only buffs reserved for mana-using pets. Utility spells no longer become pet-maintenance jobs.",
   "Role choices fit each buff: Thorns offers Tanks, and Fear Ward offers Tanks or Healers. Other buffs keep their class choices. Hidden old preferences stay saved.",

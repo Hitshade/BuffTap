@@ -163,3 +163,5 @@ Focused current checks: 185 class/context checks passed, no failures; subsequent
 Final 1.26.9-beta1 validation: 3,066 integrated mocked Lua 5.1 checks passed, VERIFIED_FAILED 0, zero FAIL records, terminal totals verified in tests/release-1269-beta1-verified.txt. Includes final utility footer alignment and updated planning-control expectations. All 49 TOC Lua modules compile; ten note entries retained. Build/install local beta for owner review; no public push/upload.
 
 Local beta installed and independently verified: all 139 source files and 134 archive entries match; Engine/TOC identify 1.26.9-beta1. ZIP SHA256 db07b54f84c72570106063ddffb5d30bee16c953ce710c7d23d464c6ec44b025. No settings touched or public push/upload performed. Artifacts and install receipt are in ../releases.
+
+1.26.9-beta1 wording follow-up: owner requested stronger emphasis on hiding controls a class or selected buff cannot use. Updated the three note audiences, preserving feature scope and unlearned configuration. Wording only; ten in-game entries load. No behavior tests repeated.
