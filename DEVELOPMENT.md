@@ -115,3 +115,8 @@ Final beta validation: 2,923 integrated mocked checks passed, zero FAIL records 
 
 ## 1.26.8-beta2 secondary icon style
 Owner reported consumable/queue icons ignored Classic/Modern. Both runtime strips and the consumable preview now call the existing ApplyIconStyle provider. No glows, secure-action or layout changes. GitHub issue review: only PR #6 remains open. Focused mocked run 143 passed, zero failures; four Lua files compile. Full beta1 evidence remains historical; no full rerun for this presentation-only adjustment.
+
+## 1.26.8-beta3 Solo Thanks report investigation
+Reviewed waggz81 screenshot diagnostic from 1.26.6: aura caster GUID readable, no live unit. No evidence fishing/crafting caused this. Current code dropped incoming unresolved identities after two seconds. Preserve known GUID pending records up to ten seconds, bound retry scheduling, rebind verified queued providers to another same-GUID/full-name live token, and discard pending records on explicit initial baseline. Exact live case remains unreproduced. GitHub review found only PR #6 open; no new issue to close. No public reply or publication performed. Regression result recorded after completion.
+
+Final beta3 validation: 1,049 targeted mocked Lua 5.1 checks passed, FINAL_FAILED 0, no FAIL records. Includes seven new cases and existing thanks/helpers/profile paths. Logs: tests/thanks-1268-beta3-regression.txt; runner: tests/run_thanks_focus.py. Helpers, PatchNotes and Engine compile. Public issue remains unreproduced and no live resolution claimed.

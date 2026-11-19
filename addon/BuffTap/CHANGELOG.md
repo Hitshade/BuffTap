@@ -1,3 +1,12 @@
+# BuffTap 1.26.8-beta3
+
+### Solo Thanks delayed-caster recovery
+- Investigation of waggz81's 1.26.6 diagnostic identifies a readable aura caster GUID with no live emote unit. It does not implicate Warrior resource state or fishing/crafting. The exact live report is not reproduced.
+- Preserve an incoming aura's unresolved caster GUID and allow up to ten seconds for live-unit resolution. Existing unknown/secret-ID cases retain the short two-second window. Settling remains bounded: first retries at 0.2 s, then 0.5 s after ten attempts, at most thirty attempts for a known pending GUID, no idle timer. Pauses/combat/profile/group transitions continue to discard or prevent sends.
+- At delayed dispatch a previously live unit token can be replaced only by a live token with the same GUID and original full name. Final player/existence/ignore/name/GUID checks remain; no name-only fallback, automatic targeting, crafting interruption or emote API retry is introduced. Per-provider cooldown and pacing remain.
+- Explicit initial baselines discard pending candidates, preventing an already present unresolved buff from creating a retroactive thank when its caster becomes visible later. Regression covers late resolution, timeout, wrong identity, combat/disabled cancellation, initial baseline and token replacement.
+- Report scope: a bounded recovery improvement, not a confirmed fix for the reporter. A caster never exposed as a live unit still cannot safely be thanked. Targeted mocked Lua 5.1 regression: **1,049 passed, 0 failed**, including existing thanks identity/robustness, helper, review-correction and profile scenarios plus seven new delayed-caster cases. FINAL_TOTAL/FINAL_FAILED and absence of FAIL records verified in tests/thanks-1268-beta3-regression.txt. Three affected Lua files compiled independently. Full beta1 suite is historical, not rerun for this scoped change.
+
 # BuffTap 1.26.8-beta2
 
 ### Secondary icon consistency

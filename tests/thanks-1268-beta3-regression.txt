@@ -1,0 +1,1077 @@
+PASS Highest known rank, exact secure spell and binding
+PASS Applied buffs advance and release overrides
+PASS Aura failures and secret records fail closed
+PASS Global secrecy cannot reuse cached auras
+PASS Mouse click refuses changed target identity
+PASS Combat clears payload, bindings and timers without insecure writes
+PASS Quick target uses its own threshold at click
+PASS Unrelated target changes are idle with target mode off
+PASS Unwatched raid auras and unrelated item/spell loads are ignored
+PASS Repeated wake replacement leaves only one timer
+PASS Rapid target changes keep a bounded timer set
+PASS Threshold wake restores action at the configured time
+PASS Unknown external range is never a castable action
+PASS Smart group does not count out of range members
+PASS Smart group chooses group spell for verified recipients
+PASS Higher priority single stays ahead of lower group family
+PASS Mark recipient accepts rank trained ten levels higher
+PASS Malformed saved keys, priorities and group maps recover
+PASS Old overlay and threshold settings migrate
+PASS All options pages build and move control opens
+PASS Consumables default off and never query inventory at idle
+PASS Whitelist item creates exact secure item action
+PASS Physical mouse down does not block mouse up item use
+PASS Right click never marks an item consumed
+PASS Successful item spell confirms settling, failed clicks do not
+PASS Disappearing bag item rejected during prepare and click
+PASS Unloaded metadata cannot create an item action
+PASS Questionmark icon cannot create an item action
+PASS Changed mapping is quarantined locally and Auto falls back
+PASS A broken preferred item does not block another family
+PASS Food eating aura suppresses repeated use until Well Fed
+PASS Existing flask recognized by ID regardless of language
+PASS Inventory cache is not rescanned on ordinary aura refreshes
+PASS Water Shield satisfies Lightning Shield without overwriting
+PASS Missing rogue poison is a manual unbound alert
+PASS Weapon enchant event clears a satisfied manual alert
+PASS Coated main hand advances reminder to off hand
+PASS Shield off hand does not request a poison
+PASS Unreadable weapon enchant state fails closed
+PASS Unreadable main hand does not hide missing off hand
+PASS Zero item sentinel is treated as an empty hand
+PASS Unchanged manual reminder uses the safe fast path
+PASS Castable class buff precedes manual weapon reminder
+PASS Castable consumable precedes manual weapon reminder
+PASS Camp Benefits reports exact granted additions
+PASS Catalog excludes known wrong spell IDs
+PASS New Aspect and Seal IDs remain known-spell gated
+PASS No permanent OnUpdate on supported client
+PASS Group reagent missing falls back to single
+PASS Confirmed flask use pauses after bounded second observation
+PASS Confirmed flask with effect does not quarantine
+PASS Saved per-buff group overrides retain mixed state
+PASS Greater blessing never replaces higher-priority owned family
+PASS Raid subgroup assignments exclude unassigned recipients
+PASS Dead and offline targets skipped without blocking other members
+PASS Empty spellbook retry stops and book event recovers
+PASS Metadata changes in combat applied safely on exit
+PASS Missing optional item APIs do not break class spell selection
+PASS Appearance changes preserve selected secure action
+PASS Hundreds of idle aura refreshes reuse rank and roster caches
+PASS Every target class advances Mark to Thorns
+PASS Group class defaults and overrides share single and group families
+PASS Party class and group filters intersect
+PASS Class filters leave personal buffs independent
+PASS Group cast falls back when subgroup contains excluded class
+PASS Paladin opt-out target follows priority without class filters
+PASS Paladin group sorting skips filtered higher priority family
+PASS Malformed class maps recover safely
+PASS Class option toggles and reset persist correctly
+PASS Priest multiple explicit target buffs advance in order
+PASS Divine Spirit is not offered to a Warrior target by default
+PASS Egg is offered and Well Fed clears it
+PASS Manual low level eating suppresses all buff actions
+PASS Manual nutritious food does not prompt repeated consumption
+PASS Different Well Fed effect preserves the existing meal
+PASS XP bonus alone does not substitute for a food buff
+PASS Explicit missing food never substitutes another item
+PASS Selected elixir uses exact spell mapping
+PASS A different active elixir no longer blocks the chosen one (elixirs stack)
+PASS Elixir default preserves legacy Ferocity preference
+PASS Removed potion family cannot become a secure item action
+PASS Picker keeps absent choices and filters inventory
+PASS Expanded inventory uses cache on ordinary aura refresh
+PASS Picker scrolling clamps and search resets the visible range
+PASS Auto and explicit selection remain mutually exclusive
+PASS Missing selected food remains visible in selection summary
+PASS Group buff selection and all-classes controls keep other assignments
+PASS Picker closes with options and combat prevents changes
+PASS Item data event replaces placeholder with the native item icon
+PASS Personal consumable is aimed at yourself (audit 1.24.1 #6)
+PASS Helpers default off and preserve existing saved choices
+PASS Dismiss advances to next buff and restores on zone change
+PASS Dismissal is recipient specific and restores manually
+PASS Right click down does not dismiss two consecutive actions
+PASS Dismissed consumable family does not block another family
+PASS Only recent stronger-effect errors suppress a BuffTap action
+PASS Successful cast clears error attribution
+PASS Explicit tracker queues one validated secure spell
+PASS Tracker changes before click are rejected
+PASS Unknown or restricted tracking never queues an action
+PASS Party coverage works without enabling party casting
+PASS Party coverage never calls unknown data missing or claims raid support
+PASS Coverage treats another blessing as occupied
+PASS Discovery is informational and cached across aura events
+PASS Discovery excludes verified items and equipment
+PASS Solo thanks requires known caster and coalesces consecutive buffs
+PASS Thanks skips self and unknown caster while accepting other helpful effects
+PASS Thanks stays off in party raid instance and combat
+PASS Thanks respects global limit across different providers
+PASS Unknown grouping and secret caster fail closed
+PASS Helpers UI builds, updates and closes safely in combat
+PASS Quick choices change preference only and preserve secure validation
+PASS Modern emote API receives a verified unit and never retries a restriction
+PASS Auto thanks remains silent when disabled
+PASS Existing auras at login do not generate a delayed thank
+PASS All optional helpers suspend cleanly at combat entry
+PASS Tracking events are idle when the feature is disabled
+PASS Unknown item load failures do not create retry loops
+PASS Unrelated item loads do not schedule discovery
+PASS Group dismissal shares the single family and prevents group bypass
+PASS Dismissing main hand still offers missing off hand manually
+HELPER REGRESSIONS COMPLETE
+PASS Helpers opens the main options tab without a second window
+PASS Helper setting preserves selected tab and existing buff choices
+PASS Discovery report is inside Diagnostics and disabled scan is explained
+PASS Upgrade removes only retired potion settings
+PASS Consumable options have only maintainable buff families
+PASS Bounce requires matching failure and reason in either order
+PASS Late and interrupted failures cannot suppress reminders
+PASS Consumable bounce matches use spell rather than item ID
+PASS Tracker selection is explicit and invalid preferences reset
+PASS Party coverage includes Shadow Protection
+PASS Selected solo emote is directed at the verified provider
+PASS Unsafe and malformed stored emotes fall back to thank
+PASS Curated choices exclude posture commands and use client localized aliases
+PASS Changing solo response preserves cooldowns and sends nothing
+PASS Modern emote failure makes one attempt without retry
+PASS Solo response selector stores choices without emitting chat
+PASS Solo emote remains configurable while automatic thanks is off
+PASS Questionable directed emotes remain selectable
+PASS Solo emote dropdown scrolls without a search box
+PASS Class tracking appears and is reminded (waggz81)
+PASS Buffs without a timer hide the Rebuff slider
+PASS Unlearned class tracking can be chosen ahead of time
+PASS Switching tracking in the minimap menu is followed, not fought
+PASS Minimap switch never offers the old tracking before adopting the new one (audit 1.24.4)
+PASS Private diagnostics leave out Oath and Soulstone targets (audit 1.24.4)
+PASS Imported remembered players are cleaned (audit 1.24.4)
+PASS Short unlisted helpful effect receives thanks
+PASS Aura instance can be thanked without a readable spell ID
+PASS Thanks ignores casting cache and reads fresh indexed helpful auras
+PASS Player aura event captures provider before ordinary refresh
+PASS Missing assist answer does not suppress verified foreign player
+PASS Unknown self comparison is resolved by available player identity
+PASS GUID self identity excludes player even if token comparison is unavailable
+PASS Live full name permits thanks when caster GUID is unavailable
+PASS Provider cooldown survives GUID becoming readable
+PASS Forever surname is captured with a space and emote uses unit token
+PASS Native false return is reported as emote requested
+PASS Native true return means restricted and is not retried
+PASS Unreadable emote result is not called success or retried
+PASS Throwing emote API reports call failure without automatic retry
+PASS Missing source diagnostics identifies spell and rejection gate
+PASS Missing caster unit produces a specific reason
+PASS Unreadable caster player type produces a specific reason
+PASS Missing caster name produces a specific reason
+PASS NPC buffs do not trigger thanks or an unidentified-player error
+PASS Helpful reader preserves existing baseline across unreadable slots
+PASS Refresh after immediate aura capture does not double thank
+PASS Thanks tolerates unrelated secret timing
+PASS Thanks accepts recognized buff with hidden timing
+PASS Thanks preserves baseline through total read failure
+PASS Thanks tracks replacement instances of the same spell
+PASS Thanks recognizes fresh same-instance expiration after provider cooldown
+PASS Unchanged repeated aura events do not repeat thanks
+PASS Cold thanks baseline settles without thanking existing buffs
+PASS Distinct providers in one scan each receive queued thanks
+PASS Different provider buff is queued rather than lost during one-second gap
+PASS Multiple quick buffs from one source produce one emote
+PASS Per-source cooldown blocks before minute and permits after minute
+PASS Queued caster identity change cannot thank reused token
+PASS Queued thanks is discarded on combat
+PASS Queued thanks is discarded on entering group
+PASS Disabled thanks cannot dispatch queued message
+PASS Known aura identity can settle briefly delayed caster
+PASS Secret caster stays silent and retries are bounded
+PASS Diagnostics includes thanks observation state
+PASS Late instance metadata does not turn existing buff into a new thanks
+PASS Queue refuses a changed name instead of thanking a later bystander
+PASS Profile changes discard queued thanks and preserve source cooldown
+PASS BG direct checks offer verified missing self buff only
+PASS BG present self Mark advances to Thorns
+PASS BG higher rank or group coverage suppresses redundant self buff
+PASS BG hidden absence never queues a buff
+PASS BG one hidden buff does not block another readable self buff
+PASS BG missing predicate fails closed
+PASS BG missing direct API fails closed
+PASS BG failed direct API fails closed
+PASS BG secret direct result fails closed
+PASS BG secret predicate fails closed
+PASS BG click rechecks newly applied self buff
+PASS BG click rechecks newly restricted self buff
+PASS BG click retains verified missing self action
+PASS BG close combat clears payload and resumes only out of combat
+PASS BG disabled self buff is not queued
+PASS BG click rejects disabled settings
+PASS BG exit before click disarms fallback
+PASS BG fallback not applied to normal world secrecy
+PASS BG fallback does not alter dungeon restrictions
+PASS BG fallback never upgrades a self action to group cast
+PASS BG self blessing ignores raid assignment but retains enabled choice
+PASS BG self blessings do not replace an existing different blessing
+PASS BG higher priority hidden blessing does not imply lower is safe
+PASS Version identifies the current build
+PASS BG Soul Link recognises pet aura without offering another cast
+PASS BG Soul Link casts only original spell when both identities absent
+PASS BG hidden Soul Link pet aura is unknown rather than missing
+PASS Normal Soul Link recognises separate aura id despite different name
+PASS BG offers a chosen tracking that is off
+PASS BG tracking already active offers nothing
+PASS BG unreadable tracking offers nothing
+PASS Readiness stays off with zero inventory or pet probes
+PASS Preferred demon prepares a spell and explicit player target
+PASS Any living demon satisfies regardless of preference
+PASS Dead demon permits preferred replacement
+PASS No preference produces a manual unbound reminder
+PASS Unlearned preference never silently selects another demon
+PASS Demonic Sacrifice suppresses summon and schedules expiry
+PASS Unreadable sacrifice aura does not arm a summon
+PASS Summons require shards except Imp
+PASS Readiness rejects movement and resumes on stop
+PASS Mounted vehicle casting and dead states suppress recovery
+PASS Dismount grace ends once without polling
+PASS Hunter absent pet never guesses call versus revive
+PASS Hunter without assigned pet stays silent
+PASS Hunter visible dead pet offers revive and cancels stale identity
+PASS Pet arriving before click cancels stale summon
+PASS Foreign pet events do not schedule work
+PASS Disabling helper unregisters added events and cancels wake
+PASS Spell failure releases pending without suppressing reminder
+PASS Success holds briefly and observed pet satisfies after settling
+PASS Mismatched cast cannot release pending attempt
+PASS Combat secure suspension remains authoritative
+PASS Healthstone prepares creation never item consumption
+PASS Any carried rank or improved stone satisfies
+PASS Healthstone cooldown and unloaded item names do not imply absence
+PASS Highest learned creation rank is selected
+PASS Creation needs shard and a general bag slot
+PASS Unreadable bag or count data fails closed
+PASS Unresolved occupied slot blocks creation
+PASS Container stone overrides stale zero counts
+PASS Empty or unavailable backpack data blocks creation
+PASS Output metadata mismatch prevents unverified creation
+PASS Loaded Healthstone output metadata resumes on matching event
+PASS Carried stone arriving just before click cancels creation
+PASS Full bags just before click cancel creation
+PASS Inventory is cached across ordinary aura refreshes
+PASS Healthstone works independently of global consumables toggle
+PASS Ready Healthstone is not blocked by missing demon preference
+PASS Broken pet provider does not block Healthstone
+PASS Ordinary buffs remain ahead of readiness
+PASS Eating suppression also protects readiness
+PASS Helpers integrate explicit demon choice and retain settings
+PASS Hunter options hide Healthstones and demon choice
+PASS Other classes have no readiness options or scans
+PASS Generated client ranks fix missing seals and armor ownership
+READINESS AND CATALOG REGRESSIONS COMPLETE
+PASS Invalid demon preference is sanitized without altering profiles
+PASS Dismiss and restore applies to readiness
+PASS Unknown movement or vehicle APIs do not arm recovery
+PASS Recovery still respects cooldown and power
+PASS Mouse release cannot enqueue a second readiness cast
+PASS Right click does not claim a readiness cast
+PASS Failed creation never falls back to consuming the stone
+PASS F07 castable readiness outranks optional food
+PASS F07 manual-only notice cannot block castable food
+PASS F07 manual notice still shows when nothing castable remains
+PASS 1.24.7 manual pet notice outranks a manual weapon notice
+PASS 1.24.7 manual weapon notice shows when the pet notice is gone
+PASS 1.24.7 castable weapon action beats a manual pet notice
+PASS 1.24.7 castable readiness beats a manual weapon notice
+PASS Middle and side buttons capture and persist
+PASS Plain primary clicks leave capture and binding unchanged
+PASS Modified primary clicks and side buttons preserve modifiers
+PASS Escape cancels mouse capture without changing binding
+PASS Combat cancels capture and rejects mouse binding changes
+PASS Unknown mouse input leaves binding unchanged
+PASS Side binding installs secure override and releases when satisfied
+PASS Side binding releases in combat and returns on exit
+PASS Punctuation captures survive settings normalization
+PASS Binding paths share normalization and preserve punctuation
+PASS Punctuation binding installs and releases secure overrides
+PASS New application is opt-in and class preferences sanitize
+PASS Modern poison uses item action and exact main slot
+PASS Poison hand progression updates same secure payload slot
+PASS Preferred poison chooses highest usable carried rank
+PASS Empty poison bags retain preference and manual alert
+PASS Poison stock disappears before click and clears slot
+PASS Weapon swap before click clears stale slot action
+PASS Preference change before click rejects old poison
+PASS Correct poison remains active until threshold
+PASS Expiring poison does not cause continuous refresh polling
+PASS Wrong poison preserved unless replacement opted in
+PASS Permanent enchant never satisfies poison requirement
+PASS Unknown coating uses manual fallback without consuming poison
+PASS Recognized poison can coexist with another temporary coating
+PASS Secret modern enchant records fail closed
+PASS Modern API failure never falls back to contradictory legacy data
+PASS Unreadable main hand does not hide definite offhand need
+PASS Shaman uses highest learned preferred imbue on main hand
+PASS Shaman oil cannot hide missing imbue and shield excluded
+PASS Shaman correct imbue satisfies main hand only
+PASS Unlearned Shaman preference stays manual rather than choosing another
+PASS Shaman missing offhand never receives scroll action
+PASS Weapon application releases payload and bindings in combat
+PASS Switching from poison to aura clears weapon target-slot
+PASS Weapon click settling prevents duplicate applications
+PASS Rogue weapon selectors display inventory availability
+PASS Shaman options never alter a Rogue offhand setting
+PASS No weapon application when disabled
+PASS Cooldown delays poison application until ready
+PASS Poison without usable metadata cannot arm a binding
+PASS Bag restock refreshes weapon actions with other item features off
+PASS Weapon metadata load event restores a ready poison
+PASS Fishing pole is excluded from weapon applications
+PASS Expired preferred poison schedules missing application without another event
+PASS Turning weapon application off clears targeted secure action
+PASS Weapon selector saves exact chosen family and closes menu
+PASS Shaman with two-handed weapon remains castable
+PASS Changed poison item effect mapping never becomes a secure action
+PASS Unknown Shaman imbue is not replaced through scroll
+PASS Uncached poison spell data requests loading and recovers
+PASS Weapon and discovery metadata requests share timestamps
+PASS Unknown class preserves valid saved weapon preferences
+PASS Failed metadata request can retry
+PASS Weapons precedes Appearance and shortcuts select correct pages
+PASS Other classes expose temporary coatings without poison controls
+ALL 335 SCENARIOS PASSED
+PASS Skip when I have none hides the empty reminder (noci__)
+PASS Skip when I have none leaves Mage and Warlock item imbues alone (audit 1.24.4)
+PASS Supplies default off add no inventory calls timers or ready-check event
+PASS Login inventory settling never reports a false empty bag
+PASS Supplies combine usable poison ranks and deduplicate both hands
+PASS Unsupported poison rank is not counted as usable stock
+PASS Carried unusable poison is distinguished from empty bags
+PASS Unknown poison inventory is not described as out of stock
+PASS Selected food stock excludes all alternative foods
+PASS Auto food stock combines usable supported food without changing preference
+PASS Enabled supply report ignores inactive consumable families
+PASS Supply tracking respects an existing elixir default without changing it
+PASS Stock badge remains useful with an empty cast queue
+PASS Supply warning never replaces an available class spell
+PASS Chat alerts occur once per low-stock episode
+PASS Sound is optional and fires once per low-stock episode
+PASS Snooze hides alerts and restores badge with one timer
+PASS Restore alerts cancels snooze immediately
+PASS Unchecked supply does not show a badge or shortage report
+PASS Bag events coalesce into one supply rebuild
+PASS Ordinary aura refreshes never rescan supply inventory
+PASS Unrelated item data events do not schedule supply work
+PASS Unreadable count does not warn or erase an existing episode
+PASS Missing metadata is loading information rather than unusable stock
+PASS Missing usability information cannot certify a shortage
+PASS Combat bag events defer supply reads and hide indicator
+PASS Ready-check summary is opt-in and private
+PASS Healthy ready-check report specifies stock minimums only
+PASS Ready check during inventory loading never reports empty stock
+PASS Combat ready check is deferred without bag or aura reads
+PASS Expired combat ready check is not reported after a long fight
+PASS Turning supply warnings off cancels timers and ready-check registration
+PASS Supply settings sanitize malformed values and obsolete keys
+PASS Supplies view is integrated and preserves all eight main tabs
+PASS Supply threshold edits save clamped values without changing cast choices
+PASS Supply badge clicks open integrated options or snooze
+PASS Supply view makes no configuration changes while in combat
+PASS Shield and fishing pole offhands do not create supply requirements
+PASS Gift of the Wild: one late recipient gets a single buff, not a reagent cast
+PASS Gift of the Wild: fresh click recount cancels stale group cast
+PASS Gift of the Wild: unchanged valid group click remains castable
+PASS Gift of the Wild: healthy greater coverage prevents short-single refreshes
+PASS Gift of the Wild: group expiry inside the configured window remains actionable
+PASS Arcane Brilliance: one late recipient gets a single buff, not a reagent cast
+PASS Arcane Brilliance: fresh click recount cancels stale group cast
+PASS Arcane Brilliance: unchanged valid group click remains castable
+PASS Arcane Brilliance: healthy greater coverage prevents short-single refreshes
+PASS Arcane Brilliance: group expiry inside the configured window remains actionable
+PASS Prayer of Fortitude: one late recipient gets a single buff, not a reagent cast
+PASS Prayer of Fortitude: fresh click recount cancels stale group cast
+PASS Prayer of Fortitude: unchanged valid group click remains castable
+PASS Prayer of Fortitude: healthy greater coverage prevents short-single refreshes
+PASS Prayer of Fortitude: group expiry inside the configured window remains actionable
+PASS Prayer of Spirit: one late recipient gets a single buff, not a reagent cast
+PASS Prayer of Spirit: fresh click recount cancels stale group cast
+PASS Prayer of Spirit: unchanged valid group click remains castable
+PASS Prayer of Spirit: healthy greater coverage prevents short-single refreshes
+PASS Prayer of Spirit: group expiry inside the configured window remains actionable
+PASS Prayer of Shadow Protection: one late recipient gets a single buff, not a reagent cast
+PASS Prayer of Shadow Protection: fresh click recount cancels stale group cast
+PASS Prayer of Shadow Protection: unchanged valid group click remains castable
+PASS Prayer of Shadow Protection: healthy greater coverage prevents short-single refreshes
+PASS Prayer of Shadow Protection: group expiry inside the configured window remains actionable
+PASS Greater Blessing of Kings: one late recipient gets a single buff, not a reagent cast
+PASS Greater Blessing of Kings: fresh click recount cancels stale group cast
+PASS Greater Blessing of Kings: unchanged valid group click remains castable
+PASS Greater Blessing of Kings: healthy greater coverage prevents short-single refreshes
+PASS Greater Blessing of Kings: group expiry inside the configured window remains actionable
+PASS Greater Blessing of Might: one late recipient gets a single buff, not a reagent cast
+PASS Greater Blessing of Might: fresh click recount cancels stale group cast
+PASS Greater Blessing of Might: unchanged valid group click remains castable
+PASS Greater Blessing of Might: healthy greater coverage prevents short-single refreshes
+PASS Greater Blessing of Might: group expiry inside the configured window remains actionable
+PASS Greater Blessing of Wisdom: one late recipient gets a single buff, not a reagent cast
+PASS Greater Blessing of Wisdom: fresh click recount cancels stale group cast
+PASS Greater Blessing of Wisdom: unchanged valid group click remains castable
+PASS Greater Blessing of Wisdom: healthy greater coverage prevents short-single refreshes
+PASS Greater Blessing of Wisdom: group expiry inside the configured window remains actionable
+PASS Group ranks do not combine incompatible recipients to meet threshold
+PASS Same-rank subgroup still qualifies in a mixed-level party
+PASS Group click cancels if a second recipient moves out of range
+PASS Group click cancels when assignments change after display
+PASS Group click fails closed when another recipient aura is unreadable
+PASS No new inventory polling or aura scans while supply snapshot is idle
+PASS Changed consumable effect is excluded from usable supply stock
+PASS Incomplete item spell data never triggers a low-stock warning
+PASS Ready check does not duplicate a newly detected private stock alert
+PASS Class group reagent checks remain unchanged pending exemption validation
+PASS Uninitialized backpack slots prevent false zero-stock warnings
+PASS Unavailable bag capacity API leaves stock loading without retry polling
+PASS Supply choice setter refreshes preferences without recounting stock
+PASS Main item picker refreshes tracked supply immediately
+PASS Quick item chooser refreshes tracked supply
+PASS Consumable master options removes disabled supply warnings
+PASS Consumable family options removes disabled supply
+PASS Consumables slash toggle refreshes stock definitions
+PASS Weapon picker refreshes and deduplicates new poison preferences
+ALL 432 SCENARIOS PASSED
+PASS Supplies page has its own header and light (1.24.4)
+PASS Supplies page Customize look opens the Supplies look
+PASS Assignments default off preserve legacy settings
+PASS Different recipient classes resolve independently of global priority
+PASS Healthy desired blessings never cycle to another family
+PASS Explicit choice works even when legacy buff toggle is off
+PASS Unlearned explicit blessing never substitutes another blessing
+PASS Mixed same-class player exceptions forbid Greater
+PASS Uniform class assignments permit reagent Greater
+PASS Matching player exception does not block Greater
+PASS Skipped affected player blocks Greater and preserves skip
+PASS Group selection remains authoritative for explicit choices
+PASS Unknown class blocks affected Greater safety
+PASS Changed single player preference cancels prepared click
+PASS Changed override cancels prepared Greater without substituting
+PASS Desired normal or Greater from another Paladin is coverage
+PASS Only one player missing uses normal not reagent recast
+PASS Solo personal behavior ignores group class choices
+PASS Ungrouped explicit target retains target priorities
+PASS Grouped friendly target uses same recipient assignment
+PASS Exception identity does not follow recycled party token
+PASS Leaving group clears session exceptions
+PASS Assignment settings sanitize invalid classes and families
+PASS Options displays class table and inline players
+PASS Class dropdown inherit clears explicit preference
+PASS Combat cannot change player exception
+PASS No inspection chat or polling introduced by assignments
+PASS Explicit threshold supersedes retained legacy per-family threshold
+PASS Inherited class choice selects learned legacy family
+PASS Unlearned dropdown remains selectable and is clearly marked
+PASS Page switching closes blessing dropdown
+PASS Turning assignments off cancels stale explicit action
+PASS Other classes retain original Groups controls
+PASS Clear exception restores class assignment
+PASS Empty reagent bag uses normal spell instead of unusable Greater
+PASS Combat group exit clears session exceptions
+PASS Expanded class rows and footer fit the panel without overlapping
+PASS Large class roster pages all players inside fixed expansion
+PASS Sidebar navigation fits beside the unchanged page area
+PASS Header Close hides options and all tabs still select their own page
+PASS Options scales the revised window inside a small screen
+ALL 473 SCENARIOS PASSED
+PASS esES: automatic selection, localized controls and unchanged action
+PASS esMX: automatic selection, localized controls and unchanged action
+PASS deDE: automatic selection, localized controls and unchanged action
+PASS frFR: automatic selection, localized controls and unchanged action
+PASS ptBR: automatic selection, localized controls and unchanged action
+PASS Unknown locale preserves English and normal buff selection
+PASS Missing translation and broken translated format fall back safely
+PASS esES: every translated format preserves argument types
+PASS deDE: every translated format preserves argument types
+PASS frFR: every translated format preserves argument types
+PASS ptBR: every translated format preserves argument types
+PASS Sound choices exclude absent or restricted client constants
+PASS Alert settings sanitize invalid and non-finite saved values
+PASS Sound preview works while disabled without consuming live cooldown
+PASS Reminder and supply selections route the requested sound and channel
+PASS Alerts share a bounded cooldown without repeating on identical actions
+PASS Failed sound playback is contained and does not consume cooldown
+PASS Sound cycle preferences remain separate and unavailable choices recover
+PASS Appearance preview never changes secure payload, action or bindings
+PASS Appearance preview honors visibility and closes on combat or page change
+PASS Combat cannot create an appearance preview
+PASS Reset needs confirmation, cancel and window close preserve settings
+PASS Confirmed reset clears assignments and restores defaults
+PASS Confirmed reset remains blocked in combat
+PASS Status explains real suspension states without guessing exclusion cause
+PASS Client spell names are shown without modifying catalog names or IDs
+PASS Localized item names are searchable without altering supported item IDs
+PASS Translated tab text fits its allotted width using font metrics
+PASS New Appearance controls and confirmation fit within the existing panel
+ALL 502 SCENARIOS PASSED
+PASS Minimap enabled but no broker object registered by default
+PASS Opt-in broker reuses cached status without selecting or scanning
+PASS Minimap hide is independent of broker display
+PASS Reset replaces library saved-variable reference safely
+PASS Broker clearing follows combat without protected mutations
+PASS Broker disable shows reload status and resets to absent after reload
+PASS Minimap idle has no update loop and click opens settings
+PASS Quick access controls reflect independent preferences
+ALL 510 SCENARIOS PASSED
+PASS No temporary coating preferences are enabled by default
+PASS All-class oil prepares secure item and mainhand slot
+PASS Oil expiry is category-specific and schedules wake without polling
+PASS Wrong recognized oil preserved until replacement opt-in
+PASS Unknown temporary enchant never overwritten automatically
+PASS Oil stock disappears before click clearing payload and binding
+PASS Coating preference change invalidates prepared item
+PASS Weapon swap invalidates prepared oil
+PASS Poison and oil retain independent reminders
+PASS Shaman imbue and oil are tracked independently
+PASS Offhand oil uses exact offhand and ignores shield
+PASS Sharpening stone chooses highest carried usable rank
+PASS Weightstone rejected on sword and supported on mace
+PASS Ranged weapon fishing pole and held item never receive oil
+PASS Secret equipment subclass fails closed
+PASS Modern unavailable or secret data never becomes oil action
+PASS Changed item spell is rejected
+PASS Manual mode gives oil alert without a casting binding
+PASS Selected coating settings sanitize and preserve valid preferences
+PASS Shared oil supply counts applications once without bank queries
+PASS Oil-use cache cannot reuse bottle-count cache
+PASS Weapons UI shows bounded coating selectors for every class
+PASS Combat clears prepared oil with no insecure protected writes
+PASS Every catalog item prepares and recognizes its own verified enchant
+PASS Out-of-stock mainhand coating diagnostics and options stay usable
+PASS Offhand coating includes hand label in diagnostics
+PASS Diagnostics tolerate incomplete action display metadata
+ALL 537 SCENARIOS PASSED
+PASS Mage scroll preferences default to None
+PASS Mage staff scroll uses mainhand secure item action
+PASS Mage active matching imbue satisfies preference
+PASS Mage unknown imbue is preserved even with replacement enabled
+PASS Mage wrong weapon never prepares scroll
+PASS Mage offhand is never used for scrolls
+PASS Mage manual mode has no application binding
+PASS Mage missing modern categories cannot authorize item action
+PASS Mage scroll stock change before click clears secure action
+PASS Mage preference change before click clears secure action
+PASS Mage bag restock updates idle reminder
+PASS All-class oil bag restock updates idle reminder
+PASS Mage scroll and oil categories stay independent
+PASS Mage supplies count selected compatible scroll
+PASS Every verified Mage scroll prepares and recognizes exact imbue
+PASS Crippling Poison II is preferred and recognized
+PASS Metadata failure storm obeys backoff and finite attempts
+PASS Metadata success cancels retry slot
+PASS Metadata retry suspends in combat and resumes afterward
+PASS Retry reminders clears effect pause but keeps mapping quarantine
+PASS Delayed flask aura avoids effect pause
+PASS Explicit retry restores paused consumable without casting
+PASS Mage picker is bounded and includes None plus fifteen choices
+PASS Unobserved Auto flask pauses all alternatives
+PASS Native metadata request throws stop after three attempts
+PASS Retry clears failed item metadata cache and allows another request
+PASS Requested item completion invalidates Healthstone inventory cache
+PASS Retry controls localized esES
+PASS Retry controls localized deDE
+PASS Retry controls localized frFR
+PASS Retry controls localized ptBR
+ALL 568 SCENARIOS PASSED
+PASS Caster target ignores higher-priority Might
+PASS Each target class uses suitable enabled priority
+PASS Healthy desired target blessing does not cycle
+PASS Explicit target class choice permits deliberate override
+PASS Explicit target choice independently enables target use
+PASS Target choice skip returns to personal queue
+PASS Target class change cancels prepared blessing
+PASS Target preference change cancels prepared blessing
+PASS Unknown target class cannot guess a blessing
+PASS Class-aware toggle restores unrestricted priority
+PASS Target preference table sanitizes invalid data
+PASS Group target assignment overrides independent target preference
+PASS New group assignment cancels prepared independent target
+PASS Resting pause defaults off
+PASS Rest event clears action and bindings then resumes
+PASS Preclick catches resting transition before event
+PASS Rest transition in combat defers secure writes
+PASS Unavailable resting API leaves reminders usable
+PASS Mount hides the Supplies reminder; the resting pause does not (towns are where it belongs)
+PASS Paused low stock alerts wait until resume once
+PASS Paused ready check remains quiet
+PASS Sound previews remain available while paused
+PASS Paladin target controls appear with independent saved choices
+PASS Other classes do not show Paladin target controls
+PASS Context options build in esES
+PASS Context options build in deDE
+PASS Context options build in frFR
+PASS Context options build in ptBR
+PASS Paused hover in combat never changes protected action
+PASS Options pause toggle quiets buffs but keeps the town Supplies reminder
+PASS Resting toggle belongs to Helpers rather than Appearance
+ALL 599 SCENARIOS PASSED
+PASS Same player expansion button collapses the open class
+PASS Explicit collapse closes player exceptions
+PASS Same blessing dropdown click closes its menu
+PASS Opening another dropdown changes menu owner
+PASS Class editor opens directly and checks retain saved fixed choice
+PASS Inactive group assignment controls cannot open or change
+PASS Party assignments can be prepared with group maintenance off
+PASS One player expansion hides unnecessary paging
+PASS Target picker shares proper arrow and selected row behavior
+PASS Target picker inactive when friendly-target mode disabled
+PASS Target picker inactive when class-aware mode disabled
+PASS Changing tabs closes blessing menu
+PASS Combat cannot open a blessing menu
+PASS Blessing selection labels localized esES
+PASS Blessing selection labels localized deDE
+PASS Blessing selection labels localized frFR
+PASS Blessing selection labels localized ptBR
+PASS Two-player exception details remain inside the page
+PASS Every Paladin seal is opt-in by default
+PASS An explicitly enabled seal remains supported
+PASS Paladin tactical spells never enter the maintenance catalog
+ALL 620 SCENARIOS PASSED
+PASS Other Paladin Kings permits Wisdom fallback
+PASS Own Kings is maintained without switching
+PASS Own lower priority Wisdom prevents Kings replacement
+PASS Unknown owner stops fallback
+PASS Unresolved caster stops fallback
+PASS All eligible blessings covered stops target queue
+PASS Disabled fallback keeps single class preference
+PASS Changed ownership before click cancels fallback
+PASS Greater Kings from another Paladin permits fallback
+PASS Target skip remains authoritative with fallback
+PASS Own expiring Kings refreshes Kings instead of Wisdom
+PASS Own unavailable blessing blocks replacement
+ALL 632 SCENARIOS PASSED
+PASS Aura caster GUID recovers a missing source token
+PASS Aura caster GUID recovers a vanished source token
+PASS Unverifiable or self aura caster is not thanked nil
+PASS Unverifiable or self aura caster is not thanked {secret=true}
+PASS Unverifiable or self aura caster is not thanked 'Creature-123'
+PASS Unverifiable or self aura caster is not thanked UnitGUID('player')
+PASS Throwing caster GUID API stays silent
+PASS Caster lookup does not run without a public aura instance
+PASS Ignored direct provider is excluded
+PASS Provider newly ignored while queued is not thanked
+PASS Automatic thanks holds for contextual restriction IsStealthed=function() return true end
+PASS Automatic thanks holds for contextual restriction UnitIsFeignDeath=function() return true end
+PASS Automatic thanks holds for contextual restriction C_ChatInfo={InChatMessagingLockdown=function() return true end}
+PASS Automatic thanks holds for contextual restriction C_ChatInfo={InChatMessagingLockdown=function() return {secret=true} end}
+PASS Automatic thanks holds for contextual restriction Enum.AddOnRestrictionType={Chat=5}; Enum.AddOnRestrictionState={Inactive=0}; C_RestrictedActions={GetAddOnRestrictionState=function() return 2 end}
+PASS Restricted queued thanks is discarded without consuming source cooldown
+PASS Public inactive chat state permits thanks
+PASS Blessing ownership uses exact aura GUID UnitGUID('player')
+PASS Blessing ownership uses exact aura GUID 'Player-Other'
+PASS Secret blessing caster GUID cannot authorize fallback
+PASS Public inactive cooldown permits verified BG self action
+PASS Public active hidden cooldown waits for recovery event
+PASS Unknown hidden cooldown remains blocked and listens for recovery
+PASS Disabled cooldown cannot be armed despite inactive flag
+PASS Missing enabled state cannot be armed
+PASS BG self supports aspect-hawk
+PASS BG self supports aspect-monkey
+PASS BG self supports aspect-cheetah
+PASS BG self supports aspect-beast
+PASS BG self does not silently enable party aspect aspect-pack
+PASS BG self does not silently enable party aspect aspect-wild
+PASS BG self supports learned enabled seal
+PASS BG hidden aspect still fails closed
+PASS Combat still prevents aspect updates
+PASS Empty aura updates do not scan thanks or invalidate cached player data
+PASS Ambiguous or meaningful aura update is retained {isFullUpdate=true}
+PASS Ambiguous or meaningful aura update is retained {isFullUpdate={secret=true}}
+PASS Ambiguous or meaningful aura update is retained {isFullUpdate=false,addedAuras={secret=true}}
+PASS Ambiguous or meaningful aura update is retained {isFullUpdate=false,addedAuras={{spellId=1459}}}
+PASS Ambiguous or meaningful aura update is retained {isFullUpdate=false,removedAuraInstanceIDs={2}}
+PASS Ambiguous or meaningful aura update is retained {isFullUpdate=false,updatedAuraInstanceIDs={2}}
+PASS Ambiguous or meaningful aura update is retained nil
+PASS Ambiguous or meaningful aura update is retained {}
+PASS Public empty delta arrays are ignored
+PASS Bag updates preserve an unfinished appearance field
+PASS General options refresh preserves dirty numeric text until Escape
+PASS Enter commits and normalizes a dirty numeric edit
+PASS Normal status explains insufficient mana
+PASS Normal status explains cooldown wait
+PASS Deprecated active Salvation preference is discarded without losing migration
+PASS Switching profiles discards unfinished edits from previous profile
+PASS Resource status is localized deDE
+PASS Resource status is localized frFR
+PASS Resource status is localized esES
+PASS Resource status is localized ptBR
+PASS Reported name-only driveby never calls the emote API
+PASS Readable name never goes to emote API even if API would accept it
+PASS Native GUID lookup resolves verified live provider
+PASS Missing or secret native token remains silent nil
+PASS Missing or secret native token remains silent {secret=true}
+PASS Throwing native token lookup remains silent
+PASS Wrong GUID returned by native token lookup is refused
+PASS Native token still needs a current unit
+PASS Native lookup can find a unit outside enumerated plate list
+PASS Briefly delayed native unit can settle into directed thanks
+PASS Legacy queued name-only record cannot emit a general emote
+PASS Caster leaving before queued dispatch cannot emit a general emote
+PASS Unavailable caster cannot fall back to current hostile or other target
+PASS Known caster appearing after two seconds is thanked exactly once
+PASS Known caster appearing after the ten-second window is not thanked
+PASS Late target with the wrong caster identity is never thanked
+PASS Combat cancels extended pending caster resolution
+PASS Thanks disabled during extended wait cannot send later
+PASS Initial unresolved baseline is not thanked when its caster appears later
+PASS Delayed thanks can rebind the same player to a different live token
+PASS Custom target order controls first choice
+PASS Custom target order reaches third choice
+PASS Empty custom list does not silently add a blessing
+PASS Checked target list entry overrides personal buff toggle
+PASS Checked target list entry ignores obsolete target filter
+PASS Custom target list skips unlearned entries
+PASS Custom target list maintains own lower priority
+PASS Custom target list obeys fallback toggle
+PASS Group custom order follows missing coverage
+PASS Group unknown ownership blocks priority fallback
+PASS Group own blessing is never replaced by priority
+PASS Group explicit player choice overrides class priority
+PASS Group skipped player remains excluded
+PASS Group raid exclusion overrides custom priorities
+PASS Matching group fallback choices permit Greater
+PASS Mixed group fallback choices forbid Greater
+PASS Unknown same-class member blocks Greater
+PASS Changed group fallback cancels prepared Greater
+PASS Changed group ownership cancels prepared individual
+PASS Grouped friendly target uses group list not target list
+PASS Priority data sanitizes unknown duplicate and malformed entries
+PASS Target and group lists remain independent
+PASS Direct editor previews existing preference without saving
+PASS Editor reorder updates numbers and preserves popup
+PASS Editor inclusion appends and exclusion removes without gaps
+PASS Group editor writes only group priorities
+PASS Same custom picker click closes expanded editor
+PASS Editor automatic restores defaults without deleting saved list
+PASS Editor cannot reorder in combat
+PASS Visual ordering controls for DRUID
+PASS Visual ordering controls for HUNTER
+PASS Visual ordering controls for MAGE
+PASS Visual ordering controls for PALADIN
+PASS Visual ordering controls for PRIEST
+PASS Visual ordering controls for SHAMAN
+PASS Visual ordering controls for WARLOCK
+PASS Visual ordering controls for WARRIOR
+PASS Rogue weapon choices do not gain a meaningless spell priority list
+PASS No-overwrite policy schedules known coverage expiry
+PASS Name-only blessing with unknown owner blocks fallback
+PASS Unknown-owner group class cannot qualify for Greater
+PASS Priority editor closes with options
+PASS Group custom mode is opt-in and preserves fixed selections
+PASS Priority editor builds with translated controls esES
+PASS Priority editor builds with translated controls deDE
+PASS Priority editor builds with translated controls frFR
+PASS Priority editor builds with translated controls ptBR
+PASS Own tactical blessing blocks target priority replacement
+PASS Unknown tactical blessing blocks group priority replacement
+PASS Known other tactical blessing does not occupy own slot
+PASS Priority editor contains arrows without drag controls
+PASS Custom priorities have no second availability gate
+PASS Non-Paladin target page retains necessary spell controls
+PASS Disabling class-aware mode reveals legacy target controls
+PASS Custom target priorities use visible shared timing
+PASS Group priority choice is enabled by its own checkbox
+PASS Automatic editor opens directly without committing previews
+PASS First Automatic checkbox edit preserves preview order
+PASS Skipped class editor opens empty without unskipping
+PASS Missing saved custom list safely opens empty
+PASS Switching class editors does not copy another class list
+PASS Group fixed choice remains fixed when editor closes
+ALL 769 SCENARIOS PASSED
+PASS Opening a sound selector does not change its preference
+PASS Sound selection remains independent of supply sound
+PASS Opening another selector closes the first
+PASS Changing tabs closes an open selector
+PASS Closing options closes an open selector
+PASS Combat cannot change a sound preference
+PASS Weapon mode selector preserves application opt-in
+PASS Status distinguishes a manual alert from an actionable cast
+PASS Visible settings status updates without a broker display
+PASS Status sits in the footer without header Debug
+PASS Consumable help describes the actual family control
+PASS Customization tab localized esES
+PASS Customization tab localized deDE
+PASS Customization tab localized frFR
+PASS Customization tab localized ptBR
+ALL 784 SCENARIOS PASSED
+PASS Every catalog family has verified fallback icon metadata
+PASS Unlearned Paladin spells and group versions display actual icons
+PASS Placeholder API textures use verified icons across classes without learning spells
+ALL 787 SCENARIOS PASSED
+PASS Existing fractional opacity displays a percentage without migration
+PASS Opacity Enter stores fractional value and preserves secure action
+PASS Opacity supports zero and clamps percentages over 100
+PASS Unlearned buff status is explicit and red
+ALL 791 SCENARIOS PASSED
+PASS Additional game sounds require available client constants
+PASS SharedMedia optional absence preserves preference and falls back
+PASS Late media registration is available without polling or reload
+PASS SharedMedia supports FileDataIDs and separate supply selection
+PASS Unavailable or failed media plays default without consuming preview cooldown
+PASS Malformed library is contained and preserves gameplay
+PASS Sound chooser scrolls large registries and search filters without paging
+PASS Media alerts retain shared rate limiting and pause rules
+ALL 799 SCENARIOS PASSED
+PASS Cleansing wash is the reminder default and plays from the addon folder
+PASS Old default migrates once to the marimba and Ding stays selectable
+PASS BuffTap sounds register with SharedMedia when available
+PASS Pause immediately clears secure action and overrides without changing preferences
+PASS Pause expires once and normal buffing resumes
+PASS Repeated pause replacement retains one expiry timer
+PASS Uncancellable After fallback cannot end a newer pause
+PASS Pause rejects malformed durations and combat mutations
+PASS Pause expiry during combat defers secure restoration
+PASS Quick controls toggle on right click and preview remains harmless
+PASS Completed setup suppresses the legacy welcome card
+PASS First-run setup waits until combat ends
+PASS Unavailable Edit Mode is harmless and late manager hooks only once
+PASS Edit Mode drag saves shared position and never opens settings
+PASS Edit Mode interruption cannot write protected frames
+PASS Edit Mode preserves manual pause on exit
+PASS Reminder styling applies to real labels and safe preview
+PASS Malformed style preferences normalize without touching binding
+PASS Combat-delayed first-run setup resumes after combat
+PASS Reset look restores the default text style
+PASS Convenience localization deDE
+PASS Convenience localization frFR
+PASS Convenience localization esES
+PASS Convenience localization ptBR
+PASS Closing Edit Mode mid-drag saves once without reopening settings
+PASS Unavailable saved font remains visible and falls back safely
+ALL 825 SCENARIOS PASSED
+PASS Both windows load the same explicit TGA banner without changing the action
+PASS Onboarding explains buffing and still opens settings
+PASS Onboarding preview remains harmless and dismissal remains persistent
+PASS Branding cannot open or mutate secure actions during combat
+PASS Branded onboarding guidance translated deDE
+PASS Branded onboarding guidance translated frFR
+PASS Branded onboarding guidance translated esES
+PASS Branded onboarding guidance translated ptBR
+PASS Ready status uses a client-safe separator
+PASS Welcome dismisses selectors and other foreground windows
+PASS Window roots use distinct strata and options are clamped and raised
+ALL 836 SCENARIOS PASSED
+PASS Visual control/grid audit DRUID enUS
+PASS Visual control/grid audit PALADIN enUS
+PASS Visual control/grid audit ROGUE enUS
+PASS Visual control/grid audit SHAMAN enUS
+PASS Visual control/grid audit MAGE enUS
+PASS Visual control/grid audit WARLOCK enUS
+PASS Visual control/grid audit HUNTER enUS
+PASS Visual control/grid audit PRIEST enUS
+PASS Visual control/grid audit WARRIOR enUS
+PASS Visual control/grid audit DRUID deDE
+PASS Visual control/grid audit PALADIN deDE
+PASS Visual control/grid audit ROGUE deDE
+PASS Visual control/grid audit SHAMAN deDE
+PASS Visual control/grid audit MAGE deDE
+PASS Visual control/grid audit WARLOCK deDE
+PASS Visual control/grid audit HUNTER deDE
+PASS Visual control/grid audit PRIEST deDE
+PASS Visual control/grid audit WARRIOR deDE
+PASS Visual control/grid audit DRUID frFR
+PASS Visual control/grid audit PALADIN frFR
+PASS Visual control/grid audit ROGUE frFR
+PASS Visual control/grid audit SHAMAN frFR
+PASS Visual control/grid audit MAGE frFR
+PASS Visual control/grid audit WARLOCK frFR
+PASS Visual control/grid audit HUNTER frFR
+PASS Visual control/grid audit PRIEST frFR
+PASS Visual control/grid audit WARRIOR frFR
+PASS Visual control/grid audit DRUID esES
+PASS Visual control/grid audit PALADIN esES
+PASS Visual control/grid audit ROGUE esES
+PASS Visual control/grid audit SHAMAN esES
+PASS Visual control/grid audit MAGE esES
+PASS Visual control/grid audit WARLOCK esES
+PASS Visual control/grid audit HUNTER esES
+PASS Visual control/grid audit PRIEST esES
+PASS Visual control/grid audit WARRIOR esES
+PASS Visual control/grid audit DRUID ptBR
+PASS Visual control/grid audit PALADIN ptBR
+PASS Visual control/grid audit ROGUE ptBR
+PASS Visual control/grid audit SHAMAN ptBR
+PASS Visual control/grid audit MAGE ptBR
+PASS Visual control/grid audit WARLOCK ptBR
+PASS Visual control/grid audit HUNTER ptBR
+PASS Visual control/grid audit PRIEST ptBR
+PASS Visual control/grid audit WARRIOR ptBR
+PASS Header Close is a themed glyph button and still closes options
+PASS Greater Blessings threshold stays class-specific
+ALL 883 SCENARIOS PASSED
+PASS Warlock stone preferences default to None
+PASS Warlock Firestone uses mainhand secure item action
+PASS Warlock carried higher Firestone rank wins
+PASS Warlock active matching stone satisfies preference
+PASS Warlock any Firestone rank satisfies Firestone preference
+PASS Warlock Spellstone is preserved under Firestone until replacement opt-in
+PASS Warlock unknown imbue is preserved even with replacement enabled
+PASS Warlock expiring stone is reapplied at the threshold
+PASS Warlock offhand-only weapon never receives a stone
+PASS Warlock staff and two-hander accept stones
+PASS Warlock offhand preference is never used
+PASS Warlock manual mode has no application binding
+PASS Warlock stone stock change before click clears secure action
+PASS Warlock out of stones gives a manual reminder that restocks
+PASS Warlock stones and oils stay independent
+PASS Warlock supplies count the selected stone
+PASS Mage cannot select Warlock stones
+PASS Every Warlock stone rank prepares and recognizes its exact imbue
+PASS Soulstone helper is off by default
+PASS Soulstone helper is Warlock-only
+PASS Soulstone without healer uses carried stone on yourself
+PASS Soulstone prefers an in-range healer
+PASS Soulstone skips healers out of range or with unknown range
+PASS Soulstone skips a dead healer
+PASS First healer in group order wins
+PASS Soulstone on yourself satisfies the helper
+PASS Soulstone on any group member satisfies the helper
+PASS Soulstone expiry wakes the helper without polling
+PASS Party Soulstone aura event refreshes with group buffing off
+PASS Unreadable group aura fails closed
+PASS Soulstone cooldown suppresses placement and wakes
+PASS Highest carried Soulstone rank is used
+PASS Changed Soulstone item spell is rejected
+PASS No carried Soulstone offers highest learned Create Soulstone
+PASS Create Soulstone needs a shard and a free bag slot
+PASS Create Soulstone unlearned stays silent
+PASS Healthstone and Soulstone inventories are cached separately
+PASS Healer leaving range before click clears the Soulstone action
+PASS Soulstone placed by someone else before click clears the action
+PASS Soulstone placement rejects movement
+PASS Soulstone use holds while the cast settles
+PASS Soulstone options toggle and tooltip render
+PASS Missing Firestone is created first with a plain self cast
+PASS Created Firestone is then applied to the main hand
+PASS Highest learned Create Firestone rank is used
+PASS Missing Spellstone is created first
+PASS Active preferred stone needs no creation
+PASS Expiring stone with none carried is created ahead of time
+PASS Other stone kept without replacement creates nothing
+PASS Unknown imbue blocks creation
+PASS No Soul Shard falls back to the manual out-of-stock reminder
+PASS Full bags fall back to the manual out-of-stock reminder
+PASS Unlearned Create Firestone falls back to the manual reminder
+PASS Incompatible main hand never creates a stone
+PASS Stone creation waits while moving
+PASS Stone arriving before click cancels creation
+PASS Main hand disabled creates nothing
+PASS Remind-only mode never creates or applies a weapon stone
+PASS Soulstone prefers the Healer role over healing classes
+PASS Soulstone never picks a tanking or damage healer class when roles are set
+PASS Healing classes without the Healer role are never chosen
+PASS Missing role API targets you
+PASS Raid Soulstone gives a manual reminder without a target or binding
+PASS Raid Soulstone from another Warlock does not count
+PASS Raid Soulstone you cast satisfies the helper
+PASS Raid still offers Create Soulstone when none is carried
+PASS Soulstone settings default to Healer in party and reminder in raid
+PASS Invalid Soulstone settings are reset
+PASS Party mode Me ignores healers
+PASS Party mode Assigned player targets them by name
+PASS Assigned name with realm must match the realm
+PASS Assigned player missing never falls back
+PASS Assigned player out of range never falls back, and returns when in range
+PASS Raid assigned player gets the Soulstone
+PASS Raid assigned player out of range gives a manual reminder naming them
+PASS Raid assigned mode with nobody assigned stays a reminder
+PASS Use current target saves a friendly player name with realm
+PASS Use current target rejects non-players
+PASS Soulstone target popup reflects saved settings
+ALL 962 SCENARIOS PASSED
+PASS F08 saving the target stores a player ID without the surname separator
+PASS F08 assigned player ID wins over a same-named other player
+PASS F08 assigned player leaving never falls through to a same-named player
+PASS 1.24.7 assigned GUID absent: manual notice, healer mode and Me mode unchanged
+PASS 1.24.7 assigned GUID at a different unit token still gets the stone
+PASS F08 player ID still resolves after a roster token change
+PASS F08 invalid saved player IDs are cleared
+PASS F08 a player ID without a name is cleared
+PASS Raid Soulstone with missing caster never claims absence
+PASS Raid Soulstone with restricted caster never arms an item
+PASS Raid Soulstone with unresolved caster fails closed
+PASS Raid Soulstone with unreadable caster identity fails closed
+PASS Unreadable party count never implies solo Soulstone placement
+PASS Unreadable raid count never implies no Soulstone coverage
+PASS Incomplete party roster never arms Soulstone
+PASS Unreadable grouping never arms Soulstone
+PASS Duplicate assignment names are not silently resolved
+PASS Forever assignment saves first name and surname without a fake realm
+PASS Forever assignment distinguishes players with the same first name
+PASS Forever missing surname saves an exact player ID, not an ambiguous name
+PASS Forever target without a readable player ID is not saved
+PASS Soulstone identity changing before click clears the secure payload
+PASS Saving Soulstone target activates party assignment and keeps popup open
+PASS Saving Soulstone target in a raid changes only raid mode
+PASS Rejected Soulstone target preserves the previous assignment
+PASS Soulstone selections and clear keep the menu open
+PASS Soulstone menu uses its own Escape handler and Done without an overlay
+ALL 989 SCENARIOS PASSED
+PASS Treasure tracking defaults off
+PASS Treasure works independently of gathering toggle
+PASS Active treasure tracking needs no reminder
+PASS Gathering and treasure each receive a reminder
+PASS Treasure activation before click clears stale action
+PASS Treasure opt-out before click clears stale action
+PASS Treasure control appears only for a learned spell
+PASS Unlearned treasure is not offered
+PASS Treasure tracking events refresh independently
+ALL 998 SCENARIOS PASSED
+PASS Own planned exception survives repeated solo refreshes
+PASS Leaving group retains self but removes other session exceptions
+PASS Self exception takes precedence after rejoining
+PASS Forty same-class players reach final five by mouse wheel
+PASS Scrollbar reaches individual hybrid recipient without changing another
+PASS Escape hiding editor clears expanded state
+ALL 1004 SCENARIOS PASSED
+PASS Own blessing exception survives a reload (Misketadam report)
+PASS Remembered exception survives a reload, Remove forgets it
+PASS Remember needs an exception and leaving group keeps remembered
+PASS Exceptions panel lists absent remembered players with Remove
+PASS Exception rows show realm and class colour
+PASS Raid-only exception does not hide Party choices (audit #1)
+PASS Shared reports leave remembered players out, full export keeps them (audit #4)
+PASS Exceptions are Paladin-only on import (audit #5)
+PASS Remember reads the class when roster metadata is missing (audit #7)
+PASS Profiles tab preserves character-specific buff preferences
+PASS First migration keeps old preferences and a rollback backup
+PASS Migrated profile choice survives repeat InitDB
+PASS New default profile changes general preferences only
+PASS Switch immediately clears old bindings and arms new binding
+PASS Copy current preferences deep copies shared tables
+PASS Copy shared profile never changes buffs by default
+PASS Same-class optional import includes buff setup but not session state
+PASS Cross-class import rejects entire operation before changing shared preferences
+PASS Wrong source profile cannot import character settings
+PASS Foreign class option is hidden in copy UI
+PASS Same-class copy UI reveals recipient only after explicit opt-in
+PASS Rename carries all character mappings and source metadata
+PASS Any inactive profile can be deleted and its other users are released
+PASS Reset profile does not reset class setup
+PASS Reset all detaches this character without resetting shared profile
+PASS Combat blocks every profile mutation
+PASS Invalid and duplicate names do not create profiles
+PASS Profile reset and copy require confirmation in options
+PASS Switching profiles preserves existing group-session exceptions
+PASS Malformed imported class preferences run through existing normalization
+PASS Profiles controls and confirmation localized deDE
+PASS Profiles controls and confirmation localized frFR
+PASS Profiles controls and confirmation localized esES
+PASS Profiles controls and confirmation localized ptBR
+PASS Unreadable class identity cannot enable or execute class imports
+PASS AceDB shutdown saves class preferences before storage cleanup, even in combat
+PASS Profiles page fits existing panel and tabs fit header
+ALL 1041 SCENARIOS PASSED
+PASS Real reload reconstructs migrated profile and character-only settings
+PASS Second same-class alt starts independent and can link general preferences
+PASS Shared edits reach another character on its next login without changing buffs
+PASS Different-class alt shares appearance and bindings but retains its blessing setup
+PASS Same-class alt explicitly imports source buff preferences into an independent profile
+PASS Unmodified AceDB uses Forever surnames and regional name identity
+PASS Malformed account-wide top-level storage recovers without losing legacy appearance
+PASS Missing account-wide profile data can recover the retained migration backup
+ALL 1049 SCENARIOS PASSED
+FINAL_TOTAL 1049
+FINAL_FAILED 0

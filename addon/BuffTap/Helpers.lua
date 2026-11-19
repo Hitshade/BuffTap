@@ -440,10 +440,14 @@ function B:SoloThanksBlockReason()
 end
 function B:SoloThanksAllowed() return self:SoloThanksBlockReason()==nil end
 function B:ScheduleThanksSettle()
-  if self.helperThankRetryPending or (self.helperThankRetries or 0)>=10 then return end
+  local knownPending=false
+  for _,pending in pairs(self.helperThankPending or {}) do
+    if A.Text(pending.guid) and GetTime()-pending.at<=10 then knownPending=true; break end
+  end
+  if self.helperThankRetryPending or (self.helperThankRetries or 0)>=(knownPending and 30 or 10) then return end
   self.helperThankRetries=(self.helperThankRetries or 0)+1
   self.helperThankRetryPending=true
-  self:StartTimer("thanks-settle",.2,function()
+  self:StartTimer("thanks-settle",knownPending and self.helperThankRetries>10 and .5 or .2,function()
     B.helperThankRetryPending=nil
     if B:SoloThanksAllowed() then B:ObserveSoloThanks() end
   end)
@@ -528,7 +532,7 @@ function B:ThanksAuraRecipient(aura,cache)
   end
   -- Knowing a caster's name does not prove the emote API can resolve them.
   -- An unresolved name may produce the general emote instead of a directed one.
-  return nil,"caster GUID readable; no live unit for a directed emote",true
+  return nil,"caster GUID readable; no live unit for a directed emote",true,guid
 end
 -- Read fresh helpful auras and capture the caster beside each slot. Casting
 -- keeps its separate, stricter aura reader/cache and all existing safeguards.
@@ -548,9 +552,9 @@ function B:ReadSoloThanksAuras()
       local id=A.Number(raw.spellId) and raw.spellId or nil
       local instance=A.Number(raw.auraInstanceID) and raw.auraInstanceID or nil
       if id or instance then
-        local recipient,why,retry=self:ThanksAuraRecipient(raw,casters)
+        local recipient,why,retry,casterGUID=self:ThanksAuraRecipient(raw,casters)
         out[#out+1]={spellId=id,auraInstanceID=instance,expirationTime=A.Number(raw.expirationTime) and raw.expirationTime or nil,
-          recipient=recipient,casterReason=why,casterRetry=retry}
+          recipient=recipient,casterReason=why,casterRetry=retry,casterGUID=recipient and recipient.guid or casterGUID}
       else out.incomplete=true end
     end
     if i==255 then out.incomplete=true end
@@ -579,6 +583,10 @@ function B:DispatchSoloThanks()
       end
       if wait>0 then self:StartTimer("thanks-send",wait,function() B:DispatchSoloThanks() end); return end
       table.remove(queue,1)
+      if A.Text(candidate.unit) and A.Text(candidate.guid) and (A.Call(UnitExists,candidate.unit)~=true or A.Call(UnitGUID,candidate.unit)~=candidate.guid) then
+        local replacement=self:FindCasterUnit(candidate.guid)
+        if replacement and thankName(replacement)==candidate.name then candidate.unit=replacement end
+      end
       local held=A.Text(candidate.unit) and A.Call(UnitExists,candidate.unit)==true
         and A.Call(UnitIsPlayer,candidate.unit)==true and thankName(candidate.unit)==candidate.name
         and (not candidate.guid or A.Call(UnitGUID,candidate.unit)==candidate.guid)
@@ -634,7 +642,7 @@ function B:ObserveSoloThanks(baseline)
         or (previous.name and record.name and previous.name~=record.name)
         or (A.Number(previous.expires) and A.Number(record.expires) and previous.expires>0 and record.expires>previous.expires+1))
       local pending=self.helperThankPending[key]
-      if pending and (pending.id~=record.id or GetTime()-pending.at>2) then self.helperThankPending[key]=nil; pending=nil end
+      if pending and (pending.id~=record.id or GetTime()-pending.at>(A.Text(pending.guid) and 10 or 2)) then self.helperThankPending[key]=nil; pending=nil end
       if changed or pending then
         if recipient then
           candidates[#candidates+1]=recipient; self.helperThankPending[key]=nil
@@ -644,7 +652,7 @@ function B:ObserveSoloThanks(baseline)
             unidentified=aura.casterReason.." (spell "..tostring(aura.spellId or "unreadable")..", instance "..tostring(aura.auraInstanceID or "unavailable")..")"
           end
           if aura.casterRetry then
-            self.helperThankPending[key]=pending or {id=record.id,at=GetTime()}; pendingCaster=true
+            self.helperThankPending[key]=pending or {id=record.id,at=GetTime(),guid=aura.casterGUID}; pendingCaster=true
           end
         end
       end
@@ -665,7 +673,10 @@ function B:ObserveSoloThanks(baseline)
   self.helperThankSeen=current; self.helperThankBaseline=nil
   if pendingCaster then self:ScheduleThanksSettle()
   else self.helperThankRetries=0; self.helperThankRetryPending=nil; self:CancelTimer("thanks-settle") end
-  if baseline or not old then self.helperThankStatus="Baseline ready; waiting for an incoming buff"; return end
+  if baseline or not old then
+    self.helperThankPending={}; self.helperThankRetries=0; self.helperThankRetryPending=nil; self:CancelTimer("thanks-settle")
+    self.helperThankStatus="Baseline ready; waiting for an incoming buff"; return
+  end
   if #candidates==0 then
     if unidentified then self.helperThankStatus="Incoming buff caster unavailable: "..unidentified
     elseif skipped then self.helperThankStatus="Skipped thanks: "..skipped end

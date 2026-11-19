@@ -1,3 +1,14 @@
+# BuffTap 1.26.8-beta3
+
+### Better recovery for delayed Solo Thanks
+If the game identifies an incoming buff's caster before making that player available, BuffTap now waits up to ten seconds for a verified player to thank. It can also follow the same person to a different nameplate while a thank is waiting to be sent.
+
+It still skips players whose identity cannot be verified. Thanks stays quiet during its normal restrictions, keeps its existing cooldown, and does not change your target or cast a spell. Existing buffs when starting or reloading are not thanked retroactively.
+
+Thanks to **waggz81** for the diagnostic capture. The reported live failure has not been reproduced; this beta improves recovery but cannot guarantee that an unavailable caster will become visible to the addon.
+
+The optional queue and combat estimates remain off by default, and secondary Classic/Modern icon styling from beta2 is retained.
+
 # BuffTap 1.26.8-beta2
 
 The consumable bar and optional buff queue now follow **Customization > Buff reminder > Style**. Classic and Modern square apply to the smaller icons and consumable preview too. These secondary icons remain free of reminder glows. Existing positions, clicks and selections are unchanged.
