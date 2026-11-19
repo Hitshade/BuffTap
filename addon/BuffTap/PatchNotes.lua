@@ -2,6 +2,9 @@
 local _,B=...
 -- Keep the ten most recent releases within a 24 KiB content ceiling.
 B.PatchNotes={
+ {version="1.26.11-beta1",title="Reminders that make room",items={
+  "Reminders now sit below ordinary game windows by default. Under Customization, Buff reminder, Camping and Supplies each offer Keep above other windows. Nearby keeps its own switch.",
+  "The main reminder's choice also covers queue icons, consumable icons and combat expiry warnings. Settings and popup menus stay easy to reach."},thanks="Thanks to WareWolf44 for the layering feedback."},
  {version="1.26.10",title="A quieter Warrior reminder",items={
   "Battle Shout stays out of sight when you lack rage. Its normal reminder returns when you can cast it. Mana reminders are unchanged."},thanks="Thanks to ichkruchka for the Warrior feedback."},
  {version="1.26.9",title="Useful choices, shared blacklists",items={
@@ -56,11 +59,6 @@ B.PatchNotes={
  {version="1.26.2",title="Keep smooth buffing quiet",items={
   "Fixed a smooth-buffing edge case that let repeat reminder sounds slip through between buffs or while waiting for a buff to appear.",
   "Fresh reminders after a pause can still alert you. Cleansing and resurrection keep their usual sounds."}},
- {version="1.26.1",title="Faster, smoother buffing",items={
-  "Keep the buffs flowing. Your next class buff stays ready during the global cooldown, so you can keep pressing your usual binding. A cooldown sweep shows the wait, without another alert when it ends.",
-  "SmartShift offers your previous form after class buffs, ahead of optional reminders. It also handles rapid buffing and mana recovery more reliably.",
-  "The main icon now stays dimmed with a waiting message when mana is low, even with Nearby closed. Reminders resume when you have enough.",
-  "Rapid presses are less likely to repeat a successful self buff while the game catches up. Other buffs can follow normally, and every cast still needs your input."},thanks="Thanks to Mechrite for the responsiveness suggestion and jimbo1111 for the repeated Thorns report."},
 
 }
 function B:PatchNotesUnread()

@@ -1,0 +1,16 @@
+PASS Missing-buff button shares LOW strata with other addon windows
+PASS Manual consumable buttons share LOW strata with other addon windows
+PASS Gameplay overlays default LOW and settings dialogs retain their layer
+PASS Independent overlay preference reminderOnTop
+PASS Independent overlay preference campOnTop
+PASS Independent overlay preference supplyOnTop
+PASS Independent overlay preference nearbyOnTop
+PASS Combat defers layer writes until normal refresh
+PASS Layer preferences survive profile export import and copy
+PASS Customization layer switches share compact placement and real callbacks
+PASS Late-created queue and nonsecure combat warning inherit reminder layer
+PASS Profile switch restores layers and preserves existing Nearby top preference
+FOCUSED_TOTAL 12
+FAILED 0
+COMPILED 49
+{}

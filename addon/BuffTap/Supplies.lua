@@ -330,7 +330,7 @@ function B:CreateSupplyBadge()
   if self.supplyBadge or A.Combat() then return end
   local f=CreateFrame("Button","BuffTapSupplyReminder",UIParent,"BackdropTemplate")
   self.supplyBadge=f
-  f:SetSize(40,40); f:SetFrameStrata("MEDIUM"); f:SetClampedToScreen(true); f:SetMovable(true)
+  f:SetSize(40,40); self:SetGameplayLayer(f,"supply"); f:SetClampedToScreen(true); f:SetMovable(true)
   f:RegisterForDrag("LeftButton"); f:RegisterForClicks("LeftButtonUp","RightButtonUp")
   f.icon=f:CreateTexture(nil,"ARTWORK"); f.art=f.icon
   f.glow=f:CreateTexture(nil,"OVERLAY"); f.glow:SetAllPoints(); f.glow:SetTexture("Interface\\Buttons\\CheckButtonHilight"); f.glow:SetBlendMode("ADD")
@@ -379,6 +379,7 @@ function B:StyleSupplyLabel(fs,frame)
 end
 
 function B:StyleSupplyBadge(f)
+  self:SetGameplayLayer(f,"supply")
   local d=self.db
   -- Its own frame style, text and glow, set under Customization > Supplies.
   local style=d.supplyIconStyle=="modern" and "modern" or "classic"

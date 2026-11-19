@@ -307,6 +307,7 @@ end
 function B:CreateCampReminder()
   if self.campReminderIcon or A.Combat() then return end
   local icon=CreateFrame("Button","BuffTapCampReminder",UIParent,"BackdropTemplate")
+  self:SetGameplayLayer(icon,"camp")
   self.campReminderIcon=icon; icon:SetSize(40,40); icon:SetClampedToScreen(true); icon:SetMovable(true); icon:RegisterForDrag("LeftButton"); icon:RegisterForClicks("LeftButtonUp","RightButtonUp")
   backdrop(icon)
   icon.art=icon:CreateTexture(nil,"ARTWORK"); icon.art:SetPoint("TOPLEFT",4,-4); icon.art:SetPoint("BOTTOMRIGHT",-4,4)
@@ -511,6 +512,7 @@ function B:UpdateCamping()
   if needed then self:CreateCampReminder() end
   local icon=self.campReminderIcon
   if icon then
+    self:SetGameplayLayer(icon,"camp")
     if not icon.dragging then icon:ClearAllPoints(); icon:SetPoint("CENTER",UIParent,"CENTER",self.db.campX,self.db.campY) end
     local item=needsBag and not needsCamp and self.SleepingBag.item or 279981
     icon.art:SetTexture(read(C_Item and C_Item.GetItemIconByID,item) or (item==211527 and 133662 or 135805))

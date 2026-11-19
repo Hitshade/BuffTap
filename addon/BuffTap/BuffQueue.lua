@@ -120,7 +120,7 @@ function B:CreateQueueButton(index)
   if self.queueButtons[index] then return self.queueButtons[index] end
   local ok,b=pcall(CreateFrame,"Button","BuffTapQueueButton"..index,UIParent,"SecureActionButtonTemplate,SecureHandlerStateTemplate")
   if not ok or not b then return nil end
-  b:Hide(); b:SetFrameStrata("MEDIUM"); b:SetClampedToScreen(true)
+  b:Hide(); self:SetGameplayLayer(b,"buff"); b:SetClampedToScreen(true)
   -- Up-only clicks need useOnKeyDown=false; otherwise the ActionButtonUseKeyDown CVar makes the
   -- secure template act on key-down only and the release click casts nothing.
   b:RegisterForClicks("LeftButtonUp"); b:SetAttribute("useOnKeyDown",false)

@@ -4,7 +4,7 @@
 
 local _, B = ...
 _G.BuffTap = B
-B.version = "1.26.10"
+B.version = "1.26.11-beta1"
 B.API = {}
 local A = B.API
 
@@ -86,6 +86,27 @@ function B:NormalizeBindings(values)
   return keys
 end
 
+-- Gameplay overlays yield to ordinary panels unless explicitly raised.
+function B:GameplayStrata(kind)
+  local key=kind=="camp" and "campOnTop" or kind=="supply" and "supplyOnTop" or kind=="nearby" and "nearbyOnTop" or "reminderOnTop"
+  return self.db and self.db[key]==true and "DIALOG" or "LOW"
+end
+function B:SetGameplayLayer(frame,kind)
+  if not frame or A.Combat() then return end
+  local strata=self:GameplayStrata(kind)
+  if frame.buffTapStrata~=strata then frame:SetFrameStrata(strata); frame.buffTapStrata=strata end
+end
+function B:ApplyGameplayLayers()
+  if A.Combat() or not self.db then return end
+  self:SetGameplayLayer(self.button,"buff")
+  self:SetGameplayLayer(self.manualConsumableHolder,"buff")
+  self:SetGameplayLayer(self.combatExpiryFrame,"buff")
+  for _,frame in ipairs(self.queueButtons or {}) do self:SetGameplayLayer(frame,"buff") end
+  self:SetGameplayLayer(self.campReminderIcon,"camp")
+  self:SetGameplayLayer(self.supplyBadge,"supply")
+  self:SetGameplayLayer(self.nearbyFrame,"nearby")
+end
+
 function B:InitDB()
   if type(BuffTapDB) ~= "table" then BuffTapDB = {} end
   self.db = self:ProfileSettings(BuffTapDB)
@@ -114,7 +135,7 @@ function B:InitDB()
     weaponReminder=true, weaponMainHand=true, weaponOffHand=true,
     consumablesPauseResting=false, weaponsPauseResting=false, weaponSkipEmpty=false, helperTrackingFollow=true,
     weaponApply=false, weaponReplace=false, weaponChoices={}, weaponCoatings={}, weaponSeconds=60,
-    nearbyEnabled=false, nearbyBuffing=true, nearbyShowAll=false, nearbyInvites=true, nearbyLocked=false, nearbyOnTop=false, nearbyFont="default", nearbyFontSize=0, nearbyFontOutline="none", nearbyShowLevel=false, nearbyMarkSocial=true, nearbyHideHeader=false, nearbyKeepLine=true, nearbyWhileResting=false, nearbyHoldShort=false, nearbyCastResult=true, nearbyAnimate=true, nearbyReturnFavor=true, nearbyKeys={}, effectUrgency=false, effectOnce=false, nearbyManaFloor=0, consumablesInstanceOnly=false, buffPets=false, helperDismissMinutes=10, helperThankDelay=0, readyCheckTopUp=true, pauseNotes=true, blockIgnored=true, blacklistTargets=true, blacklistInInstances=true, blockedPlayers={}, blockedGuilds={}, nearbyX=240, nearbyY=0, pvpProtection=true, helperDismiss=true, helperBounce=false, helperTracking=false, helperTreasure=false, helperCoverage=false,
+    nearbyEnabled=false, nearbyBuffing=true, nearbyShowAll=false, nearbyInvites=true, nearbyLocked=false, nearbyOnTop=false, reminderOnTop=false, campOnTop=false, supplyOnTop=false, nearbyFont="default", nearbyFontSize=0, nearbyFontOutline="none", nearbyShowLevel=false, nearbyMarkSocial=true, nearbyHideHeader=false, nearbyKeepLine=true, nearbyWhileResting=false, nearbyHoldShort=false, nearbyCastResult=true, nearbyAnimate=true, nearbyReturnFavor=true, nearbyKeys={}, effectUrgency=false, effectOnce=false, nearbyManaFloor=0, consumablesInstanceOnly=false, buffPets=false, helperDismissMinutes=10, helperThankDelay=0, readyCheckTopUp=true, pauseNotes=true, blockIgnored=true, blacklistTargets=true, blacklistInInstances=true, blockedPlayers={}, blockedGuilds={}, nearbyX=240, nearbyY=0, pvpProtection=true, helperDismiss=true, helperBounce=false, helperTracking=false, helperTreasure=false, helperCoverage=false,
     helperDiscovery=false, helperThanks=false, helperThankEmote="THANK", helperQuick=false, helperTracker=0, helperPet=false, helperHealthstone=false, helperSoulstone=false, helperOath=false, oathAssigned={}, soulstoneParty="healer", soulstoneRaid="remind", soulstoneAssigned="", soulstoneAssignedGUID="", helperDemon=0,
     raidGroups={true,true,true,true,true,true,true,true},
     buffRoles={}, buffSelf={}, blessingRoleChoices={}, blessingRolePriorities={}, roleMarks={}, roleGuess=false, helperThanksResting=false,

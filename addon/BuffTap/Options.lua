@@ -2417,7 +2417,7 @@ function B:Options()
         B.db.effectUrgency=false; B.db.effectOnce=false
       end
       if not A.Combat() then B.db.manualConsumablesDetached=false; B.db.manualConsumablesX=0; B.db.manualConsumablesY=0 end
-      if not A.Combat() then B.db.showReminder=true; B.db.size=64; B.db.opacity=1; B:ResetReminderPosition("buff"); B.db.glow=true; B.db.pulse=false; B.db.effectStyle=nil; B.db.effectColor="gold"; B.db.effectSpeed="normal"; B.db.showBuffName=false; B.db.showTargetName=true; B.db.showTimer=false; B.db.showGroupBadge=true; B.db.labelFont="default"; B.db.labelColor="default"; B.db.labelSize=0; B.db.labelOutline=B:GameTextOutline(); B.db.labelGap=5; B.appearance=nil; B:RequestRefresh("reset look",0); B:Options() end
+      if not A.Combat() then B.db.reminderOnTop=false; B.db.showReminder=true; B.db.size=64; B.db.opacity=1; B:ResetReminderPosition("buff"); B.db.glow=true; B.db.pulse=false; B.db.effectStyle=nil; B.db.effectColor="gold"; B.db.effectSpeed="normal"; B.db.showBuffName=false; B.db.showTargetName=true; B.db.showTimer=false; B.db.showGroupBadge=true; B.db.labelFont="default"; B.db.labelColor="default"; B.db.labelSize=0; B.db.labelOutline=B:GameTextOutline(); B.db.labelGap=5; B.appearance=nil; B:RequestRefresh("reset look",0); B:Options() end
     end)
     T.Confirm(f.resetLookButton)
     local function textChange(key,value)

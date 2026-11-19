@@ -1420,8 +1420,7 @@ function B:UpdateNearbyWindow()
   local f=self.nearbyFrame; if not f or self.nearbySetupError then return end
   local right=self.db.nearbyButtonSide=="right"
   -- A glanceable list belongs under Blizzard's panels (professions, bags); players can keep it on top.
-  local strata=self.db.nearbyOnTop==true and "DIALOG" or "LOW"
-  if f.strata~=strata then f:SetFrameStrata(strata); f.strata=strata end
+  self:SetGameplayLayer(f,"nearby")
   local fontPath,fontSize,fontFlags=self:NearbyFont()
   local layoutKey=table.concat({WIDTH,ROWS,scale,self.db.nearbyOpacity,right and "R" or "L",fontPath,fontSize,fontFlags},":")
   if f.layoutKey~=layoutKey then

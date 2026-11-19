@@ -1,3 +1,13 @@
+# BuffTap 1.26.11-beta1
+
+### Overlay layering
+- Adds shared profile preferences reminderOnTop, campOnTop and supplyOnTop (false by default); existing nearbyOnTop is preserved. GameplayStrata maps disabled to LOW and enabled to DIALOG. Main reminder, queue, manual consumables (attached or detached) and combat-expiry warnings share reminderOnTop; camp, supply and Nearby remain independent.
+- Applies cached strata to existing frames after profile/visual changes and normal out-of-combat refresh. Protected frame writes are guarded in combat. First creation of the separate nonsecure combat-warning frame uses the saved layer even during combat. Settings, trays, menus and confirmations retain their intentional higher strata.
+- Adds uniform Keep above other windows switches at x230/y-554 above Move/Reset in the three reminder editors, beside Detach consumables on the main editor. Preview guidance is shortened to keep the row clear. Nearby retains its Position placement, aligned to x230. Reset appearance/window defaults clears each scope's switch. Profile copies and exports include the new preferences.
+- No casting, buff selection or sound-policy changes. No direct settings-file edits. Existing Nearby opt-in stays enabled; other overlays adopt LOW unless explicitly raised.
+- Validation: 12 focused checks passed, zero failed (tests/overlay-layers-12611-focused.txt), covering actual creation, independent layer scopes, real UI callbacks/coordinates, copy/export/import/profile switching, combat deferral and late-created queue/nonsecure warning inheritance. All 49 TOC modules compile; ten in-game entries retained. No full suite or live Auction House rendering claim.
+- Thanks to WareWolf44 for the report. Start GitHub review: #6/#5/#4 closed, no new issue scope.
+
 # BuffTap 1.26.10
 
 ### Fixed

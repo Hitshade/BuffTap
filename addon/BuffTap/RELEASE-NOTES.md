@@ -1,3 +1,14 @@
+# BuffTap 1.26.11-beta1
+
+### Let game windows take priority
+The buff reminder, Camping and Supplies now use a lower display layer by default, helping ordinary game windows appear above them. Each has a **Keep above other windows** switch under its Customization tab. The switches sit just above Move reminders and Reset look & position. Nearby keeps its existing switch under Position.
+
+Your main reminder's choice also controls the smaller buff queue, consumable icons (including detached icons) and combat expiry warnings. Camping, Supplies and Nearby can each be raised separately. Existing Nearby choices are kept.
+
+Settings, setup trays and popup menus retain their higher layers. These choices save with profiles; resetting a reminder's appearance returns it to the lower layer. Buffing and sound behavior are unchanged.
+
+Thanks to WareWolf44 for the feedback. Local beta for review, especially over the Auction House, bags and map; not published.
+
 # BuffTap 1.26.10
 
 Warriors no longer see the grey waiting-for-power icon when they lack rage for Battle Shout. When enough rage is available, its usual missing-buff reminder returns. Your existing settings, mana reminders and combat restrictions stay the same.

@@ -129,3 +129,5 @@ import test_blacklist_sharing_1269
 print('FINAL_TOTAL',len(__import__('test_bufftap').tests))
 
 import test_warrior_rage_wait_12610
+
+import test_overlay_layers_12611

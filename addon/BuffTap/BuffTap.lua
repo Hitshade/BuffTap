@@ -139,7 +139,7 @@ function B:CreateButton()
   if not okCreate or not b then self.setupError="secure action button creation failed"; return end
   self.button=b
   b:Hide()
-  b:SetFrameStrata("MEDIUM")
+  self:SetGameplayLayer(b,"buff")
   b:SetClampedToScreen(true)
   b:RegisterForClicks("AnyDown","AnyUp")
   b:SetAttribute("useOnKeyDown",true)
@@ -678,6 +678,7 @@ function B:Refresh(captureDiagnostics)
   local createOK,createErr=pcall(self.CreateButton,self)
   if not createOK then self.setupError="button setup: "..publicError(createErr) end
   if self.setupError then self.reason=self.setupError; self:ProfileRecord(profileStart); return end
+  self:ApplyGameplayLayers()
   if self.bookDirty or not self.book then
     local bookOK,bookErr=pcall(self.ScanBook,self)
     if not bookOK then

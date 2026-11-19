@@ -60,7 +60,7 @@ function B:CreateCombatExpiryFrame()
   if self.combatExpiryFrame then return self.combatExpiryFrame end
   -- Plain frame, no secure template and no anchor to the secure button: it can show and move in combat.
   local f=CreateFrame("Frame","BuffTapCombatExpiry",UIParent)
-  f:SetFrameStrata("MEDIUM"); f:SetClampedToScreen(true); f:EnableMouse(false); f:Hide()
+  f:SetFrameStrata(self:GameplayStrata("buff")); f:SetClampedToScreen(true); f:EnableMouse(false); f:Hide()
   f.icon=f:CreateTexture(nil,"ARTWORK"); f.icon:SetAllPoints()
   f.timer=f:CreateFontString(nil,"OVERLAY","GameFontHighlightLarge"); f.timer:SetPoint("CENTER",f,"CENTER",0,0)
   f.label=f:CreateFontString(nil,"OVERLAY","GameFontHighlightSmall"); f.label:SetPoint("TOP",f,"BOTTOM",0,-4)

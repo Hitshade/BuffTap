@@ -45,6 +45,7 @@ function B:VisualSetting(key,value)
   self.db[key]=value; self:NormalizeVisualOptions()
   if key:match("^camp") then self:NormalizeCamping(); self:UpdateCamping() end
   if key:match("^supply") and self.UpdateSupplyBadge then self:UpdateSupplyBadge() end
+  self:ApplyGameplayLayers()
   self.appearance=nil; self:RequestRefresh("appearance preference",.05)
   -- Interface colour and scale: coalesce, so dragging the colour wheel or the scale slider
   -- does not rebuild the whole window on every tick.
@@ -231,14 +232,21 @@ function B:BuildReminderEditor(parent,kind,ui)
   local move=ui.button(parent,"Move reminders",26,actionY,184,function() B:MoveAllFrames(sup and "supply" or camp and "camp" or "buff") end)
   if not camp then f.moveReminders=move; place(f.resetLookButton,parent,230,actionY,184,26); f.resetLookButton:SetText(self:Text("Reset look & position")) end
   if sup then T.Confirm(ui.button(parent,"Reset look & position",230,actionY,184,function()
-    for _,k in ipairs({"supplySize","supplyOpacity","supplyEffectStyle","supplyEffectColor","supplyEffectSpeed","supplyTextFont","supplyTextSize","supplyTextColor","supplyTextOutline","supplyTextGap","supplyShowName","supplyShowCount","supplyIconStyle","supplyX","supplyY"}) do B.db[k]=nil end
+    for _,k in ipairs({"supplyOnTop","supplySize","supplyOpacity","supplyEffectStyle","supplyEffectColor","supplyEffectSpeed","supplyTextFont","supplyTextSize","supplyTextColor","supplyTextOutline","supplyTextGap","supplyShowName","supplyShowCount","supplyIconStyle","supplyX","supplyY"}) do B.db[k]=nil end
     B:NormalizeSupplyReminder(); B:UpdateSupplyBadge(); B:Options()
   end))
   elseif camp then T.Confirm(ui.button(parent,"Reset look & position",230,actionY,184,function()
-    for k,v in pairs({campSize=40,campOpacity=1,campIconStyle="classic",campEffectStyle="soft",campEffectColor="gold",campEffectSpeed="normal",campTextFont="default",campTextSize=0,campTextColor="white",campTextOutline="outline",campTextGap=4,campShowCountdown=true,campShowStacks=true}) do B.db[k]=v end
+    for k,v in pairs({campOnTop=false,campSize=40,campOpacity=1,campIconStyle="classic",campEffectStyle="soft",campEffectColor="gold",campEffectSpeed="normal",campTextFont="default",campTextSize=0,campTextColor="white",campTextOutline="outline",campTextGap=4,campShowCountdown=true,campShowStacks=true}) do B.db[k]=v end
     B:ResetReminderPosition("camp"); B:NormalizeCamping(); B:UpdateCamping(); B:Options()
   end)) end
-  if camp then ui.label(parent,"The preview does not move or activate your live reminder.",26,-554,"GameFontDisableSmall",404) end
+  if camp then ui.label(parent,"Preview only; live reminder stays put.",26,-554,"GameFontDisableSmall",180) end
+  local layerKey=sup and "supplyOnTop" or camp and "campOnTop" or "reminderOnTop"
+  f.overlayLayers=f.overlayLayers or {}
+  local layerSwitch=ui.check(parent,"Keep above other windows",230,-554,function(c) B:VisualSetting(layerKey,c:GetChecked()==true) end)
+  f.overlayLayers[layerKey]=layerSwitch
+  layerSwitch:HookScript("OnEnter",function(control)
+    T.Tooltip(control,B:Text("Keep above other windows"),B:Text(camp and "Off: normal game windows open above this reminder. On: this reminder uses a higher layer. Changes are applied outside combat." or "Off: normal game windows open above the reminder. On: it uses a higher layer. Also applies to buff queue icons, consumable icons (including detached icons) and combat expiry warnings. Changes are applied outside combat."))
+  end)
   if not camp then
     f.detachConsumables=ui.check(parent,"Detach consumables",26,-554,function(c)
       if B:SetManualConsumablesDetached(c:GetChecked()==true) then B:UpdateRefinedOptions() end
@@ -496,7 +504,7 @@ function B:BuildNearbyAppearance(ui,p)
   f.nearbyCastResult:HookScript("OnEnter",function(s) T.Tooltip(s,B:Text("Show whether each cast worked"),B:Text("After you buff or cleanse a Nearby player, their row briefly turns green with a tick, or red with the game's reason, such as out of range.")) end)
   f.nearbyCastResult:HookScript("OnLeave",function() if GameTooltip then GameTooltip:Hide() end end)
   f.nearbyLock=ui.check(p,"Lock window position",26,-378,function(c) B.db.nearbyLocked=c:GetChecked()==true; if B.nearbyFrame then B:UpdateNearbyWindow() end end)
-  f.nearbyOnTop=ui.check(p,"Keep above other windows",226,-378,function(c)
+  f.nearbyOnTop=ui.check(p,"Keep above other windows",230,-378,function(c)
     if A.Combat() then return end
     B.db.nearbyOnTop=c:GetChecked()==true; if B.nearbyFrame then B:UpdateNearbyWindow() end
   end)
@@ -504,7 +512,7 @@ function B:BuildNearbyAppearance(ui,p)
   f.nearbyOnTop:SetScript("OnLeave",function() if GameTooltip then GameTooltip:Hide() end end)
   ui.button(p,"Move reminders",26,-416,190,function() B:MoveAllFrames("nearby") end)
   T.Confirm(ui.button(p,"Restore window defaults",450,-416,234,function()
-    B.db.nearbyScale=1; B.db.nearbyRows=5; B.db.nearbyWidth=240; B.db.nearbyOpacity=.5; B.db.nearbyX=240; B.db.nearbyY=0; B.db.nearbyButtonSide="left"; B.db.nearbyFont="default"; B.db.nearbyFontSize=0; B.db.nearbyFontOutline="none"
+    B.db.nearbyOnTop=false; B.db.nearbyScale=1; B.db.nearbyRows=5; B.db.nearbyWidth=240; B.db.nearbyOpacity=.5; B.db.nearbyX=240; B.db.nearbyY=0; B.db.nearbyButtonSide="left"; B.db.nearbyFont="default"; B.db.nearbyFontSize=0; B.db.nearbyFontOutline="none"
     if B.nearbyFrame then B.nearbyFrame.positionX=nil; B.nearbyFrame.positionY=nil; B:UpdateNearbyWindow() end; B:Options()
   end))
   ui.label(p,"Drag the title bar to move the window. A hidden title bar comes back while the mouse is over it.",26,-610,"GameFontDisableSmall",650)
@@ -764,6 +772,7 @@ function B:UpdateRefinedOptions()
   if f.rangeCheck then f.rangeCheck:SetChecked(self.db.showOutOfRange==true) end
   for kind,control in pairs(f.categorySounds or {}) do T.SoundSpeaker(control,self:AlertCategoryEnabled(kind)) end
   if f.queueCheck then f.queueCheck:SetChecked(self.db.buffQueue==true) end
+  for key,control in pairs(f.overlayLayers or {}) do control:SetChecked(self.db[key]==true) end
   f.reduceMotion:SetChecked(self.db.optionsReduceMotion); f.nearbyLock:SetChecked(self.db.nearbyLocked==true); if f.nearbyAnimate then f.nearbyAnimate:SetChecked(self.db.nearbyAnimate==true) end; if f.nearbyFavor then f.nearbyFavor:SetChecked(self.db.nearbyReturnFavor~=false) end; if f.nearbyPvp then f.nearbyPvp:SetChecked(self.db.pvpProtection==true) end; if f.nearbyOnTop then f.nearbyOnTop:SetChecked(self.db.nearbyOnTop==true) end; if f.nearbyShowLevel then f.nearbyShowLevel:SetChecked(self.db.nearbyShowLevel==true) end; if f.nearbyMarkSocial then f.nearbyMarkSocial:SetChecked(self.db.nearbyMarkSocial~=false) end; if f.nearbyWhileResting then f.nearbyWhileResting:SetChecked(self.db.nearbyWhileResting==true) end; if f.nearbyCastResult then f.nearbyCastResult:SetChecked(self.db.nearbyCastResult~=false) end; if f.socialAlert then f.socialAlert:SetChecked(self.db.nearbySocialAlert==true); f.socialFriends:SetChecked(self.db.nearbySocialFriends~=false); f.socialGuild:SetChecked(self.db.nearbySocialGuild~=false); f.socialFriends:SetEnabled(self.db.nearbySocialAlert==true); f.socialGuild:SetEnabled(self.db.nearbySocialAlert==true) end; if f.nearbyHoldShort then f.nearbyHoldShort:SetChecked(self.db.nearbyHoldShort==true); f.nearbyHoldShort:SetEnabled(not (self.db.pauseResting and self.db.nearbyWhileResting~=true)) end; if f.nearbyHideHeader then f.nearbyHideHeader:SetChecked(self.db.nearbyHideHeader==true); f.nearbyKeepLine:SetChecked(self.db.nearbyKeepLine~=false); f.nearbyKeepLine:SetEnabled(self.db.nearbyHideHeader==true) end; if f.nearbyFullNames then f.nearbyFullNames:SetChecked(self.db.nearbyFullNames~=false) end
   if f.nearbyFontButton then
     for _,v in ipairs(self:NearbyFonts()) do if v.key==self.db.nearbyFont then f.nearbyFontButton:SetText(self:Text(v.name)) end end
