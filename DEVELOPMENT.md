@@ -207,3 +207,6 @@ Beta1 local install independently verified: all 139 raw source files and 134 arc
 
 ## 1.26.11 stable preparation
 Owner accepted local layering beta and authorized publication plus reply to WareWolf44. Identity/notes only since reviewed beta; no additional tests. Prior 12 focused checks remain evidence.
+
+## 1.26.11 publication receipt
+Published GitHub release 451378435 from 47dccc5, archive SHA256 4c72e91c3db87f45752bb3401349489b1b4c7ebea0447e553e52d4932b17edb6 matched asset digest. CurseForge file 9700153 submitted as Release for 1.60.1, automatic publication after approval; last observed Uploading in persisted file list. Posted direct reply to WareWolf44 explaining lower default, Buff reminder switch above Move/Reset, dependent icons and independent other overlays; UI confirmed Your reply was posted. Stable installed and source bytes matched. No settings touched or extra tests run. Prepublication GitHub #6/#5/#4 remain closed.
