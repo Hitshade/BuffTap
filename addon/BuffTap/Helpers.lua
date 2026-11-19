@@ -565,7 +565,7 @@ function B:ReadSoloThanksAuras()
         local recipient,why,retry,casterGUID=self:ThanksAuraRecipient(raw,casters)
         local identity=recipient and recipient.guid or casterGUID
         local lookup=self.thanksLookup
-        out[#out+1]={casterLookup=lookup and lookup.guid==identity and lookup or nil,spellId=id,auraInstanceID=instance,expirationTime=A.Number(raw.expirationTime) and raw.expirationTime or nil,
+        out[#out+1]={name=A.Text(raw.name) and raw.name or nil,casterLookup=lookup and lookup.guid==identity and lookup or nil,spellId=id,auraInstanceID=instance,expirationTime=A.Number(raw.expirationTime) and raw.expirationTime or nil,
           recipient=recipient,casterReason=why,casterRetry=retry,casterGUID=recipient and recipient.guid or casterGUID}
       else out.incomplete=true end
     end
@@ -617,7 +617,9 @@ function B:DispatchSoloThanks()
           -- generated API documentation naming this return value success.
           if not A.Public(result) then self.helperThankStatus="Emote result restricted or unreadable; no retry"
           elseif result==true then self.helperThankStatus="Client restricted the emote; no retry"
-          else self.helperThankStatus="Thank emote requested for "..candidate.name.." ("..candidate.identity..")"; if self.RememberReportName then self:RememberReportName(candidate.name) end end
+          else
+            if self.DropManualThanks and candidate.guid then self:DropManualThanks(candidate.guid) end
+            self.helperThankStatus="Thank emote requested for "..candidate.name.." ("..candidate.identity..")"; if self.RememberReportName then self:RememberReportName(candidate.name) end end
         else self.helperThankStatus="Emote call failed; no retry" end
         if #queue>0 then self:StartTimer("thanks-send",1,function() B:DispatchSoloThanks() end) end
         return
@@ -676,6 +678,7 @@ function B:ObserveSoloThanks(baseline)
             unidentified=aura.casterReason.." (spell "..tostring(aura.spellId or "unreadable")..", instance "..tostring(aura.auraInstanceID or "unavailable")..")"
           end
           if aura.casterRetry then
+            if self.OfferManualThanks then self:OfferManualThanks(aura) end
             self.helperThankPending[key]=pending or {id=record.id,at=GetTime(),guid=aura.casterGUID,resolution=resolution}; pendingCaster=true
           end
         end

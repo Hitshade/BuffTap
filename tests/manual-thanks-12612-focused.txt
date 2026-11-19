@@ -1,0 +1,60 @@
+PASS Reported name-only driveby never calls the emote API
+PASS Readable name never goes to emote API even if API would accept it
+PASS Native GUID lookup resolves verified live provider
+PASS Missing or secret native token remains silent nil
+PASS Missing or secret native token remains silent {secret=true}
+PASS Throwing native token lookup remains silent
+PASS Wrong GUID returned by native token lookup is refused
+PASS Native token still needs a current unit
+PASS Native lookup can find a unit outside enumerated plate list
+PASS Briefly delayed native unit can settle into directed thanks
+PASS Legacy queued name-only record cannot emit a general emote
+PASS Caster leaving before queued dispatch cannot emit a general emote
+PASS Unavailable caster cannot fall back to current hostile or other target
+PASS Known caster appearing after two seconds is thanked exactly once
+PASS Known caster appearing after the ten-second window is not thanked
+PASS Late target with the wrong caster identity is never thanked
+PASS Combat cancels extended pending caster resolution
+PASS Thanks disabled during extended wait cannot send later
+PASS Initial unresolved baseline is not thanked when its caster appears later
+PASS Delayed thanks can rebind the same player to a different live token
+PASS Thanks diagnostics show Warrior settings and current activity without extra gates
+PASS Unresolved caster diagnostics link lookup to spell and retry window
+PASS Status ages are distinguishable from fresh observations
+PASS Thanks timeout is retained in bounded history without names or GUIDs
+PASS Actual emote API attempt is recorded separately from eligibility
+PASS Hidden-name reports anonymize an arbitrary profile label
+PASS Debug and full checkup both include detailed thanks observations
+PASS Unreadable activity APIs are diagnostic only and stay safe
+PASS Thanks caster lookup records native and group result paths
+PASS Thanks diagnostics tolerate unavailable class identity
+PASS Pending thanks resolves immediately on NAME_PLATE_UNIT_ADDED
+PASS Pending thanks resolves immediately on PLAYER_TARGET_CHANGED
+PASS Pending thanks resolves immediately on UPDATE_MOUSEOVER_UNIT
+PASS Pending thanks resolves immediately on PLAYER_FOCUS_CHANGED
+PASS Unrelated unit events do not rescan pending auras
+PASS Event retry respects gate combat=true
+PASS Event retry respects gate BuffTap.db.helperThanks=false
+PASS Event retry respects gate IsInGroup=function() return true end
+PASS Event cannot extend expired ten second window
+PASS No pending incident means no scan on unit changes
+PASS Diagnostic first lookup survives retries and timeout without private ID
+PASS Known nameplate departure is recorded but cannot bypass send validation
+PASS Failed event observation clears temporary unit hint
+PASS Manual thanks defaults off
+PASS Manual thanks offers immediately and sends once
+PASS Manual thanks merges received buffs
+PASS Manual thanks refuses changed identity
+PASS Manual thanks needs readable full name
+PASS Manual resting rule with global pause true
+PASS Manual resting rule with global pause false
+PASS Manual thanks allows resting opt in
+PASS Real buff action takes priority over manual thanks
+PASS Manual expiry is bounded
+PASS Right click dismiss survives automatic retry
+PASS Manual wins cancels automatic pending and queued thanks
+PASS Message reset and literal substitution
+PASS Manual controls fit existing Helpers card
+PASS Actual unresolved aura offers manual before retry timeout
+PASS Automatic thanks removes manual fallback
+FOCUSED_TOTAL 59 FAILURES 0

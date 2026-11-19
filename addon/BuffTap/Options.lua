@@ -1335,6 +1335,28 @@ function B:BuildHelperPage(parent)
     B.db.helperThanksResting=c:GetChecked()==true; B.helperThankSeen=nil; B:ObserveSoloThanks(true); B:Options()
   end)
   addHelp(f.thanksResting,L("Keep thanking while resting"),L("Thanks continue in cities and inns even when Pause reminders while resting is on."))
+  f.manualThanks=check(th,L("Offer a manual thank-you"),28,-202,function(c)
+    if A.Combat() then return end
+    B.db.manualThanks=c:GetChecked()==true; B:UpdateManualThanks(); B:Options()
+  end)
+  addHelp(f.manualThanks,"Offer a manual thank-you","If an incoming buff giver cannot be reached for automatic thanks, offer a click-only whisper once their full name is known. Appears when no buff action is ready, expires after 30 seconds, and follows Keep thanking while resting. Nothing is sent through your buff binding.")
+  f.thankMessage=editbox(th,28,-232,222,false); f.thankMessage:SetFontObject(T.fonts.Small); f.thankMessage:SetJustifyH("LEFT"); f.thankMessage:SetMaxLetters(180)
+  f.thankMessage:SetScript("OnEnterPressed",function(control)
+    local ok,why=B:SetManualThanksMessage(control:GetText())
+    if not ok and why then B.Print(why) end
+    control:ClearFocus(); B:Options()
+  end)
+  f.thankMessage:SetScript("OnEscapePressed",function(control) control:ClearFocus(); B:Options() end)
+  f.thankMessage:SetScript("OnEnter",function(control)
+    local sample={buffs={[1]=L("Arcane Intellect")}}
+    T.Tooltip(control,L("Thank-you whisper"),L("Use [buff] for the received buff names. Press Enter to save. Preview: %s",B:ManualThanksText(sample) or L("Message is too long.")))
+  end)
+  f.thankMessage:SetScript("OnLeave",function() if GameTooltip then GameTooltip:Hide() end end)
+  f.thankMessageReset=button(th,L("Reset"),258,-230,80,function()
+    if A.Combat() then return end
+    B:SetManualThanksMessage(""); B:Options()
+  end)
+  addHelp(f.thankMessageReset,"Reset thank-you message","Restores Thank you for [buff]!")
   label(th,L("Solo response emote"),30,-266,"GameFontNormal",200)
   label(th,L("Delay"),240,-266,"GameFontNormal",98)
   f.thankDelay=selector(th,"",238,-286,100,function() return B:ThankDelayChoices() end,function(v) B.db.helperThankDelay=v; B:Options() end)
@@ -1552,6 +1574,12 @@ function B:UpdateHelperOptions()
   if not f.requestMessage:HasFocus() then f.requestMessage:SetText(self.db.requestMessage~="" and self.db.requestMessage or self:Text("Hi! Could I get %s, please? Thank you!")) end
   for key,c in pairs(f.requestChecks) do c:SetChecked(self:RequestEnabled(self:FindBuff(key) or {key=key})); c:SetEnabled(self.db.nearbyRequests==true) end
   f.thanksResting:SetChecked(self.db.helperThanksResting==true)
+  if f.manualThanks then
+    f.manualThanks:SetChecked(self.db.manualThanks==true); f.manualThanks:SetEnabled(self.db.helperThanks==true)
+    if not f.thankMessage:HasFocus() then f.thankMessage:SetText(self:ManualThanksTemplate()) end
+    if self.db.manualThanks==true and self.db.helperThanks==true then f.thankMessage:Enable() else f.thankMessage:Disable() end
+    f.thankMessageReset:SetEnabled(self.db.manualThanks==true and self.db.helperThanks==true)
+  end
   f.thankDelay:SetText(self:ChoiceName(self:ThankDelayChoices(),self.db.helperThankDelay or 0))
   f.dismissMinutes:SetText(self:ChoiceName(self:DismissChoices(),self.db.helperDismissMinutes or 0)); f.dismissMinutes:SetEnabled(self.db.helperDismiss==true)
   local classCoords=CLASS_ICON_TCOORDS and CLASS_ICON_TCOORDS[class]

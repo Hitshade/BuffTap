@@ -4,7 +4,7 @@
 
 local _, B = ...
 _G.BuffTap = B
-B.version = "1.26.12-beta1"
+B.version = "1.26.12-beta2"
 B.API = {}
 local A = B.API
 
@@ -99,6 +99,7 @@ end
 function B:ApplyGameplayLayers()
   if A.Combat() or not self.db then return end
   self:SetGameplayLayer(self.button,"buff")
+  self:SetGameplayLayer(self.manualThanksButton,"buff")
   self:SetGameplayLayer(self.manualConsumableHolder,"buff")
   self:SetGameplayLayer(self.combatExpiryFrame,"buff")
   for _,frame in ipairs(self.queueButtons or {}) do self:SetGameplayLayer(frame,"buff") end
@@ -136,7 +137,7 @@ function B:InitDB()
     consumablesPauseResting=false, weaponsPauseResting=false, weaponSkipEmpty=false, helperTrackingFollow=true,
     weaponApply=false, weaponReplace=false, weaponChoices={}, weaponCoatings={}, weaponSeconds=60,
     nearbyEnabled=false, nearbyBuffing=true, nearbyShowAll=false, nearbyInvites=true, nearbyLocked=false, nearbyOnTop=false, reminderOnTop=false, campOnTop=false, supplyOnTop=false, nearbyFont="default", nearbyFontSize=0, nearbyFontOutline="none", nearbyShowLevel=false, nearbyMarkSocial=true, nearbyHideHeader=false, nearbyKeepLine=true, nearbyWhileResting=false, nearbyHoldShort=false, nearbyCastResult=true, nearbyAnimate=true, nearbyReturnFavor=true, nearbyKeys={}, effectUrgency=false, effectOnce=false, nearbyManaFloor=0, consumablesInstanceOnly=false, buffPets=false, helperDismissMinutes=10, helperThankDelay=0, readyCheckTopUp=true, pauseNotes=true, blockIgnored=true, blacklistTargets=true, blacklistInInstances=true, blockedPlayers={}, blockedGuilds={}, nearbyX=240, nearbyY=0, pvpProtection=true, helperDismiss=true, helperBounce=false, helperTracking=false, helperTreasure=false, helperCoverage=false,
-    helperDiscovery=false, helperThanks=false, helperThankEmote="THANK", helperQuick=false, helperTracker=0, helperPet=false, helperHealthstone=false, helperSoulstone=false, helperOath=false, oathAssigned={}, soulstoneParty="healer", soulstoneRaid="remind", soulstoneAssigned="", soulstoneAssignedGUID="", helperDemon=0,
+    helperDiscovery=false, manualThanks=false, thankMessage="Thank you for [buff]!", helperThanks=false, helperThankEmote="THANK", helperQuick=false, helperTracker=0, helperPet=false, helperHealthstone=false, helperSoulstone=false, helperOath=false, oathAssigned={}, soulstoneParty="healer", soulstoneRaid="remind", soulstoneAssigned="", soulstoneAssignedGUID="", helperDemon=0,
     raidGroups={true,true,true,true,true,true,true,true},
     buffRoles={}, buffSelf={}, blessingRoleChoices={}, blessingRolePriorities={}, roleMarks={}, roleGuess=false, helperThanksResting=false,
     nearbyRequests=false, requestMessage="", requestBuffs={}, nearbyButtonSide="left",

@@ -133,3 +133,5 @@ import test_warrior_rage_wait_12610
 import test_overlay_layers_12611
 
 import test_thanks_events_12612
+
+import test_manual_thanks_12612

@@ -2,7 +2,9 @@
 local _,B=...
 -- Keep the ten most recent releases within a 24 KiB content ceiling.
 B.PatchNotes={
- {version="1.26.12-beta1",title="Another chance to say thanks",items={
+ {version="1.26.12-beta2",title="Another chance to say thanks",items={
+  "Helpers > Solo Thanks offers an optional manual thank-you when a buff giver cannot be reached automatically but their full name is known. Click THANK to whisper, or right-click to dismiss. Your resting preference still applies.",
+  "Edit the message in Solo Thanks. It starts as Thank you for [buff]! and combines buffs from the same giver. The offer lasts 30 seconds and waits behind ready buff actions.",
   "While waiting to identify a buff giver, Solo Thanks now tries again as soon as that player becomes available through a nameplate, target, mouseover or focus. The usual ten-second limit still applies.",
   "Diagnostics keeps the first and last caster lookup, whether a giver was ever matched, and the final outcome to help investigate missed thanks."}},
  {version="1.26.11",title="Reminders that make room",items={

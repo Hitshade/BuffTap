@@ -213,3 +213,7 @@ Published GitHub release 451378435 from 47dccc5, archive SHA256 4c72e91c3db87f45
 
 ## 1.26.12-beta1 Solo Thanks event experiment
 Owner requested a simple local beta after unresolved-caster report, no publication. Added known-GUID matching event wake within existing ten-second pending window, independent nameplate/target/mouseover/focus listener, temporary validated event-unit lookup hint, and bounded latest-incident first/last lookup/outcome history. No guessed-name emote, polling or extended expiry; original send validation intact. Focused 43 directed/late/diagnostic/event cases passed, zero failures, tests/thanks-events-12612-focused.txt; no full suite. Report text omits added identities. First lookup timing is observation timing, not server receipt latency. GitHub review #6/#5/#4 closed, no added scope. Local install for owner to tool around; no public upload/push. Prior Groups visual prototype remains reverted.
+
+
+## 1.26.12-beta2 local manual thanks
+Optional immediate click-only whisper fallback with full-name revalidation, shared cooldown/deduplication and per-thanks resting gate. Helpers card retains its size. 59 focused mocked checks pass; no full suite, no live client validation, no publication. Owner should review handshake artwork, spacing and actual chat behavior after reload.
