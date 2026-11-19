@@ -204,3 +204,6 @@ Published GitHub release 450975930 from cb08f24 with archive SHA256 b1eb88dc1ec2
 Owner requested consistent low-default gameplay overlays with independent keep-above switches, careful uniform placement in limited customization space. Added reminder/camp/supply preferences, preserving Nearby preference. Main switch covers queue, all manual consumables and nonsecure combat estimate; dialogs and menus unchanged. Shared setters cache writes and defer protected layer changes in combat; first-created nonsecure estimate uses saved scope. Reminder switches at x230/y-554 beside main detach control and above Move/Reset; camp/supply preview hint shortened. Nearby x230 in Position. 12 focused checks passed, zero failures; 49 TOC modules compile; ten notes load. No full suite or live Auction House overlap verification. Start GitHub review #6/#5/#4 closed, no new scope. Local beta only; no push/publication.
 
 Beta1 local install independently verified: all 139 raw source files and 134 archive entries match installed bytes; Engine/TOC identify 1.26.11-beta1. No settings touched, no public push/upload. Artifacts and receipt in ../releases.
+
+## 1.26.11 stable preparation
+Owner accepted local layering beta and authorized publication plus reply to WareWolf44. Identity/notes only since reviewed beta; no additional tests. Prior 12 focused checks remain evidence.

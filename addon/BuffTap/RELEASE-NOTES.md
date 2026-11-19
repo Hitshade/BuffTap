@@ -1,4 +1,4 @@
-# BuffTap 1.26.11-beta1
+# BuffTap 1.26.11
 
 ### Let game windows take priority
 The buff reminder, Camping and Supplies now use a lower display layer by default, helping ordinary game windows appear above them. Each has a **Keep above other windows** switch under its Customization tab. The switches sit just above Move reminders and Reset look & position. Nearby keeps its existing switch under Position.
@@ -7,7 +7,7 @@ Your main reminder's choice also controls the smaller buff queue, consumable ico
 
 Settings, setup trays and popup menus retain their higher layers. These choices save with profiles; resetting a reminder's appearance returns it to the lower layer. Buffing and sound behavior are unchanged.
 
-Thanks to WareWolf44 for the feedback. Local beta for review, especially over the Auction House, bags and map; not published.
+Thanks to WareWolf44 for the feedback. The lower layer is the default; turn on Keep above other windows if you prefer a reminder to stay above ordinary panels.
 
 # BuffTap 1.26.10
 

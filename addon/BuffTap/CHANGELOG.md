@@ -1,4 +1,4 @@
-# BuffTap 1.26.11-beta1
+# BuffTap 1.26.11
 
 ### Overlay layering
 - Adds shared profile preferences reminderOnTop, campOnTop and supplyOnTop (false by default); existing nearbyOnTop is preserved. GameplayStrata maps disabled to LOW and enabled to DIALOG. Main reminder, queue, manual consumables (attached or detached) and combat-expiry warnings share reminderOnTop; camp, supply and Nearby remain independent.
