@@ -196,3 +196,6 @@ Owner requested a quick fix before visual beta, based on ichkruchka report of gr
 
 ## 1.26.10 stable preparation
 Owner authorized efficient publication and a reply to ichkruchka. Reviewed runtime diff against v1.26.9: only ShowManaWait Warrior return plus comment. Stable identity/notes only after the 15 focused checks; no additional tests run. GitHub review #6/#5/#4 closed, no new scope.
+
+## 1.26.10 publication receipt
+Published GitHub release 450975930 from cb08f24 with archive SHA256 b1eb88dc1ec2f4e514af5e4a2812a844eb6a017d24e2d999491f62b02ad5868b, digest matched GitHub asset. CurseForge file 9696441 submitted as Release for 1.60.1 with automatic publication after approval; last observed Uploading after form returned to file list. Replied directly to ichkruchka: Warrior low-rage display hidden again, castable reminder returns, other classes unchanged, approval pending; UI confirmed Your reply was posted. Local stable source bytes match installed files. No additional tests run for publication, as owner requested.
