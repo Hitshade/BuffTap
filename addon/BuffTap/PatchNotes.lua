@@ -2,7 +2,7 @@
 local _,B=...
 -- Keep the ten most recent releases within a 24 KiB content ceiling.
 B.PatchNotes={
- {version="1.26.8-beta7",title="Your next buff, at a glance",items={
+ {version="1.26.8-beta8",title="Your next buff, at a glance",items={
   "Pick your next buff. An optional row of smaller, clickable icons shows what else is due. Turn on Show next buffs below under Customization > Buff reminder. Your usual binding stays on the main icon.",
   "Find a helping hand. Helpers > Buff requests now offers optional provider sorting for buffs you are missing. Your existing priorities come first, and every request still needs your click.",
   "An early heads-up in combat. My buffs > Combat expiry warning can remind you when a buff may be running out. It is an estimate: dispels and another player's refresh can make it inaccurate. It starts off.",

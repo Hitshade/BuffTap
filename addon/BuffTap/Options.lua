@@ -1371,7 +1371,7 @@ function B:BuildHelperPage(parent)
     local c=check(q,def.name,28+((i-1)%3)*228,-362-math.floor((i-1)/3)*26,function(s) if not A.Combat() then B.db.requestBuffs[key]=s:GetChecked()==true; if B.nearbyFrame then B:UpdateNearbyWindow() end end end)
     f.requestChecks[key]=c
   end
-  f.providerSort=check(q,L("Prioritize potential buff providers"),374,-306,function(c)
+  f.providerSort=check(q,L("Prioritize providers"),484,-414,function(c)
     if A.Combat() then return end
     B.db.nearbyProviderSort=c:GetChecked()==true; B.nearbySnapshot=nil
     if B.nearbyFrame then B:UpdateNearbyWindow() end

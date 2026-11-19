@@ -145,3 +145,6 @@ Beta6 checks: 98 focused mocked cases passed, no failures. Loaded and compared t
 Owner screenshot showed the lowest card touching the footer. Set all card gaps to eight units horizontally/vertically; move requests up four units, tracking up eight and readiness up twelve. Frees twelve units at the footer without shrinking controls or changing behavior. Current in-game feature wording retained. GitHub: only PR #6 open. Focused geometry checks include equal gaps and footer clearance for all four relevant class layouts.
 
 Beta7 geometry validation: 98 focused checks passed with no failures. Install locally for owner visual review; no publication.
+
+## 1.26.8-beta8 provider control position
+Owner disliked provider switch in the section heading. Move it to the unused bottom-right slot of the eight-buff request grid, shorten visible label to Prioritize providers, retain full tooltip, card geometry and behavior. GitHub: only PR #6 open. Install after focused geometry checks.

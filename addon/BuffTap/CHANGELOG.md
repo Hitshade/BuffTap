@@ -1,3 +1,8 @@
+# BuffTap 1.26.8-beta8
+
+### Provider control placement
+- Moves the provider toggle from the request heading to the empty ninth grid slot, shortens its label to Prioritize providers, and retains its full tooltip and behavior. Card height and eight-unit gaps are unchanged. 98 focused mocked checks passed, including provider grid placement and unchanged panel gaps for four classes in two locales. Log: tests/helpers-spacing-1268-beta8-focused.txt. No full rerun for this placement-only change.
+
 # BuffTap 1.26.8-beta7
 
 ### Helpers footer clearance

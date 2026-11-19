@@ -19,6 +19,6 @@ assert(right.points[1][2]-(left.points[1][2]+left.w)==8,'horizontal gap')
 assert(readyTop-f.readinessCard.__draw.h>=-722,'footer clearance')
 assert(y(f.thankEmote)==y(f.dismissMinutes) and y(f.thankDelay)==y(f.dismissMinutes),'bottom controls misaligned')
 local p=f.providerSort.__draw.points[#f.providerSort.__draw.points]
-assert(p[2]>=374 and p[3]==-306 and f.providerSort:GetParent()==f.requests)
+assert(p[2]==484 and p[3]==-414 and f.providerSort:GetParent()==f.requests)
 assert((f.readiness:IsShown()==true)==(playerClass~='DRUID'))
 """,locale)

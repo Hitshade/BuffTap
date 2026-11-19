@@ -1,3 +1,7 @@
+# BuffTap 1.26.8-beta8
+
+The provider-sorting option now sits with the buff choices in the bottom-right slot, labelled **Prioritize providers**. The explanation remains in its tooltip. Feature behavior and panel sizes are unchanged.
+
 # BuffTap 1.26.8-beta7
 
 Helpers now uses smaller, even gaps between its panels, leaving more breathing room above the footer when Class readiness is present. Controls and feature behavior are unchanged.
