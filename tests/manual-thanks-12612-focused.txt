@@ -59,4 +59,10 @@ PASS Actual unresolved aura offers manual before retry timeout
 PASS Automatic thanks removes manual fallback
 PASS Dismiss affects only selected giver and advances manual queue
 PASS Percent s replaces literally and preserves legacy messages
-FOCUSED_TOTAL 61 FAILURES 0
+PASS THANK binds regular key and key release sends once
+PASS THANK binding expires and restores base key
+PASS Ready buff replaces THANK binding with ordinary spell binding
+PASS THANK key rechecks resting gate before dispatch
+PASS THANK key rechecks combat before dispatch
+PASS THANK key follows configured keys without replacing Nearby key
+FOCUSED_TOTAL 67 FAILURES 0

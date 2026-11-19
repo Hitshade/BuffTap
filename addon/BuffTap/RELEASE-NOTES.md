@@ -3,7 +3,7 @@
 ### An extra thank-you backup for the especially polite
 For the really, really polite players who never want to miss a chance to say thanks, Solo Thanks now has a **very optional manual backup**. It starts off; ordinary automatic thanks needs no extra setup.
 
-Enable **Offer a manual thank-you** under Helpers > Solo Thanks. When automatic thanks cannot reach a buff giver but their full name is known, a handshake marked THANK can appear at your reminder position. Click to whisper, or right-click to dismiss. The offer lasts 15 seconds and waits behind ready buff actions. Your normal buff binding never sends it, and automatic and manual thanks avoid doubling up.
+Enable **Offer a manual thank-you** under Helpers > Solo Thanks. When automatic thanks cannot reach a buff giver but their full name is known, a handshake marked THANK can appear at your reminder position. Use your regular BuffTap binding or click to whisper; right-click to dismiss this thank-you. The offer lasts 15 seconds and waits behind ready buff actions. Automatic and manual thanks avoid doubling up.
 
 The message starts as **Thank you for %s!**. Edit it inside Solo Thanks and press Enter to save; %s inserts received buff names. Several buffs from one giver share a thank-you. Reset restores the original message.
 

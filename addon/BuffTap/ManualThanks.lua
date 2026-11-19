@@ -1,4 +1,4 @@
--- Click-only whisper fallback. A captured GUID must resolve to the same full name at send time.
+-- User-triggered whisper fallback. A captured GUID must resolve to the same full name at send time.
 local _,B=...
 local A=B.API
 local DEFAULT="Thank you for %s!"
@@ -89,14 +89,27 @@ function B:SendManualThanks(entry)
   self:DropManualThanks(entry.guid)
   return true
 end
+function B:ClearManualThanksBinding()
+  if A.Combat() then return end
+  if self.manualThanksBound and self.button and type(ClearOverrideBindings)=="function" then pcall(ClearOverrideBindings,self.button) end
+  self.manualThanksBound=nil
+end
+-- Share the main secure owner so its existing combat/death/mount safety driver
+-- releases this override too. Commit always restores ordinary buff bindings first.
+local commit=B.Commit
+function B:Commit(...)
+  self:ClearManualThanksBinding()
+  return commit(self,...)
+end
 function B:CreateManualThanksButton()
   if self.manualThanksButton or A.Combat() then return end
   local f=CreateFrame("Button","BuffTapManualThanks",UIParent,"BackdropTemplate")
-  f:RegisterForClicks("LeftButtonUp","RightButtonUp"); f:SetClampedToScreen(true)
+  f:RegisterForClicks("AnyDown","AnyUp"); f:SetClampedToScreen(true)
   f.icon=f:CreateTexture(nil,"ARTWORK"); f.icon:SetAllPoints(); f.icon:SetTexture(ICON)
   f.title=f:CreateFontString(nil,"OVERLAY","GameFontNormalSmall"); f.title:SetPoint("BOTTOM",f,"BOTTOM",0,4)
   f.title:SetText("THANK"); f.title:SetTextColor(1,1,1); f.title:SetFont("Fonts\\FRIZQT__.TTF",11,"OUTLINE")
-  f:SetScript("OnClick",function(_,button)
+  f:SetScript("OnClick",function(_,button,down)
+    if down or not f:IsShown() then return end
     local entry=f.entry
     if button=="RightButton" and entry then
       B.manualThanksDismissed=B.manualThanksDismissed or {}; B.manualThanksDismissed[entry.guid]=GetTime()+15
@@ -107,7 +120,7 @@ function B:CreateManualThanksButton()
     if f.entry and GameTooltip then
       GameTooltip:SetOwner(f,"ANCHOR_RIGHT"); GameTooltip:SetText(B:Text("Thank %s",f.entry.name))
       GameTooltip:AddLine(B:ManualThanksText(f.entry) or B:Text("Message is too long."),1,1,1,true)
-      GameTooltip:AddLine(B:Text("Click to whisper. Right-click to dismiss. Your buff binding never sends this message."),.65,.7,.8,true); GameTooltip:Show()
+      GameTooltip:AddLine(B:Text("Use your regular BuffTap binding or click to whisper. Right-click to dismiss this thank-you."),.65,.7,.8,true); GameTooltip:Show()
     end
   end)
   f:SetScript("OnLeave",function() if GameTooltip then GameTooltip:Hide() end end)
@@ -116,6 +129,7 @@ end
 function B:UpdateManualThanks()
   local f=self.manualThanksButton
   if not self:ManualThanksAllowed() then
+    self:ClearManualThanksBinding()
     self.manualThanksQueue={}; self:CancelTimer("manual-thanks-expire")
     if f then f.entry=nil; f:Hide() end
     return
@@ -131,7 +145,7 @@ function B:UpdateManualThanks()
   end
   self:CancelTimer("manual-thanks-expire")
   if expiry then self:StartTimer("manual-thanks-expire",math.max(.01,expiry-now),function() B:UpdateManualThanks(); B:RequestRefresh("manual thanks expiry",0) end) end
-  if not entry or self.action or self.db.showReminder==false or A.Combat() then if f then f.entry=nil; f:Hide() end; return end
+  if not entry or self.action or self.db.showReminder==false or A.Combat() then self:ClearManualThanksBinding(); if f then f.entry=nil; f:Hide() end; return end
   self:CreateManualThanksButton(); f=self.manualThanksButton; if not f then return end
   self:SetGameplayLayer(f,"buff"); f:SetSize(self.db.size,self.db.size); f:SetAlpha(self.db.opacity)
   f:ClearAllPoints(); f:SetPoint("CENTER",UIParent,"CENTER",self.db.x,self.db.y)
@@ -139,6 +153,16 @@ function B:UpdateManualThanks()
   f.entry=entry
   if self.button then self.button:Hide(); self.manaWaitVisible=nil end
   f:Show()
+  if self.button and type(SetOverrideBindingClick)=="function" and type(ClearOverrideBindings)=="function" then
+    self:ClearManualThanksBinding()
+    local cleared=pcall(ClearOverrideBindings,self.button)
+    if cleared then
+      self.manualThanksBound=true
+      for _,key in ipairs(self.db.keys or {}) do
+        if type(key)=="string" and key~="" then pcall(SetOverrideBindingClick,self.button,true,key,"BuffTapManualThanks","LeftButton") end
+      end
+    end
+  end
 end
 local refresh=B.Refresh
 function B:Refresh(...)

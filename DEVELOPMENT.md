@@ -217,3 +217,7 @@ Owner requested a simple local beta after unresolved-caster report, no publicati
 
 ## 1.26.12-beta2 local manual thanks
 Optional immediate click-only whisper fallback with full-name revalidation, shared cooldown/deduplication and per-thanks resting gate. Helpers card retains its size. 59 focused mocked checks pass; no full suite, no live client validation, no publication. Owner should review handshake artwork, spacing and actual chat behavior after reload.
+
+
+### Manual THANK binding follow-up
+Owner requested regular main binding support while THANK occupies the reminder. Shares the main secure binding owner and its existing safety cleanup; restores buff bindings through Commit. Right-click remains giver-specific. 67 focused mocked checks pass, including handoff, expiry, resting/combat recheck and key-down/up duplicate prevention. No full suite, publication or live-client verification.
