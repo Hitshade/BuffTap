@@ -1,3 +1,13 @@
+# BuffTap 1.26.9-beta4
+
+### Optional shared blacklist and profile merge
+- Adds an opt-in account-wide player/guild blacklist under AceDB global storage. Enabling seeds the shared maps from the active profile; disabling restores the untouched profile maps. Switching profiles/classes and resetting a profile do not erase or reset the shared scope. Existing installations remain profile-local by default.
+- Adds a profile selector and merge-only Add entries action on Blacklist. It copies names, skips duplicates and malformed entries, and leaves source profiles and unrelated settings unchanged. The action becomes available immediately after choosing a source.
+- Centralizes effective-list reads for target/Nearby eligibility, context menus, list editing and report counts. Combat guards and per-profile ignore/target/instance rules remain in force. Full explicit exports include the effective names; private diagnostic exports omit them. Explicit settings imports merge names when sharing is active and never change the account scope.
+- Fixes a pre-existing stale friendly-target action gap: TargetEligible now rechecks FriendlyTargetEntry for ordinary quick-target actions at validation/click time. Newly blocked targets are disarmed without changing normal party/raid action scope.
+- Reflows Blacklist cards to retain the existing bottom margin. Also includes the beta3 My buffs/Target header-divider correction.
+- Validation: final integrated mocked Lua 5.1 run: **3,158 passed, 0 failed** (tests/release-1269-beta4-final.txt). Focused sharing/UI/click checks: **114 passed, 0 failed**. All 49 TOC modules compile; exactly ten in-game entries retained. No live Forever verification or public publication claimed. GitHub start review: only PR #6 open; no new report added to scope.
+
 # BuffTap 1.26.9-beta3
 
 ### Consistent information cards and Nearby grid

@@ -2482,7 +2482,7 @@ function B:Options()
     f.pages[TAB.Cleanse]=panel(f)
     label(black,L("Blacklist"),18,-16,"GameFontNormalLarge")
     label(black,"BuffTap never offers buffs or invites to these players or guilds. Your own group is not affected.",18,-42,"GameFontDisableSmall",680)
-    card(black,12,-74,692,118)
+    card(black,12,-74,692,190)
     T.SectionTitle(label(black,L("Add to blacklist"),28,-88,T.fonts.Section))
     f.blackInput=editbox(black,30,-114,240,false); f.blackInput:SetMaxLetters(64)
     local function addTyped(kind) if B:SetBlocked(kind,f.blackInput:GetText(),true) then f.blackInput:SetText(""); f.blackInput:ClearFocus() end end
@@ -2500,34 +2500,51 @@ function B:Options()
       local guild=A.Call(GetGuildInfo,"target")
       if A.Text(guild) and guild~="" then B:SetBlocked("guild",guild,true) end
     end)
-    card(black,12,-206,692,104)
-    T.SectionTitle(label(black,L("Rules"),28,-220,T.fonts.Section))
-    f.blackIgnored=check(black,L("Also skip players on my ignore list"),28,-244,function(c)
+    f.blackShared=check(black,L("Share across all characters"),28,-202,function(c)
+      if B:SetBlacklistAccountWide(c:GetChecked()==true) then B:Options(); B:UpdateBlacklistPage() end
+    end)
+    addHelp(f.blackShared,"Share across all characters","Shares player and guild names across all your characters. Turning on adds this profile's entries to the shared list. Turning off restores each profile's own list; the shared list stays saved. Blacklist rules still belong to each profile.")
+    f.blackSource=selector(black,L("Copy from profile..."),374,-200,190,function()
+      local list={}
+      for _,name in ipairs(B:ProfileNames()) do
+        if name~=B.profileDB:GetCurrentProfile() then list[#list+1]={key=name,name=B:ProfileLabel(name)} end
+      end
+      return list
+    end,function(name) f.blackCopySource=name; f.blackCopyNotice=nil; B:UpdateBlacklistPage() end,"scroll")
+    f.blackCopy=button(black,L("Add entries"),574,-200,116,function()
+      local ok,count=B:CopyBlacklistFromProfile(f.blackCopySource)
+      if ok then f.blackCopyNotice=L("Added %d new blacklist entries. Existing entries were kept.",count); B:UpdateBlacklistPage() end
+    end)
+    addHelp(f.blackCopy,"Add entries","Adds the selected profile's player and guild blacklist entries to the active list. Duplicates are skipped. Other settings and the source profile stay unchanged.")
+    f.blackScopeHint=label(black,"",28,-238,"GameFontDisableSmall",650)
+    card(black,12,-278,692,104)
+    T.SectionTitle(label(black,L("Rules"),28,-292,T.fonts.Section))
+    f.blackIgnored=check(black,L("Also skip players on my ignore list"),28,-316,function(c)
       if A.Combat() then return end
       B.db.blockIgnored=c:GetChecked()==true; B:ApplyBlacklist()
     end)
     addHelp(f.blackIgnored,"Also skip players on my ignore list","Players on your game ignore list are treated as blacklisted. They are not added to the lists below.")
-    f.blackTargets=check(black,L("Apply to players I target myself"),28,-274,function(c)
+    f.blackTargets=check(black,L("Apply to players I target myself"),28,-346,function(c)
       if A.Combat() then return end
       B.db.blacklistTargets=c:GetChecked()==true; B:ApplyBlacklist()
     end)
     addHelp(f.blackTargets,"Apply to players I target myself","On: friendly target buffing skips blacklisted players too. Off: the blacklist only affects the Nearby window.")
-    f.blackInstances=check(black,L("Ignore the blacklist in dungeons and raids"),374,-244,function(c)
+    f.blackInstances=check(black,L("Ignore the blacklist in dungeons and raids"),374,-316,function(c)
       if A.Combat() then return end
       B.db.blacklistInInstances=c:GetChecked()~=true; B:ApplyBlacklist()
     end)
     addHelp(f.blackInstances,"Ignore the blacklist in dungeons and raids","Useful when a blacklisted player ends up in your dungeon or raid. Your own group is never affected either way.")
-    label(black,"Your own party and raid are never affected.",400,-280,"GameFontDisableSmall",290)
+    label(black,"Your own party and raid are never affected.",400,-352,"GameFontDisableSmall",290)
     f.blackLists={}
     for i,kind in ipairs({"player","guild"}) do
       local x=i==1 and 12 or 364
-      card(black,x,-324,340,330)
+      card(black,x,-396,340,258)
       local list={kind=kind,rows={}}
-      list.title=label(black,"",x+16,-338,T.fonts.Section); T.SectionTitle(list.title)
+      list.title=label(black,"",x+16,-410,T.fonts.Section); T.SectionTitle(list.title)
       list.scroll=CreateFrame("ScrollFrame",nil,black,"UIPanelScrollFrameTemplate")
-      list.scroll:SetPoint("TOPLEFT",x+12,-362); list.scroll:SetSize(296,280); list.scroll:Show()
-      list.child=CreateFrame("Frame",nil,list.scroll); list.child:SetSize(296,280); list.scroll:SetScrollChild(list.child)
-      list.empty=label(black,kind=="player" and L("No players blacklisted.") or L("No guilds blacklisted."),x+18,-368,"GameFontDisable",300)
+      list.scroll:SetPoint("TOPLEFT",x+12,-434); list.scroll:SetSize(296,208); list.scroll:Show()
+      list.child=CreateFrame("Frame",nil,list.scroll); list.child:SetSize(296,208); list.scroll:SetScrollChild(list.child)
+      list.empty=label(black,kind=="player" and L("No players blacklisted.") or L("No guilds blacklisted."),x+18,-440,"GameFontDisable",300)
       f.blackLists[i]=list
     end
     function f.blackRow(list,index)

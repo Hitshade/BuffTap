@@ -72,6 +72,7 @@ import test_class_groups_1269
 import test_situation_controls_1269
 import test_class_followup_1269
 import test_class_card_polish_1269
+import test_blacklist_sharing_1269
 print('FINAL_TOTAL',len(__import__('test_bufftap').tests))
 import test_release_119
 import test_release_1194
@@ -124,4 +125,5 @@ import test_class_groups_1269
 import test_situation_controls_1269
 import test_class_followup_1269
 import test_class_card_polish_1269
+import test_blacklist_sharing_1269
 print('FINAL_TOTAL',len(__import__('test_bufftap').tests))

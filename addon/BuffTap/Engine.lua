@@ -4,7 +4,7 @@
 
 local _, B = ...
 _G.BuffTap = B
-B.version = "1.26.9-beta3"
+B.version = "1.26.9-beta4"
 B.API = {}
 local A = B.API
 
@@ -1229,6 +1229,10 @@ end
 
 function B:TargetEligible(action,checkRange)
   if not action then return false,"no action" end
+  if action.quickTarget and not action.nearby and not action.blessingAssigned then
+    local entry,why=self:FriendlyTargetEntry(action.target,false,true)
+    if not entry then return false,why end
+  end
   if self.PvPActionAllowed then
     local allowed,why=self:PvPActionAllowed(action)
     if not allowed then return false,why end

@@ -19,15 +19,72 @@ function B:UnitFullName(unit)
   if not A.Text(name) or name=="" then name=A.Call(UnitName,unit) end
   if A.Text(name) and name~="" then return name end
 end
+-- List scope is independent of profile-specific blacklist rules and settings copies.
+local function mergeNames(target,source)
+  local added=0
+  for name,value in pairs(type(source)=="table" and source or {}) do
+    if type(name)=="string" and value==true then
+      local key=lower(name)
+      if key~="" and #key<=64 and not key:find("[%c|]") and target[key]~=true then target[key]=true; added=added+1 end
+    end
+  end
+  return added
+end
+function B:AccountBlacklist()
+  local global=self.profileDB and self.profileDB.global
+  if not global then return nil end
+  if type(global.accountBlacklist)~="table" then global.accountBlacklist={version=1,enabled=false,players={},guilds={}} end
+  local root=global.accountBlacklist
+  if self.normalizedAccountBlacklist~=root then
+    local players,guilds={},{}; mergeNames(players,root.players); mergeNames(guilds,root.guilds)
+    root.players=players; root.guilds=guilds; root.enabled=root.enabled==true; root.version=1
+    self.normalizedAccountBlacklist=root
+  end
+  return root
+end
+function B:BlacklistAccountWide()
+  local root=self.profileDB and self.profileDB.global.accountBlacklist
+  return type(root)=="table" and root.enabled==true
+end
+function B:BlacklistStore(kind)
+  if self:BlacklistAccountWide() then local root=self:AccountBlacklist(); return kind=="guild" and root.guilds or root.players end
+  local list=self.db and self.db[kind=="guild" and "blockedGuilds" or "blockedPlayers"]
+  return type(list)=="table" and list or {}
+end
+function B:SetBlacklistAccountWide(enabled)
+  if A.Combat() or not self.db then return false end
+  local root=self:AccountBlacklist(); if not root then return false end
+  if enabled==true then
+    mergeNames(root.players,self.db.blockedPlayers); mergeNames(root.guilds,self.db.blockedGuilds)
+  end
+  root.enabled=enabled==true
+  if self.options then self.options.blackCopyNotice=nil end
+  self:ApplyBlacklist(); return true
+end
+function B:MergeBlacklist(kind,source,defer)
+  if A.Combat() or not self.db then return false,0 end
+  local added=mergeNames(self:BlacklistStore(kind),source)
+  self.nearbySnapshot=nil
+  if not defer then self:ApplyBlacklist() end
+  return true,added
+end
+function B:CopyBlacklistFromProfile(name)
+  if A.Combat() or not self.profileDB or name==self.profileDB:GetCurrentProfile() then return false,0 end
+  local source=type(name)=="string" and self.profileDB.sv.profiles[name]
+  if type(source)~="table" then return false,0 end
+  local count=mergeNames(self:BlacklistStore("player"),source.blockedPlayers)+mergeNames(self:BlacklistStore("guild"),source.blockedGuilds)
+  self:ApplyBlacklist(); return true,count
+end
 function B:BlockReason(unit)
   local d=self.db
   if not d or not A.Text(unit) then return nil end
+  local blockedPlayers,blockedGuilds=self:BlacklistStore("player"),self:BlacklistStore("guild")
   if d.blacklistInInstances==false and self:InGroupInstance() then return nil end
   local name=A.Call(UnitName,unit)
   if A.Text(name) and name~="" then
     -- A full-name entry matches that player only; a first-name-only entry (typed by hand) matches anyone with that first name.
     local full=self:UnitFullName(unit)
-    if type(d.blockedPlayers)=="table" and ((full and d.blockedPlayers[full:lower()]) or d.blockedPlayers[name:lower()]) then return "blacklisted player" end
+    if ((full and blockedPlayers[full:lower()]) or blockedPlayers[name:lower()]) then return "blacklisted player" end
     if d.blockIgnored~=false then
       local ignored
       if C_FriendList and type(C_FriendList.IsIgnored)=="function" then ignored=A.Call(C_FriendList.IsIgnored,name)
@@ -35,15 +92,15 @@ function B:BlockReason(unit)
       if ignored==true then return "on your ignore list" end
     end
   end
-  if type(d.blockedGuilds)=="table" and next(d.blockedGuilds) then
+  if next(blockedGuilds) then
     local guild=A.Call(GetGuildInfo,unit)
-    if A.Text(guild) and guild~="" and d.blockedGuilds[guild:lower()] then return "blacklisted guild" end
+    if A.Text(guild) and guild~="" and blockedGuilds[guild:lower()] then return "blacklisted guild" end
   end
 end
 function B:SetBlocked(kind,name,blocked)
   if A.Combat() or not self.db then return false end
   local key=lower(name); if key=="" or key:find("[%c|]") or #key>64 then return false end
-  local list=kind=="guild" and self.db.blockedGuilds or self.db.blockedPlayers
+  local list=self:BlacklistStore(kind)
   list[key]=blocked and true or nil
   self:ApplyBlacklist(); return true
 end
@@ -57,8 +114,8 @@ function B:ApplyBlacklist()
 end
 function B:BlockedList()
   local out={}
-  for name in pairs(self.db.blockedPlayers or {}) do out[#out+1]={kind="player",name=name} end
-  for name in pairs(self.db.blockedGuilds or {}) do out[#out+1]={kind="guild",name=name} end
+  for name in pairs(self:BlacklistStore("player")) do out[#out+1]={kind="player",name=name} end
+  for name in pairs(self:BlacklistStore("guild")) do out[#out+1]={kind="guild",name=name} end
   table.sort(out,function(a,b) if a.kind~=b.kind then return a.kind=="player" end; return a.name<b.name end)
   return out
 end
@@ -324,7 +381,7 @@ function B:CheckupLines()
   add("Supplies",safe(function() return self:CaptureOutput(function() B:ReportSupplies() end) end))
   add("Settings (import string, without your blacklist)",safe(function()
     local count=function(t) local n=0; for _ in pairs(t or {}) do n=n+1 end; return n end
-    return {"Blacklist: "..count(self.db.blockedPlayers).." players, "..count(self.db.blockedGuilds).." guilds (names left out)",self:ExportSettings(true)}
+    return {"Blacklist: "..count(self:BlacklistStore("player")).." players, "..count(self:BlacklistStore("guild")).." guilds (names left out)",self:ExportSettings(true)}
   end))
   return out
 end
@@ -493,10 +550,11 @@ function B:ShowNearbyMenu(row)
     {L("Add to ignore list"),function() ignore(name); B:ApplyBlacklist() end},
   }
   -- Already listed: offer the way back instead.
-  local listedKey=B.db.blockedPlayers and ((B.db.blockedPlayers[name:lower()] and name) or (B.db.blockedPlayers[entry.name:lower()] and entry.name))
+  local players=B:BlacklistStore("player")
+  local listedKey=(players[name:lower()] and name) or (players[entry.name:lower()] and entry.name)
   items[#items+1]=listedKey and {L("Remove from blacklist"),function() B:SetBlocked("player",listedKey,false) end} or {L("Blacklist player"),function() B:SetBlocked("player",name,true) end}
   if guild then
-    local guildListed=B.db.blockedGuilds and B.db.blockedGuilds[guild:lower()]
+    local guildListed=B:BlacklistStore("guild")[guild:lower()]
     items[#items+1]=guildListed and {L("Remove guild from blacklist: %s",guild),function() B:SetBlocked("guild",guild,false) end} or {L("Blacklist guild: %s",guild),function() B:SetBlocked("guild",guild,true) end}
   end
   items[#items+1]={L("Cancel"),function() end}
@@ -522,14 +580,22 @@ end
 function B:UpdateBlacklistPage()
   local f=self.options; if not f or not f.blackLists then return end
   f.blackIgnored:SetChecked(self.db.blockIgnored~=false); f.blackTargets:SetChecked(self.db.blacklistTargets~=false); f.blackInstances:SetChecked(self.db.blacklistInInstances==false)
+  if f.blackShared then
+    f.blackShared:SetChecked(self:BlacklistAccountWide())
+    local profiles=self.profileDB.sv.profiles
+    if f.blackCopySource==self.profileDB:GetCurrentProfile() or type(profiles[f.blackCopySource])~="table" then f.blackCopySource=nil end
+    f.blackSource:SetText(f.blackCopySource and self:ProfileLabel(f.blackCopySource) or L("Copy from profile..."))
+    f.blackCopy:SetEnabled(f.blackCopySource~=nil and not A.Combat())
+    f.blackScopeHint:SetText(f.blackCopyNotice or L(self:BlacklistAccountWide() and "Shared across your characters. Each profile's original list is kept." or "Using this profile's list. Copy adds entries without replacing your blacklist."))
+  end
   for _,list in ipairs(f.blackLists) do
     local names={}
-    for name in pairs(list.kind=="guild" and self.db.blockedGuilds or self.db.blockedPlayers) do names[#names+1]=name end
+    for name in pairs(self:BlacklistStore(list.kind)) do names[#names+1]=name end
     table.sort(names)
-    list.title:SetText(L(list.kind=="guild" and "Guilds (%d)" or "Players (%d)",#names))
+    list.title:SetText(L(list.kind=="guild" and "Guilds (%d)" or "Players (%d)",#names)); B.OptionsTheme.SectionTitle(list.title)
     for i,name in ipairs(names) do local row=f.blackRow(list,i); row.name=name; row.text:SetText(name); row:Show() end
     for i=#names+1,#list.rows do list.rows[i].name=nil; list.rows[i]:Hide() end
-    list.child:SetHeight(math.max(280,#names*32)); list.empty:SetShown(#names==0)
+    list.child:SetHeight(math.max(208,#names*32)); list.empty:SetShown(#names==0)
   end
 end
 function B:ShowBlacklist()

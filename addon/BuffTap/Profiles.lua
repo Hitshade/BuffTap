@@ -260,7 +260,7 @@ local PRIVATE={blockedPlayers=true,blockedGuilds=true}
 local privateClassKeys={blessingSaved=true,oathAssigned=true,soulstoneAssigned=true,soulstoneAssignedGUID=true}
 function B:ExportSettings(private)
   local data={shared={},class={}}
-  for key in pairs(shared) do if not (private and PRIVATE[key]) then data.shared[key]=clone(self.db[key]) end end
+  for key in pairs(shared) do if not (private and PRIVATE[key]) then data.shared[key]=clone(PRIVATE[key] and self:BlacklistStore(key=="blockedGuilds" and "guild" or "player") or self.db[key]) end end
   -- Remembered blessing exceptions name other players: kept in full exports, left out of shared reports.
   -- Settings that name other players stay in full exports but are left out of shared reports.
   for _,key in ipairs(classKeys) do if not (private and privateClassKeys[key]) then data.class[key]=clone(self.db[key]) end end
@@ -280,7 +280,10 @@ function B:ImportSettings(text)
   local class,body=text:match("^BuffTap1:(%u+):(.+)$")
   local data=body and decode(body)
   if type(data)~="table" or type(data.shared)~="table" then return false,self:Text("This is not a BuffTap settings string.") end
-  for key in pairs(shared) do if data.shared[key]~=nil then self.db[key]=clone(data.shared[key]) end end
+  for key in pairs(shared) do if data.shared[key]~=nil then
+    if PRIVATE[key] and self:BlacklistAccountWide() then self:MergeBlacklist(key=="blockedGuilds" and "guild" or "player",data.shared[key],true)
+    else self.db[key]=clone(data.shared[key]) end
+  end end
   local sameClass=class==token()
   if type(data.class)=="table" then
     for _,key in ipairs(classKeys) do

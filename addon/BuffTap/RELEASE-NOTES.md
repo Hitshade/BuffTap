@@ -1,3 +1,16 @@
+# BuffTap 1.26.9-beta4
+
+### A blacklist you can share
+Blacklist now offers Share across all characters. It starts off. Turning it on adds your current profile's player and guild entries to a shared list used by all your characters. Turning it off brings back each profile's own list; the shared list stays saved for later.
+
+Prefer separate lists? Choose Copy from profile, then Add entries to bring over just that profile's blacklist. Existing names stay, duplicates are skipped, and no other preferences change. You can also use this to bring additional profiles into your shared list.
+
+A friendly-target buff that was ready before you blocked someone is now checked again when you click.
+
+The rules for ignored players, friendly targets and dungeons remain separate for each profile. Your own party and raid retain their existing protection from blacklist filtering. This beta also keeps the recent class-aware page improvements and restores the thin heading divider on My buffs and Target.
+
+Installed locally for review after verification; not a public release. Live game appearance still needs your review.
+
 # BuffTap 1.26.9-beta3
 
 The class information panels on My buffs, Groups and Target now share the same spacing, buttons and highlighted headings. Headings follow your chosen interface colour from the first opening.
