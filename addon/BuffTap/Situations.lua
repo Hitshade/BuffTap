@@ -197,6 +197,7 @@ function B:SituationChanged(context)
   self.situationDirty=true
   self:SyncSituation()
   if self.SaveClassSetup then self:SaveClassSetup() end
+  if self.UpdateContextControls and self.options and self.options:IsShown() then self:UpdateContextControls() end
   self:RequestRefresh("context preferences changed",0)
   return true
 end

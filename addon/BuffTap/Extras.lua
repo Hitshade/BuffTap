@@ -136,7 +136,9 @@ function B:ManaFloorReached()
 end
 
 -- Ready checks and long buffs in dungeons top up earlier.
-function B:EarlyTopUpSeconds(configured,duration)
+function B:EarlyTopUpSeconds(configured,duration,b)
+  -- Utility spells retain their configured timing, without hidden ready-check top-ups.
+  if b and self:BuffGroupCapabilities(b).utility then return configured end
   if not A.Number(duration) or duration<=0 then return configured end
   if self.readyCheckUntil and self.db.readyCheckTopUp~=false and GetTime()<self.readyCheckUntil then
     configured=math.max(configured,math.min(300,duration*0.5))

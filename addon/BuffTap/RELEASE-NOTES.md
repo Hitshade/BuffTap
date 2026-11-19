@@ -1,3 +1,19 @@
+# BuffTap 1.26.9-beta1
+
+### Groups that make sense for your class
+The Groups page now keeps only the choices your buffs can use. Warlocks and Shamans get a shorter utility layout, without group-spell thresholds, pet controls or role choices. Druids, Mages and Priests keep their real single/group-spell options. Paladins retain their dedicated blessing plans.
+
+Battle Shout and Trueshot Aura are maintained through My buffs: they affect nearby group members automatically, so their Groups pages explain this instead of offering recipient assignments. Rogues get a shortcut to Weapons.
+
+Thorns offers tank targeting; Fear Ward offers tank or healer targeting. Other buffs use class choices. Pet maintenance is limited to approved buffs, and Intellect/Spirit require mana-using pets. Utility effects are excluded.
+
+New Warlocks and Shamans start with party utility buffing off; enable it deliberately under Groups if wanted. Existing choices, separate Party/Raid settings and hidden preferences stay saved. Setup does not repeat. Utility buffs keep their configured refresh times rather than receiving an unseen ready-check top-up.
+
+
+**Use Solo settings** stays available in Party/Raid outside combat and updates immediately when you edit a setting. Paladins can also prepare target-blessing choices while Target and Nearby are switched off.
+
+This beta uses the existing interface style and needs in-game review. Automated results are recorded separately; no public release has been made.
+
 # BuffTap 1.26.8
 
 ### See what is next

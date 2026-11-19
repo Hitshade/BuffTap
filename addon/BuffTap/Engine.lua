@@ -4,7 +4,7 @@
 
 local _, B = ...
 _G.BuffTap = B
-B.version = "1.26.8"
+B.version = "1.26.9-beta1"
 B.API = {}
 local A = B.API
 
@@ -105,7 +105,7 @@ function B:InitDB()
   if type(self.db.showGroupBadge)~="boolean" and type(self.db.showGroupIndicator)=="boolean" then self.db.showGroupBadge=self.db.showGroupIndicator end
   self.db.showRemaining=nil; self.db.showGroupIndicator=nil
   local defaults = {enabled=true, showReminder=true, size=64, opacity=1, x=0, y=-180,
-    seconds=45, rebuffVersion=1, sound=false, combatExpiry=false, buffQueue=false, reminderSound="cleanse", alertSoundVersion=0, supplySound="glass", campAlertSound="harp", cleanseSound="bell", socialSound="hello", nearbySocialAlert=false, nearbySocialFriends=true, nearbySocialGuild=true, cleanseEnabled=false, cleanseTypes={Magic=true,Curse=true,Poison=true,Disease=true}, cleanseSelf=true, cleanseGroup=true, cleanseTarget=true, cleanseNearby=false, cleansePreferAbolish=true, cleanseBorder=true, reviveEnabled=false, reviveGroup=true, reviveTarget=true, reviveRebirth=false, cleanseFirst=false, smartShift=false, soundChannel="Master", soundInterval=5, glow=true, pulse=false, group=true, smartGroup=true,
+    seconds=45, rebuffVersion=1, sound=false, combatExpiry=false, buffQueue=false, reminderSound="cleanse", alertSoundVersion=0, supplySound="glass", campAlertSound="harp", cleanseSound="bell", socialSound="hello", nearbySocialAlert=false, nearbySocialFriends=true, nearbySocialGuild=true, cleanseEnabled=false, cleanseTypes={Magic=true,Curse=true,Poison=true,Disease=true}, cleanseSelf=true, cleanseGroup=true, cleanseTarget=true, cleanseNearby=false, cleansePreferAbolish=true, cleanseBorder=true, reviveEnabled=false, reviveGroup=true, reviveTarget=true, reviveRebirth=false, cleanseFirst=false, smartShift=false, soundChannel="Master", soundInterval=5, glow=true, pulse=false, group=self:DefaultGroupEnabled(), smartGroup=self:HasGroupSpellPairs(),
     nearbyRankUpgrades=false,nearbyProviderSort=false,
     groupNeed=3, blessingNeed=2, friendlyTarget=false, targetSeconds=300, keys={"MOUSEWHEELDOWN"}, buffs={}, priorities={}, buffSeconds={}, buffCharges={},
     pauseResting=false, targetClassBlessings=true, targetClasses={}, targetBlessingFallback=true, targetBlessingClasses={}, targetBlessingPriorities={}, groupBlessingPriorities={}, blessingAssignments=false, blessingClasses={}, blessingGroupOverrides={}, buffGroups={}, buffClasses={}, buffGroupNeed={}, targetBuffs={}, targetBuffSeconds={}, showBuffName=false, showTargetName=true, showTimer=false, showGroupBadge=true,
@@ -133,13 +133,9 @@ function B:InitDB()
   self.db.nearbyRestingRule=1
   -- 1.22.6: the animated Nearby list turns on once for everyone; turning it off afterwards sticks.
   if self.db.nearbyAnimateRule~=1 then self.db.nearbyAnimate=true; self.db.nearbyAnimateRule=1 end
-  -- 1.20.0: party and raid buffing turns on once for everyone; later choices are kept.
-  if self.db.groupDefaultVersion~=1 then
-    self.db.group=true
-    local root=self.db.groupContextSettings
-    if type(root)=="table" then for _,context in ipairs({"Party","Raid"}) do if type(root[context])=="table" then root[context].group=true end end end
-    self.db.groupDefaultVersion=1
-  end
+  -- Fresh values come from class capabilities. Never overwrite an existing choice,
+  -- including old profiles predating the historical group-default migration.
+  self.db.groupDefaultVersion=1
   -- 1.24.5: any tracking spell can be chosen (class tracking too, even before it is learned).
   -- Keep a sane spell ID; whether it can be offered is decided at runtime.
   local tracker=self.db.helperTracker
@@ -718,7 +714,7 @@ function B:GroupAssignableBuffs()
   local out={}
   for _,b in ipairs(self:ClassList()) do
     local supported=self:Supported(b)
-    if supported and not b.singleKey and (b.kind=="single" or b.kind=="blessing") then
+    if supported and not b.singleKey and self:BuffGroupCapabilities(b).assignable then
       out[#out+1]=b
     end
   end
@@ -1175,7 +1171,7 @@ function B:Missing(b,action,auras,rebuffSeconds)
       elseif not custom then
         if a.duration<120 then configured=0 elseif a.duration>=2700 then configured=math.max(configured,300) end
       end
-      configured=self.EarlyTopUpSeconds and self:EarlyTopUpSeconds(configured,a.duration) or configured
+      configured=self.EarlyTopUpSeconds and self:EarlyTopUpSeconds(configured,a.duration,b) or configured
       -- Short charge-style buffs such as Nature's Grasp only remind once they are gone.
       if b.noTimer then configured=0 end
       -- Return the favor (Nearby) refreshes once a quarter of their buff is gone; otherwise half.
@@ -1941,11 +1937,11 @@ end
 function B:BuffRoleMode(b,context)
   local map=self:GroupPreference("buffRoles",context)
   local mode=type(map)=="table" and map[self:RootKey(b)]
-  return self.RoleModes[mode] and mode or "class"
+  return self.RoleModes[mode] and self:BuffSupportsRole(b,mode) and mode or "class"
 end
 -- Party/raid recipient check for one buff: by class (default), or by role regardless of class.
 function B:GroupRecipientAllowed(b,entry,context)
-  if not entry or entry.pet then return false end
+  if not entry or entry.pet or not self:BuffGroupCapabilities(b).assignable then return false end
   local mode=self:BuffRoleMode(b,context)
   if mode=="class" then return self:GroupClassAllowed(b,entry.class,context) end
   local role=self:UnitRole(entry.unit)
@@ -1975,16 +1971,11 @@ function B:SetBlessingRolePriority(role,class,order,context)
 end
 
 function B:RecipientAllowed(b,entry)
-  -- Pets only receive single-target buffs; group spells and blessings follow players.
+  if self:IsBroadcastBuff(b) then return entry.unit=="player" and not entry.pet end
   if entry.pet then
-    if b.kind~="single" or self.db.buffPets~=true then return false end
-    -- Buffs meant for mana users (Arcane Intellect, Divine Spirit) only help pets that use mana.
-    local def=self:FindBuff(b.singleKey or b.key) or b
-    if type(def.target)=="table" and A.Call(UnitPowerType,entry.unit)~=0 then
-      local forMana=true; for _,class in ipairs(def.target) do if class=="WARRIOR" or class=="ROGUE" then forMana=false end end
-      if forMana then return false end
-    end
-    return true
+    local cap=self:BuffGroupCapabilities(b)
+    if b.kind~="single" or self.db.buffPets~=true or not cap.pet then return false end
+    return cap.pet~="mana" or A.Call(UnitPowerType,entry.unit)==0
   end
   -- Explicit targets and personal maintenance are independent of group assignments.
   if b.kind=="blessing" and self:BlessingAssignmentsActive() and (not entry.quickTarget or entry.blessingAssigned) then
@@ -2002,6 +1993,7 @@ end
 -- "Also on me" (Groups page, per party/raid setup): off means a buff you cast on others, such as
 -- Thorns for the tank, is not cast on you while you are in a group. Solo, you always get it.
 function B:SelfRecipientAllowed(b,context)
+  if self:IsBroadcastBuff(b) then return true end
   if not context and A.Call(IsInGroup)~=true then return true end
   local map=self:GroupPreference("buffSelf",context)
   return not (type(map)=="table" and map[self:RootKey(b)]==false)

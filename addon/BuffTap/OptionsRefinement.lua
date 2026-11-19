@@ -636,7 +636,7 @@ function B:StandardizeOptionsPages(ui,tabs)
   end
   local groupPage=f.pages[2]; local party=f.partyView or f.groupParty; local raid=f.raidView or f.groupRaid
   place(party,groupPage.refinedCanvas,18,-8,78,26); place(raid,groupPage.refinedCanvas,102,-8,78,26)
-  ui.label(groupPage.refinedCanvas,"Applies automatically when you join a party or raid.",198,-15,"GameFontDisableSmall",f.partyView and 340 or 488)
+  f.groupContextHint=ui.label(groupPage.refinedCanvas,"Applies automatically when you join a party or raid.",198,-15,"GameFontDisableSmall",f.partyView and 340 or 488)
   if f.partyView then f.blessingSoundsButton=ui.button(groupPage.refinedCanvas,"Buff sounds",571,-8,132,function() B:ToggleBlessingSounds() end) end
   local master=f.blessingGroupEnable or f.groupEnable
   if master then headerSwitch(master,groupPage) end
@@ -679,7 +679,7 @@ function B:NavStatus(index)
   local f,d=self.options,self.db
   if index==1 then return d.enabled==true
   elseif index==14 then return d.cleanseEnabled==true
-  elseif index==2 then local c=f.blessingGroupEnable or f.groupEnable; if c then return c:GetChecked()==true end; return d.group==true
+  elseif index==2 then if not self:HasTargetedGroupBuffs() then return nil end; local c=f.blessingGroupEnable or f.groupEnable; if c then return c:GetChecked()==true end; return d.group==true
   elseif index==3 then return d.friendlyTarget==true
   elseif index==4 then return d.nearbyEnabled==true
   elseif index==5 then return d.consumablesEnabled==true

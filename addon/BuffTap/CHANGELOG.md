@@ -1,3 +1,21 @@
+# BuffTap 1.26.9-beta1
+
+### Capability-driven Groups
+- Adds BuffCapabilities.lua after generated Catalog data. Canonical-family policy distinguishes targeted assignments, genuine single/group pairs, broadcast self effects, approved pet recipients, utility effects and role modes. Options consumes shared helpers rather than maintaining class-specific copies. Paladin keeps the specialized blessing workflow.
+- Warlock/Shaman shared cards collapse without smart-group, threshold, pet or role controls. Druid/Mage/Priest retain supported capabilities ahead of learning. Warrior/Hunter show broadcast guidance; Rogue shows a Weapons shortcut. Existing visual primitives only, no new art. Class-dependent headings, cards and footer spacing adapt together.
+
+### Runtime and defaults
+- Explicit pet whitelist: Mark, Thorns, Fortitude, Shadow Protection; Intellect/Spirit require readable mana power type. Unknown families and utility/Fear Ward/blessings fail closed for generic pet maintenance.
+- Thorns supports tank roles; Fear Ward supports tank/healer. Unsupported saved role choices remain stored but evaluate as class mode. Broadcast effects are player-only and ignore recipient assignments/Also on me. Normal secure eligibility and input requirements remain.
+- Fresh targeted group defaults derive from maintenance capability; utility-only and broadcast/no-target classes start off. Stops the old unconditional one-time group-enable migration from overriding explicit legacy choices. Existing settings win, with no destructive reset or onboarding version replay. Utility timing does not inherit hidden ready-check top-ups.
+- No profile/export schema change. Party/Raid data remains independent and hidden settings remain available for copying/export. No direct settings-file edits.
+
+- Use Solo settings is always usable in Party/Raid outside combat; sparse preference edits refresh context controls immediately. Paladin target-blessing planning is available while Target/Nearby features are off. Profile selector-dependent buttons were audited and regression-covered.
+
+### Validation scope
+- Added all-nine-class Party/Raid UI checks with learned/unlearned spellbooks, fresh/legacy defaults, pet policy, stale roles, broadcast self actions and context preservation. Final integrated mocked Lua 5.1 run: **3,066 passed, 0 failed**, terminal VERIFIED_TOTAL/VERIFIED_FAILED and absence of FAIL records verified in tests/release-1269-beta1-verified.txt. All 49 TOC modules compile; ten in-game note entries load. Focused class/context run: 185 passed; context/profile-selector/blessing run: 560 passed. No live Forever verification or public publication claimed. New explanatory copy falls back to English where translations are unavailable.
+- GitHub issue review: only PR #6 remains open; issue/review comments empty. No new report or issue-state change in this scope.
+
 # BuffTap 1.26.8
 
 ### Optional queue and combat estimates

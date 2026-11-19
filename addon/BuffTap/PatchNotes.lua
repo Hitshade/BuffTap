@@ -2,6 +2,13 @@
 local _,B=...
 -- Keep the ten most recent releases within a 24 KiB content ceiling.
 B.PatchNotes={
+ {version="1.26.9-beta1",title="Groups that fit your class",items={
+  "Groups now shows the options your class can use. Warlock and Shaman utility buffs have a simpler layout; group-spell thresholds appear only for real single/group pairs.",
+  "Battle Shout and Trueshot Aura stay under My buffs. Their Groups page explains how they affect nearby group members automatically. Rogues get a shortcut to Weapons.",
+  "Pet buffs use an approved list, with mana-only buffs reserved for mana-using pets. Utility spells no longer become pet-maintenance jobs.",
+  "Role choices fit each buff: Thorns offers Tanks, and Fear Ward offers Tanks or Healers. Other buffs keep their class choices. Hidden old preferences stay saved.",
+  "Use Solo settings stays available in Party and Raid outside combat. You can undo changes immediately, and Paladins can plan target blessings while Target and Nearby are off.",
+  "New Warlocks and Shamans start with party utility buffing off. Existing Party and Raid choices are kept, and setup does not repeat."}},
  {version="1.26.8",title="Your next buff, at a glance",items={
   "Pick your next buff. An optional row of smaller, clickable icons shows what else is due. Turn on Show next buffs below under Customization > Buff reminder. Your usual binding stays on the main icon.",
   "Find a helping hand. Helpers > Buff requests now offers optional provider sorting for buffs you are missing. Your existing priorities come first, and every request still needs your click.",
@@ -57,14 +64,7 @@ B.PatchNotes={
   "Set refresh times directly in My buffs. The bottom panel explains the defaults, and Reset default timings restores them without changing buff choices or priorities.",
   "The settings are tidier too: selected items no longer cover their labels, label visibility comes before text styling, and Camping and Supplies have fuller layouts. Timers are centered, group counts sit at the top right, and Modern glows fit their icons better.",
   "Disabling BuffTap stops prepared clicks immediately. SmartShift follows pauses and form cooldowns, manual icons return at their refresh time, and appearance reset restores all visual choices."},thanks="Thanks to Xprit44 for suggesting reminders without accidental mouse-wheel consumption."},
- {version="1.25.0",title="Smarter setup, easier choices",items={
-  "Druids and Shamans can turn on SmartShift under My buffs. After refreshing your own buffs, it quietly offers your previous form. Returning takes another click; it never shifts automatically.",
-  "Find food and elixirs by what they give you. Open Category in Choose to browse their benefits while keeping your selected items.",
-  "My buffs > Review class setup offers recommendations for your class. Opening it changes nothing: choose the recommendations you want to apply.",
-  "Paladin recommendations adapt as you learn: Kings when available, Might for physical damage dealers and Wisdom for mana users, with Wisdom preferred for known healers. Fixed manual choices still take priority.",
-  "Druid recommendations include Thorns for tanks, and Priests can plan Fear Ward for tanks before learning it. Shaman caster and healer recommendations save the main-hand Flametongue choice; applying weapon buffs remains a separate option.",
-  "Rogue choices now include Atrophic, Numbing, Sebacious and both ranks of Occult Poison.",
-  "You can plan class-appropriate cleansing and resurrection before learning the spells, including Rebirth and cleansing order. In this release, new characters start with those reminders off; existing choices stay as they are. Prefer Abolish appears only for classes with an Abolish spell."}},
+
 }
 function B:PatchNotesUnread()
   return self.profileDB and self.db.optionsPatchDot~=false and self.profileDB.global.patchNotesSeen~=self.version

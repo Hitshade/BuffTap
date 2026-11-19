@@ -35,7 +35,7 @@ function B:UpdateContextControls()
     for key,button in pairs(group.buttons) do B.OptionsTheme.Navigation(button,key==context) end
     local custom=self:SituationValues(context,category)
     group.active:SetText(self:SituationBadge())
-    group.reset:SetShown(context~="solo"); group.reset:SetEnabled(custom~=nil and not A.Combat())
+    group.reset:SetShown(context~="solo"); group.reset:SetEnabled(context~="solo" and not A.Combat())
     group.status:SetText(self:Text(context=="solo" and "Solo preferences. Party and Raid follow unchanged settings." or custom and (context=="party" and "Applied automatically in a party. Other settings still follow Solo." or "Applied automatically in a raid. Other settings still follow Solo.") or (context=="party" and "Following Solo settings. Change a setting to customize Party." or "Following Solo settings. Change a setting to customize Raid.")))
   end
 end

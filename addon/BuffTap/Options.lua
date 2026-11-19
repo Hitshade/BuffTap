@@ -2099,15 +2099,15 @@ function B:Options()
       addHelp(f.readyTopUp,"Top up at ready checks","When a ready check starts, buffs with less than half their time left count as missing, so you can refresh them before the pull.")
       local shared=CreateFrame("Frame",nil,groups); shared:SetPoint("TOPLEFT",0,-72); shared:SetSize(704,80); shared:Show()
       f.sharedGroups=shared
-      card(groups,12,-46,698,146)
-      T.SectionTitle(label(groups,L("Shared group settings"),26,-58,T.fonts.Section))
-      line(groups,-204)
+      f.groupSharedCard=card(groups,12,-46,698,146)
+      f.groupSharedTitle=label(groups,L("Shared group settings"),26,-58,T.fonts.Section); T.SectionTitle(f.groupSharedTitle)
+      f.groupDivider=line(groups,-204)
       f.perBuffHeading=label(groups,L("Per-buff customization"),18,-218,"GameFontNormalLarge")
       f.roleGuess=check(groups,L("Guess tanks from stance"),300,-213,function(c) if not A.Combat() then B.db.roleGuess=c:GetChecked()==true; B.roleCache=nil; B:InvalidateAura(); B:RequestRefresh("role guess",0) end end)
       addHelp(f.roleGuess,"Guess tanks from stance","Counts a visible Defensive Stance, Bear or Dire Bear Form, or Righteous Fury as a tank when no role is set. Off by default.")
       f.roleMark=button(groups,L("Mark target role"),560,-212,144,markTargetRole)
       addHelp(f.roleMark,"Mark target role",roleHelp)
-      label(groups,L("Select a buff below to customize its party/raid groups, recipient classes and group-spell threshold."),18,-242,"GameFontDisableSmall",686)
+      f.groupInstructions=label(groups,L("Select a buff below to customize how BuffTap applies it in parties and raids."),18,-242,"GameFontDisableSmall",686)
       label(groups,L("These filters apply only to party/raid buffing. Personal and open-world target buffs stay separate."),18,-596,"GameFontDisableSmall",686)
       f.groupAllLabel=label(shared,L("All buffs"),18,-10,"GameFontNormal")
       f.groupChecks={}
@@ -2124,22 +2124,28 @@ function B:Options()
         addHelp(c,"Raid Group "..i,"Checked or unchecked applies to every buff. A gold dash means this group has mixed per-buff assignments.")
         f.groupChecks[i]=c
       end
-      label(shared,L("Group threshold"),18,-48,"GameFontHighlight",110)
+      f.groupThresholdLabel=label(shared,L("Group threshold"),18,-48,"GameFontHighlight",110)
       f.groupNeedSlider=compactSlider(shared,2,5,1,190,function(v) return tostring(v).."+" end,function(_,v)
         B:GroupEditorSettings().groupNeed=v; B:NormalizeGroupNeeds(B:EditingGroupContext()); B:InitDB(); B:RequestRefresh("group threshold default",0.08)
       end)
       f.groupNeedSlider:SetScript("OnMouseUp",function() if not A.Combat() then B:Options() end end)
       f.groupNeedSlider:SetPoint("TOPLEFT",146,-45)
-      card(groups,12,-270,194,300)
-      T.SectionTitle(label(groups,L("Select a buff"),24,-282,T.fonts.Section))
+      f.assignmentListCard=card(groups,12,-270,194,300)
+      f.assignmentListTitle=label(groups,L("Select a buff"),24,-282,T.fonts.Section); T.SectionTitle(f.assignmentListTitle)
       local listScroll=CreateFrame("ScrollFrame",nil,groups,"UIPanelScrollFrameTemplate")
       listScroll:SetPoint("TOPLEFT",18,-298); listScroll:SetSize(178,274)
       f.assignScroll=listScroll
       f.assignList=CreateFrame("Frame",nil,listScroll); f.assignList:SetSize(174,1); listScroll:SetScrollChild(f.assignList)
       f.assignButtons={}
-      local assignChild=CreateFrame("Frame",nil,groups); assignChild:SetPoint("TOPLEFT",230,-270); assignChild:SetSize(474,300); card(assignChild,0,0,474,300)
+      local assignChild=CreateFrame("Frame",nil,groups); assignChild:SetPoint("TOPLEFT",230,-270); assignChild:SetSize(474,300); f.assignmentDetailCard=card(assignChild,0,0,474,300)
       f.assignChild=assignChild; f.assignRows={}
       f.assignEmpty=label(assignChild,"No party / raid buffs available for this class.",8,-12,"GameFontHighlight",440)
+      f.groupInfo=CreateFrame("Frame",nil,groupPage); f.groupInfo:SetAllPoints()
+      card(f.groupInfo,12,-46,692,108)
+      f.groupInfoTitle=label(f.groupInfo,"",28,-64,"GameFontNormalLarge",654)
+      f.groupInfoText=label(f.groupInfo,"",28,-96,"GameFontHighlight",654)
+      f.groupWeapons=button(f.groupInfo,L("Open Weapons"),28,-118,148,function() f.selectTab(TAB.Weapons) end)
+      f.groupInfo:Hide()
 
     end
 
@@ -2651,7 +2657,7 @@ function B:Options()
   f.buffInstruction:SetText(L("Choose your buffs. Move the most important ones to the top."))
   f.targetBlessingPanel:SetShown(paladin); f.targetClassAware:SetChecked(self.db.targetClassBlessings)
   f.targetBlessingFallback:SetChecked(self.db.targetBlessingFallback)
-  for _,pick in ipairs(f.targetBlessingPicks) do pick:SetShown(self.db.targetClassBlessings); pick.classLabel:SetShown(self.db.targetClassBlessings); pick:Update(); pick:SetAvailable(self.db.targetClassBlessings and (self.db.friendlyTarget or self.db.nearbyEnabled)) end
+  for _,pick in ipairs(f.targetBlessingPicks) do pick:SetShown(self.db.targetClassBlessings); pick.classLabel:SetShown(self.db.targetClassBlessings); pick:Update(); pick:SetAvailable(self.db.targetClassBlessings and not A.Combat()) end
   f.targetBlessingInstruction:SetText(L(not (self.db.friendlyTarget or self.db.nearbyEnabled) and "Enable friendly target buffing to use these class choices." or not self.db.targetClassBlessings and "Enable class-aware target blessings to customize each class." or "Open a class to check and order blessings. All use the refresh above. Automatic uses enabled Buffs and their order, filtered for this class."))
   f.targetBlessingFallback:ClearAllPoints(); f.targetBlessingFallback:SetPoint("TOPLEFT",6,self.db.targetClassBlessings and -128 or -28)
   f.targetBlessingInstruction:ClearAllPoints(); f.targetBlessingInstruction:SetPoint("TOPLEFT",6,self.db.targetClassBlessings and -160 or -60)
@@ -2801,7 +2807,14 @@ function B:Options()
       for i=1,8 do row.checks[i]:SetShown(raid or i==1); row.checks[i].Text:SetText(raid and tostring(i) or L("Include party")); row.checks[i]:SetChecked(self:GroupSelected(b,i,B:EditingGroupContext())) end
       for class,c in pairs(row.classes) do c:SetChecked(self:GroupClassAllowed(b,class,B:EditingGroupContext())) end
       local roleMode=self:BuffRoleMode(b,B:EditingGroupContext())
-      for _,rb in ipairs(row.roleButtons) do T.Navigation(rb,rb.roleMode==roleMode) end
+      local cap=self:BuffGroupCapabilities(b)
+      local roleCount=0
+      for _,rb in ipairs(row.roleButtons) do
+        local visible=cap.roles and (rb.roleMode=="class" or self:BuffSupportsRole(b,rb.roleMode))
+        rb:SetShown(visible and true or false)
+        if visible then rb:ClearAllPoints(); rb:SetPoint("TOPLEFT",176+roleCount*94,-110); roleCount=roleCount+1 end
+        T.Navigation(rb,rb.roleMode==roleMode)
+      end
       for _,c in pairs(row.classes) do c:SetEnabled(roleMode=="class"); c:SetAlpha(roleMode=="class" and 1 or .35) end
       row.allClasses:SetShown(roleMode=="class"); row.resetClasses:SetShown(roleMode=="class")
       if roleMode~="class" then
@@ -3200,7 +3213,7 @@ function B:Options()
     f.diagText.snapshotText=text; f.diagText:SetText(text)
     f.resizeDiagnostics()
   end
-  self:UpdateRefinedOptions(); f:Show(); f:Raise(); self:UpdateOptionsPreviews()
+  self:UpdateRefinedOptions(); self:UpdateGroupCapabilityOptions(); f:Show(); f:Raise(); self:UpdateOptionsPreviews()
 end
 
 
@@ -3339,3 +3352,44 @@ end
 
 
 
+
+-- Finish after page refinement, which reparents the header switch and tabs.
+function B:UpdateGroupCapabilityOptions()
+  local f=self.options; if not f or f.partyView then return end
+  local c=self:ClassGroupCapabilities(); local targeted=c.targeted
+  f.legacyGroups:SetShown(targeted); f.groupInfo:SetShown(not targeted)
+  f.groupEnable:SetShown(targeted)
+  f.groupParty:SetShown(targeted); f.groupRaid:SetShown(targeted)
+  if f.groupContextHint then f.groupContextHint:SetShown(targeted) end
+  if not targeted then
+    if f.pageHeaders and f.pageHeaders[2] then f.pageHeaders[2].description:SetText(L("Group effects without recipient assignments.")) end
+    if c.broadcast then
+      f.groupInfoTitle:SetText(spellLabel(c.broadcast))
+      f.groupInfoText:SetText(L("This buff affects nearby party and raid members automatically. Keep it enabled under My buffs; there are no recipient assignments to configure."))
+    else
+      f.groupInfoTitle:SetText(L("No party or raid buffs to assign"))
+      f.groupInfoText:SetText(L("Your poisons and weapon coatings are configured under Weapons."))
+    end
+    f.groupWeapons:SetShown(not c.broadcast)
+    return
+  end
+  f.smartGroup:SetShown(c.pairs); f.groupThresholdLabel:SetShown(c.pairs)
+  f.groupNeedSlider:SetShown(c.pairs); f.groupNeedSlider.valueText:SetShown(c.pairs)
+  f.buffPets:SetShown(c.pets); f.readyTopUp:SetShown(c.maintenance)
+  f.roleGuess:SetShown(c.roles); f.roleMark:SetShown(c.roles)
+  local shift=c.pairs and 0 or 84
+  f.groupSharedCard:SetHeight(146-shift)
+  local function move(o,x,y) o:ClearAllPoints(); o:SetPoint("TOPLEFT",x,y+shift) end
+  -- All later sections reclaim the irrelevant threshold/pet rows.
+  move(f.groupDivider,18,-204); f.groupDivider:SetPoint("TOPRIGHT",-18,-204+shift)
+  move(f.perBuffHeading,18,-218); move(f.groupInstructions,18,-242)
+  move(f.roleGuess,300,-213); move(f.roleMark,560,-212)
+  move(f.assignmentListCard,12,-270); f.assignmentListCard:SetHeight(300+shift)
+  move(f.assignmentListTitle,24,-282); move(f.assignScroll,18,-298)
+  move(f.assignChild,230,-270); f.assignChild:SetHeight(300+shift); f.assignmentDetailCard:SetHeight(300+shift)
+  for _,row in ipairs(f.assignRows) do
+    row:SetHeight(288+shift)
+    row.allClasses:ClearAllPoints(); row.allClasses:SetPoint("TOPLEFT",280,-258-shift)
+    row.resetClasses:ClearAllPoints(); row.resetClasses:SetPoint("TOPLEFT",374,-258-shift)
+  end
+end

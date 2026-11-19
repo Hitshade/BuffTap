@@ -61,10 +61,10 @@ local function recommendations(self)
     apply=function() d.helperThanks=true end})
   add({key="resting",label="Pause reminders while resting",current=d.pauseResting==true,target=true,untouched=d.pauseResting==false,
     apply=function() d.pauseResting=true end})
-  add({key="party",label="Buff my party and raid",current=d.group==true,target=true,untouched=false,apply=function()
+  if self:DefaultGroupEnabled() then add({key="party",label="Buff my party and raid",current=d.group==true,target=true,untouched=false,apply=function()
     d.group=true; local root=d.groupContextSettings
     if type(root)=="table" then for _,c in ipairs({"Party","Raid"}) do if type(root[c])=="table" then root[c].group=true end end end
-  end})
+  end}) end
   add({key="dismiss",label="Right-click a reminder to dismiss it for 10 minutes",current=d.helperDismiss==true,target=true,untouched=false,
     apply=function() d.helperDismiss=true; if (tonumber(d.helperDismissMinutes) or 0)==0 then d.helperDismissMinutes=10 end end})
   add({key="pvp",label="Prevent accidental PvP flagging",current=d.pvpProtection==true,target=true,untouched=false,apply=function() d.pvpProtection=true end})
