@@ -1,56 +1,27 @@
-# BuffTap 1.26.9-beta4
+# BuffTap 1.26.9
 
-### Optional shared blacklist and profile merge
-- Adds an opt-in account-wide player/guild blacklist under AceDB global storage. Enabling seeds the shared maps from the active profile; disabling restores the untouched profile maps. Switching profiles/classes and resetting a profile do not erase or reset the shared scope. Existing installations remain profile-local by default.
-- Adds a profile selector and merge-only Add entries action on Blacklist. It copies names, skips duplicates and malformed entries, and leaves source profiles and unrelated settings unchanged. The action becomes available immediately after choosing a source.
-- Centralizes effective-list reads for target/Nearby eligibility, context menus, list editing and report counts. Combat guards and per-profile ignore/target/instance rules remain in force. Full explicit exports include the effective names; private diagnostic exports omit them. Explicit settings imports merge names when sharing is active and never change the account scope.
-- Fixes a pre-existing stale friendly-target action gap: TargetEligible now rechecks FriendlyTargetEntry for ordinary quick-target actions at validation/click time. Newly blocked targets are disarmed without changing normal party/raid action scope.
-- Reflows Blacklist cards to retain the existing bottom margin. Also includes the beta3 My buffs/Target header-divider correction.
-- Validation: final integrated mocked Lua 5.1 run: **3,158 passed, 0 failed** (tests/release-1269-beta4-final.txt). Focused sharing/UI/click checks: **114 passed, 0 failed**. All 49 TOC modules compile; exactly ten in-game entries retained. No live Forever verification or public publication claimed. GitHub start review: only PR #6 open; no new report added to scope.
+### Added
+- Optional account-wide player/guild blacklist in AceDB global storage, disabled by default. Enabling merges the active profile list; disabling restores the untouched profile lists. Other profiles can be merged explicitly using Blacklist > Copy from profile > Add entries. Duplicates are skipped, malformed names rejected, and unrelated settings are not copied.
+- Effective blacklist scope is used by target/Nearby selection, context menus, editing and counts. Full settings exports include the active names; private diagnostic exports exclude them. Imports merge names when account sharing is active and never change its enabled flag. Ignore/target/instance rules remain profile-specific. Profile changes and resets preserve shared data.
 
-# BuffTap 1.26.9-beta3
+### Class-aware presentation and policy
+- New BuffCapabilities module distinguishes targeted assignments, single/group pairs, broadcast self effects, approved pet recipients and supported roles. Groups hides inapplicable controls and reclaims their space while retaining supported unlearned spell configuration. Paladins retain their specialized blessing workflow.
+- Warlock/Shaman utility layouts omit unsupported thresholds, pets and roles. Warrior/Hunter broadcast effects remain in My buffs with guidance on Groups. Rogue empty pages link to Weapons/Nearby. My buffs and Target explain class-inapplicable modes, including Hunter/Warrior Target, without removing sidebar navigation.
+- Nearby reflows non-casting classes into aligned display/social columns and removes irrelevant casting pauses and favor observation. Browsing, invitations and existing request validation remain available; no automatic requests are added.
+- Approved pet buffs: Mark, Thorns, Fortitude and Shadow Protection; Intellect/Spirit require readable mana power. Thorns supports Tanks; Fear Ward supports Tanks/Healers. Unsupported saved roles remain stored but evaluate as class mode. Broadcast effects are player-only and ignore recipient assignments.
+- Fresh utility-only group setups start off. Existing explicit choices win; the old unconditional group-enable migration no longer overrides them. Utility timing does not inherit hidden ready-check top-ups. Hidden preferences remain saved and exportable.
 
-### Consistent information cards and Nearby grid
-- Aligns My buffs, Groups and Target information cards to the same page coordinates, dimensions, body spacing and two-button footer. Removes Groups' additional refined-canvas offset and uses the standard section font/capitalization.
-- Applies the current interface accent after dynamically creating labels. This fixes the initial orange/default-colour heading on My buffs/Target and the white Groups heading; class and custom accent selections are respected immediately and on reopening.
-- Nearby's non-casting layout uses consistent checkbox columns: player display choices on the left, invitations/social markers on the right. Moves explanatory text into one full-width line below the settings card and shifts the guide to retain a clear gap. No casting, eligibility, pause, inventory or saved-setting changes.
-- Focused mocked checks: **158 passed, 0 failed**, including all nine classes with class/custom accents, matching info-card geometry, first-opening highlight colour and Nearby column/hint placement (tests/class-polish-1269-beta3-focused.txt). All 49 TOC modules compile; ten in-game entries retained. The beta2 full behavior run remains historical; no full rerun or live rendering claim for this layout-only pass. GitHub start review: only PR #6 open, no new report requiring action.
+### Fixed
+- Use Solo settings remains available in Party/Raid outside combat, with immediate status refresh after edits. Paladin target-blessing planning works while Target/Nearby are off.
+- Weapon reminder eligibility checks public client item minimum level, usability and exact effect metadata, including lower eligible carried ranks. Unusable stock and unknown requirements remain quiet while bounded item metadata loading completes. Saved choices are preserved; no guessed Rogue level threshold or defaults reset.
+- Ordinary quick-target validation rechecks current friendly-target policy at click time, disarming newly blocked recipients. Party/raid action scope is unchanged.
+- Consistent information-card placement, active accent headings and thin header dividers; aligned Nearby controls; separate Blacklist entry and sharing cards with equal-width action columns and preserved footer margin.
 
-# BuffTap 1.26.9-beta2
-
-### Extend capability-aware presentation
-- NearbyCapabilities derives external-buff, short-buff, verified-rank and cleanse applicability independently of learned status. Nearby hides inapplicable casting controls and actively reflows retained display/invite controls, card height and guide placement. The social/buff-request view preference remains available and saved values are not overwritten. No new request validation or automatic sends.
-- My buffs shows a compact explanation for classes with no supported personal reminder families. Target does likewise for classes without assignable friendly buffs, including Hunter/Warrior/Rogue. Class-applicable unlearned spells retain the full UI. Sidebar positions remain stable; inapplicable mode status dots are omitted. Existing cards/fonts/buttons provide relevant Weapons/My buffs/Nearby shortcuts.
-- Browsing for classes without external actions no longer inherits hidden casting-specific resting/mana pauses. Their unused rest shortcut is hidden and favor aura observation is skipped. Other pause/identity safeguards remain.
-
-### Weapon reminder eligibility
-- Clean defaults still select no oils/stones. The reported level-one Rogue screenshot contains explicit saved selections; their origin is unconfirmed. Existing valid choices are preserved.
-- WeaponChoiceSource validates public client item minimum level and player level, in addition to usability and exact effect mapping, and can fall through to a lower carried eligible rank. Unusable carried ranks do not become manual alerts.
-- Empty saved coating/poison preferences require at least one verified level-eligible item before a manual notice. Missing metadata requests use the existing bounded item loader/event path and remain silent until verified. No hard-coded level guess, preference reset, stock-default migration or arbitrary Rogue level gate.
-- Generic Rogue poison reminders remain behind learned/usable capability. Explicit usable Forever item poisons remain supported without a spellbook entry. Disabled hands are excluded from availability probes; eligible out-of-stock notices and Skip when I have none remain supported.
-
-### Validation
-- New all-nine-class/two-locale learned/unlearned page checks and weapon regressions cover level-one saved stones, clean Rogue defaults, unknown metadata, unusable stock, lower rank fallback, explicit usable poisons and preserved choices. Final integrated mocked Lua 5.1 run: **3,116 passed, 0 failed**, terminal VERIFIED_TOTAL/VERIFIED_FAILED and zero FAIL records verified in tests/release-1269-beta2-verified.txt. All 49 TOC modules compile and exactly ten in-game entries load. No live Forever verification or public publication claimed.
-- Start-of-work GitHub review: only PR #6 open; no new report in this scope.
-
-# BuffTap 1.26.9-beta1
-
-### Class-appropriate controls with less clutter
-- Hides inapplicable controls rather than leaving disabled options visible, reclaiming their layout space. Visibility follows class and selected-buff capabilities; supported unlearned spells remain configurable.
-- Adds BuffCapabilities.lua after generated Catalog data. Canonical-family policy distinguishes targeted assignments, genuine single/group pairs, broadcast self effects, approved pet recipients, utility effects and role modes. Options consumes shared helpers rather than maintaining class-specific copies. Paladin keeps the specialized blessing workflow.
-- Warlock/Shaman shared cards collapse without smart-group, threshold, pet or role controls. Druid/Mage/Priest retain supported capabilities ahead of learning. Warrior/Hunter show broadcast guidance; Rogue shows a Weapons shortcut. Existing visual primitives only, no new art. Class-dependent headings, cards and footer spacing adapt together.
-
-### Runtime and defaults
-- Explicit pet whitelist: Mark, Thorns, Fortitude, Shadow Protection; Intellect/Spirit require readable mana power type. Unknown families and utility/Fear Ward/blessings fail closed for generic pet maintenance.
-- Thorns supports tank roles; Fear Ward supports tank/healer. Unsupported saved role choices remain stored but evaluate as class mode. Broadcast effects are player-only and ignore recipient assignments/Also on me. Normal secure eligibility and input requirements remain.
-- Fresh targeted group defaults derive from maintenance capability; utility-only and broadcast/no-target classes start off. Stops the old unconditional one-time group-enable migration from overriding explicit legacy choices. Existing settings win, with no destructive reset or onboarding version replay. Utility timing does not inherit hidden ready-check top-ups.
-- No profile/export schema change. Party/Raid data remains independent and hidden settings remain available for copying/export. No direct settings-file edits.
-
-- Use Solo settings is always usable in Party/Raid outside combat; sparse preference edits refresh context controls immediately. Paladin target-blessing planning is available while Target/Nearby features are off. Profile selector-dependent buttons were audited and regression-covered.
-
-### Validation scope
-- Added all-nine-class Party/Raid UI checks with learned/unlearned spellbooks, fresh/legacy defaults, pet policy, stale roles, broadcast self actions and context preservation. Final integrated mocked Lua 5.1 run: **3,066 passed, 0 failed**, terminal VERIFIED_TOTAL/VERIFIED_FAILED and absence of FAIL records verified in tests/release-1269-beta1-verified.txt. All 49 TOC modules compile; ten in-game note entries load. Focused class/context run: 185 passed; context/profile-selector/blessing run: 560 passed. No live Forever verification or public publication claimed. New explanatory copy falls back to English where translations are unavailable.
-- GitHub issue review: only PR #6 remains open; issue/review comments empty. No new report or issue-state change in this scope.
+### Compatibility and validation
+- Forever only. Existing class/profile lists and settings are preserved. Account blacklist storage is additive and opt-in; no direct WTF or SavedVariables edits.
+- Final behavior run: **3,158 mocked Lua 5.1 checks passed, 0 failed** (tests/release-1269-beta4-final.txt). Subsequent layout-only change: one focused UI callback/geometry check and two edited-file syntax checks passed; no full suite repeated. Stable identity/package checks compile all 49 TOC modules and retain ten in-game entries.
+- Owner reviewed the local beta. Automated results do not establish live API behavior on every class. Unknown item requirements remain silent until verified. New text falls back to English where translations are unavailable.
+- Pre-publication GitHub review: PR #6 remains open; recent issues #5/#4/#3 are closed. No new issue expanded this release. tinect's PR #6 contribution was adapted and co-authored in 1.26.8; credit is retained.
 
 # BuffTap 1.26.8
 

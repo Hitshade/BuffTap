@@ -184,3 +184,6 @@ Owner requested shared account blacklist or importing another profile's names. A
 Beta4 installation independently verified: all 139 source files and 134 ZIP entries match installed bytes. Engine/TOC version 1.26.9-beta4. Receipt and release artifacts in ../releases. No public publication or settings-file access.
 
 Beta4 visual follow-up: split Add to blacklist and Sharing & profile copy into separate cards. Equal-width aligned action columns, labelled target row, uniform 14px card gaps and unchanged list bottom edge. Shortened list viewport only; behavior unchanged. One focused actual UI callback/geometry check passed and the two edited Lua files compile. No full suite run. GitHub review still only PR #6.
+
+## 1.26.9 stable preparation
+Owner approved publication after beta4 UI review. Stable identity and independently authored consolidated release notes; no behavior changes and no full suite rerun. Prior final 3158 behavior checks plus one later focused UI check remain evidence. GitHub pre-publication review: PR #6 open, no comments; recent issues closed. Owner explicitly authorized explanatory closure of #6 after publishing, retaining tinect coauthor credit from 1.26.8.

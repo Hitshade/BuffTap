@@ -1,49 +1,23 @@
-# BuffTap 1.26.9-beta4
+# BuffTap 1.26.9
 
-### A blacklist you can share
-Blacklist now offers Share across all characters. It starts off. Turning it on adds your current profile's player and guild entries to a shared list used by all your characters. Turning it off brings back each profile's own list; the shared list stays saved for later.
+### Less clutter for your class
+Groups now shows the pet, role and group-spell options your class and selected buff can actually use. Supported spells remain configurable before you learn them. Paladins keep their blessing plans; Warlocks and Shamans get simpler utility layouts.
 
-Prefer separate lists? Choose Copy from profile, then Add entries to bring over just that profile's blacklist. Existing names stay, duplicates are skipped, and no other preferences change. You can also use this to bring additional profiles into your shared list.
+Classes without personal or friendly-target buffs get a short explanation and useful shortcuts instead of empty controls. Nearby keeps browsing, invitations and buff requests together, with a tidier layout when your class has no buffs to offer. Battle Shout and Trueshot Aura stay under My buffs.
 
-A friendly-target buff that was ready before you blocked someone is now checked again when you click.
+Thorns offers tank targeting, and Fear Ward offers tanks or healers. Pet upkeep is limited to appropriate buffs, with Intellect and Spirit reserved for mana-using pets. Existing preferences stay saved.
 
-The rules for ignored players, friendly targets and dungeons remain separate for each profile. Your own party and raid retain their existing protection from blacklist filtering. This beta also keeps the recent class-aware page improvements and restores the thin heading divider on My buffs and Target.
+### Share your blacklist
+Under Blacklist, turn on **Share across all characters** to use one player and guild list. It starts off. Enabling adds your current profile's entries; disabling restores each profile's original list and keeps the shared list saved.
 
-Installed locally for review after verification; not a public release. Live game appearance still needs your review.
+For separate lists, choose **Copy from profile**, then **Add entries**. This adds names without replacing your list or copying other settings. Blacklist rules stay separate for each profile. Newly blocked friendly targets are checked again before a prepared buff can cast.
 
-# BuffTap 1.26.9-beta3
+### Quieter reminders and easier settings
+Weapon reminders stay quiet for items below your level, unusable carried items and items whose requirements have not loaded yet. Saved choices remain ready for later. Usable poisons, eligible lower ranks and deliberate out-of-stock reminders still work.
 
-The class information panels on My buffs, Groups and Target now share the same spacing, buttons and highlighted headings. Headings follow your chosen interface colour from the first opening.
+**Use Solo settings** remains available while editing Party or Raid outside combat. New Warlock and Shaman utility group setups start off; existing choices are kept. Information cards, headings and Blacklist controls have also been tidied up.
 
-Nearby has a tidier two-column layout for classes without buffs to offer. Its explanation sits below the options instead of sharing space with the switches. This is a visual update; reminder behavior and saved choices are unchanged.
-
-# BuffTap 1.26.9-beta2
-
-### Useful options for every class
-Nearby now rearranges its remaining controls when your class cannot offer buffs. Player browsing, invitations and buff requests stay useful, without an empty block of casting settings. Your view and saved choices are preserved.
-
-My buffs and Target show a short explanation and useful shortcuts when your class has nothing to configure there. Hunters and Warriors get this treatment on Target; Rogues get it on both. Classes that simply have not learned their spells still see their normal settings.
-
-### Quieter weapon reminders
-A saved oil, stone or poison choice no longer produces an impossible reminder below its required level, while carried but unusable items and unknown requirements stay quiet. Your preference remains saved for later. Usable poisons, lower eligible ranks and deliberate out-of-stock reminders still work; Skip when I have none remains available.
-
-New characters do not have oils or stones selected by default. This beta corrects reminder eligibility rather than clearing existing choices. Please review the updated pages in game; it has not been published.
-
-# BuffTap 1.26.9-beta1
-
-### Groups that make sense for your class
-Less clutter on Groups: classes no longer have to look past pet, role or group-spell controls they cannot use. Options also adapt to the selected buff, keeping the useful choices in view. Warlocks and Shamans get a shorter utility layout, without group-spell thresholds, pet controls or role choices. Druids, Mages and Priests keep their real single/group-spell options. Paladins retain their dedicated blessing plans.
-
-Battle Shout and Trueshot Aura are maintained through My buffs: they affect nearby group members automatically, so their Groups pages explain this instead of offering recipient assignments. Rogues get a shortcut to Weapons.
-
-Thorns offers tank targeting; Fear Ward offers tank or healer targeting. Other buffs use class choices. Pet maintenance is limited to approved buffs, and Intellect/Spirit require mana-using pets. Utility effects are excluded.
-
-New Warlocks and Shamans start with party utility buffing off; enable it deliberately under Groups if wanted. Existing choices, separate Party/Raid settings and hidden preferences stay saved. Setup does not repeat. Utility buffs keep their configured refresh times rather than receiving an unseen ready-check top-up.
-
-
-**Use Solo settings** stays available in Party/Raid outside combat and updates immediately when you edit a setting. Paladins can also prepare target-blessing choices while Target and Nearby are switched off.
-
-This beta uses the existing interface style and needs in-game review. Automated results are recorded separately; no public release has been made.
+For WoW Forever. Your own party and raid retain their existing blacklist exemptions. Unknown item requirements stay quiet until the game provides them. Some new text uses English until translated.
 
 # BuffTap 1.26.8
 
