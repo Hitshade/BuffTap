@@ -448,7 +448,7 @@ function B:RefineNearbyPage(ui,tabs)
   f.nearbyGuideCard=section(ui,p,"How Nearby works",12,-306,692,418)
   local guide=CreateFrame("Frame",nil,p); guide:SetPoint("TOPLEFT",26,-346); guide:SetSize(664,366)
   f.nearbyGuide=guide; self:DrawNearbyGuide(guide,664)
-  f.nearbyClassHint=ui.label(p,"Nearby still supports player browsing, invitations and buff requests for your class.",374,-150,"GameFontDisableSmall",294)
+  f.nearbyClassHint=ui.label(p,"Your class can browse players, send invitations and request buffs here.",374,-150,"GameFontDisableSmall",294)
   self:BuildNearbyAppearance(ui,f.appearancePanes.nearby)
 end
 -- Customization > Nearby window: size, rows, text, button side and position.

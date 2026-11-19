@@ -1,3 +1,9 @@
+# BuffTap 1.26.9-beta3
+
+The class information panels on My buffs, Groups and Target now share the same spacing, buttons and highlighted headings. Headings follow your chosen interface colour from the first opening.
+
+Nearby has a tidier two-column layout for classes without buffs to offer. Its explanation sits below the options instead of sharing space with the switches. This is a visual update; reminder behavior and saved choices are unchanged.
+
 # BuffTap 1.26.9-beta2
 
 ### Useful options for every class

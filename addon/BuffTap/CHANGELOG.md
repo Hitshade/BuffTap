@@ -1,3 +1,11 @@
+# BuffTap 1.26.9-beta3
+
+### Consistent information cards and Nearby grid
+- Aligns My buffs, Groups and Target information cards to the same page coordinates, dimensions, body spacing and two-button footer. Removes Groups' additional refined-canvas offset and uses the standard section font/capitalization.
+- Applies the current interface accent after dynamically creating labels. This fixes the initial orange/default-colour heading on My buffs/Target and the white Groups heading; class and custom accent selections are respected immediately and on reopening.
+- Nearby's non-casting layout uses consistent checkbox columns: player display choices on the left, invitations/social markers on the right. Moves explanatory text into one full-width line below the settings card and shifts the guide to retain a clear gap. No casting, eligibility, pause, inventory or saved-setting changes.
+- Focused mocked checks: **158 passed, 0 failed**, including all nine classes with class/custom accents, matching info-card geometry, first-opening highlight colour and Nearby column/hint placement (tests/class-polish-1269-beta3-focused.txt). All 49 TOC modules compile; ten in-game entries retained. The beta2 full behavior run remains historical; no full rerun or live rendering claim for this layout-only pass. GitHub start review: only PR #6 open, no new report requiring action.
+
 # BuffTap 1.26.9-beta2
 
 ### Extend capability-aware presentation

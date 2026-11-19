@@ -2141,10 +2141,11 @@ function B:Options()
       f.assignChild=assignChild; f.assignRows={}
       f.assignEmpty=label(assignChild,"No party / raid buffs available for this class.",8,-12,"GameFontHighlight",440)
       f.groupInfo=CreateFrame("Frame",nil,groupPage); f.groupInfo:SetAllPoints()
-      card(f.groupInfo,12,-46,692,148)
-      f.groupInfoTitle=label(f.groupInfo,"",28,-64,"GameFontNormalLarge",654)
-      f.groupInfoText=label(f.groupInfo,"",28,-96,"GameFontHighlight",654)
-      f.groupWeapons=button(f.groupInfo,L("Open Weapons"),28,-156,148,function() f.selectTab(TAB.Weapons) end)
+      f.groupInfoCard=card(f.groupInfo,12,-84,692,172)
+      f.groupInfoTitle=label(f.groupInfo,"",28,-104,T.fonts.Section,650)
+      f.groupInfoText=label(f.groupInfo,"",28,-136,"GameFontHighlight",650)
+      f.groupWeapons=button(f.groupInfo,L("Open Weapons"),28,-206,148,function() f.selectTab(B:ClassGroupCapabilities().broadcast and TAB.Buffs or TAB.Weapons) end)
+      f.groupNearby=button(f.groupInfo,L("Open Nearby"),188,-206,148,function() f.selectTab(TAB.Nearby) end)
       f.groupInfo:Hide()
 
     end
@@ -3362,6 +3363,7 @@ function B:UpdateGroupCapabilityOptions()
   f.groupParty:SetShown(targeted); f.groupRaid:SetShown(targeted)
   if f.groupContextHint then f.groupContextHint:SetShown(targeted) end
   if not targeted then
+    f.groupInfo:SetParent(f.pages[2]); f.groupInfo:ClearAllPoints(); f.groupInfo:SetAllPoints(f.pages[2])
     if f.pageHeaders and f.pageHeaders[2] then f.pageHeaders[2].description:SetText(L(c.broadcast and "Group effects without recipient assignments." or "Your class has useful options elsewhere in BuffTap.")) end
     if c.broadcast then
       f.groupInfoTitle:SetText(spellLabel(c.broadcast))
@@ -3370,7 +3372,8 @@ function B:UpdateGroupCapabilityOptions()
       f.groupInfoTitle:SetText(L("No party or raid buffs to assign"))
       f.groupInfoText:SetText(L("Your class has no party or raid buffs to assign. Use Weapons for poisons and coatings, or Nearby for invitations and buff requests."))
     end
-    f.groupWeapons:SetShown(not c.broadcast)
+    T.SectionTitle(f.groupInfoTitle)
+    f.groupWeapons:SetText(L(c.broadcast and "Open My buffs" or "Open Weapons")); f.groupWeapons:Show()
     return
   end
   f.smartGroup:SetShown(c.pairs); f.groupThresholdLabel:SetShown(c.pairs)
@@ -3409,10 +3412,10 @@ function B:UpdateClassAwarePages()
   f.nearbyManaLabel:SetShown(c.actions); f.nearbyManaFloor:SetShown(c.actions); f.nearbyManaFloor.valueText:SetShown(c.actions)
   f.nearbyClassHint:SetShown(not c.actions)
   if not c.actions then
-    at(f.nearbyAll,26,-112); at(f.nearbyFullNames,26,-140); at(f.nearbyShowLevel,192,-140)
-    at(f.nearbyMarkSocial,26,-168); at(f.nearbyInvites,374,-112)
+    at(f.nearbyAll,26,-112); at(f.nearbyFullNames,26,-140); at(f.nearbyShowLevel,26,-168)
+    at(f.nearbyMarkSocial,374,-140); at(f.nearbyInvites,374,-112); at(f.nearbyClassHint,28,-224); f.nearbyClassHint:SetWidth(656)
     movedCard(f.nearbySettingsCard,12,-72,138)
-    movedCard(f.nearbyGuideCard,12,-228,418); at(f.nearbyGuide,26,-268)
+    movedCard(f.nearbyGuideCard,12,-252,418); at(f.nearbyGuide,26,-292)
     f.pageHeaders[4].description:SetText(L("Browse nearby players, invite someone or ask for a buff."))
   else
     at(f.nearbyAll,374,-112); at(f.nearbyFullNames,374,-140); at(f.nearbyShowLevel,540,-140); at(f.nearbyMarkSocial,374,-168)
@@ -3430,11 +3433,11 @@ function B:UpdateClassAwarePages()
     local index,applicable,title=spec[1],spec[2],spec[3]; local page=f.pages[index]
     if not page.classEmpty then
       local box=CreateFrame("Frame",nil,page); box:SetAllPoints(); page.classEmpty=box
-      card(box,12,-84,692,172)
-      T.SectionTitle(label(box,title,28,-104,T.fonts.Section,650))
-      label(box,L(personal and "Your buffs are maintained under My buffs rather than cast on individual friendly targets. Nearby still offers player browsing, invitations and buff requests." or "Your class uses other parts of BuffTap. Poisons and weapon coatings are under Weapons; Nearby offers player browsing, invitations and buff requests."),28,-136,"GameFontHighlight",650)
-      button(box,L(personal and "Open My buffs" or "Open Weapons"),28,-206,148,function() f.selectTab(personal and TAB.Buffs or TAB.Weapons) end)
-      button(box,L("Open Nearby"),188,-206,148,function() f.selectTab(TAB.Nearby) end)
+      box.infoCard=card(box,12,-84,692,172)
+      box.infoTitle=label(box,title,28,-104,T.fonts.Section,650); T.SectionTitle(box.infoTitle)
+      box.infoText=label(box,L(personal and "Your buffs are maintained under My buffs rather than cast on individual friendly targets. Nearby still offers player browsing, invitations and buff requests." or "Your class uses other parts of BuffTap. Poisons and weapon coatings are under Weapons; Nearby offers player browsing, invitations and buff requests."),28,-136,"GameFontHighlight",650)
+      box.primary=button(box,L(personal and "Open My buffs" or "Open Weapons"),28,-206,148,function() f.selectTab(personal and TAB.Buffs or TAB.Weapons) end)
+      box.nearby=button(box,L("Open Nearby"),188,-206,148,function() f.selectTab(TAB.Nearby) end)
       box:Hide()
     end
     if not applicable then
@@ -3454,4 +3457,5 @@ function B:UpdateClassAwarePages()
       if page.classHidden then for _,entry in ipairs(page.classHidden) do entry[1]:SetShown(entry[2]) end; page.classHidden=nil end
     end
   end
+  T.Refresh()
 end

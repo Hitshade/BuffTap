@@ -18,7 +18,7 @@ assert(f.pages[1].classEmpty.shown==(playerClass=='ROGUE'),'personal applicabili
 assert(B.db.nearbyManaFloor==50 and B.db.nearbyReturnFavor==true,'hidden prefs retained')
 if not c.actions then
  local p=f.nearbyInvites.__draw.points[1]; assert(p[2]==374 and p[3]==-112)
- assert(f.nearbyGuide.__draw.points[1][3]==-268,'guide must move with compact card')
+ assert(f.nearbyGuide.__draw.points[1][3]==-292,'guide must move with compact card')
  IsResting=function() return true end; B.db.pauseResting=false; B.ManaFloorReached=function() error('no meaningless mana read') end
  assert(not B:NearbyPauseReason(),'browsing should not be paused for unusable casting preferences')
  B.db.nearbyEnabled=true; B:CreateNearbyWindow(); B:UpdateNearbyWindow(); assert(not B.nearbyFrame.resting.shown)
