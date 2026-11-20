@@ -1,3 +1,10 @@
+# BuffTap 1.26.14
+
+### Group buffs with Reagent Economy
+Forever effects that waive a group buff's normal vendor reagent cost now work with BuffTap. If the game says your spell can be cast, an empty reagent stack no longer makes BuffTap switch to individual buffs.
+
+No setup is needed. Spells the game refuses still fall back normally, and BuffTap checks again when you use your binding. Group preferences and other features are unchanged. No new settings or saved-data changes.
+
 # BuffTap 1.26.13
 
 ### Catch the giver while the buff arrives

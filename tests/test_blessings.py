@@ -50,7 +50,7 @@ test('Page switching closes blessing dropdown',setup+"BuffTap:Options(); local f
 test('Turning assignments off cancels stale explicit action',setup+"BuffTap.db.blessingAssignments=false; BuffTap.button.scripts.PreClick(nil,'LeftButton',false); assert(not BuffTap.action)")
 test('Other classes retain original Groups controls',"BuffTap:Options(); assert(not BuffTap.options.blessingPanel.shown and BuffTap.options.legacyGroups.shown)")
 test('Clear exception restores class assignment',setup+"BuffTap:SetBlessingPlayer({unit='party1'},'bow'); BuffTap:SetBlessingPlayer({unit='party1'},nil); refresh(); assert(BuffTap.action.key=='bom')")
-test('Empty reagent bag uses normal spell instead of unusable Greater',setup+"classes.party2='WARRIOR'; bags[21177]=0; BuffTap:InvalidateRoster(); refresh(); assert(BuffTap.action.key=='bom' and not BuffTap.action.groupCast)")
+test('Empty reagent bag uses normal spell instead of unusable Greater',setup+"classes.party2='WARRIOR'; bags[21177]=0; local normal=C_Spell.IsSpellUsable; C_Spell.IsSpellUsable=function(id) if BuffTap.GroupReagents[id] then return false,false end; return normal(id) end; BuffTap:InvalidateRoster(); refresh(); assert(BuffTap.action.key=='bom' and not BuffTap.action.groupCast)")
 test('Combat group exit clears session exceptions',setup+"BuffTap:SetBlessingPlayer({unit='party1'},'bow'); combat=true; GetNumSubgroupMembers=function() return 0 end; BuffTap.events.scripts.OnEvent(nil,'GROUP_ROSTER_UPDATE'); assert(not BuffTap.blessingPlayers)")
 test('Expanded class rows and footer fit the panel without overlapping',setup+'''
 local original=CreateFrame

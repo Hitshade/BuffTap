@@ -2,6 +2,8 @@
 local _,B=...
 -- Keep the ten most recent releases within a 24 KiB content ceiling.
 B.PatchNotes={
+ {version="1.26.14",title="Group buffs without the reagent",items={
+  "Group buffs now respect Forever effects that remove their normal vendor reagent cost. When the game allows the cast, BuffTap offers the group buff instead of unnecessarily switching to individual buffs."}},
  {version="1.26.13",title="Catch a brief chance to say thanks",items={
   "Solo Thanks now captures the buff giver as the buff arrives, helping when their details disappear from the next buff check. The usual identity checks still apply."},thanks="Thanks to waggz81 for continuing to help investigate missed thanks."},
  {version="1.26.12",title="Thanks, even on horseback",items={
@@ -50,13 +52,6 @@ B.PatchNotes={
   "Nearby setup explains friendly nameplates and offers a separate names-only choice when supported. Game settings change only when you choose to change them.",
   "New characters get a tidier starting layout. Edit Mode lets you place Camping, Supplies and Nearby even while they are off; existing positions stay put.",
   "Higher-rank Nearby buffs now work through the main binding. Grey mana and power waits follow your label choices, including icon-only, and hide with the city/inn pause. Automatic sounds stay quiet if resting information is briefly unavailable."},thanks="Thanks to sevaniuz for the power-wait display feedback."},
- {version="1.26.4",title="Give nearby players a buff-grade",items={
-  "Nearby > Offer higher rank buffs can suggest an upgrade when someone has a known weaker buff and can receive a stronger rank. It starts off. Mage, Priest, Druid and Paladin rank choices also work better for lower-level recipients.",
-  "Shamans can get a shield reminder with one or two charges left. Choose My buffs > Refresh at charges for Lightning Shield or Water Shield; it starts off.",
-  "Fresh setup recommends class-appropriate Cleanse, Resurrection, cleanse-first ordering and SmartShift. Supplies guidance helps you choose ammo, Soul Shards and reagents to track.",
-  "Curious about a buff? Diagnostics > Inspect buffs shows which reminders recognize it. Full check-up includes the same details; select the text and press Ctrl+C to share it.",
-  "Group buffs respect Also on me and use single buffs when a member's buff information is unclear. Nearby buttons also clear prepared casts when combat starts.",
-  "Warlocks using Demonic Pact can be reminded to summon a chosen different demon while protecting the sacrificed family."}},
 
 }
 function B:PatchNotesUnread()

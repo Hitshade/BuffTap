@@ -4,7 +4,7 @@
 
 local _, B = ...
 _G.BuffTap = B
-B.version = "1.26.13"
+B.version = "1.26.14"
 B.API = {}
 local A = B.API
 
@@ -1336,6 +1336,17 @@ function B:OnlyGlobalCooldown(action,cd)
   return true
 end
 
+-- Static reagent data explains an explicit unusable group spell, but it must
+-- never veto a spell the live client says is usable. Forever's Reagent Economy
+-- can waive vendor reagents while SpellReagents still lists the old cost.
+local function groupReagentShortage(self,action)
+  for _,reagent in ipairs(self.GroupReagents and self.GroupReagents[action.id] or {}) do
+    local count=A.Call(C_Item and C_Item.GetItemCount,reagent[1],false,false,false,false)
+    if A.Number(count) and count<reagent[2] then return true end
+  end
+  return false
+end
+
 function B:Validate(action)
   if action then action.gcdStart=nil; action.gcdDuration=nil end
   if not self:SituationActionCurrent(action) then return false,"setup changed before validation" end
@@ -1365,16 +1376,29 @@ function B:Validate(action)
     if why=="target out of range" or why=="target range unknown" then self:AddRangeBlocked(action) end
     return false,why
   end
-  for _,reagent in ipairs(self.GroupReagents and self.GroupReagents[action.id] or {}) do
-    local count=A.Call(C_Item and C_Item.GetItemCount,reagent[1],false,false,false,false)
-    if not A.Number(count) or count<reagent[2] then return false,"group reagent unavailable" end
-  end
   if self.SelfBuffAwaitingAura and self:SelfBuffAwaitingAura(action) then return false,"waiting for successful self buff aura" end
-  local usable,err = A.SpellUsable(action.id)
-  action.usable = usable==true
+
+  -- Current client castability is authoritative. Forever's Reagent Economy can
+  -- waive a static vendor-reagent requirement, so a live usable=true must not
+  -- be overridden by the historical GroupReagents table.
+  local usable,err=A.SpellUsable(action.id)
+  action.usable=usable==true
   if not action.usable then
+    -- Preserve resource failures ahead of reagent diagnostics.
+    if err==true then
+      self.powerBlocked=true
+      self.manaBlocked=true
+      self.manaWaitIcon=self.manaWaitIcon or action.icon
+      return false,"not enough mana"
+    end
+
+    -- Only an explicit live refusal may be explained by a definite static
+    -- reagent shortage. Unknown usability or unreadable stock stays generic.
+    if usable==false and groupReagentShortage(self,action) then
+      return false,"group reagent unavailable"
+    end
+
     self.powerBlocked=true
-    if err==true then self.manaBlocked=true; self.manaWaitIcon=self.manaWaitIcon or action.icon; return false,"not enough mana" end
     return false,type(err)=="string" and err or "spell not usable (power, form, reagent or requirements)"
   end
   local cd,cdwhy = A.Call(C_Spell and C_Spell.GetSpellCooldown,action.id)

@@ -283,9 +283,10 @@ test('Ready check does not duplicate a newly detected private stock alert', flas
 BuffTap.db.suppliesChat=true; bags[13510]=0; local before=#prints; BuffTap:ReportSupplies()
 assert(#prints==before+1 and prints[#prints]:find('Supply check:'))
 ''')
-test('Class group reagent checks remain unchanged pending exemption validation', '''
+test('Live usable group spell accepts waived reagents without a talent subsystem', '''
 spell(21849,'Gift of the Wild',50); UnitLevel=function() return 60 end; BuffTap.db.group=true; bags[17021]=0
-refresh(); assert(BuffTap.action and not BuffTap.action.groupCast)
+C_Spell.IsSpellUsable=function() return true,false end
+refresh(); assert(BuffTap.action and BuffTap.action.groupCast)
 assert(not BuffTap.ReagentWaiverAuras and not BuffTap.RecoveryReagents)
 ''')
 test('Uninitialized backpack slots prevent false zero-stock warnings', '''
