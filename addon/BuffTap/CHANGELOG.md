@@ -1,3 +1,12 @@
+# BuffTap 1.26.14
+
+### Forever reagent compatibility
+- Engine.lua now accepts explicit live spell usability before consulting static GroupReagents costs. Historical vendor reagent requirements no longer veto spells the Forever client permits, including Reagent Economy waived casts.
+- On explicit refusal, mana failures retain precedence; definite reagent shortages retain their existing reason. Unknown usability fails closed. No talent IDs, aura detection, settings, schema changes or secure-action changes. Selection thresholds, recipients, range, cooldowns and click-time revalidation remain unchanged.
+- Validation: 410 focused mocked scenarios passed, zero failed, covering the base suite, blessings, Supplies and ten new legacy regressions. All 50 TOC Lua modules compile. Full aggregate suite not rerun for this bounded correction. No live-client testing claimed.
+- Updated two historical reagent-failure fixtures to make the mock client explicitly refuse the cast. The food regression uses the lasting Well Fed aura, not the eating channel.
+- GitHub review before development and publication: no open issues. Previously closed #4/#5 and adapted PR #6 remain outside this patch; existing contributor credits preserved.
+
 # BuffTap 1.26.13
 
 ### Incoming thanks identity capture
