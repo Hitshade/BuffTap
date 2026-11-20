@@ -2,6 +2,8 @@
 local _,B=...
 -- Keep the ten most recent releases within a 24 KiB content ceiling.
 B.PatchNotes={
+ {version="1.26.13",title="Catch a brief chance to say thanks",items={
+  "Solo Thanks now captures the buff giver as the buff arrives, helping when their details disappear from the next buff check. The usual identity checks still apply."},thanks="Thanks to waggz81 for continuing to help investigate missed thanks."},
  {version="1.26.12",title="Thanks, even on horseback",items={
   "Say thanks from the saddle. Automatic thank-you emotes and the optional whisper backup now work while mounted. Buff actions still pause while riding, and Keep thanking while resting still applies in town.",
   "Really, really don't want to miss a thank-you? Helpers > Solo Thanks has a very optional whisper backup. It starts off and only offers THANK when automatic thanks has not fired and the buff giver's full name is known. Nothing is whispered automatically.",
@@ -55,12 +57,6 @@ B.PatchNotes={
   "Curious about a buff? Diagnostics > Inspect buffs shows which reminders recognize it. Full check-up includes the same details; select the text and press Ctrl+C to share it.",
   "Group buffs respect Also on me and use single buffs when a member's buff information is unclear. Nearby buttons also clear prepared casts when combat starts.",
   "Warlocks using Demonic Pact can be reminded to summon a chosen different demon while protecting the sacrificed family."}},
- {version="1.26.3",title="Better recovery, more food choices",items={
-  "Druids can resurrect with every rank of Revive while leaving Also use Rebirth off. Resurrection reminders check again when a fallen group member comes back into range.",
-  "Plan tracking ahead of time. Druids can choose Track Humanoids and Warlocks can choose Sense Demons before learning them. Using them still needs the spell, and Druid tracking needs Cat Form.",
-  "SmartShift can offer your previous form after a successful cleanse.",
-  "Nearby confirmations have a clearer left-to-right cooldown sweep. Repeated presses follow the real cooldown, and unrelated game errors no longer make a successful cast look failed. Every cast still needs your input.",
-  "Fifteen more foods are on the menu, including Goblin Deviled Clams, Clamlette Surprise and seasonal treats. Find them under Consumables > Food > Choose."},thanks="Thanks to shaunpearsondev for reporting the missing Goblin Deviled Clams."},
 
 }
 function B:PatchNotesUnread()

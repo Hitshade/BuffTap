@@ -135,3 +135,5 @@ import test_overlay_layers_12611
 import test_thanks_events_12612
 
 import test_manual_thanks_12612
+
+import test_thanks_payload_12613

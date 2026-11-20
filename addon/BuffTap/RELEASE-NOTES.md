@@ -1,3 +1,12 @@
+# BuffTap 1.26.13
+
+### Catch the giver while the buff arrives
+Solo Thanks now captures a readable buff giver from the incoming buff update, before checking your buff list again. This can help when the giver's details are available briefly and disappear from the later check.
+
+Your existing emote, delay, mounted thanks and resting choices stay in place. BuffTap still verifies who it is thanking, and the optional manual whisper backup still requires your input. This adds no automatic chat messages.
+
+This is a targeted improvement for missed thanks, not a guarantee when the game never exposes a usable giver. Thanks to waggz81 for continuing to help us investigate.
+
 # BuffTap 1.26.12
 
 ### Say thanks without dismounting

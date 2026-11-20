@@ -1,3 +1,11 @@
+# BuffTap 1.26.13
+
+### Incoming thanks identity capture
+- Helpers.lua passes the player UNIT_AURA added-aura payload into Solo Thanks observation. Captures a readable helpful aura's live player source, GUID and full name before scanning the aura list. This closes a reproduced mocked gap where the event knows the unit but the subsequent scan and unit enumeration do not.
+- Event hints are local to this observation, never cached across events. They are used only for a matching spell plus aura instance when normal recipient resolution needs retry; live GUID/name are revalidated and a contradictory readable current aura caster GUID rejects the hint. Existing ignore, solo, pause, baseline, cooldown and delayed-dispatch identity checks remain unchanged. No new settings, automatic whispers or untargeted emotes.
+- Validation: 84 focused mocked checks passed, zero failed (tests/thanks-payload-12613-focused.txt), including actual dispatcher delivery, duplicate suppression, mismatched payloads, restricted data, ignored players, combat, disabled thanks, mounting and changed identity during delay. All 50 TOC modules compile; ten in-game versions retained. Full suite not rerun for this targeted change; 1.26.12 had 3,213 passing checks. No live-client claim.
+- A plausible cause, not a confirmed resolution of waggz81's report. Thanks to waggz81 for continued reports. Compared TFTB's public added-aura handling while investigating; implementation is independent and keeps BuffTap's stricter identity policy. Prepublication GitHub #6/#5/#4 remain closed, no new issue scope.
+
 # BuffTap 1.26.12
 
 ### Mounted thanks and optional whisper backup

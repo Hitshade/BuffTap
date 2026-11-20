@@ -235,3 +235,7 @@ Final stable validation: 3,213 integrated mocked checks passed, VERIFIED_FAILED 
 
 ## 1.26.12 publication receipt
 Published GitHub release 451530020 from 2f3766b with archive SHA256 2d4083325b0b692a5bc275d618d543f49d785f3510169a4522952c9f09068942; GitHub asset digest matched. CurseForge file 9701543 submitted as Release for 1.60.1, automatic publication after approval; persisted file list shows Processing. Reopened file details and verified saved notes explicitly highlight mounted thanks and user-triggered whisper backup only when automatic thanks has not fired. Stable install independently matched all 140 raw source files; archive has 135 runtime/distribution files. Full validation: 3,213 passed, zero failed. Owner requested emergency maintenance only until weekly reset.
+
+
+## 1.26.13 targeted thanks maintenance
+Owner authorized minimal event-payload capture, efficient focused validation, publication and a direct reply to waggz81 describing one last targeted attempt. Captures event source before rescan, reuses existing recipient and dispatch checks, matches spell+instance and rejects changed current GUID/name. 84 focused mocked checks pass; no full rerun or live claim. Report remains unconfirmed in client. GitHub #6/#5/#4 closed, no new scope. Weekly release freeze remains in effect beyond this expressly authorized maintenance.

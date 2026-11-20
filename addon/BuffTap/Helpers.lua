@@ -547,7 +547,24 @@ function B:ThanksAuraRecipient(aura,cache)
 end
 -- Read fresh helpful auras and capture the caster beside each slot. Casting
 -- keeps its separate, stricter aura reader/cache and all existing safeguards.
-function B:ReadSoloThanksAuras()
+function B:CaptureSoloThanksPayload(update)
+  if type(update)~="table" or not A.Public(update) then return end
+  local added=update.addedAuras
+  if type(added)~="table" or not A.Public(added) then return end
+  local hints={}
+  for i,raw in ipairs(added) do
+    if i>255 then break end
+    if type(raw)=="table" and A.Public(raw) and A.Public(raw.isHelpful) and raw.isHelpful==true
+      and A.Number(raw.spellId) and A.Number(raw.auraInstanceID) then
+      local recipient=thankRecipient(raw.sourceUnit)
+      if recipient and A.Text(recipient.guid) and recipient.guid:match("^Player%-") then
+        hints[raw.auraInstanceID]={spell=raw.spellId,recipient=recipient}
+      end
+    end
+  end
+  return hints
+end
+function B:ReadSoloThanksAuras(hints)
   local read=C_UnitAuras and C_UnitAuras.GetAuraDataByIndex
   if type(read)~="function" then return nil,"helpful aura API unavailable" end
   local out,empty,refused,casters={},false,0,{}
@@ -564,6 +581,18 @@ function B:ReadSoloThanksAuras()
       local instance=A.Number(raw.auraInstanceID) and raw.auraInstanceID or nil
       if id or instance then
         local recipient,why,retry,casterGUID=self:ThanksAuraRecipient(raw,casters)
+        local hint=instance and hints and hints[instance]
+        if not recipient and retry and hint and hint.spell==id then
+          local captured=hint.recipient
+          local current=thankRecipient(captured.unit)
+          local actual=self:AuraCasterGUID("player",raw)
+          if current and current.guid==captured.guid and current.name==captured.name
+            and (not A.Text(actual) or actual==captured.guid) then
+            recipient=current; recipient.identity="incoming aura event / live unit"
+            why=nil; retry=nil; casterGUID=current.guid
+            self:ThanksTrace("event caster captured")
+          end
+        end
         local identity=recipient and recipient.guid or casterGUID
         local lookup=self.thanksLookup
         out[#out+1]={name=A.Text(raw.name) and raw.name or nil,casterLookup=lookup and lookup.guid==identity and lookup or nil,spellId=id,auraInstanceID=instance,expirationTime=A.Number(raw.expirationTime) and raw.expirationTime or nil,
@@ -632,14 +661,15 @@ function B:DispatchSoloThanks()
   end
 end
 
-function B:ObserveSoloThanks(baseline)
+function B:ObserveSoloThanks(baseline,update)
   if not self:SoloThanksAllowed() then
     self.helperThankSeen=nil; self.helperThankBaseline=nil; self.helperThankPending=nil; self.helperThankRetries=0
     self.helperThankRetryPending=nil; self.helperThankQueue={}; self:CancelTimer("thanks-send"); self:CancelTimer("thanks-settle")
     self.helperThankStatus="Paused: "..tostring(self:SoloThanksBlockReason() or "unavailable"); return
   end
   -- Gratitude needs readable identity, not the strict timing required for casting.
-  local auras,scanError=self:ReadSoloThanksAuras()
+  local hints=self:CaptureSoloThanksPayload(update)
+  local auras,scanError=self:ReadSoloThanksAuras(hints)
   if not auras then
     self.helperThankStatus="Aura scan unavailable: "..tostring(scanError).."; previous baseline preserved"
     self:ScheduleThanksSettle(); return
@@ -726,7 +756,7 @@ end
 
 function B:HelperEvent(event,arg,arg2,spellID)
   if event=="UNIT_AURA" and A.Text(arg) and arg=="player" and self:HelperEnabled("helperThanks") then
-    self:ObserveSoloThanks()
+    self:ObserveSoloThanks(nil,arg2)
   elseif event=="PLAYER_REGEN_DISABLED" then
     self.buffQueueQuietUntil=nil
     self.selfBuffAttempts=nil; self.selfBuffSettling=nil
