@@ -239,3 +239,7 @@ Published GitHub release 451530020 from 2f3766b with archive SHA256 2d4083325b0b
 
 ## 1.26.13 targeted thanks maintenance
 Owner authorized minimal event-payload capture, efficient focused validation, publication and a direct reply to waggz81 describing one last targeted attempt. Captures event source before rescan, reuses existing recipient and dispatch checks, matches spell+instance and rejects changed current GUID/name. 84 focused mocked checks pass; no full rerun or live claim. Report remains unconfirmed in client. GitHub #6/#5/#4 closed, no new scope. Weekly release freeze remains in effect beyond this expressly authorized maintenance.
+
+
+## 1.26.13 publication receipt
+GitHub release 452641413 published from de93f20; asset digest matches archive SHA256 4b06fc6a4155ff67e721b276f613c5f559ca762ad98470322a09014d6a658d3d. CurseForge file 9714698 submitted as Release for 1.60.1 with automatic publication after approval; persisted list showed Uploading. Direct reply to waggz81 confirmed by Your reply was posted: one last targeted attempt, case unconfirmed, update before resetting profile, target-giver test, immediate debug, salute/thank comparison and other-addon details. All 135 distribution files match the local installation; five unused source-only sounds are absent from that installation and are excluded from the release as before. 84 focused checks, no full rerun. Receipts in ../releases.
