@@ -628,7 +628,7 @@ function B:DrawNearbyGuide(g,width)
   -- The numbered key, left of the picture.
   local rx=0; local cw=PX-20; local last
   local function heading(label,gap)
-    local h=g:CreateFontString(nil,"OVERLAY",T.fonts.Section); h:SetWidth(cw); h:SetJustifyH("LEFT"); h:SetText(self:Text(label)); T.SectionTitle(h)
+    local h=g:CreateFontString(nil,"OVERLAY",T.fonts.Section); h:SetWidth(cw); h:SetJustifyH("LEFT"); h:SetText(self:Text(label)); T.SectionTitle(h); T.Track(h,"label")
     if last then h:SetPoint("TOPLEFT",last,"BOTTOMLEFT",-24,-(gap or 14)) else h:SetPoint("TOPLEFT",g,"TOPLEFT",rx,0) end
     last=h; last.indented=false
   end
@@ -654,6 +654,8 @@ function B:DrawNearbyGuide(g,width)
   item(6,"Nothing needed",self:Text("A dash means that player already has what you can give."))
   local plates=g:CreateFontString(nil,"OVERLAY",T.fonts.Muted); plates:SetWidth(290); plates:SetJustifyH("LEFT"); plates:SetWordWrap(true)
   plates:SetPoint("TOPLEFT",note,"BOTTOMLEFT",0,-12); plates:SetText(self:Text("Nearby needs friendly nameplates (normally Shift+V). Window size, text and position: Customization > Nearby window."))
+  local combat=g:CreateFontString(nil,"OVERLAY",T.fonts.Muted); combat:SetWidth(290); combat:SetJustifyH("LEFT"); combat:SetWordWrap(true)
+  combat:SetPoint("TOPLEFT",plates,"BOTTOMLEFT",0,-8); combat:SetText(self:Text("Nearby stays open in combat, so invitations still work. You can change this under Customization > Nearby window."))
 end
 -- Why Nearby helps, worded for the player's class. Classes without a buff for others still get
 -- one-click invites and polite buff requests to Mages, Priests, Druids and Paladins around them.

@@ -501,6 +501,7 @@ function B:Validate(action)
 end
 
 -- Options: the Cleanse page (after My buffs). Built from the shared options helpers.
+local function noTile() return setmetatable({edges={}},{__index=function() return function() end end}) end
 local TYPE_ORDER={"Poison","Curse","Disease","Magic"}
 function B:BuildCleansePage(ui,tabs,headerSwitch,section)
   local f=self.options; local T=B.OptionsTheme; local p=f.pages[tabs.Cleanse]
@@ -510,30 +511,34 @@ function B:BuildCleansePage(ui,tabs,headerSwitch,section)
     B.db.cleanseEnabled=c:GetChecked()==true; B:RequestRefresh("cleanse toggled",0); B:UpdateCleansePage(); B:UpdateNavStatus()
   end)
   headerSwitch(f.cleanseEnable,p)
-  section(ui,p,"What to remove",12,-76,692,220)
+  section(ui,p,"What to remove",12,-76,692,224)
   f.cleanseRows={}
+  f.cleanseTiles={}
   for i,kind in ipairs(TYPE_ORDER) do
-    local y=-112-(i-1)*30
-    local swatch=p:CreateTexture(nil,"ARTWORK"); swatch:SetSize(10,10); swatch:SetPoint("TOPLEFT",30,y-9)
+    local y=-112-(i-1)*34
+    f.cleanseTiles[#f.cleanseTiles+1]=noTile(p,22,y+3,672,30)
+    local swatch=p:CreateTexture(nil,"ARTWORK"); swatch:SetSize(10,10); swatch:SetPoint("TOPLEFT",32,y-7)
     local c=B.CleanseColors[kind]; swatch:SetColorTexture(c[1],c[2],c[3],1)
     local row={kind=kind,swatch=swatch}
     row.check=ui.check(p,kind,48,y,function(s)
       if A.Combat() then return end
       B.db.cleanseTypes[kind]=s:GetChecked()==true; B:RequestRefresh("cleanse types",0)
     end)
-    row.spell=ui.label(p,"",260,y-8,"GameFontDisableSmall",420)
+    row.spell=ui.label(p,"",260,y-6,"GameFontDisableSmall",420)
     f.cleanseRows[i]=row
   end
-  f.cleanseAbolishInfo=ui.label(p,"",48,-244,"GameFontDisableSmall",620)
-  f.cleanseBorder=ui.check(p,"Border colour by type",48,-264,function(c)
+  f.cleanseAbolishInfo=ui.label(p,"",34,-246,"GameFontDisableSmall",640)
+  f.cleanseTiles[#f.cleanseTiles+1]=noTile(p,22,-262,672,30)
+  f.cleanseBorder=ui.check(p,"Border colour by type",30,-265,function(c)
     B.db.cleanseBorder=c:GetChecked()==true; B:UpdateOverlay()
   end)
-  section(ui,p,"Who",12,-310,692,68)
-  local who={{"cleanseSelf","You",26},{"cleanseGroup","Your group",196},{"cleanseTarget","Your target",366},{"cleanseNearby","Nearby players",536}}
+  section(ui,p,"Who",12,-316,692,70)
+  local who={{"cleanseSelf","You",30,190},{"cleanseGroup","Your group",228,140},{"cleanseTarget","Your target",376,140},{"cleanseNearby","Nearby players",524,178}}
   f.cleanseWho={}
   for _,entry in ipairs(who) do
     local key=entry[1]
-    f.cleanseWho[key]=ui.check(p,entry[2],entry[3],-341,function(c)
+    noTile(p,entry[3]-8,-347,entry[4],32)
+    f.cleanseWho[key]=ui.check(p,entry[2],entry[3],-352,function(c)
       if A.Combat() then return end
       B.db[key]=c:GetChecked()==true; B:RequestRefresh("cleanse who",0)
     end)
@@ -541,43 +546,45 @@ function B:BuildCleansePage(ui,tabs,headerSwitch,section)
   f.cleanseWho.cleanseNearby:HookScript("OnEnter",function(s) T.Tooltip(s,B:Text("Nearby players"),B:Text("Also offer to cleanse players in the Nearby list. Uses the same safety rules as Nearby buffing.")) end)
   f.cleanseWho.cleanseNearby:HookScript("OnLeave",function() if GameTooltip then GameTooltip:Hide() end end)
   -- The cleanse sound lives with the other sounds under Customization > Binding & sound.
-  f.cleanseSoundShortcut=ui.button(p,"Sound settings",566,-35,138,function() f.selectTab(tabs.Appearance); B:SetAppearanceView("binding") end); f.cleanseSoundShortcut:SetHeight(20)
+  f.cleanseSoundShortcut=ui.button(p,"Sound settings",566,-40,138,function() f.selectTab(tabs.Appearance); B:SetAppearanceView("binding") end); f.cleanseSoundShortcut:SetHeight(20)
   -- Resurrection: one row. Works whether or not cleansing is on.
-  section(ui,p,"Resurrection",12,-392,692,100)
-  f.reviveEnable=ui.check(p,"Offer resurrection",26,-432,function(c)
+  section(ui,p,"Resurrection",12,-402,692,108)
+  for _,col in ipairs({{22,190},{220,140},{368,140},{516,178}}) do noTile(p,col[1],-432,col[2],32) end
+  noTile(p,22,-470,330,32)
+  f.reviveEnable=ui.check(p,"Offer resurrection",30,-437,function(c)
     if A.Combat() then return end
     B.db.reviveEnabled=c:GetChecked()==true; B:RequestRefresh("revive toggled",0); B:UpdateCleansePage()
   end)
   f.reviveEnable:HookScript("OnEnter",function(s) T.Tooltip(s,B:Text("Offer resurrection"),B:Text("Out of combat, puts your resurrection spell on the reminder for a dead group member, or a dead player you target. Never for someone who has released their spirit or already has a resurrection coming. Dead players have no nameplate, so Nearby can't offer it: target their corpse instead.")) end)
   f.reviveEnable:HookScript("OnLeave",function() if GameTooltip then GameTooltip:Hide() end end)
-  f.reviveGroup=ui.check(p,"Your group",196,-432,function(c) if A.Combat() then return end; B.db.reviveGroup=c:GetChecked()==true; B:RequestRefresh("revive who",0) end)
-  f.reviveTarget=ui.check(p,"Your target",366,-432,function(c) if A.Combat() then return end; B.db.reviveTarget=c:GetChecked()==true; B:RequestRefresh("revive who",0) end)
-  f.reviveRebirth=ui.check(p,"Also use Rebirth",536,-432,function(c) if A.Combat() then return end; B.db.reviveRebirth=c:GetChecked()==true; B:RequestRefresh("revive rebirth",0) end)
+  f.reviveGroup=ui.check(p,"Your group",228,-437,function(c) if A.Combat() then return end; B.db.reviveGroup=c:GetChecked()==true; B:RequestRefresh("revive who",0) end)
+  f.reviveTarget=ui.check(p,"Your target",376,-437,function(c) if A.Combat() then return end; B.db.reviveTarget=c:GetChecked()==true; B:RequestRefresh("revive who",0) end)
+  f.reviveRebirth=ui.check(p,"Also use Rebirth",524,-437,function(c) if A.Combat() then return end; B.db.reviveRebirth=c:GetChecked()==true; B:RequestRefresh("revive rebirth",0) end)
   f.reviveRebirth:HookScript("OnEnter",function(s) T.Tooltip(s,B:Text("Also use Rebirth"),B:Text("Rebirth has a long cooldown, so it is off unless you turn it on. When on, it is offered out of combat like any resurrection.")) end)
   f.reviveRebirth:HookScript("OnLeave",function() if GameTooltip then GameTooltip:Hide() end end)
-  f.reviveNote=ui.label(p,"",536,-439,"GameFontDisableSmall",160)
-  f.cleanseFirst=ui.check(p,"Cleanse before resurrection",26,-458,function(c) if A.Combat() then return end; B.db.cleanseFirst=c:GetChecked()==true; B:RequestRefresh("cleanse/revive order",0) end)
+  f.reviveNote=ui.label(p,"",524,-444,"GameFontDisableSmall",160)
+  f.cleanseFirst=ui.check(p,"Cleanse before resurrection",30,-475,function(c) if A.Combat() then return end; B.db.cleanseFirst=c:GetChecked()==true; B:RequestRefresh("cleanse/revive order",0) end)
   f.cleanseFirst:HookScript("OnEnter",function(s) T.Tooltip(s,B:Text("Cleanse before resurrection"),B:Text("When both are needed after a fight, offer a cleanse first. Leave off to offer resurrection first.")) end)
   f.cleanseFirst:HookScript("OnLeave",function() if GameTooltip then GameTooltip:Hide() end end)
-  section(ui,p,"Never cleanse (shared by all your characters)",12,-506,692,212)
-  f.cleanseInput=ui.editbox(p,26,-546,260,false); f.cleanseInput:SetMaxLetters(80)
+  section(ui,p,"Never cleanse (shared by all your characters)",12,-526,692,192)
+  f.cleanseInput=ui.editbox(p,26,-564,260,false); f.cleanseInput:SetMaxLetters(80)
   local function add()
     local text=f.cleanseInput:GetText()
     if A.Text(text) then B:SetCleanseNever(text,true); f.cleanseInput:SetText(""); f.cleanseInput:ClearFocus(); B:UpdateCleansePage() end
   end
   f.cleanseInput:SetScript("OnEnterPressed",add)
   f.cleanseInput:SetScript("OnEscapePressed",function(s) s:ClearFocus() end)
-  ui.button(p,"Add",298,-544,90,add)
-  ui.label(p,"Type the debuff's name, or right-click a cleanse reminder to add it.",400,-550,"GameFontDisableSmall",290)
+  ui.button(p,"Add",298,-562,90,add)
+  ui.label(p,"Type the debuff's name, or right-click a cleanse reminder to add it.",400,-568,"GameFontDisableSmall",290)
   f.cleanseScroll=CreateFrame("ScrollFrame",nil,p,"UIPanelScrollFrameTemplate")
-  f.cleanseRestore=ui.button(p,"Restore built-in entries",486,-512,204,function()
+  f.cleanseRestore=ui.button(p,"Restore built-in entries",486,-532,204,function()
     if A.Combat() then return end
     for id in pairs(B:CleanseBuiltInAllowed()) do B:SetCleanseBuiltInAllowed(id,false) end
     B:UpdateCleansePage()
   end)
   f.cleanseRestore:SetHeight(20)
-  f.cleanseScroll:SetPoint("TOPLEFT",26,-578); f.cleanseScroll:SetSize(640,134)
-  f.cleanseList=CreateFrame("Frame",nil,f.cleanseScroll); f.cleanseList:SetSize(640,134); f.cleanseScroll:SetScrollChild(f.cleanseList)
+  f.cleanseScroll:SetPoint("TOPLEFT",26,-596); f.cleanseScroll:SetSize(640,112)
+  f.cleanseList=CreateFrame("Frame",nil,f.cleanseScroll); f.cleanseList:SetSize(640,112); f.cleanseScroll:SetScrollChild(f.cleanseList)
   f.cleanseListRows={}
   function f.cleanseRow(index)
     local row=f.cleanseListRows[index]; if row then return row end

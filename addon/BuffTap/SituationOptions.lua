@@ -22,7 +22,7 @@ function B:BuildContextControls(parent,category,ui)
     button:SetSize(78,26); group.buttons[context]=button
     ui.addHelp(button,names[context],context=="solo" and "Solo is the baseline. Party and Raid follow these preferences until you change individual choices in those setups." or (context=="party" and "Applied automatically when you join a party. Unchanged preferences follow Solo." or "Applied automatically while you are in a raid. Unchanged preferences follow Solo."))
   end
-  group.active=ui.label(parent,"",298,-15,"GameFontDisableSmall",220)
+  group.active=ui.label(parent,"",298,-15,"GameFontDisableSmall",220); group.active:Hide() -- the window header already shows the active setup
   group.reset=ui.button(parent,"Use Solo settings",540,-8,160,function()
     B:CustomizeSituation(B:EditorContext(category),category,false); B:Options()
   end)

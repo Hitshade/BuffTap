@@ -2,6 +2,12 @@
 local _,B=...
 -- Keep the ten most recent releases within a 24 KiB content ceiling.
 B.PatchNotes={
+ {version="1.27.0",title="A fresh coat of paint",items={
+  "The settings window has a new look. Every page shares one darker background and opens with a larger title, and section headings carry a small icon with a fine line beside them.",
+  "Tidier pages: the boxes inside boxes are gone, and controls are lined up with even spacing. Weapons, Consumables, Supplies, Cleanse, My buffs, Target, Blacklist and Groups were all reworked.",
+  "Supplies has roomier item rows. Weapons shows the Off hand row only for classes that can dual wield. Camping shows its benefits with new icons. Party and Raid get a small emblem and a short note under each setting.",
+  "Nearby now stays open in combat by default, so inviting players and asking to join a group work whatever your class. Prefer the old behaviour? Turn off Keep open in combat under Customization > Nearby window. The How Nearby works guide starts folded away: press Show to open it.",
+  "Scrollbars appear only when a list actually scrolls, and the thumb is quieter. Customization tabs are evenly spaced, and the Effect card has room to breathe."}},
  {version="1.26.15",title="Invites, even mid-fight",items={
   "Keep Nearby open in combat. Inviting players and asking to join a group still work while you fight. Turn on Keep open in combat under Customization > Nearby window. It starts off.",
   "In combat the list keeps showing players as they come and go, under a Paused: in combat banner. Buffing waits until the fight ends, then your usual buff list returns.",
@@ -46,11 +52,6 @@ B.PatchNotes={
   "Ten new fantasy sounds are ready to try, including Crystal chime, Elven harp and Holy light. Sound lists open at your current choice and scroll more smoothly; Reduce animation keeps scrolling immediate.",
   "Choosing alert sounds during first-time setup allows all sound categories. Optional features still have their own switches, and SmartShift returns and active buffing sequences stay quiet.",
   "Druids and Priests get a simpler cleanse choice: learned Abolish replaces Cure at the same base mana cost. Cure remains the fallback before Abolish is learned."},thanks="Thanks to jimbo1111 for pointing out the equal-cost Cure and Abolish choice."},
- {version="1.26.6",title="Quieter pauses, tidier reminders",items={
-  "Camping takes a proper break during temporary pauses, the city/inn pause, stealth and Edit Mode. Its alerts follow its own sound switch.",
-  "Manual consumable icons tuck away during their pauses and outside your chosen dungeon or raid setting. They return when reminders resume.",
-  "New starter positions leave more room for consumables, including on shorter screens. Your existing positions stay put. Reset look & position restores one reminder without moving the others.",
-  "Warriors and Rogues now see power in waiting messages. Settings also have clearer labels and roomier Nearby text choices."}},
 
 }
 function B:PatchNotesUnread()

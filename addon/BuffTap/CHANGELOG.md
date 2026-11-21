@@ -1,3 +1,31 @@
+# BuffTap 1.27.0
+
+### Options window redesign
+- OptionsStyle.lua: window and sidebar share one darker tone; new `PageTitle` font (SemiBold 22); section font is Bold 12. `T.Tile` adds an inset tile for card contents. `T.SectionTitle(fs,rightEdge)` uppercases ASCII titles, adds an accent icon from a prefix map (`SECTION_ICONS`), and `T.LayoutSectionRules()` draws a hairline from the measured text end to the card edge. `T.SectionIconFor` also matches the English original through a reverse lookup of the active locale, so translated titles keep their icons; titles that start empty can pass `sectionKey` and `sectionRight`.
+- Page headers (OptionsRefinement.lua) are open and minimal: icon, title, description and an accent rule segment, with no header box.
+- Scrollbars hide when the scroll range fits (`OnScrollRangeChanged`), and use a faint own thumb texture.
+- Boxes inside boxes were removed: outer cards stay; plain switch rows lost their tiles (Weapons, Consumables, Cleanse, Blacklist, Groups). Camping keeps its tiles. Cards use 16 px equal spacing.
+- Pages reworked: Weapons (application mode, coating and timing cards; Off hand row, picker, switch and tile only for classes that can dual wield or with an off-hand weapon equipped), Consumables (rules tile and family rows aligned), Supplies (item rows with icon, name, state, count and Remove; Add by name box aligned with the list card), Cleanse, My buffs (column headers centred, Sound and Priority separated), Target (wider list), Blacklist (target label and Block buttons), Groups.
+- Camping: night-camp scene with timer tiles; new Media files CampScene, CampFlame, CampMoon, CampPin and CampClock.
+- Groups: "All buffs" card has an emblem tile (GroupParty, GroupRaid textures), a hairline under the title row, a vertical hairline between columns and a short note under each setting. The per-buff section moves down with the card; the detail pane keeps its full height. Combat expiry on My buffs takes SmartShift's row for classes without SmartShift.
+
+### Nearby
+- `nearbyInCombat` now defaults on. A one-time rule (`nearbyInCombatRule`, shared across profiles) turns it on for existing characters, so a later choice sticks.
+- "How Nearby works" starts collapsed; `db.nearbyGuideOpen` remembers the Show/Hide choice. The guide footer notes that Nearby stays open in combat.
+
+### Localization
+- New strings use `B:Text` with deDE, esES, frFR and ptBR entries: Show, Hide, the Nearby combat note, the four Groups helper lines, and the Camping tile strings. The Section icon lookup works in every locale.
+
+### Fixed
+- Blacklist list titles ran past their card edge (titles created empty missed the card's right edge).
+- The Paladin Weapons page showed an Off hand switch over the timing card.
+- Dead helper `supplyTile` removed; `T.LayoutSectionRules` and the icon guard use `rawget` so they behave the same in the mock environment.
+
+### Validation
+- Full integrated mocked run on the final files: 3,300 PASS records, zero FAIL records, exit 0. Tests pinning pre-1.27 coordinates (Weapons, Consumables, Groups) were updated to the new layout.
+- All Lua modules compile under Lua 5.1; locale files compile and keep their format placeholders.
+- Visual checks were done in the Forever client by the owner, one page at a time.
+
 # BuffTap 1.26.15
 
 ### Added: Nearby can stay open in combat

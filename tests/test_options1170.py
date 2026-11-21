@@ -38,9 +38,9 @@ for cls in ['DRUID','PALADIN','MAGE','PRIEST','HUNTER','WARLOCK','SHAMAN','ROGUE
  local imbue=BuffTap:WeaponReminderClass()~=nil
  assert(f.weaponClassCard.shown==imbue and f.weaponSectionHeading.shown==imbue)
  for _,edge in ipairs(f.weaponClassCard.edges) do assert(edge.shown==imbue) end
- local y=imbue and -224 or -102
- assert(f.coatingPickers.main.position[3]==y-30 and f.coatingPickers.off.position[3]==y-78)
- if not imbue then assert(math.abs(f.weaponMain.position[3]-(y-30))<=1 and math.abs(f.weaponOff.position[3]-(y-78))<=1) end
+ local y=imbue and -242 or -116 -- 1.27 weapon cards
+ assert(f.coatingPickers.main.position[3]==y-38 and f.coatingPickers.off.position[3]==y-86)
+ if not imbue then assert(math.abs(f.weaponMain.position[3]-(y-35))<=1 and math.abs(f.weaponOff.position[3]-(y-83))<=1) end
  assert(f.closeButton.backdrop and f.closeButton.glyph,'1.18: themed Close button with a drawn glyph')
  ''')
 

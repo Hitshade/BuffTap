@@ -68,6 +68,7 @@ PASS Paladin group sorting skips filtered higher priority family
 PASS Malformed class maps recover safely
 PASS Class option toggles and reset persist correctly
 PASS Priest multiple explicit target buffs advance in order
+PASS Divine Spirit is not offered to a Warrior target by default
 PASS Egg is offered and Well Fed clears it
 PASS Manual low level eating suppresses all buff actions
 PASS Manual nutritious food does not prompt repeated consumption
@@ -75,7 +76,7 @@ PASS Different Well Fed effect preserves the existing meal
 PASS XP bonus alone does not substitute for a food buff
 PASS Explicit missing food never substitutes another item
 PASS Selected elixir uses exact spell mapping
-PASS Existing different elixir is preserved even near expiration
+PASS A different active elixir no longer blocks the chosen one (elixirs stack)
 PASS Elixir default preserves legacy Ferocity preference
 PASS Removed potion family cannot become a secure item action
 PASS Picker keeps absent choices and filters inventory
@@ -87,4 +88,4 @@ PASS Group buff selection and all-classes controls keep other assignments
 PASS Picker closes with options and combat prevents changes
 PASS Item data event replaces placeholder with the native item icon
 
-88 scenarios passed under Lua 5.1. Mocked APIs; no in-client cast or visual verification.
+89 scenarios passed under Lua 5.1. Mocked APIs; no in-client cast or visual verification.
