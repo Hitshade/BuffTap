@@ -1,7 +1,5 @@
 # BuffTap
 
-1.26.0 adds optional Manual consumable icons that stay off the buff binding, detachable positioning, clearer appearance controls and timing defaults, and pre-release safety fixes. Thanks to Xprit44 for the Manual reminder suggestion. SmartShift remains opt-in for Druids and Shamans. See `addon/BuffTap/RELEASE-NOTES.md` for practical release notes and `CHANGELOG.md` in that folder for technical changes.
-
 **Smart buff reminders and effortless mouse-wheel buffing for all classes in WoW Forever.**
 
 BuffTap detects missing or expiring buffs, follows your priorities, and prepares the next spell or item. **Scroll to buff, then keep adventuring.** Prefer a different control? Use a custom keybind, mouse button, or the clickable reminder.
@@ -70,10 +68,17 @@ Use the selectors inside Buffs, Weapons and Consumables to prepare different cho
 
 Install **BuffTap** in your client's `Interface/AddOns` folder, open **`/bt`**, choose your buffs, and start scrolling. Nearby has its own settings page; friendly player nameplates are required.
 
-[Download on CurseForge](https://www.curseforge.com/wow/addons/bufftap) · [Source code and support](https://github.com/Hitshade/BuffTap)
+[Download on CurseForge](https://www.curseforge.com/wow/addons/bufftap) · [Latest GitHub release](https://github.com/Hitshade/BuffTap/releases/latest) · [Changelog](addon/BuffTap/CHANGELOG.md) · [Report an issue](https://github.com/Hitshade/BuffTap/issues/new/choose)
 
 Found a problem? Include your class, addon version, game build, and steps to reproduce it.
 
 ---
 
-**MPL 2.0.** See bundled license notices. Game data and artwork belong to their respective owners. Developed with AI-assisted coding and review.
+**MPL 2.0.** See [LICENSE](LICENSE) and the bundled license notices in `addon/BuffTap`. Game data and artwork belong to their respective owners. Developed with AI-assisted coding and review.
+
+## Repository layout
+
+- `addon/BuffTap` is the addon exactly as shipped. Copy this folder into `Interface/AddOns`.
+- `tests` holds the mocked Lua 5.1 test suite (see [CONTRIBUTING.md](CONTRIBUTING.md)).
+- `tools` holds the generators and audits used to build the spell and consumable catalogs.
+- `docs` and `research` hold design notes and evidence; older release notes and review records are in `docs/archive`.
