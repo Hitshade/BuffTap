@@ -90,16 +90,19 @@ function B:SendManualThanks(entry)
   return true
 end
 function B:ClearManualThanksBinding()
-  if A.Combat() then return end
+  -- In combat the safety driver clears the keys; forget the key list so they are rebound afterwards.
+  if A.Combat() then self.manualThanksBindKey=nil; return end
   if self.manualThanksBound and self.manualThanksBindingOwner and type(ClearOverrideBindings)=="function" then pcall(ClearOverrideBindings,self.manualThanksBindingOwner) end
-  self.manualThanksBound=nil
+  self.manualThanksBound=nil; self.manualThanksBindKey=nil
 end
 -- Thanks has a separate safety owner because mounting must still block spells,
 -- while allowing a user-triggered whisper. Commit restores ordinary buff bindings first.
 local commit=B.Commit
-function B:Commit(...)
-  self:ClearManualThanksBinding()
-  return commit(self,...)
+function B:Commit(action,...)
+  -- Only a real action takes the keys back. Commit(nil) leaves an on-screen THANK bound,
+  -- so ordinary refreshes do not clear and re-set its bindings over and over.
+  if action then self:ClearManualThanksBinding() end
+  return commit(self,action,...)
 end
 function B:CreateManualThanksButton()
   if self.manualThanksButton or A.Combat() then return end
@@ -132,12 +135,20 @@ function B:CreateManualThanksButton()
     if ok then self.manualThanksBindingOwner=owner end
   end
 end
+-- Runs after every refresh and helper event (including every UNIT_AURA), so it only
+-- does work when something changed: no new tables, timers or bindings on idle calls.
+function B:HideManualThanks()
+  self:ClearManualThanksBinding()
+  local f=self.manualThanksButton
+  if f and (f.entry or f:IsShown()) then f.entry=nil; f.layoutKey=nil; f:Hide() end
+end
 function B:UpdateManualThanks()
   local f=self.manualThanksButton
   if not self:ManualThanksAllowed() then
     self:ClearManualThanksBinding()
-    self.manualThanksQueue={}; self:CancelTimer("manual-thanks-expire")
-    if f then f.entry=nil; f:Hide() end
+    if self.manualThanksQueue and next(self.manualThanksQueue) then self.manualThanksQueue={} end
+    if self.manualThanksExpiry then self.manualThanksExpiry=nil; self:CancelTimer("manual-thanks-expire") end
+    if f and (f.entry or f:IsShown()) then f.entry=nil; f.layoutKey=nil; f:Hide() end
     return
   end
   local entry,expiry; local now=GetTime()
@@ -149,21 +160,38 @@ function B:UpdateManualThanks()
       if not entry or candidate.at<entry.at then entry=candidate end
     end
   end
-  self:CancelTimer("manual-thanks-expire")
-  if expiry then self:StartTimer("manual-thanks-expire",math.max(.01,expiry-now),function() B:UpdateManualThanks(); B:RequestRefresh("manual thanks expiry",0) end) end
-  if not entry or self.action or self.db.showReminder==false or A.Combat() then self:ClearManualThanksBinding(); if f then f.entry=nil; f:Hide() end; return end
+  -- Restart the expiry timer only when the earliest expiry actually changes.
+  if expiry~=self.manualThanksExpiry then
+    self.manualThanksExpiry=expiry
+    self:CancelTimer("manual-thanks-expire")
+    if expiry then self:StartTimer("manual-thanks-expire",math.max(.01,expiry-now),function() B.manualThanksExpiry=nil; B:UpdateManualThanks(); B:RequestRefresh("manual thanks expiry",0) end) end
+  end
+  if A.Combat() then
+    -- The secure safety driver has already cleared the bindings; rebind fully after combat.
+    self.manualThanksBindKey=nil
+    if f and (f.entry or f:IsShown()) then f.entry=nil; f.layoutKey=nil; f:Hide() end
+    return
+  end
+  if not entry or self.action or self.db.showReminder==false then self:HideManualThanks(); return end
   self:CreateManualThanksButton(); f=self.manualThanksButton; if not f then return end
-  self:SetGameplayLayer(f,"buff"); f:SetSize(self.db.size,self.db.size); f:SetAlpha(self.db.opacity)
-  f:ClearAllPoints(); f:SetPoint("CENTER",UIParent,"CENTER",self.db.x,self.db.y)
-  if self.ApplyIconStyle then self:ApplyIconStyle(f,f.icon,self.db.iconStyle) end
+  local layoutKey=table.concat({tostring(self.db.size),tostring(self.db.opacity),tostring(self.db.x),tostring(self.db.y),tostring(self.db.iconStyle),tostring(self:GameplayStrata("buff"))},"|")
+  if f.layoutKey~=layoutKey or not f:IsShown() then
+    f.layoutKey=layoutKey
+    self:SetGameplayLayer(f,"buff"); f:SetSize(self.db.size,self.db.size); f:SetAlpha(self.db.opacity)
+    f:ClearAllPoints(); f:SetPoint("CENTER",UIParent,"CENTER",self.db.x,self.db.y)
+    if self.ApplyIconStyle then self:ApplyIconStyle(f,f.icon,self.db.iconStyle) end
+  end
   f.entry=entry
-  if self.button then self.button:Hide(); self.manaWaitVisible=nil end
-  f:Show()
-  if self.manualThanksBindingOwner and self.manualThanksBindingOwner:GetAttribute("state-safety")~="blocked" and type(SetOverrideBindingClick)=="function" and type(ClearOverrideBindings)=="function" then
+  if self.button and self.button:IsShown() then self.button:Hide(); self.manaWaitVisible=nil end
+  if not f:IsShown() then f:Show() end
+  -- Rebinding fires UPDATE_BINDINGS for every addon, so only rebind when the keys change or after a clear.
+  local bindKey=table.concat(self.db.keys or {},",")
+  if (not self.manualThanksBound or self.manualThanksBindKey~=bindKey)
+    and self.manualThanksBindingOwner and self.manualThanksBindingOwner:GetAttribute("state-safety")~="blocked" and type(SetOverrideBindingClick)=="function" and type(ClearOverrideBindings)=="function" then
     self:ClearManualThanksBinding()
     local cleared=pcall(ClearOverrideBindings,self.manualThanksBindingOwner)
     if cleared then
-      self.manualThanksBound=true
+      self.manualThanksBound=true; self.manualThanksBindKey=bindKey
       for _,key in ipairs(self.db.keys or {}) do
         if type(key)=="string" and key~="" then pcall(SetOverrideBindingClick,self.manualThanksBindingOwner,true,key,"BuffTapManualThanks","LeftButton") end
       end

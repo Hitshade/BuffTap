@@ -89,6 +89,7 @@ UIParent=CreateFrame('Frame'); GameTooltip=CreateFrame('Frame')
 function ClearOverrideBindings(f) assert(not combat or f.secure,'binding mutation in combat'); clearBindingCalls=clearBindingCalls+1; bindings={} end
 function SetOverrideBindingClick(f,p,key,name,button) assert(not combat); bindings[key]=name..':'..button end
 function RegisterStateDriver(f,state,condition) f.attrs['state-'..state]='ready'; f.driver=condition end
+function UnregisterStateDriver(f,state) assert(not combat,'state driver change in combat'); f.attrs['state-'..state]=nil; f.driver=nil end
 function safety(state)
  local f=BuffTap.button; f.secure=true
  local fn=assert(loadstring('local self,newstate=...; '..f.attrs['_onstate-safety']))

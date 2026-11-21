@@ -1,3 +1,18 @@
+# BuffTap 1.26.15
+
+### Invite and ask to join, even mid-fight
+Nearby can now stay open while you are in combat, so its invite and request-to-join buttons keep working during a fight. Turn on **Keep open in combat** under Customization > Nearby window. It starts off, and Restore window defaults turns it off again.
+
+In combat the window looks the same and keeps showing players as they come into range and leave, under a yellow **Paused: in combat. Invites still work.** banner. Buffing waits until combat ends, so buff icons, buff requests and the right-click menu return afterwards, and you can still scroll the list. Each invite is one click and is rechecked against the player you see.
+
+### More translated text
+Settings, help and status text added in recent versions now appears in German, Spanish, French and Brazilian Portuguese, including the new combat option, class tips, shared blacklists, manual thanks and per-buff sounds. The in-game patch notes and a few older Nearby window messages remain in English. Corrections from native speakers are welcome.
+
+### Smaller improvements
+BuffTap does less background work during busy raids when the optional manual thank-you is off, and fewer key-binding updates while a THANK is on screen. Short buff lists on the Groups page no longer show an empty scrollbar.
+
+Known limits: during combat the list cannot buff anyone, and empty rows are blank placeholders until combat ends.
+
 # BuffTap 1.26.14
 
 ### Group buffs with Reagent Economy

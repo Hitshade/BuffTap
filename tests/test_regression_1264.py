@@ -183,7 +183,9 @@ assert(B.action and not B.action.groupCast,'group cast still reaches recipient w
 """)
 case('D','reagent disappearance before group click cancels without substitute',GROUP+"""
 -- Initial mock reagent supply is provided by IsSpellUsable; make count explicit.
-bags[17021]=0; B.button.scripts.PreClick(nil,'LeftButton',true)
+-- Since 1.26.14 live usability is authoritative, so the mock client must also refuse the cast.
+bags[17021]=0; local normal=C_Spell.IsSpellUsable; C_Spell.IsSpellUsable=function(id) if id==21849 then return false,false end; return normal(id) end
+B.button.scripts.PreClick(nil,'LeftButton',true)
 assert(not B.button.attrs.type1)
 """)
 case('D','mixed group ranks do not count as one shared rank',GROUP+"""

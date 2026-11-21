@@ -2,6 +2,11 @@
 local _,B=...
 -- Keep the ten most recent releases within a 24 KiB content ceiling.
 B.PatchNotes={
+ {version="1.26.15",title="Invites, even mid-fight",items={
+  "Keep Nearby open in combat. Inviting players and asking to join a group still work while you fight. Turn on Keep open in combat under Customization > Nearby window. It starts off.",
+  "In combat the list keeps showing players as they come and go, under a Paused: in combat banner. Buffing waits until the fight ends, then your usual buff list returns.",
+  "Bitte, de nada, de rien, de nada. Newer settings and help text now read in German, Spanish, French and Brazilian Portuguese.",
+  "Less busywork: BuffTap does less behind the scenes during busy raids, and short buff lists on Groups no longer show an empty scrollbar."}},
  {version="1.26.14",title="Group buffs without the reagent",items={
   "Group buffs now respect Forever effects that remove their normal vendor reagent cost. When the game allows the cast, BuffTap offers the group buff instead of unnecessarily switching to individual buffs."}},
  {version="1.26.13",title="Catch a brief chance to say thanks",items={
@@ -46,12 +51,6 @@ B.PatchNotes={
   "Manual consumable icons tuck away during their pauses and outside your chosen dungeon or raid setting. They return when reminders resume.",
   "New starter positions leave more room for consumables, including on shorter screens. Your existing positions stay put. Reset look & position restores one reminder without moving the others.",
   "Warriors and Rogues now see power in waiting messages. Settings also have clearer labels and roomier Nearby text choices."}},
- {version="1.26.5",title="A quicker welcome to BuffTap",items={
-  "First-time setup is shorter: choose Get started, Customize first or Keep current settings. The recommended setup includes Nearby, without a required tour.",
-  "Recommended setup includes sounds, the resting pause, stronger-buff protection and class-appropriate Cleanse and Resurrection. Solo Thanks is your choice; SmartShift and class helpers remain available in Settings.",
-  "Nearby setup explains friendly nameplates and offers a separate names-only choice when supported. Game settings change only when you choose to change them.",
-  "New characters get a tidier starting layout. Edit Mode lets you place Camping, Supplies and Nearby even while they are off; existing positions stay put.",
-  "Higher-rank Nearby buffs now work through the main binding. Grey mana and power waits follow your label choices, including icon-only, and hide with the city/inn pause. Automatic sounds stay quiet if resting information is briefly unavailable."},thanks="Thanks to sevaniuz for the power-wait display feedback."},
 
 }
 function B:PatchNotesUnread()

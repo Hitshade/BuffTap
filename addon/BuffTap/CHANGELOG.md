@@ -1,3 +1,34 @@
+# BuffTap 1.26.15
+
+### Added: Nearby can stay open in combat
+- New shared profile preference `nearbyInCombat` (default false; included in profile copies, exports and Restore window defaults). Switch: Customization > Nearby window > Position > Keep open in combat.
+- Nearby.lua `ApplyNearbyCombatVisibility` runs from `UpdateNearbyWindow` outside combat only. Off keeps the existing `[combat] hide` visibility driver; on calls `UnregisterStateDriver`, so the window stays up through combat. The per-row `[combat] blocked` driver that clears `type1`/`macrotext`/`spell`/`unit` is unchanged, so no row can cast in combat either way.
+- Secure rows cannot be shown or hidden in combat, so with the option on, out-of-combat updates keep every visible slot (1..visible rows) shown; empty slots are drawn blank (`blankRow`: text and textures hidden, wash/hover alpha 0). The status button is raised above blank rows.
+- `UpdateNearbyCombatList` refills those same rows in combat from `NearbyCombatPlayers`: tracked, live-GUID-verified, assistable, non-grouped players (friends/guild first, then arrival order), with PvP/blacklist/social tags and no aura reads. Row 1 shows the existing pause banner with the new reason "Paused: in combat. Invites still work." Only regions, the invite/request child buttons, the scroll slider and row alpha change; no secure frame is shown, hidden, moved, resized or given attributes in combat (the test mock asserts this). Runs on `PLAYER_REGEN_DISABLED` (and 0.2 s later), nameplate add/remove, invites, mouse wheel and the scroll slider. Afterwards the normal update clears combat style caches and redraws.
+- `NearbyInviteName` permits combat only when `nearbyInCombat` is on. Click-time checks are unchanged: tracked nameplate GUID, live `UnitGUID`, assistable, not grouped, group size/leader rules and `GetDisplayedInviteType`. Buff requests (whispers), the right-click menu, view switching and dragging remain out-of-combat only.
+- Diagnostics: Nearby line reports in-combat mode.
+
+### Localization
+- Added 131 missing translations to esES, frFR and ptBR and 48 to deDE (the strings deDE lacked), plus the new "Paused: in combat" banner reason. Covers text added since 1.26.9 that already passes through `B:Text`: Nearby combat option and tooltip, class information cards (Groups, Target, My buffs), shared blacklist and profile copy, manual thanks, per-buff sounds, buff queue, combat expiry warning, shield charges, layering switches, onboarding buttons and Diagnostics labels. Found by extracting literals passed to the translation helpers and diffing each locale; 29 internal keys (class tokens, identifiers) were excluded. Placeholders verified per string; new lines appended after each locale's guard, so other locales are unaffected.
+- Not covered: in-game patch notes (never localized) and older hard-coded English that does not pass through `B:Text`, such as several Nearby window status lines and tooltips.
+
+### Fixed
+- ManualThanks.lua: `UpdateManualThanks` runs on every helper event (global `UNIT_AURA`) and every refresh. With manual thanks off it no longer allocates a queue table or cancels a timer per call. While THANK is visible it no longer re-sets position or restarts its expiry timer per event, and only rebinds override keys when the key list changes or after a clear (each rebind fires `UPDATE_BINDINGS` for every addon). The `Commit` wrapper now clears THANK keys only when committing a real action, not on empty refreshes. In combat the stored key list is forgotten so keys are rebound after combat.
+- Options.lua: the Groups buff list hides its scrollbar and resets scroll when all buffs fit (more than six rows still scroll). Renamed a shadowed role-button local; no behavior change.
+- Test mock gains `UnregisterStateDriver` (asserts out of combat).
+
+### Known limits
+- Party invites and join requests during combat use `C_PartyInfo.InviteUnit` / `RequestInviteFromUnit`, which are not protected on the mocked API. The owner tested beta2 in the Forever client and reported it working.
+- With the option on, empty visible slots are mouse-enabled blank rows; clicking one does nothing.
+- New translations are AI-assisted and not yet reviewed by native speakers; corrections welcome.
+
+### Validation
+- Full integrated mocked run: 3,258 PASS records, zero FAIL records, exit 0 (tests/release-12615-full.txt, run on the final files including translations; the runner's own FINAL_TOTAL line excludes later-imported modules). Includes 23 new checks in tests/test_cleanups_12615.py; mutation-checked by reverting each fix (manual thanks idle work, scrollbar, blank combat slots). The mock asserts no protected show, hide, move, resize or attribute write happens in combat.
+- The first full run exposed a stale 1.26.4 regression fixture that also fails on unmodified 1.26.14: it removed the reagent but the mock client still reported the group spell usable. Updated it like the two fixtures 1.26.14 changed, so the mock client refuses the cast. No addon code change for this.
+- All 50 TOC Lua modules compile under Lua 5.1.
+- Locale files: all four compile and return the new strings for their locale; every translation keeps its %s/%d placeholders.
+- GitHub issue review before publication (API): no open issues or pull requests; #1 to #6 are closed, the latest updated 2026-11-19. No reports in scope for this release. Live-client testing is limited to the owner reporting beta2 working.
+
 # BuffTap 1.26.14
 
 ### Forever reagent compatibility

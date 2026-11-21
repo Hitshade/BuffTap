@@ -2792,13 +2792,13 @@ function B:Options()
         row.roleButtons={}
         for i,spec in ipairs({{"class","By class"},{"tank","Tanks"},{"healer","Healers"}}) do
           local mode=spec[1]
-          local b=flatButton(row,spec[2],176+(i-1)*94,-110,90,function()
+          local roleButton=flatButton(row,spec[2],176+(i-1)*94,-110,90,function()
             local def=row.def; if not def or A.Combat() then return end
             B:GroupEditorSettings().buffRoles[B:RootKey(def)]=(mode~="class") and mode or nil
             B.roleCache=nil; B:InvalidateAura(); B:RequestRefresh("buff role",0); B:Options()
           end)
-          b:SetHeight(24); b.navStyle="segment"; b.roleMode=mode; row.roleButtons[i]=b
-          addHelp(b,spec[2],mode=="class" and "The class checkboxes below decide who gets this buff." or mode=="tank" and "Every tank in your group gets this buff, whatever their class. Class choices below are not used. Mark target role sets a role yourself." or "Every healer in your group gets this buff, whatever their class. Class choices below are not used. Mark target role sets a role yourself.")
+          roleButton:SetHeight(24); roleButton.navStyle="segment"; roleButton.roleMode=mode; row.roleButtons[i]=roleButton
+          addHelp(roleButton,spec[2],mode=="class" and "The class checkboxes below decide who gets this buff." or mode=="tank" and "Every tank in your group gets this buff, whatever their class. Class choices below are not used. Mark target role sets a role yourself." or "Every healer in your group gets this buff, whatever their class. Class choices below are not used. Mark target role sets a role yourself.")
         end
         -- "Also on me": off means a buff you cast on others (Thorns for the tank) skips you in a group.
         row.selfCheck=check(row,"Also on me",8,-216,function(s)
@@ -2876,6 +2876,12 @@ function B:Options()
     end
     f.assignList:SetHeight(math.max(1,#assignmentBuffs*42))
     f.assignScroll:SetHeight(math.min(252,math.max(42,#assignmentBuffs*42)))
+    -- Short lists fit their box: hide the scrollbar instead of showing an empty track.
+    local listBar=f.assignScroll.ScrollBar
+    if not listBar then for _,child in ipairs({f.assignScroll:GetChildren()}) do if child:GetObjectType()=="Slider" then listBar=child; break end end end
+    local overflow=#assignmentBuffs*42>252
+    if listBar then listBar:SetShown(overflow) end
+    if not overflow then f.assignScroll:SetVerticalScroll(0) end
   end
   self:UpdateBlessingOptions()
 

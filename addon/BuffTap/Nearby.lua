@@ -291,7 +291,7 @@ function B:ShowNearbyRowResult(row,r)
 end
 -- While Nearby is paused (stealthed, mounted, resting), the first row is pinned to say so, in the
 -- same style as the cast results. The rows below keep listing players for invites.
-local PAUSE_TEXT={stealthed="Paused: stealthed",mounted="Paused: mounted",resting="Paused: resting",mana="Paused: saving mana"}
+local PAUSE_TEXT={combat="Paused: in combat",stealthed="Paused: stealthed",mounted="Paused: mounted",resting="Paused: resting",mana="Paused: saving mana"}
 function B:NearbyPauseRowText(reason,browsing)
   local text=self:Text(PAUSE_TEXT[reason] or "Paused")
   if browsing then text=text..". "..self:Text("Invites still work.") end
@@ -803,7 +803,7 @@ function B:SetNearbyView(showAll)
   self:UpdateNearbyWindow()
 end
 function B:NearbyInviteName(entry)
-  if A.Combat() or not self.db.enabled or not self.db.nearbyEnabled 
+  if (A.Combat() and not self:NearbyKeepsCombat()) or not self.db.enabled or not self.db.nearbyEnabled 
     or self.db.nearbyInvites==false or not entry or not platesOn() then return nil end
   local unit=entry.unit
   if not self.nearbyUnits or self.nearbyUnits[unit]~=entry.guid or A.Call(UnitGUID,unit)~=entry.guid
@@ -915,7 +915,7 @@ function B:InviteNearby(entry)
   else ok,result=pcall(C_PartyInfo.InviteUnit,name) end
   if not ok or result==false then self.Print("The group invitation could not be requested."); return false end
   self.nearbyInvited[entry.guid]=GetTime(); self.nearbyLastInvite=mode..": "..name; self:RememberReportName(name)
-  self:UpdateNearbyWindow()
+  if A.Combat() then self:UpdateNearbyCombatList() else self:UpdateNearbyWindow() end
   return true
 end
 function B:SelectNearby()
@@ -1183,7 +1183,12 @@ function B:CreateNearbyWindow()
   f.dragHandle:EnableMouse(true); f.dragHandle:RegisterForDrag("LeftButton")
   f.dragHandle:SetScript("OnDragStart",dragStart); f.dragHandle:SetScript("OnDragStop",dragStop)
   local function scrollPlayers(surface,delta)
-    if A.Combat() or not A.Number(delta) or delta==0 then return end
+    if not A.Number(delta) or delta==0 then return end
+    if A.Combat() then
+      if not f.keepsCombat then return end
+      local step=delta>0 and math.ceil(delta) or math.floor(delta)
+      self.nearbyOffset=math.max(0,(self.nearbyOffset or 0)-step); self:UpdateNearbyCombatList(); return
+    end
     self.nearbyHovered=nil; GameTooltip:Hide()
     local step=delta>0 and math.ceil(delta) or math.floor(delta)
     self.nearbyOffset=math.max(0,math.min(math.max(0,#(self.nearbyDisplay or {})-ROWS),(self.nearbyOffset or 0)-step))
@@ -1201,9 +1206,9 @@ function B:CreateNearbyWindow()
   f.scroll.track=wash(f.scroll,"BACKGROUND",.5,.51,.49,.16); f.scroll.track:SetAllPoints()
   f.scroll.thumb=wash(f.scroll,"ARTWORK",.67,.68,.65,.65); f.scroll.thumb:SetSize(4,22); f.scroll:SetThumbTexture(f.scroll.thumb)
   f.scroll:SetScript("OnValueChanged",function(_,value)
-    if A.Combat() or not A.Number(value) then return end
+    if not A.Number(value) or (A.Combat() and not f.keepsCombat) then return end
     local offset=math.floor(value+.5)
-    if self.nearbyOffset~=offset then self.nearbyOffset=offset; self:UpdateNearbyWindow() end
+    if self.nearbyOffset~=offset then self.nearbyOffset=offset; if A.Combat() then self:UpdateNearbyCombatList() else self:UpdateNearbyWindow() end end
   end)
   f.rows={}
   for i=1,MAX_UNITS do
@@ -1314,7 +1319,8 @@ function B:CreateNearbyWindow()
       if not button.entry then return end
       self.nearbyHovered=button.entry.guid
       GameTooltip:SetOwner(button,"ANCHOR_RIGHT"); GameTooltip:SetText(button.entry.name)
-      if button.action then for _,action in ipairs(button.entry.actions) do GameTooltip:AddLine(action.name,1,1,1) end
+      if A.Combat() then GameTooltip:AddLine(self:Text("In combat. Buffs wait until combat ends; invites still work."),1,.55,.25,true)
+      elseif button.action then for _,action in ipairs(button.entry.actions) do GameTooltip:AddLine(action.name,1,1,1) end
       elseif not button.entry.marker then GameTooltip:AddLine("No buff queued. Buffs may be covered, excluded, or unavailable.",.7,.7,.7,true) end
       if button.entry.social=="friend" then GameTooltip:AddLine(self:Text("On your friends list."),.42,.72,1,true)
       elseif button.entry.social=="guild" then GameTooltip:AddLine(self:Text("In your guild."),.35,.9,.42,true) end
@@ -1325,8 +1331,10 @@ function B:CreateNearbyWindow()
       if button.action and not button.action.ready then GameTooltip:AddLine("Waiting for cooldown.",.8,.8,.7)
       elseif button.action and button.action.source=="cleanse" then GameTooltip:AddLine(self:Text("Click: cleanse %s",button.action.debuffName or ""),1,.82,0)
       elseif button.action then GameTooltip:AddLine("Click: next appropriate buff",1,.82,0) end
-      GameTooltip:AddLine("Right-click: whisper, invite, ignore or blacklist",.7,.7,.7,true)
-      GameTooltip:AddLine("Mouse wheel: scroll players",.7,.7,.7,true)
+      if not A.Combat() then
+        GameTooltip:AddLine("Right-click: whisper, invite, ignore or blacklist",.7,.7,.7,true)
+        GameTooltip:AddLine("Mouse wheel: scroll players",.7,.7,.7,true)
+      end
       GameTooltip:Show()
     end)
     row:SetScript("OnLeave",function()
@@ -1340,7 +1348,119 @@ function B:CreateNearbyWindow()
   for _,row in ipairs(f.rows) do wheelSurface(row); wheelSurface(row.invite); wheelSurface(row.request) end
   local ok,result=pcall(RegisterStateDriver,f,"visibility","[combat] hide")
   if not ok or result==false then self.nearbySetupError="Secure combat visibility failed"; f:Hide(); return end
+  f.keepsCombat=false
   f:Hide()
+end
+-- Keep open in combat (off by default). Off: the secure driver hides the window when combat
+-- starts. On: the driver is removed, so the window stays where it was. Changed only out of combat.
+-- Row casts are still cleared by each row's own combat driver either way.
+function B:NearbyKeepsCombat()
+  return self.db and self.db.nearbyInCombat==true or false
+end
+function B:ApplyNearbyCombatVisibility(f)
+  if not f or A.Combat() then return end
+  local keep=self:NearbyKeepsCombat()
+  if f.keepsCombat==keep then return end
+  if keep then
+    if type(UnregisterStateDriver)~="function" then return end
+    if pcall(UnregisterStateDriver,f,"visibility") then f.keepsCombat=true end
+  else
+    local ok,result=pcall(RegisterStateDriver,f,"visibility","[combat] hide")
+    if ok and result~=false then f.keepsCombat=false end
+  end
+end
+-- Players for the in-combat list: everyone tracked outside your group, friends and guild first,
+-- then arrival order. No aura reads (buffs are hidden in combat) and no actions.
+function B:NearbyCombatPlayers()
+  local out,seen={},{}
+  if not self.db.enabled or not self.db.nearbyEnabled or not platesOn() then return out end
+  for unit,guid in pairs(self.nearbyUnits or {}) do
+    if A.Text(guid) and not seen[guid] and A.Call(UnitGUID,unit)==guid and A.Call(UnitExists,unit)==true
+      and A.Call(UnitCanAssist,"player",unit)==true and A.Call(UnitIsUnit,unit,"player")==false and not self:NearbyGroupMember(unit) then
+      local name,class=A.Call(UnitName,unit),A.Class(unit)
+      if A.Text(name) and A.Text(class) then
+        seen[guid]=true
+        out[#out+1]={unit=unit,guid=guid,name=name,surname=self:NearbySurname(unit),class=class,actions={},order=self.nearbyOrder[guid] or 0,
+          marker=self:NearbyMarker(unit),social=self.db.nearbyMarkSocial~=false and self:NearbySocialKind(unit,guid) or nil}
+      end
+    end
+  end
+  table.sort(out,function(a,b)
+    local at,bt=a.social and 0 or 1,b.social and 0 or 1
+    if at~=bt then return at<bt end
+    if a.order==b.order then return a.guid<b.guid end return a.order<b.order
+  end)
+  return out
+end
+-- A visible slot with no player. Kept shown (out of combat, with Keep open in combat on) so the
+-- same rows can be refilled during combat, when the game does not allow showing or hiding them.
+local function blankRow(row)
+  row.entry=nil; row.action=nil; row.style=nil; row.blank=true
+  row.name:SetText(""); row.classIcon:Hide(); row.classEdge:Hide(); row.idle:Hide(); row.marker:Hide()
+  row.cleanseTint:Hide(); row.cleanseBar:Hide(); row.invite:Hide(); row.request:Hide(); row.socialFlash:Hide()
+  if row.socialFx then row.socialFx:Hide() end
+  for j,icon in ipairs(row.icons) do icon:Hide(); row.iconEdges[j]:Hide() end
+  for _,tag in ipairs(row.tags) do tag:Hide() end
+  row.wash:SetAlpha(0); row.hover:SetAlpha(0)
+end
+local function unblankRow(row)
+  if not row.blank then return end
+  row.blank=nil; row.style=nil; row.classEdge:Show(); row.wash:SetAlpha(1); row.hover:SetAlpha(1)
+end
+-- In combat: the same rows show who is nearby now, under the usual pause banner. Only text,
+-- textures and the invite buttons change; secure rows are never shown, hidden, moved or armed,
+-- and each row's own combat driver keeps its cast cleared.
+function B:UpdateNearbyCombatList()
+  local f=self.nearbyFrame
+  if not f or not f.keepsCombat or not self:NearbyKeepsCombat() or not f:IsShown() then return end
+  local list=self:NearbyCombatPlayers()
+  self.nearbyResult=nil; self.nearbyDisplay=nil; f.combatDressed=true
+  self:ShowNearbyPauseRow(f,"combat",true)
+  local pin=1; local shown=ROWS-pin
+  self.nearbyOffset=math.max(0,math.min(self.nearbyOffset or 0,math.max(0,#list-shown)))
+  f.scroll:SetMinMaxValues(0,math.max(0,#list-shown)); f.scroll:SetValue(self.nearbyOffset); f.scroll:SetShown(#list>shown)
+  f.count:SetText("0/"..#list)
+  f.status:Hide(); f.statusButton:Hide()
+  for i,row in ipairs(f.rows) do
+    if i<=ROWS and row:IsShown() then
+      local entry=i>pin and list[i-pin+self.nearbyOffset] or nil
+      row.combatDressed=true
+      self:ShowNearbyRowResult(row,nil)
+      if entry then
+        unblankRow(row)
+        row.entry=entry; row.action=nil; row.style=nil
+        row.name:SetText(self:NearbyDisplayName(entry))
+        local coords=CLASS_ICON_TCOORDS and CLASS_ICON_TCOORDS[entry.class]
+        row.classIcon:SetTexture("Interface\\GLUES\\CHARACTERCREATE\\UI-CHARACTERCREATE-CLASSES")
+        if coords then row.classIcon:SetTexCoord(unpack(coords)); row.classIcon:Show() else row.classIcon:Hide() end
+        local color=RAID_CLASS_COLORS and RAID_CLASS_COLORS[entry.class]
+        if color then row.name:SetTextColor(color.r,color.g,color.b) else row.name:SetTextColor(1,1,1) end
+        local tagged={}
+        if MARKERS[entry.marker or ""] then tagged[#tagged+1]=MARKERS[entry.marker] end
+        if MARKERS[entry.social or ""] then tagged[#tagged+1]=MARKERS[entry.social] end
+        for j,tag in ipairs(row.tags) do
+          local style=tagged[#tagged+1-j]
+          tag:ClearAllPoints()
+          if style then
+            tag:SetPoint("RIGHT",row,"RIGHT",-8-18-2-(j-1)*14,0)
+            tag:SetTexture("Interface\\AddOns\\BuffTap\\Media\\"..style[1]); tag:SetVertexColor(style[2],style[3],style[4]); tag:SetAlpha(style[5]); tag.baseAlpha=style[5]; tag:Show()
+          else tag:Hide() end
+        end
+        row.name:SetWidth(WIDTH-26-12-18-#tagged*14)
+        for j,icon in ipairs(row.icons) do icon:Hide(); row.iconEdges[j]:Hide() end
+        row.idle:Hide(); row.cleanseTint:Hide(); row.cleanseBar:Hide(); row.marker:Hide(); row.request:Hide()
+        local name,mode=self:NearbyInviteName(entry)
+        local invited=self.nearbyInvited and self.nearbyInvited[entry.guid] and GetTime()-self.nearbyInvited[entry.guid]<10
+        local request=mode=="REQUEST_INVITE"
+        local plus=not invited and mode~="SUGGEST_INVITE" and not request
+        local join=request and not invited
+        row.invite.text:SetText(invited and "..." or mode=="SUGGEST_INVITE" and ">" or "+")
+        row.invite.plus:SetShown(plus); row.invite.arrow:SetShown(join); row.invite.text:SetShown(not plus and not join)
+        row.invite:SetShown(name~=nil and entry.marker~="blocked")
+        row:SetAlpha(.60)
+      else blankRow(row) end
+    end
+  end
 end
 -- Optional hidden title bar: the header fades out until the mouse is over the window, so it
 -- can still be dragged and its buttons used. The hairline can stay. Polls the mouse only
@@ -1418,6 +1538,12 @@ function B:UpdateNearbyWindow()
   local width,rows,scale=self:NearbyLayout(); WIDTH,ROWS,HEIGHT=width,rows,29+rows*ROW_HEIGHT
   self:CreateNearbyWindow()
   local f=self.nearbyFrame; if not f or self.nearbySetupError then return end
+  self:ApplyNearbyCombatVisibility(f)
+  if f.combatDressed then
+    -- Rows refilled in combat: forget their cached look so the normal list redraws them fully.
+    f.combatDressed=nil; self.nearbyOffset=0
+    for _,row in ipairs(f.rows) do if row.combatDressed then row.combatDressed=nil; row.style=nil end end
+  end
   local right=self.db.nearbyButtonSide=="right"
   -- A glanceable list belongs under Blizzard's panels (professions, bags); players can keep it on top.
   self:SetGameplayLayer(f,"nearby")
@@ -1470,6 +1596,7 @@ function B:UpdateNearbyWindow()
   local paused=self.db.enabled and self.db.nearbyEnabled and platesOn() and self:NearbyPauseReason() or nil
   if not PAUSE_TEXT[paused or ""] then paused=nil end
   local pin=paused and 1 or 0
+  if f.keepsCombat and not f.pauseRow then self:ShowNearbyPauseRow(f,"combat",true) end
   self:ShowNearbyPauseRow(f,paused,browse~=nil)
   f.count:SetText(counts.need.."/"..counts.total..note)
   f.resting:SetShown(self:NearbyCapabilities().actions)
@@ -1496,6 +1623,7 @@ function B:UpdateNearbyWindow()
     row.entry=entry; row.action=item and item.fresh and nextAction(entry) or (result and result.state=="fail" and result.action) or nil
     self:SetNearbyRowPayload(row,row.action)
     if entry then
+      unblankRow(row)
       local parts={entry.guid,self:NearbyDisplayName(entry),entry.class,tostring(entry.marker),tostring(entry.social),tostring(entry.favor and #entry.actions>0)}
       for _,action in ipairs(entry.actions) do parts[#parts+1]=tostring(action.id)..":"..tostring(action.icon)..":"..tostring(action.dispelType) end
       local style=table.concat(parts,"|")
@@ -1560,6 +1688,10 @@ function B:UpdateNearbyWindow()
       row.marker:SetShown(row.action and row.action.ready and self.action and self.action.nearby and self.action.targetGUID==entry.guid or false)
       self:ShowNearbyRowResult(row,self:NearbyResultFor(entry.guid))
       if not row:IsShown() then row:Show() end
+    elseif i<=ROWS and f.keepsCombat then
+      -- Keep open in combat: the slot stays shown but blank, ready to be refilled in combat.
+      if row.result then row.result:Hide() end; dimRow(row,false); blankRow(row); row:SetAlpha(1)
+      if not row:IsShown() then row:Show() end
     else row.style=nil; row.invite:Hide(); row.request:Hide(); row.idle:Hide(); row.cleanseTint:Hide(); row.cleanseBar:Hide(); row.socialFlash:Hide(); if row.socialFx then row.socialFx:Hide() end; if row.result then row.result:Hide() end; dimRow(row,false); for _,tag in ipairs(row.tags) do tag:Hide() end; if row:IsShown() then row:Hide() end end
   end
   self:AnimateNearbyRows(f,ROWS)
@@ -1585,6 +1717,8 @@ function B:UpdateNearbyWindow()
   else status="No nearby buffs needed." end
   local quiet=#display==0 and pin==0
   f.status:SetText(status); f.status:SetShown(quiet); f.statusButton:SetShown(quiet)
+  -- Blank slots stay shown with Keep open in combat; keep the status message clickable above them.
+  if f.keepsCombat then f.statusButton:SetFrameLevel((f.rows[1]:GetFrameLevel() or 1)+3) end
   if self.db.nearbyEnabled and not platesOn() then f.status:SetTextColor(1,.55,.25) else f.status:SetTextColor(.75,.75,.72) end
   self:UpdateNearbyHeaderFade(true)
   if not f:IsShown() then f:Show() end
@@ -1613,6 +1747,11 @@ frame:SetScript("OnEvent",function(_,event,unit,message,spellID)
     B.nearbyCastAttempt=nil; B.nearbyCastUntil=nil; B:CancelTimer('nearby-cast-ready')
     B.nearbySnapshot=nil
     for _,slot in ipairs({"nearby-range","nearby-settle","nearby-late","nearby-display","buff-aura-early","buff-aura-settle","buff-aura-late"}) do B:CancelTimer(slot) end
+    if B:NearbyKeepsCombat() then
+      B:UpdateNearbyCombatList()
+      -- Once more after lockdown begins, in case another handler redrew the list first.
+      B:StartTimer("nearby-combat",.2,function() if A.Combat() then B:UpdateNearbyCombatList() end end)
+    end
     return
   end
   B:SyncNearby()
@@ -1643,9 +1782,10 @@ frame:SetScript("OnEvent",function(_,event,unit,message,spellID)
     end
     return
   elseif event=="NAME_PLATE_UNIT_ADDED" then B:TrackNearby(unit); B:ScheduleNearbySettle()
+    if A.Combat() then B:UpdateNearbyCombatList() end
   elseif event=="NAME_PLATE_UNIT_REMOVED" and A.Text(unit) then
     B.nearbyUnits[unit]=nil; B:InvalidateAura(unit)
-    if not A.Combat() then B:SeedNearby(unit) end
+    if not A.Combat() then B:SeedNearby(unit) else B:UpdateNearbyCombatList() end
     -- Preserve arrival order through short nameplate hide/show cycles.
   elseif event=="PLAYER_ENTERING_WORLD" or event=="PLAYER_REGEN_ENABLED" then
     if event=="PLAYER_ENTERING_WORLD" then B:SettleSocialAlerts() end
@@ -1714,7 +1854,7 @@ function B:NearbyDiagnosticsLines()
   for _ in pairs(self.nearbyUnits or {}) do tracked=tracked+1 end
   local counts=self.nearbyCounts or {need=0,total=0}
   local out={
-    "Nearby: "..(self.db.nearbyEnabled and "on" or "off").." | view: "..(self.db.nearbyShowAll and "all players" or "buffs only").." | buffing: "..(self.db.nearbyBuffing~=false and "on" or "off"),
+    "Nearby: "..(self.db.nearbyEnabled and "on" or "off").." | view: "..(self.db.nearbyShowAll and "all players" or "buffs only").." | buffing: "..(self.db.nearbyBuffing~=false and "on" or "off").." | in combat: "..(self:NearbyKeepsCombat() and "open, invites only" or "hidden"),
     "Nearby players: "..counts.need.." queued / "..counts.total.." detected | tracked: "..tracked.."/40",
     "Nearby nameplates: "..tostring(plates).." ("..setting..")",
     "Nearby casting: exact-name/cast/restore | notifications: quiet",
