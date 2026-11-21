@@ -249,3 +249,6 @@ Owner asked for a review of 1.26.9 to 1.26.14, then small cleanups and a way to 
 
 ## 1.26.15 publication receipt
 GitHub release 453421318 (v1.26.15, Latest, not draft) published from 684e365; attached BuffTap-1.26.15.zip digest sha256:7897e89d8e53c5055c1310aaa8c028714b51b1e00f93b67fec4c99b7e019c3af matches the local archive (1,810,285 bytes, 135 files). Release API creation was not permitted for this session, so the release form was filled in Chrome and the owner attached the ZIP and published. CurseForge: submitted as Release for 1.60.1 with automatic publication after approval and the CurseForge notes; persisted file list shows Post Processing. Local install matches the release files.
+
+## 1.27.0 publication receipt
+GitHub release 453950695 (v1.27.0, Latest, not draft) published from da8b974; attached BuffTap-1.27.0.zip digest sha256:6f42400193518435efea3d17310b9835ad5999faee3786f75933c13dd9f36bb7 matches the local archive (1,829,643 bytes, 142 files). The tag push and release API were not permitted for this session, so the release form was filled in Chrome and the owner attached the ZIP and published. Full mocked run on the final files: 3,300 PASS, 0 FAIL. CurseForge upload pending the owner.
