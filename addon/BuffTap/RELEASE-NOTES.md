@@ -1,3 +1,18 @@
+# BuffTap 1.27.0
+
+### A fresh look for the settings window
+Every page now shares one darker background and opens with a larger title. Section headings gain a small icon and a fine line, and the boxes inside boxes are gone, so pages feel calmer and easier to scan. Controls are lined up with even spacing.
+
+Weapons, Consumables, Supplies, Cleanse, My buffs, Target, Blacklist and Groups were all reworked. Supplies has roomier item rows, and Weapons shows the Off hand row only for classes that can dual wield. Camping shows its benefits with new icons. On Groups, Party and Raid get a small emblem and a short note under each setting. Scrollbars appear only when a list actually scrolls.
+
+### Nearby stays open in combat
+Inviting players and asking to join a group work during a fight, whatever your class, so Nearby now stays open in combat by default. Existing characters get this once; if you prefer the old behaviour, turn off **Keep open in combat** under Customization > Nearby window and it stays off. The **How Nearby works** guide now starts folded away, and **Show** opens it.
+
+### Translations
+New text appears in German, Spanish, French and Brazilian Portuguese, and the section icons now show in every language.
+
+No gameplay or saved settings change apart from the Nearby default above. Some new window art needs a full game restart the first time.
+
 # BuffTap 1.26.15
 
 ### Invite and ask to join, even mid-fight

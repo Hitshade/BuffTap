@@ -142,7 +142,7 @@ end
 
 test('Preview contains noninteractive samples and leaves Supplies alone', """
 local B=BuffTap; B:Options(); local p=B.optionsPreviews.buff
-assert(p:GetHeight()==248 and #p.manualSamples==3 and not p.hint.shown)
+assert(p:GetHeight()==204 and #p.manualSamples==3 and not p.hint.shown)
 for _,s in ipairs(p.manualSamples) do assert(not s.protected and not s.attrs.type1 and not s.scripts.OnClick) end
 assert(B.optionsPreviews.supply:GetHeight()==328)
 assert(p.manualCaption and p.manualCaption.text==B:Text('Consumables'))

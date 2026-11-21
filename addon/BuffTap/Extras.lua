@@ -579,6 +579,7 @@ end
 -- Blacklist page in the options window.
 function B:UpdateBlacklistPage()
   local f=self.options; if not f or not f.blackLists then return end
+  self:UpdateBlacklistTarget()
   f.blackIgnored:SetChecked(self.db.blockIgnored~=false); f.blackTargets:SetChecked(self.db.blacklistTargets~=false); f.blackInstances:SetChecked(self.db.blacklistInInstances==false)
   if f.blackShared then
     f.blackShared:SetChecked(self:BlacklistAccountWide())
@@ -597,6 +598,23 @@ function B:UpdateBlacklistPage()
     for i=#names+1,#list.rows do list.rows[i].name=nil; list.rows[i]:Hide() end
     list.child:SetHeight(math.max(166,#names*32)); list.empty:SetShown(#names==0)
   end
+end
+-- Who the Block buttons would act on: the player you have targeted now.
+function B:UpdateBlacklistTarget()
+  local f=self.options; if not f or not f.blackTargetLabel then return end
+  local name=A.Call(UnitName,"target")
+  local player=A.Call(UnitIsPlayer,"target")==true and A.Text(name)
+  local guild=player and A.Call(GetGuildInfo,"target") or nil
+  guild=A.Text(guild) and guild~="" and guild or nil
+  local text,muted
+  if player then text=guild and (name.."  <"..guild..">") or name
+  elseif A.Text(name) then text=L("%s is not a player",name); muted=true
+  else text=L("No target selected"); muted=true end
+  f.blackTargetLabel:SetText(text)
+  local color=muted and B.OptionsTheme.muted or B.OptionsTheme.text
+  if color then f.blackTargetLabel:SetTextColor(color[1],color[2],color[3]) end
+  if f.blackTarget then f.blackTarget:SetEnabled(player and true or false) end
+  if f.blackTargetGuild then f.blackTargetGuild:SetEnabled(guild~=nil) end
 end
 function B:ShowBlacklist()
   if A.Combat() then self.Print(L("Settings are available after combat.")); return end

@@ -29,6 +29,7 @@ local function line(parent,y)
   return t
 end
 
+local function noTile() return setmetatable({edges={}},{__index=function() return function() end end}) end
 local function card(parent,x,y,width,height)
   return T.Card(parent,x,y,width,height)
 end
@@ -157,8 +158,9 @@ local function selectorArrow(control)
   if textRegion then textRegion:ClearAllPoints(); textRegion:SetPoint("LEFT",30,0); textRegion:SetPoint("RIGHT",-26,0) end
 end
 
-local function check(parent,text,x,y,fn)
+local function check(parent,text,x,y,fn,chip)
   local c=CreateFrame("CheckButton",nil,parent,"UICheckButtonTemplate")
+  c.visualChip=chip==true
   c:SetSize(24,24); c:SetPoint("TOPLEFT",x,y); c.Text:SetText(L(text)); c:SetScript("OnClick",fn); T.Check(c)
   return c
 end
@@ -992,12 +994,12 @@ function B:BuildSupplyOptions(parent)
   addHelp(f.supplyEnable,"Supply warnings","Shows a small stock indicator beside BuffTap. Counts carried usable items only. No purchases, bank tracking, or changes to casting priorities.")
   -- Track any item: shift-click or drag it into the box, or type its name, then press Enter or Add.
   -- Supplies reminder icon (look and position under Customization > Supplies).
-  f.supplyShowIcon=check(p,L("Reminder icon"),18,-70,function(c) if not A.Combat() then B.db.supplyReminder=c:GetChecked()==true; B:UpdateSupplyBadge() end end)
+  f.supplyShowIcon=check(p,L("Reminder icon"),20,-70,function(c) if not A.Combat() then B.db.supplyReminder=c:GetChecked()==true; B:UpdateSupplyBadge() end end)
   f.supplyAnywhereCheck=check(p,L("Outside towns"),230,-70,function(c) if not A.Combat() then B.db.supplyAnywhere=c:GetChecked()==true; B:UpdateSupplyBadge() end end)
   addHelp(f.supplyShowIcon,"Reminder icon","An icon that appears when something you track runs low. Left-click opens Supplies, right-click snoozes it, drag to move. Change its look under Customization > Supplies.")
   addHelp(f.supplyAnywhereCheck,"Outside towns","Off: the icon only shows while resting in a city or inn, where you can restock. On: it shows everywhere out of combat.")
-  label(p,L("Add by name"),410,-75,"GameFontHighlightSmall",78)
-  f.supplyAddBox=editbox(p,502,-70,118,false); f.supplyAddBox:SetJustifyH("LEFT")
+  label(p,L("Add by name"),440,-75,"GameFontHighlightSmall",78)
+  f.supplyAddBox=editbox(p,524,-70,108,false); f.supplyAddBox:SetJustifyH("LEFT")
   local function addItem()
     if A.Combat() then return end
     local text=f.supplyAddBox:GetText()
@@ -1015,24 +1017,27 @@ function B:BuildSupplyOptions(parent)
   local insert=(ChatFrameUtil and ChatFrameUtil.InsertLink and "ChatFrameUtil") or (ChatEdit_InsertLink and "ChatEdit_InsertLink")
   if insert=="ChatEdit_InsertLink" then hooksecurefunc("ChatEdit_InsertLink",function(link) if f.supplyAddBox:HasFocus() and A.Text(link) then f.supplyAddBox:SetText(link) end end)
   elseif insert then hooksecurefunc(ChatFrameUtil,"InsertLink",function(link) if f.supplyAddBox:HasFocus() and A.Text(link) then f.supplyAddBox:SetText(link) end end) end
-  f.supplyAdd=button(p,L("Add"),626,-69,56,addItem)
+  f.supplyAdd=button(p,L("Add"),640,-69,56,addItem)
   addHelp(f.supplyAddBox,"Add by name","Type an item's name and press Enter, or click in this box and then shift-click the item. The easiest way: drag the item from your bags onto the list below. BuffTap only warns about stock; it never uses these items.")
-  f.supplyChat=check(p,L("Private chat alerts"),18,-102,function(c) setAndRefresh("suppliesChat",c:GetChecked()==true) end)
+  f.supplyChat=check(p,L("Private chat alerts"),20,-102,function(c) setAndRefresh("suppliesChat",c:GetChecked()==true) end)
   f.supplySound=check(p,L("Alert sound"),230,-102,function(c) setAndRefresh("suppliesSound",c:GetChecked()==true) end)
-  f.supplyReady=check(p,L("Private ready-check summary"),410,-102,function(c) setAndRefresh("suppliesReadyCheck",c:GetChecked()==true) end)
+  f.supplyReady=check(p,L("Private ready-check summary"),440,-102,function(c) setAndRefresh("suppliesReadyCheck",c:GetChecked()==true) end)
   addHelp(f.supplyChat,"Private stock alerts","One message when an enabled supply becomes low or empty. Restocking above its minimum resets the warning. Nothing is sent to other players.")
   addHelp(f.supplyReady,"Ready-check supply summary","Reports enabled supply shortages to you when a ready check starts. This checks stock, not raid buffs, cooldowns, or whether you are ready to fight. In combat, reports wait for combat to end, for up to 15 seconds.")
-  line(p,-140)
-  label(p,L("Track / supply"),18,-158,"GameFontDisableSmall",250)
-  label(p,L("Usable"),298,-158,"GameFontDisableSmall",60)
-  label(p,"Warn below",365,-158,"GameFontDisableSmall",75)
-  label(p,"Want",462,-158,"GameFontDisableSmall",55)
-  label(p,"Missing",550,-158,"GameFontDisableSmall",70)
+  -- Tiles behind the switch grid, anchored to each control.
+  f.supplyAdd:SetHeight(24)
+  f.supplyTiles={card(p,12,-62,692,76)}
   -- The list is a drop target: drag any item from your bags onto it to start tracking it.
   local list=CreateFrame("Frame",nil,p,"BackdropTemplate"); f.supplyList=list
-  list:SetPoint("TOPLEFT",6,-174); list:SetSize(702,244)
+  list:SetPoint("TOPLEFT",12,-154); list:SetSize(692,276)
+  -- Column headers live inside the card, aligned to the row fields.
+  for _,h in ipairs({{L("Track / supply"),20,230,"LEFT"},{L("Usable"),289,70},{"Warn below",348,100},{"Want",444,80},{"Missing",543,80}}) do
+    local plain=h[4]~="LEFT"
+    local fs=label(list,h[1],h[2],-12,plain and T.fonts.Small or T.fonts.Section,h[3]); fs:SetJustifyH(h[4] or "CENTER"); fs:SetWordWrap(false)
+    if plain then fs:SetTextColor(unpack(T.muted)) else T.SectionTitle(fs) end
+  end
   list:SetBackdrop({bgFile="Interface\\Buttons\\WHITE8X8",edgeFile="Interface\\Buttons\\WHITE8X8",edgeSize=1})
-  list:SetBackdropColor(0,0,0,.45); list:SetBackdropBorderColor(.25,.25,.27,1)
+  list:SetBackdropColor(unpack(T.card)); list:SetBackdropBorderColor(1,1,1,.07)
   list.drop=list:CreateFontString(nil,"OVERLAY","GameFontNormalLarge"); list.drop:SetPoint("CENTER"); list.drop:Hide()
   list.drop:SetText(L("Drop to track this item"))
   local function dropOnList()
@@ -1051,31 +1056,31 @@ function B:BuildSupplyOptions(parent)
     local holding=kind=="item"
     if holding~=s.holding then
       s.holding=holding
-      s:SetBackdropBorderColor(holding and 1 or .25,holding and .42 or .25,holding and .07 or .27,1)
-      s:SetBackdropColor(0,0,0,holding and .75 or .45); s.drop:SetShown(holding)
+      if holding then s:SetBackdropBorderColor(1,.42,.07,1) else s:SetBackdropBorderColor(1,1,1,.07) end
+      if holding then s:SetBackdropColor(0,0,0,.75) else s:SetBackdropColor(unpack(T.card)) end; s.drop:SetShown(holding)
     end
   end)
   f.supplyRows={}
   for i=1,5 do
     local row=CreateFrame("Frame",nil,p,"BackdropTemplate")
-    row:SetSize(676,43); row:SetPoint("TOPLEFT",12,-180-(i-1)*47)
+    row:SetSize(672,43); row:SetPoint("TOPLEFT",22,-186-(i-1)*47)
     row:EnableMouse(true); row:SetFrameLevel(list:GetFrameLevel()+2)
     row:SetScript("OnReceiveDrag",function() f.supplyDrop() end)
     row:HookScript("OnMouseUp",function() f.supplyDrop() end)
     row:SetBackdrop({bgFile="Interface\\Buttons\\WHITE8X8"}); row:SetBackdropColor(unpack(T.row)); T.Row(row,8)
-    row.enable=check(row,"",0,-7,function(c)
+    row.enable=check(row,"",0,-10,function(c)
       if A.Combat() then return end
       local entry=c:GetParent().entry
       if entry then entry.settings.enabled=c:GetChecked()==true; B:InvalidateSupplies(false); B:UpdateSupplyOptions() end
     end)
-    row.icon=row:CreateTexture(nil,"ARTWORK"); row.icon:SetSize(26,26); row.icon:SetPoint("TOPLEFT",27,-8)
-    row.name=label(row,"",62,-6,"GameFontHighlightSmall",214)
+    row.icon=row:CreateTexture(nil,"ARTWORK"); row.icon:SetSize(28,28); row.icon:SetPoint("TOPLEFT",27,-7); row.icon:SetTexCoord(.08,.92,.08,.92)
+    row.name=label(row,"",64,-6,"GameFontHighlight",214)
     row.name:SetWordWrap(false); row.name:SetHeight(16)
-    row.state=label(row,"",62,-23,"GameFontDisableSmall",214)
-    row.count=label(row,"",288,-13,"GameFontHighlightSmall",52)
+    row.state=label(row,"",64,-24,"GameFontDisableSmall",214)
+    row.count=label(row,"",288,-15,"GameFontHighlightSmall",52); row.count:SetJustifyH("CENTER")
     row.minimum=editbox(row,366,-10,44,true)
     row.target=editbox(row,452,-10,44,true)
-    row.shortfall=label(row,"",545,-13,"GameFontHighlightSmall",74)
+    row.shortfall=label(row,"",521,-15,"GameFontHighlightSmall",74); row.shortfall:SetJustifyH("CENTER")
     for _,field in ipairs({"minimum","target"}) do
       local key=field
       row[field]:SetScript("OnEnterPressed",function(e)
@@ -1091,16 +1096,15 @@ function B:BuildSupplyOptions(parent)
       row[field]:SetScript("OnEscapePressed",function(e) e:ClearFocus(); B:UpdateSupplyOptions() end)
     end
     addHelp(row.minimum,"Warn below","Alert when usable stock falls below this number. Zero stock always warns. Press Enter to save.")
-    row.remove=button(row,L("Remove"),612,-9,62,function(b) local entry=b:GetParent().entry; if entry and entry.itemID and not A.Combat() then B:RemoveSupplyItem(entry.itemID); B:UpdateSupplyOptions() end end)
+    row.remove=button(row,L("Remove"),604,-9,62,function(b) local entry=b:GetParent().entry; if entry and entry.itemID and not A.Combat() then B:RemoveSupplyItem(entry.itemID); B:UpdateSupplyOptions() end end)
     row.remove:SetSize(62,24); addHelp(row.remove,"Stop tracking","Remove this item from Supplies.")
     addHelp(row.target,L("Desired stock"),"Your personal target quantity. Missing shows how many more usable items would reach it. BuffTap does not buy them. Press Enter to save.")
     f.supplyRows[i]=row
-    label(row,L("Enter to save"),366,-31,"GameFontDisableSmall",144)
   end
   -- More than five tracked supplies (several elixirs, for example): scroll the list.
   f.supplyOffset=0
   f.supplyScroll=CreateFrame("Slider",nil,p,"OptionsSliderTemplate"); f.supplyScroll:SetOrientation("VERTICAL")
-  f.supplyScroll:SetSize(12,227); f.supplyScroll:SetPoint("TOPLEFT",692,-180); f.supplyScroll:SetMinMaxValues(0,1); f.supplyScroll:SetValueStep(1)
+  f.supplyScroll:SetSize(12,230); f.supplyScroll:SetPoint("TOPLEFT",692,-190); f.supplyScroll:SetMinMaxValues(0,1); f.supplyScroll:SetValueStep(1)
   if f.supplyScroll.SetObeyStepOnDrag then f.supplyScroll:SetObeyStepOnDrag(true) end
   for _,part in ipairs({"Text","Low","High"}) do if f.supplyScroll[part] then f.supplyScroll[part]:Hide() end end
   f.supplyScroll:SetScript("OnValueChanged",function(s,value)
@@ -1113,12 +1117,12 @@ function B:BuildSupplyOptions(parent)
   end
   for _,row in ipairs(f.supplyRows) do row:EnableMouseWheel(true); row:SetScript("OnMouseWheel",wheel) end
   f.supplyList:EnableMouseWheel(true); f.supplyList:SetScript("OnMouseWheel",wheel)
-  f.supplyScroll:ClearAllPoints(); f.supplyScroll:SetPoint("TOPRIGHT",f.supplyList,"TOPRIGHT",-2,-6)
-  f.supplyEmpty=label(p,"",18,-190,"GameFontHighlightSmall",665)
-  f.supplySnooze=button(p,L("Snooze 10 min"),18,-468,122,function() B:SnoozeSupplies() end)
-  button(p,L("Restore alerts"),150,-468,118,function() B:RestoreSupplies() end)
-  button(p,L("Check supplies"),554,-468,126,function() B:ReportSupplies() end)
-  f.supplyHint=label(p,"Drag any item from your bags onto the list to track it. Warnings do not block your buff queue.",18,-434,"GameFontDisableSmall",660)
+  f.supplyScroll:ClearAllPoints(); f.supplyScroll:SetPoint("TOPRIGHT",f.supplyList,"TOPRIGHT",-2,-34)
+  f.supplyEmpty=label(p,"",34,-206,"GameFontHighlightSmall",640)
+  f.supplySnooze=button(p,L("Snooze 10 min"),18,-478,122,function() B:SnoozeSupplies() end)
+  button(p,L("Restore alerts"),150,-478,118,function() B:RestoreSupplies() end)
+  button(p,L("Check supplies"),554,-478,126,function() B:ReportSupplies() end)
+  f.supplyHint=label(p,"Drag any item from your bags onto the list to track it. Warnings do not block your buff queue.",18,-444,"GameFontDisableSmall",660)
 end
 
 function B:UpdateSupplyOptions()
@@ -1140,10 +1144,12 @@ function B:UpdateSupplyOptions()
     if row.entry and (not entry or row.entry.key~=entry.key) then row.minimum:ClearFocus(); row.target:ClearFocus() end
     row.entry=entry; row:SetShown(entry~=nil)
     if entry then
-      row.enable:SetChecked(entry.settings.enabled); row.icon:SetTexture(entry.icon); row.name:SetText(entry.name)
+      row.enable:SetChecked(entry.settings.enabled); row.icon:SetTexture(entry.icon or 134400); row.name:SetText(entry.name)
       row.remove:SetShown(entry.kind=="custom")
       local states={loading="Inventory settling",unknown="Stock or item data unavailable",empty=L("Out of stock"),unusable="Carried, none usable",low="Low stock",ok="Stock ready"}
       row.state:SetText(states[entry.state] or "Unknown")
+      local good,warn=entry.state=="ok",(entry.state=="empty" or entry.state=="low" or entry.state=="unusable")
+      if good then row.state:SetTextColor(.42,.82,.5) elseif warn then row.state:SetTextColor(1,.62,.2) else row.state:SetTextColor(unpack(T.muted)) end
       row.count:SetText(entry.count~=nil and tostring(entry.count) or "?")
       if not row.minimum:HasFocus() then row.minimum:SetText(tostring(entry.settings.minimum)) end
       if not row.target:HasFocus() then row.target:SetText(tostring(entry.settings.target)) end
@@ -1984,7 +1990,7 @@ function B:Options()
       fitButtonText(t,135)
     end
     local navRule=f:CreateTexture(nil,"BORDER"); navRule:SetColorTexture(unpack(T.rule)); navRule:SetPoint("BOTTOMLEFT",20,118); navRule:SetSize(156,1)
-    f.navNote=label(f,"Every cast still needs your click or binding.",0,0,"GameFontDisableSmall",156)
+    f.navNote=label(f,"Every cast still needs your click or binding.",0,0,"GameFontDisableSmall",156); f.navNote:SetSpacing(3)
     f.navNote:ClearAllPoints(); f.navNote:SetPoint("BOTTOMLEFT",20,82)
     f.navHelp=button(f,L("How to buff"),0,0,164,function() B:ShowWelcome(true) end)
     f.navHelp:ClearAllPoints(); f.navHelp:SetPoint("BOTTOMLEFT",16,44); f.navHelp:SetHeight(28)
@@ -1997,18 +2003,20 @@ function B:Options()
     label(buffs,L("Buffs"),18,-16,"GameFontNormalLarge")
     f.buffInstruction=label(buffs,L("Choose your buffs. Move the most important ones to the top."),18,-42,"GameFontDisableSmall",650)
     -- Column headers line up with the controls in each row (rows start at x=28: rebuff field at 284, arrows at 556).
-    f.buffRebuffHeader=label(buffs,L("Rebuff"),28+284,-70,"GameFontDisableSmall",90)
-    f.buffSoundHeader=label(buffs,L("Sound"),28+516,-70,"GameFontDisableSmall",40)
-    f.buffPriorityHeader=label(buffs,L("Priority"),28+556,-70,"GameFontDisableSmall",90)
+    f.buffRebuffHeader=label(buffs,L("Rebuff"),12+284,-70,"GameFontDisableSmall",196); f.buffRebuffHeader:SetJustifyH("CENTER")
+    f.buffSoundHeader=label(buffs,L("Sound"),12+546,-70,"GameFontDisableSmall",64); f.buffSoundHeader:SetJustifyH("CENTER")
+    f.buffPriorityHeader=label(buffs,L("Priority"),12+600,-70,"GameFontDisableSmall",84); f.buffPriorityHeader:SetJustifyH("CENTER")
     local scroll=CreateFrame("ScrollFrame",nil,buffs,"UIPanelScrollFrameTemplate")
-    scroll:SetPoint("TOPLEFT",28,-90); scroll:SetPoint("BOTTOMRIGHT",-40,218)
-    local child=CreateFrame("Frame",nil,scroll); child:SetSize(644,1); scroll:SetScrollChild(child); f.buffChild=child; f.buffRows={}
+    scroll:SetPoint("TOPLEFT",12,-90); scroll:SetPoint("BOTTOMLEFT",12,222); scroll:SetWidth(692)
+    local child=CreateFrame("Frame",nil,scroll); child:SetSize(692,1); scroll:SetScrollChild(child); f.buffChild=child; f.buffRows={}
 
     f.emptyBuffs=label(child,"No supported aura buffs for this class.",8,-12,"GameFontDisableSmall",610)
     self:BuildContextControls(buffsPage,"buffs",{label=label,flatButton=flatButton,button=button,addHelp=addHelp})
     local weapons=panel(f); f.pages[TAB.Weapons]=weapons
     local weaponsPage=weapons; weapons=CreateFrame("Frame",nil,weaponsPage); f.weaponContent=weapons; weapons:SetPoint("TOPLEFT",0,-60); weapons:SetPoint("BOTTOMRIGHT",0,0)
-    f.weaponClassCard=card(weapons,12,-98,698,110); f.coatingCard=card(weapons,12,-220,698,120); f.weaponTimingCard=card(weapons,12,-358,698,124)
+    f.weaponAppCard=card(weapons,12,-50,698,50); f.weaponClassCard=card(weapons,12,-116,698,110); f.coatingCard=card(weapons,12,-242,698,124); f.weaponTimingCard=card(weapons,12,-378,698,140)
+    -- Tiles behind each row; update code moves them with the cards.
+    f.weaponTiles={app=noTile(),main=noTile(),off=noTile(),coatMain=noTile(),coatOff=noTile(),timing=noTile(),replace=noTile(),rest=noTile(),skip=noTile()}
     f.weaponTitle=label(weapons,L("Weapon buffs"),18,-16,"GameFontNormalLarge")
     f.weaponHint=label(weapons,L("Maintain a preferred buff on each weapon using your normal BuffTap binding."),18,-42,"GameFontDisableSmall",660)
     f.weaponRetry=button(weapons,L("Retry reminders"),528,-16,154,function() B:RetryConsumableReminders(); B:Options() end)
@@ -2016,13 +2024,13 @@ function B:Options()
     f.weaponEnable=check(weapons,L("Enable weapon reminders"),18,-72,function(c) setAndRefresh("weaponReminder",c:GetChecked()==true); B:Options() end)
     f.weaponApply=selector(weapons,"",180,-72,502,function() return {{key=false,name="Remind only"},{key=true,name="Remind and apply"}} end,function(value) setAndRefresh("weaponApply",value) end)
     addHelp(f.weaponApply,"Weapon mode","Remind only shows missing weapon buffs without preparing an application. Remind and apply prepares your selected spell or item for your next scroll or click, out of combat. Every application still requires your input.")
-    f.weaponSectionHeading=label(weapons,L("Poisons / class imbues"),26,-110,T.fonts.Section); f.weaponSectionHeading.optionsSection=true; T.SectionTitle(f.weaponSectionHeading)
-    f.weaponMain=check(weapons,L("Main hand"),18,-116,function(c) setAndRefresh("weaponMainHand",c:GetChecked()==true); B:Options() end)
-    f.weaponOff=check(weapons,L("Off hand"),18,-164,function(c) setAndRefresh("weaponOffHand",c:GetChecked()==true); B:Options() end)
+    f.weaponSectionHeading=label(weapons,L("Poisons / class imbues"),26,-128,T.fonts.Section); f.weaponSectionHeading.optionsSection=true; T.SectionTitle(f.weaponSectionHeading)
+    f.weaponMain=check(weapons,L("Main hand"),18,-134,function(c) setAndRefresh("weaponMainHand",c:GetChecked()==true); B:Options() end)
+    f.weaponOff=check(weapons,L("Off hand"),18,-182,function(c) setAndRefresh("weaponOffHand",c:GetChecked()==true); B:Options() end)
     f.weaponPickers={}
     for i,hand in ipairs({"main","off"}) do
       local key=hand
-      local pick=flatButton(weapons,L("Choose preferred buff"),180,-132-(i-1)*38,502,function(control)
+      local pick=flatButton(weapons,L("Choose preferred buff"),180,-150-(i-1)*38,502,function(control)
         if A.Combat() then return end
         for _,other in pairs(f.weaponPickers) do if other~=control then other.menu:Hide() end end
         for _,other in pairs(f.coatingPickers or {}) do other.menu:Hide() end
@@ -2120,14 +2128,16 @@ function B:Options()
       addHelp(f.buffPets,"Buff pets","Offer single-target buffs such as Mark of the Wild to your pet and your group's pets. Blessings and group spells stay with players.")
       f.readyTopUp=check(groups,L("Top up at ready checks"),0,0,function(s) if not A.Combat() then B.db.readyCheckTopUp=s:GetChecked()==true end end)
       -- Shared group settings card, three rows: All buffs; Group threshold with group spells; pets and ready checks.
-      f.smartGroup:ClearAllPoints(); f.smartGroup:SetPoint("TOPLEFT",groups,"TOPLEFT",480,-115)
-      f.buffPets:ClearAllPoints(); f.buffPets:SetPoint("TOPLEFT",groups,"TOPLEFT",18,-152)
-      f.readyTopUp:ClearAllPoints(); f.readyTopUp:SetPoint("TOPLEFT",groups,"TOPLEFT",480,-152)
+      f.smartGroup:ClearAllPoints(); f.smartGroup:SetPoint("TOPLEFT",groups,"TOPLEFT",36,-114)
+      f.buffPets:ClearAllPoints(); f.buffPets:SetPoint("TOPLEFT",groups,"TOPLEFT",36,-160)
+      f.readyTopUp:ClearAllPoints(); f.readyTopUp:SetPoint("TOPLEFT",groups,"TOPLEFT",377,-160)
       addHelp(f.readyTopUp,"Top up at ready checks","When a ready check starts, buffs with less than half their time left count as missing, so you can refresh them before the pull.")
-      local shared=CreateFrame("Frame",nil,groups); shared:SetPoint("TOPLEFT",0,-72); shared:SetSize(704,80); shared:Show()
+      local shared=CreateFrame("Frame",nil,groups); shared:SetPoint("TOPLEFT",0,0); shared:SetSize(704,200); shared:Show()
       f.sharedGroups=shared
-      f.groupSharedCard=card(groups,12,-46,698,146)
-      f.groupSharedTitle=label(groups,L("Shared group settings"),26,-58,T.fonts.Section); T.SectionTitle(f.groupSharedTitle)
+      f.groupSharedCard=card(groups,12,-46,698,162)
+      f.groupSharedTitle=label(groups,L("Shared group settings"),26,-58,T.fonts.Section); T.SectionTitle(f.groupSharedTitle); f.groupSharedTitle:Hide()
+      -- Two columns of tiles inside the card: All buffs on top, then group spells with their threshold, then pets and ready checks.
+      f.groupTiles={noTile(groups,22,-56,672,38),noTile(groups,22,-100,331,38),noTile(groups,363,-100,331,38),noTile(groups,22,-144,331,38),noTile(groups,363,-144,331,38)}
       f.groupDivider=line(groups,-204)
       f.perBuffHeading=label(groups,L("Per-buff customization"),18,-218,"GameFontNormalLarge")
       f.roleGuess=check(groups,L("Guess tanks from stance"),300,-213,function(c) if not A.Combat() then B.db.roleGuess=c:GetChecked()==true; B.roleCache=nil; B:InvalidateAura(); B:RequestRefresh("role guess",0) end end)
@@ -2135,28 +2145,44 @@ function B:Options()
       f.roleMark=button(groups,L("Mark target role"),560,-212,144,markTargetRole)
       addHelp(f.roleMark,"Mark target role",roleHelp)
       f.groupInstructions=label(groups,L("Select a buff below to customize how BuffTap applies it in parties and raids."),18,-242,"GameFontDisableSmall",686)
-      label(groups,L("These filters apply only to party/raid buffing. Personal and open-world target buffs stay separate."),18,-596,"GameFontDisableSmall",686)
-      f.groupAllLabel=label(shared,L("All buffs"),18,-10,"GameFontNormal")
+      f.groupFooterNote=label(groups,L("These filters apply only to party/raid buffing. Personal and open-world target buffs stay separate."),18,-596,"GameFontDisableSmall",686)
+      -- A small emblem tile beside the title: a few figures for a party, more for a raid.
+      f.groupEmblemTile=T.Tile(shared,24,-52,44,40)
+      f.groupEmblem=shared:CreateTexture(nil,"ARTWORK"); f.groupEmblem:SetSize(26,26); f.groupEmblem:SetPoint("TOPLEFT",33,-59)
+      f.groupEmblem:SetTexture("Interface\\AddOns\\BuffTap\\Media\\GroupParty"); f.groupEmblem.optionsDecoration=true
+      T.Track(f.groupEmblem,"accentIcon"); f.groupEmblem:SetVertexColor(T.accent[1],T.accent[2],T.accent[3],1)
+      f.groupAllLabel=label(shared,L("All buffs"),80,-65,"GameFontNormal")
+      -- Quiet explanation under each setting, and hairlines that split the card into title, left and right columns.
+      f.groupTitleRule=T.Rule(shared,24,-104,662)
+      do
+        local v=shared:CreateTexture(nil,"BORDER"); v:SetColorTexture(unpack(T.rule)); v:SetSize(1,86); v:SetPoint("TOPLEFT",355,-114); v.optionsDecoration=true; T.Track(v,"rule"); f.groupColumnRule=v
+      end
+      f.groupNotes={
+        smart=label(shared,L("One group spell instead of several singles."),80,-140,"GameFontDisableSmall",260),
+        need=label(shared,L("Players needed before a group spell is used."),377,-140,"GameFontDisableSmall",300),
+        pets=label(shared,L("Also buff your pet and your group's pets."),80,-186,"GameFontDisableSmall",260),
+        ready=label(shared,L("Refresh low buffs at ready checks."),421,-186,"GameFontDisableSmall",270)}
       f.groupChecks={}
       for i=1,8 do
         local idx=i
-        local c=check(shared,"G"..i,108+(i-1)*68,-5,function(s)
+        local c=check(shared,"G"..i,682-(9-i)*46-(8-i)*6,-60,function(s)
           if A.Combat() then return end
           B:SetRaidGroupColumn(idx,s:GetChecked()==true,B:EditingGroupContext())
           B:RequestRefresh("raid group master",0)
           B:Options()
-        end)
+        end,true)
+        c:SetSize(46,24)
         local dash=c:CreateFontString(nil,"OVERLAY","GameFontNormalSmall")
-        dash:SetPoint("CENTER",c,"CENTER",0,1); dash:SetText("-"); dash:SetTextColor(1,0.82,0.1); dash:Hide(); c.mixedDash=dash
+        dash:SetPoint("CENTER",c,"CENTER",0,1); dash:SetText("-"); dash:SetTextColor(1,0.82,0.1); dash:Hide(); dash:SetAlpha(0); c.mixedDash=dash
         addHelp(c,"Raid Group "..i,"Checked or unchecked applies to every buff. A gold dash means this group has mixed per-buff assignments.")
         f.groupChecks[i]=c
       end
-      f.groupThresholdLabel=label(shared,L("Group threshold"),18,-48,"GameFontHighlight",110)
-      f.groupNeedSlider=compactSlider(shared,2,5,1,190,function(v) return tostring(v).."+" end,function(_,v)
+      f.groupThresholdLabel=label(shared,L("Group threshold"),377,-118,"GameFontHighlight",110)
+      f.groupNeedSlider=compactSlider(shared,2,5,1,180,function(v) return tostring(v).."+" end,function(_,v)
         B:GroupEditorSettings().groupNeed=v; B:NormalizeGroupNeeds(B:EditingGroupContext()); B:InitDB(); B:RequestRefresh("group threshold default",0.08)
       end)
       f.groupNeedSlider:SetScript("OnMouseUp",function() if not A.Combat() then B:Options() end end)
-      f.groupNeedSlider:SetPoint("TOPLEFT",146,-45)
+      f.groupNeedSlider:SetPoint("TOPLEFT",495,-115)
       f.assignmentListCard=card(groups,12,-270,194,300)
       f.assignmentListTitle=label(groups,L("Select a buff"),24,-282,T.fonts.Section); T.SectionTitle(f.assignmentListTitle)
       local listScroll=CreateFrame("ScrollFrame",nil,groups,"UIPanelScrollFrameTemplate")
@@ -2238,7 +2264,7 @@ function B:Options()
       pick.setOrder=function(order) B.db.targetBlessingPriorities[token]=order end
     end
     f.targetBlessingInstruction=label(f.targetBlessingPanel,"",6,-160,"GameFontDisableSmall",686)
-    f.targetHeaders=CreateFrame("Frame",nil,target); f.targetHeaders:SetPoint("TOPLEFT",0,-168); f.targetHeaders:SetSize(698,78)
+    f.targetHeaders=CreateFrame("Frame",nil,target); f.targetHeaders:SetPoint("TOPLEFT",4,-168); f.targetHeaders:SetSize(698,78)
     local header=f.targetHeaders
     line(header,0)
     header.title=label(header,"Spell availability & refresh timing",26,-22,T.fonts.Section); T.SectionTitle(header.title)
@@ -2250,8 +2276,8 @@ function B:Options()
     label(header,L("Override timing"),276,-56,"GameFontDisableSmall",100)
     label(header,L("Refresh when remaining"),402,-56,"GameFontDisableSmall",180)
     local targetScroll=CreateFrame("ScrollFrame",nil,target,"UIPanelScrollFrameTemplate")
-    targetScroll:SetPoint("TOPLEFT",14,-246); targetScroll:SetPoint("BOTTOMRIGHT",-34,54)
-    local targetChild=CreateFrame("Frame",nil,targetScroll); targetChild:SetSize(660,1); targetScroll:SetScrollChild(targetChild)
+    targetScroll:SetPoint("TOPLEFT",18,-246); targetScroll:SetPoint("BOTTOMLEFT",18,54); targetScroll:SetWidth(678)
+    local targetChild=CreateFrame("Frame",nil,targetScroll); targetChild:SetSize(678,1); targetScroll:SetScrollChild(targetChild)
     f.targetChild=targetChild; f.targetRows={}; f.targetScroll=targetScroll
     local resetTarget; resetTarget=button(target,L("Reset target settings"),0,0,132,function()
       if not A.Combat() then
@@ -2280,7 +2306,10 @@ function B:Options()
     f.consumeBuild=label(consume,"Data: -",410,-77,"GameFontDisableSmall",260)
     f.consumableRestPause=check(consume,L("Pause while resting"),18,-58,function(c) if not A.Combat() then B.db.consumablesPauseResting=c:GetChecked()==true; B:RequestRefresh("consumable resting pause",0) end end)
     f.consumableInstanceOnly=check(consume,L("Only in dungeons and raids"),0,0,function(c) if not A.Combat() then B.db.consumablesInstanceOnly=c:GetChecked()==true; B:RequestRefresh("consumable instance only",0) end end)
-    f.consumableInstanceOnly:ClearAllPoints(); f.consumableInstanceOnly:SetPoint("TOPLEFT",f.consumableRestPause,"TOPLEFT",200,0)
+    f.consumableInstanceOnly:ClearAllPoints(); f.consumableInstanceOnly:SetPoint("TOPLEFT",f.consumableRestPause,"TOPLEFT",340,0)
+    -- Tiles sit behind the two rules and the footer, anchored to the controls so page shifts keep them aligned.
+    local function tileBehind(control,dx,dy,w,h) local t=T.Tile(consume,0,0,w,h); t:ClearAllPoints(); t:SetPoint("TOPLEFT",control,"TOPLEFT",dx,dy); return t end
+    f.consumeTiles={rules=tileBehind(f.consumableRestPause,-6,6,692,36)}
     addHelp(f.consumableInstanceOnly,"Only in dungeons and raids","Skip food, flask, elixir and utility reminders outside dungeons and raids. Buff reminders continue everywhere.")
     addHelp(f.consumableRestPause,"Pause while resting","Skip food, flask, elixir and utility reminders in cities and inns, so you do not use them while resting. Buff reminders continue as usual.")
     line(consume,-108)
@@ -2290,7 +2319,7 @@ function B:Options()
     B.ConsumableVisibleFamilies=visibleFamilies
     for index,family in ipairs(visibleFamilies) do
       local row=CreateFrame("Frame",nil,consume,"BackdropTemplate")
-      row:SetSize(686,76); row:SetPoint("TOPLEFT",10,-116-(index-1)*80)
+      row:SetSize(692,76); row:SetPoint("TOPLEFT",12,-120-(index-1)*92)
       row:SetBackdrop({bgFile="Interface\\Buttons\\WHITE8X8"}); row:SetBackdropColor(unpack(T.row)); T.Row(row,8)
       row.family=family
       row.enable=check(row,"",8,-8,function(c)
@@ -2309,7 +2338,7 @@ function B:Options()
       local modeHelp="Auto: offered by BuffTap's normal binding. Manual: shown below the icon; click its small icon to use it. Never uses your BuffTap binding."
       addHelp(row.auto,"Consumable mode",modeHelp); addHelp(row.manual,"Consumable mode",modeHelp)
       row.choice=label(row,"Auto",82,-29,"GameFontHighlightSmall",420)
-      row.prev=button(row,L("Choose"),584,-8,86,function(btn) B:ChooseConsumable(btn:GetParent().family,btn,B:EditorContext("consumables")) end)
+      row.prev=button(row,L("Choose"),592,-8,86,function(btn) B:ChooseConsumable(btn:GetParent().family,btn,B:EditorContext("consumables")) end)
       row.inventory=label(row,"",450,-11,"GameFontHighlightSmall",120)
       label(row,family.protectPresent and (family.key=="utility" and "Preserve active utility; remind after expiry" or "Preserve active elixirs; remind after expiry") or "Rebuff at",350,-52,"GameFontDisableSmall",family.protectPresent and 320 or 62)
       addHelp(row.enable,"Maintain this consumable buff","Enable this family to monitor its selected effects. Auto offers items on your normal binding; Manual uses separate click-only icons. Enable consumable reminders above too. Preferences stay saved when supplies run out.")
@@ -2332,9 +2361,9 @@ function B:Options()
       end
       f.consumableRows[index]=row
     end
-    local consumeFooterY=-116-(#visibleFamilies)*80-4
+    local consumeFooterY=-120-(#visibleFamilies)*92+8
 
-    f.consumeRetry=button(consume,L("Retry reminders"),528,consumeFooterY-48,154,function() B:RetryConsumableReminders(); B:Options() end)
+        f.consumeRetry=button(consume,L("Retry reminders"),528,consumeFooterY-48,154,function() B:RetryConsumableReminders(); B:Options() end)
     addHelp(f.consumeRetry,L("Retry reminders"),L("Restarts item loading and paused consumable reminders. Changed item effects remain blocked."))
     f.consumePauseStatus=label(consume,"",186,consumeFooterY-53,"GameFontHighlightSmall",496)
 
@@ -2368,8 +2397,8 @@ function B:Options()
     label(camping,"Opacity",364,-275,"GameFontHighlightSmall")
     f.campingOpacity=compactSlider(camping,25,100,5,160,function(v) return tostring(v).."%" end,function(_,v) campChange("campOpacity",v/100) end); f.campingOpacity:SetPoint("TOPLEFT",456,-274)
     f.campingEffect=selector(camping,"",18,-310,240,function() return {{key="none",name="Effect: None"},{key="soft",name="Effect: Soft glow"},{key="pulse",name="Effect: Pulse"},{key="pixel",name="Effect: Pixel border"},{key="autocast",name="Effect: Sparkles"},{key="proc",name="Effect: Spell glow"},{key="shine",name="Effect: Shine"},{key="ripple",name="Effect: Ripple"},{key="bounce",name="Effect: Bounce"},{key="orbit",name="Effect: Orbit"}} end,function(v) campChange("campEffectStyle",v) end)
-    f.campingColor=selector(camping,"",274,-310,196,function() return {{key="gold",name="Gold"},{key="cyan",name="Cyan"},{key="green",name="Green"},{key="red",name="Red"},{key="white",name="White"}} end,function(v) campChange("campEffectColor",v) end)
-    f.campingSpeed=selector(camping,"",486,-310,196,function() return {{key="slow",name="Slow"},{key="normal",name="Normal"},{key="fast",name="Fast"}} end,function(v) campChange("campEffectSpeed",v) end)
+    f.campingColor=selector(camping,"",274,-310,196,function() return {{key="gold",name="Colour: Gold"},{key="cyan",name="Colour: Cyan"},{key="green",name="Colour: Green"},{key="red",name="Colour: Red"},{key="white",name="Colour: White"}} end,function(v) campChange("campEffectColor",v) end)
+    f.campingSpeed=selector(camping,"",486,-310,196,function() return {{key="slow",name="Speed: Slow"},{key="normal",name="Speed: Normal"},{key="fast",name="Speed: Fast"}} end,function(v) campChange("campEffectSpeed",v) end)
     addHelp(f.campingColor,"Effect color","Changes only the camp reminder effect, not the regular buff icon.")
     addHelp(f.campingSpeed,"Effect speed","Changes only the camp reminder animation speed.")
     label(camping,"Reminder text",18,-350,"GameFontNormal")
@@ -2420,8 +2449,8 @@ function B:Options()
     end)
     f.soundCheck=check(app,L("Enable reminder sound"),18,-510,function(s) setAndRefresh("sound",s:GetChecked()==true) end)
     f.effectButton=selector(app,"",18,-200,240,function() return {{key="none",name="Effect: None"},{key="soft",name="Effect: Soft glow"},{key="pulse",name="Effect: Pulse"},{key="pixel",name="Effect: Pixel border"},{key="autocast",name="Effect: Sparkles"},{key="proc",name="Effect: Spell glow"},{key="shine",name="Effect: Shine"},{key="ripple",name="Effect: Ripple"},{key="bounce",name="Effect: Bounce"},{key="orbit",name="Effect: Orbit"}} end,function(v) setAndRefresh("effectStyle",v) end)
-    f.effectColorButton=selector(app,"",274,-200,196,function() return {{key="gold",name="Gold"},{key="cyan",name="Cyan"},{key="green",name="Green"},{key="red",name="Red"},{key="white",name="White"}} end,function(v) setAndRefresh("effectColor",v) end)
-    f.effectSpeedButton=selector(app,"",486,-200,196,function() return {{key="slow",name="Slow"},{key="normal",name="Normal"},{key="fast",name="Fast"}} end,function(v) setAndRefresh("effectSpeed",v) end)
+    f.effectColorButton=selector(app,"",274,-200,196,function() return {{key="gold",name="Colour: Gold"},{key="cyan",name="Colour: Cyan"},{key="green",name="Colour: Green"},{key="red",name="Colour: Red"},{key="white",name="Colour: White"}} end,function(v) setAndRefresh("effectColor",v) end)
+    f.effectSpeedButton=selector(app,"",486,-200,196,function() return {{key="slow",name="Speed: Slow"},{key="normal",name="Speed: Normal"},{key="fast",name="Speed: Fast"}} end,function(v) setAndRefresh("effectSpeed",v) end)
     addHelp(f.effectButton,"Icon effect","Choose a border or glow. Effects stop when the reminder is hidden. Unsupported effects use a soft glow.")
     addHelp(f.effectColorButton,"Effect color","Changes the icon effect color.")
     addHelp(f.effectSpeedButton,"Effect speed","Changes the animation speed.")
@@ -2509,72 +2538,81 @@ function B:Options()
     f.pages[TAB.Cleanse]=panel(f)
     label(black,L("Blacklist"),18,-16,"GameFontNormalLarge")
     label(black,"BuffTap never offers buffs or invites to these players or guilds. Your own group is not affected.",18,-42,"GameFontDisableSmall",680)
-    card(black,12,-74,692,118)
+    card(black,12,-74,692,122); noTile(black,22,-106,672,36); noTile(black,22,-148,672,36)
     T.SectionTitle(label(black,L("Add to blacklist"),28,-88,T.fonts.Section))
-    f.blackInput=editbox(black,28,-114,270,false); f.blackInput:SetMaxLetters(64)
+    f.blackInput=editbox(black,39,-111,270,false); f.blackInput:SetMaxLetters(64)
     local function addTyped(kind) if B:SetBlocked(kind,f.blackInput:GetText(),true) then f.blackInput:SetText(""); f.blackInput:ClearFocus() end end
     f.blackInput:SetScript("OnEnterPressed",function() addTyped("player") end)
     f.blackInput:SetScript("OnEscapePressed",function(s) s:ClearFocus() end)
-    local addPlayer=button(black,L("Add player"),310,-112,186,function() addTyped("player") end)
+    local addPlayer=button(black,L("Add player"),318,-111,176,function() addTyped("player") end)
     addHelp(addPlayer,"Add player","Type a character's first name. Capitals do not matter.")
-    local addGuild=button(black,L("Add guild"),504,-112,186,function() addTyped("guild") end)
+    local addGuild=button(black,L("Add guild"),502,-111,180,function() addTyped("guild") end)
     addHelp(addGuild,"Add guild","Type the guild name exactly as the game shows it, including spaces, accents and special characters. Capitals do not matter. Block target's guild copies the name for you.")
-    label(black,L("Current target"),28,-156,"GameFontDisableSmall",260)
-    f.blackTarget=button(black,L("Block target"),310,-148,186,function()
+    f.blackTargetLabel=label(black,"",36,-160,"GameFontHighlightSmall",270)
+    f.blackTarget=button(black,L("Block target"),318,-153,176,function()
       local name=A.Call(UnitName,"target")
       if A.Call(UnitIsPlayer,"target")==true and A.Text(name) then B:SetBlocked("player",name,true) end
     end)
-    f.blackTargetGuild=button(black,L("Block target's guild"),504,-148,186,function()
+    f.blackTargetGuild=button(black,L("Block target's guild"),502,-153,180,function()
       local guild=A.Call(GetGuildInfo,"target")
       if A.Text(guild) and guild~="" then B:SetBlocked("guild",guild,true) end
     end)
-    card(black,12,-206,692,100)
-    T.SectionTitle(label(black,L("Sharing & profile copy"),28,-220,T.fonts.Section))
-    f.blackShared=check(black,L("Share across all characters"),28,-248,function(c)
+    -- The current target is shown live while this page is open.
+    do
+      local waited=0
+      black:HookScript("OnUpdate",function(_,elapsed)
+        waited=waited+(elapsed or 0); if waited<.4 then return end
+        waited=0; if black:IsShown() and not A.Combat() then B:UpdateBlacklistTarget() end
+      end)
+      black:HookScript("OnShow",function() if not A.Combat() then B:UpdateBlacklistTarget() end end)
+    end
+    card(black,12,-212,692,100); noTile(black,22,-244,672,36)
+    T.SectionTitle(label(black,L("Sharing & profile copy"),28,-226,T.fonts.Section))
+    f.blackShared=check(black,L("Share across all characters"),36,-250,function(c)
       if B:SetBlacklistAccountWide(c:GetChecked()==true) then B:Options(); B:UpdateBlacklistPage() end
     end)
     addHelp(f.blackShared,"Share across all characters","Shares player and guild names across all your characters. Turning on adds this profile's entries to the shared list. Turning off restores each profile's own list; the shared list stays saved. Blacklist rules still belong to each profile.")
-    f.blackSource=selector(black,L("Copy from profile..."),374,-246,190,function()
+    f.blackSource=selector(black,L("Copy from profile..."),340,-249,190,function()
       local list={}
       for _,name in ipairs(B:ProfileNames()) do
         if name~=B.profileDB:GetCurrentProfile() then list[#list+1]={key=name,name=B:ProfileLabel(name)} end
       end
       return list
     end,function(name) f.blackCopySource=name; f.blackCopyNotice=nil; B:UpdateBlacklistPage() end,"scroll")
-    f.blackCopy=button(black,L("Add entries"),574,-246,116,function()
+    f.blackCopy=button(black,L("Add entries"),538,-249,144,function()
       local ok,count=B:CopyBlacklistFromProfile(f.blackCopySource)
       if ok then f.blackCopyNotice=L("Added %d new blacklist entries. Existing entries were kept.",count); B:UpdateBlacklistPage() end
     end)
     addHelp(f.blackCopy,"Add entries","Adds the selected profile's player and guild blacklist entries to the active list. Duplicates are skipped. Other settings and the source profile stay unchanged.")
-    f.blackScopeHint=label(black,"",28,-280,"GameFontDisableSmall",650)
-    card(black,12,-320,692,104)
-    T.SectionTitle(label(black,L("Rules"),28,-334,T.fonts.Section))
-    f.blackIgnored=check(black,L("Also skip players on my ignore list"),28,-358,function(c)
+    f.blackScopeHint=label(black,"",36,-290,"GameFontDisableSmall",650)
+    card(black,12,-328,692,118); noTile(black,22,-360,331,36); noTile(black,363,-360,331,36); noTile(black,22,-402,331,36)
+    T.SectionTitle(label(black,L("Rules"),28,-342,T.fonts.Section))
+    f.blackIgnored=check(black,L("Also skip players on my ignore list"),36,-366,function(c)
       if A.Combat() then return end
       B.db.blockIgnored=c:GetChecked()==true; B:ApplyBlacklist()
     end)
     addHelp(f.blackIgnored,"Also skip players on my ignore list","Players on your game ignore list are treated as blacklisted. They are not added to the lists below.")
-    f.blackTargets=check(black,L("Apply to players I target myself"),28,-388,function(c)
+    f.blackTargets=check(black,L("Apply to players I target myself"),377,-366,function(c)
       if A.Combat() then return end
       B.db.blacklistTargets=c:GetChecked()==true; B:ApplyBlacklist()
     end)
     addHelp(f.blackTargets,"Apply to players I target myself","On: friendly target buffing skips blacklisted players too. Off: the blacklist only affects the Nearby window.")
-    f.blackInstances=check(black,L("Ignore the blacklist in dungeons and raids"),374,-358,function(c)
+    f.blackInstances=check(black,L("Ignore the blacklist in dungeons and raids"),36,-408,function(c)
       if A.Combat() then return end
       B.db.blacklistInInstances=c:GetChecked()~=true; B:ApplyBlacklist()
     end)
     addHelp(f.blackInstances,"Ignore the blacklist in dungeons and raids","Useful when a blacklisted player ends up in your dungeon or raid. Your own group is never affected either way.")
-    label(black,"Your own party and raid are never affected.",400,-394,"GameFontDisableSmall",290)
+    label(black,"Your own party and raid are never affected.",377,-414,"GameFontDisableSmall",310)
     f.blackLists={}
     for i,kind in ipairs({"player","guild"}) do
       local x=i==1 and 12 or 364
-      card(black,x,-438,340,216)
+      card(black,x,-462,340,216)
       local list={kind=kind,rows={}}
-      list.title=label(black,"",x+16,-452,T.fonts.Section); T.SectionTitle(list.title)
+      list.title=label(black,"",x+16,-476,T.fonts.Section); list.title.sectionRight=x+324; list.title.sectionKey=kind=="guild" and "guilds" or "players"; T.SectionTitle(list.title)
       list.scroll=CreateFrame("ScrollFrame",nil,black,"UIPanelScrollFrameTemplate")
-      list.scroll:SetPoint("TOPLEFT",x+12,-476); list.scroll:SetSize(296,166); list.scroll:Show()
+      list.scroll:SetPoint("TOPLEFT",x+12,-500); list.scroll:SetSize(296,166); list.scroll:Show()
       list.child=CreateFrame("Frame",nil,list.scroll); list.child:SetSize(296,166); list.scroll:SetScrollChild(list.child)
-      list.empty=label(black,kind=="player" and L("No players blacklisted.") or L("No guilds blacklisted."),x+18,-482,"GameFontDisable",300)
+      list.empty=label(black,kind=="player" and L("No players blacklisted.") or L("No guilds blacklisted."),x+18,-506,"GameFontDisable",300)
       f.blackLists[i]=list
     end
     function f.blackRow(list,index)
@@ -2713,8 +2751,8 @@ function B:Options()
   f.targetHeaders.title:SetText(L(simplePal and "Independent target buffs" or "Spell availability & refresh timing")); T.SectionTitle(f.targetHeaders.title)
   f.targetHeaders.help:SetText(L("Choose allowed spells and optional refresh overrides for friendly targets."))
   f.targetHeaders:SetShown(not simplePal); f.targetScroll:SetShown(not simplePal)
-  f.targetHeaders:ClearAllPoints(); f.targetHeaders:SetPoint("TOPLEFT",0,paladin and -264 or -168)
-  f.targetScroll:ClearAllPoints(); f.targetScroll:SetPoint("TOPLEFT",14,paladin and -342 or -246); f.targetScroll:SetPoint("BOTTOMRIGHT",-34,54)
+  f.targetHeaders:ClearAllPoints(); f.targetHeaders:SetPoint("TOPLEFT",4,paladin and -264 or -168)
+  f.targetScroll:ClearAllPoints(); f.targetScroll:SetPoint("TOPLEFT",18,paladin and -342 or -246); f.targetScroll:SetPoint("BOTTOMLEFT",18,54); f.targetScroll:SetWidth(678)
   f.pauseResting:SetChecked(self.db.pauseResting)
   self:PolishOptionsSurfaces()
   f.enable:SetChecked(self.db.enabled)
@@ -2733,12 +2771,13 @@ function B:Options()
     f.groupEnable.Text:SetText(L(raid and "Enable raid buffing" or "Enable party buffing"))
     f.groupEnable:SetChecked(self:GroupEditorSettings().group); f.smartGroup:SetChecked(self:GroupEditorSettings().smartGroup)
     if f.buffPets then f.buffPets:SetChecked(self.db.buffPets==true); f.readyTopUp:SetChecked(self.db.readyCheckTopUp~=false) end
+    if f.groupEmblem then f.groupEmblem:SetTexture("Interface\\AddOns\\BuffTap\\Media\\"..(raid and "GroupRaid" or "GroupParty")) end
     for i=1,8 do
       local state=self:GroupColumnState(i,B:EditingGroupContext())
       local c=f.groupChecks[i]
-      c:SetShown(raid or i==1); c.Text:SetText(raid and "G"..i or L("Include party"))
+      c:SetShown(raid or i==1); c:SetWidth(raid and 46 or 112); if i==1 then c:ClearAllPoints(); c:SetPoint("TOPLEFT",f.sharedGroups,"TOPLEFT",raid and 682-8*46-7*6 or 570,-60) end; c.Text:SetText(raid and "G"..i or L("Include party"))
       c:SetChecked(state=="on")
-      if c.mixedDash then c.mixedDash:SetShown(state=="mixed") end
+      if c.mixedDash then c.mixedDash:SetShown(state=="mixed") end; if T.SyncCheck then T.SyncCheck(c) end
     end
     f.groupNeedSlider.silent=true; f.groupNeedSlider:SetValue(self:GroupEditorSettings().groupNeed); f.groupNeedSlider.valueText:SetText(tostring(self:GroupEditorSettings().groupNeed).."+"); f.groupNeedSlider.silent=false
     local smartAlpha=(self:GroupEditorSettings().group and self:GroupEditorSettings().smartGroup) and 1 or 0.45
@@ -2863,8 +2902,15 @@ function B:Options()
         if visible then rb:ClearAllPoints(); rb:SetPoint("TOPLEFT",176+roleCount*94,-110); roleCount=roleCount+1 end
         T.Navigation(rb,rb.roleMode==roleMode)
       end
-      for _,c in pairs(row.classes) do c:SetEnabled(roleMode=="class"); c:SetAlpha(roleMode=="class" and 1 or .35) end
-      row.allClasses:SetShown(roleMode=="class"); row.resetClasses:SetShown(roleMode=="class")
+      -- Tanks and healers ignore class, so the class choices go away and the rows below close the gap.
+      local byClass=roleMode=="class"
+      for _,c in pairs(row.classes) do c:SetEnabled(true); c:SetAlpha(1); c:SetShown(byClass) end
+      row.allClasses:SetShown(byClass); row.resetClasses:SetShown(byClass)
+      local lift=byClass and 0 or 66
+      row.selfCheck:ClearAllPoints(); row.selfCheck:SetPoint("TOPLEFT",8,-216+lift)
+      row.filterHint:ClearAllPoints(); row.filterHint:SetPoint("TOPLEFT",8,-243+lift)
+      row.needLabel:ClearAllPoints(); row.needLabel:SetPoint("TOPLEFT",8,-263+lift)
+      row.need:ClearAllPoints(); row.need:SetPoint("TOPLEFT",104,-263+lift)
       if roleMode~="class" then
         row.filterHint:SetText(L(roleMode=="tank" and "Every tank gets this buff, whatever their class." or "Every healer gets this buff, whatever their class."))
       end
@@ -2891,7 +2937,7 @@ function B:Options()
   for rowIndex,b in ipairs(targetBuffs) do
     local row=f.targetRows[rowIndex]
     if not row then
-      row=CreateFrame("Frame",nil,f.targetChild,"BackdropTemplate"); row:SetSize(650,48)
+      row=CreateFrame("Frame",nil,f.targetChild,"BackdropTemplate"); row:SetSize(678,48)
       row:SetBackdrop({bgFile="Interface\\Buttons\\WHITE8X8"}); row:SetBackdropColor(unpack(T.row)); T.Row(row,8)
       row.enable=check(row,"",8,-12,function(s)
         local def=s:GetParent().def
@@ -3042,7 +3088,7 @@ function B:Options()
   if self.action then f.statusText:SetTextColor(.56,.88,.72) else f.statusText:SetTextColor(unpack(T.muted)) end
   if self.appearancePreview and self.appearancePreview:IsShown() then self:PreviewAppearance() end
   self:UpdateCampingOptions()
-  f.showReminderCheck:SetChecked(self.db.showReminder); f.soundCheck:SetChecked(self.db.sound); f.effectButton:SetText(L(({none="Effect: None",soft="Effect: Soft glow",pulse="Effect: Pulse",pixel="Effect: Pixel border",autocast="Effect: Sparkles",proc="Effect: Spell glow",shine="Effect: Shine",ripple="Effect: Ripple",bounce="Effect: Bounce",orbit="Effect: Orbit"})[self:IconEffectStyle()] or "Effect: Soft glow")); f.effectColorButton:SetText(L(({gold="Gold",cyan="Cyan",green="Green",red="Red",white="White"})[self.db.effectColor] or "Gold")); f.effectSpeedButton:SetText(L(({slow="Slow",normal="Normal",fast="Fast"})[self.db.effectSpeed] or "Normal"))
+  f.showReminderCheck:SetChecked(self.db.showReminder); f.soundCheck:SetChecked(self.db.sound); f.effectButton:SetText(L(({none="Effect: None",soft="Effect: Soft glow",pulse="Effect: Pulse",pixel="Effect: Pixel border",autocast="Effect: Sparkles",proc="Effect: Spell glow",shine="Effect: Shine",ripple="Effect: Ripple",bounce="Effect: Bounce",orbit="Effect: Orbit"})[self:IconEffectStyle()] or "Effect: Soft glow")); f.effectColorButton:SetText(L(({gold="Colour: Gold",cyan="Colour: Cyan",green="Colour: Green",red="Colour: Red",white="Colour: White"})[self.db.effectColor] or "Colour: Gold")); f.effectSpeedButton:SetText(L(({slow="Speed: Slow",normal="Speed: Normal",fast="Speed: Fast"})[self.db.effectSpeed] or "Speed: Normal"))
   f.buffNameCheck:SetChecked(self.db.showBuffName); f.targetNameCheck:SetChecked(self.db.showTargetName)
   f.timerCheck:SetChecked(self.db.showTimer); f.groupBadgeCheck:SetChecked(self.db.showGroupBadge)
   if f.effectUrgency then f.effectUrgency:SetChecked(self.db.effectUrgency==true); f.effectOnce:SetChecked(self.db.effectOnce==true) end
@@ -3052,7 +3098,7 @@ function B:Options()
   if f.combatExpiry then
     f.combatExpiry:SetChecked(self.db.combatExpiry==true)
     -- Takes SmartShift's place for classes without it.
-    if f.buffContent then f.combatExpiry:ClearAllPoints(); f.combatExpiry:SetPoint("TOPLEFT",f.buffContent,"TOPLEFT",28,-510) end
+    if f.buffContent then f.combatExpiry:ClearAllPoints(); f.combatExpiry:SetPoint("TOPLEFT",f.buffContent,"TOPLEFT",28,(playerClass=="DRUID" or playerClass=="SHAMAN") and -510 or -478) end
   end
 
   local weaponClass=self.WeaponReminderClass and self:WeaponReminderClass()
@@ -3060,31 +3106,51 @@ function B:Options()
   f.weaponSectionHeading:SetText(L(weaponClass and "Poisons / class imbues" or "Hands to maintain")); T.SectionTitle(f.weaponSectionHeading)
   -- Classes without imbues choose their hands directly beside the coating rows.
   local function place(control,x,y) control:ClearAllPoints(); control:SetPoint("TOPLEFT",x,y) end
-  local coatingY=weaponClass and -220 or -98
-  place(f.coatingCard,12,coatingY); place(f.coatingHeading,26,coatingY-14)
+  local coatingY=weaponClass and -242 or -116
+  place(f.coatingCard,12,coatingY); place(f.coatingHeading,48,coatingY-14)
   T.CardShown(f.weaponClassCard,weaponClass~=nil)
   f.weaponSectionHeading:SetShown(weaponClass~=nil)
-  for i,hand in ipairs({"main","off"}) do
-    place(f.coatingPickers[hand],180,coatingY-34-(i-1)*48)
-    place(f.coatingHandLabels[hand],28,coatingY-40-(i-1)*48)
-    f.coatingHandLabels[hand]:SetShown(weaponClass~=nil)
+  for _,h in ipairs({f.weaponSectionHeading}) do if type(h.sectionIcon)~="function" and h.sectionIcon then h.sectionIcon:SetShown(weaponClass~=nil) end; if type(h.sectionRule)~="function" and h.sectionRule then h.sectionRule:SetShown(weaponClass~=nil) end end
+  -- Classes that cannot dual-wield skip the Off hand row, unless an off-hand weapon is equipped.
+  local dualClasses={ROGUE=true,WARRIOR=true,HUNTER=true,SHAMAN=true,DEATHKNIGHT=true}
+  local offAllowed=dualClasses[A.Class("player") or ""]==true
+  if not offAllowed and type(GetInventoryItemID)=="function" and type(GetItemInfoInstant)=="function" then
+    local id=GetInventoryItemID("player",17)
+    if type(id)=="number" then local _,_,_,_,_,classID=GetItemInfoInstant(id); offAllowed=classID==2 end
   end
-  place(f.weaponMain,26,weaponClass and -133 or coatingY-35)
-  place(f.weaponOff,26,weaponClass and -171 or coatingY-83)
-  local timingY=weaponClass and -358 or -236
-  place(f.weaponTimingCard,12,timingY); place(f.weaponTimingLabel,26,timingY-18)
-  place(f.weaponTiming,220,timingY-14); place(f.weaponReplace,26,timingY-58); place(f.weaponRestPause,400,timingY-58); place(f.weaponSkipEmpty,400,timingY-86)
-  place(f.weaponHandsHint,14,weaponClass and -500 or -376)
-  place(f.weaponModeHint,14,weaponClass and -530 or -420)
-  place(f.weaponStatus,14,weaponClass and -556 or -458)
+  f.coatingCard:SetHeight(offAllowed and 124 or 76)
+  for i,hand in ipairs({"main","off"}) do
+    place(f.coatingPickers[hand],180,coatingY-38-(i-1)*48)
+    place(f.coatingHandLabels[hand],34,coatingY-44-(i-1)*48)
+    f.coatingHandLabels[hand]:SetShown(weaponClass~=nil and (hand=="main" or offAllowed))
+  end
+  f.coatingPickers.off:SetShown(offAllowed)
+  place(f.weaponMain,34,weaponClass and -151 or coatingY-35)
+  place(f.weaponOff,34,weaponClass and -189 or coatingY-83)
+  f.weaponOff:SetShown(offAllowed)
+  local timingY=(weaponClass and -382 or -256)+(offAllowed and 0 or 48)
+  place(f.weaponTimingCard,12,timingY); f.weaponTimingCard:SetHeight(140); place(f.weaponTimingLabel,34,timingY-18)
+  place(f.weaponTiming,228,timingY-14); place(f.weaponReplace,34,timingY-58); place(f.weaponRestPause,408,timingY-58); place(f.weaponSkipEmpty,408,timingY-100)
+  local function tile(t,x,y) t:ClearAllPoints(); t:SetPoint("TOPLEFT",x,y) end
+  local W=f.weaponTiles
+  tile(W.timing,22,timingY-8); tile(W.replace,22,timingY-52); tile(W.rest,400,timingY-52); tile(W.skip,400,timingY-94)
+  T.CardShown(W.main,weaponClass~=nil); T.CardShown(W.off,weaponClass=="ROGUE")
+  T.CardShown(W.coatMain,true); T.CardShown(W.coatOff,offAllowed)
+  tile(W.coatMain,22,coatingY-32); tile(W.coatOff,22,coatingY-80)
+  local notesY=timingY-140-16
+  place(f.weaponPoisonHint,14,notesY)
+  local handsY=weaponClass=="ROGUE" and notesY-18 or notesY
+  place(f.weaponHandsHint,14,handsY)
+  place(f.weaponModeHint,14,handsY-34)
+  place(f.weaponStatus,14,handsY-62); place(f.weaponRetry,528,handsY-56)
   f.weaponPoisonHint:SetShown(weaponClass=="ROGUE")
-  for _,control in ipairs({f.weaponHint,f.weaponEnable,f.weaponApply,f.weaponMain,f.weaponOff,f.weaponTimingLabel,f.weaponTiming,f.weaponReplace,f.weaponStatus,f.weaponHandsHint}) do control:Show() end
+  for _,control in ipairs({f.weaponHint,f.weaponEnable,f.weaponApply,f.weaponMain,f.weaponTimingLabel,f.weaponTiming,f.weaponReplace,f.weaponStatus,f.weaponHandsHint}) do control:Show() end
   for _,pick in pairs(f.weaponPickers) do pick:SetShown(weaponClass~=nil); pick.menu:Hide() end
   f.weaponEnable:SetChecked(self:EditorSettings("weapons").weaponReminder==true); f.weaponApply:SetText(L(self.db.weaponApply and "Remind and apply" or "Remind only"))
   f.weaponModeHint:SetText(L(self.db.weaponApply and "Your scroll or click applies the selected weapon buff, out of combat." or "Alerts only: apply weapon buffs manually. Your preferences remain saved."))
   f.weaponMain:SetChecked(self:EditorSettings("weapons").weaponMainHand~=false); f.weaponOff:SetChecked(self:EditorSettings("weapons").weaponOffHand~=false)
   f.weaponReplace:SetChecked(self.db.weaponReplace==true); f.weaponRestPause:SetChecked(self.db.weaponsPauseResting==true); f.weaponSkipEmpty:SetChecked(self.db.weaponSkipEmpty==true)
-  f.weaponOff:SetShown(weaponClass=="ROGUE" or not weaponClass)
+  f.weaponOff:SetShown((weaponClass=="ROGUE" or not weaponClass) and offAllowed)
   f.weaponTiming.silent=true; f.weaponTiming:SetValue(self:EditorSettings("weapons").weaponSeconds); f.weaponTiming.valueText:SetText(formatSeconds(self:EditorSettings("weapons").weaponSeconds)); f.weaponTiming.silent=false
   local status=self:WeaponReminderSummary()
   f.weaponStatus:SetText(status=="disabled" and L("Weapon reminders are off") or status)
@@ -3153,7 +3219,7 @@ function B:Options()
     visible=visible+1
     local row=f.buffRows[visible]
     if not row then
-      row=CreateFrame("Frame",nil,f.buffChild,"BackdropTemplate"); row:SetSize(644,54)
+      row=CreateFrame("Frame",nil,f.buffChild,"BackdropTemplate"); row:SetSize(692,54)
       row:SetBackdrop({bgFile="Interface\\Buttons\\WHITE8X8"}); row:SetBackdropColor(unpack(T.row)); T.Row(row,8)
       row.check=check(row,"",14,-15,function(s)
         local parent=s:GetParent(); local def=parent.def
@@ -3178,7 +3244,7 @@ function B:Options()
         if def and not A.Combat() then B:EditorSettings("buffs").buffSeconds[def.key]=nil; B:RequestRefresh("rebuff default",0); B:Options() end
       end)
       addHelp(row.default,"Use default timing","Remove this buff's custom refresh time and use its automatic timing. Buff choices and priorities stay unchanged.")
-      row.sound=button(row,"",522,-15,24,function(btn,mouseButton)
+      row.sound=button(row,"",566,-15,24,function(btn,mouseButton)
         local def=btn:GetParent().def
         if mouseButton=="RightButton" then if def then B:OpenBuffSoundEditor("personal",def) end; return end
         if def and B:SetBuffAlertEnabled("personal",def,not B:BuffAlertEnabled("personal",def)) then B:Options() end
@@ -3201,7 +3267,7 @@ function B:Options()
       addHelp(row.charges,"Refresh at charges","Optional extra refresh trigger for this shield, outside combat. Off keeps time-based behavior. Unreadable or zero stack values are never assumed to mean low charges. Solo, Party and Raid can differ.")
       for _,direction in ipairs({-1,1}) do
         local delta=direction
-        local arrow=arrowButton(row,"",delta<0 and 556 or 582,-15,24,function(btn)
+        local arrow=arrowButton(row,"",delta<0 and 600 or 626,-15,24,function(btn)
           if A.Combat() then return end
           local current=btn:GetParent().def; local list=logicalBuffs()
           for i,def in ipairs(list) do if current and def.key==current.key and list[i+delta] then B:MoveBuffPriority(def.key,list[i+delta].key); return end end
@@ -3211,7 +3277,7 @@ function B:Options()
         if delta<0 then row.up=arrow else row.down=arrow end
       end
       -- Rank badge: read-only. The arrows are the one way to reorder.
-      row.order=CreateFrame("Frame",nil,row,"BackdropTemplate"); row.order:SetSize(28,24); row.order:SetPoint("TOPLEFT",612,-15)
+      row.order=CreateFrame("Frame",nil,row,"BackdropTemplate"); row.order:SetSize(28,24); row.order:SetPoint("TOPLEFT",656,-15)
       row.order:SetBackdrop({bgFile="Interface\\Buttons\\WHITE8X8"}); row.order:SetBackdropColor(1,1,1,.05); T.Round(row.order,5,"surface"); T.LockBorder(row.order,0,0,0,0)
       row.order:EnableMouse(true)
       row.order.text=row.order:CreateFontString(nil,"OVERLAY"); row.order.text:SetFontObject(T.fonts.Value); row.order.text:SetPoint("CENTER",0,0)
@@ -3283,8 +3349,8 @@ function B:UpdateCampingOptions(state)
   f.campingWarning:SetText(L(self.db.campWarning==60 and "Warn: 1 minute" or self.db.campWarning==600 and "Warn: 10 minutes" or "Warn: 5 minutes"))
   for _,entry in ipairs({{f.campingSize,self.db.campSize},{f.campingOpacity,math.floor(self.db.campOpacity*100+.5)}}) do entry[1].silent=true; entry[1]:SetValue(entry[2]); entry[1].silent=false end
   f.campingEffect:SetText(L(({none="Effect: None",soft="Effect: Soft glow",pulse="Effect: Pulse",pixel="Effect: Pixel border",autocast="Effect: Sparkles",proc="Effect: Spell glow",shine="Effect: Shine",ripple="Effect: Ripple",bounce="Effect: Bounce",orbit="Effect: Orbit"})[self.db.campEffectStyle] or "Effect: Soft glow"))
-  f.campingColor:SetText(L(({gold="Gold",cyan="Cyan",green="Green",red="Red",white="White"})[self.db.campEffectColor] or "Gold"))
-  f.campingSpeed:SetText(L(({slow="Slow",normal="Normal",fast="Fast"})[self.db.campEffectSpeed] or "Normal"))
+  f.campingColor:SetText(L(({gold="Colour: Gold",cyan="Colour: Cyan",green="Colour: Green",red="Colour: Red",white="Colour: White"})[self.db.campEffectColor] or "Colour: Gold"))
+  f.campingSpeed:SetText(L(({slow="Speed: Slow",normal="Speed: Normal",fast="Speed: Fast"})[self.db.campEffectSpeed] or "Speed: Normal"))
   f.campingCountdown:SetChecked(self.db.campShowCountdown); f.campingStacks:SetChecked(self.db.campShowStacks)
   for _,v in ipairs(self:ReminderFonts(self.db.campTextFont)) do if v.key==self:NormalizeTextFontKey(self.db.campTextFont) then f.campingTextFont:SetText(L(v.name)) end end
   for _,v in ipairs(self:ReminderColors(true)) do if v.key==self.db.campTextColor then f.campingTextColor:SetText(L(v.name)) end end
@@ -3429,24 +3495,29 @@ function B:UpdateGroupCapabilityOptions()
     f.groupWeapons:SetText(L(c.broadcast and "Open My buffs" or "Open Weapons")); f.groupWeapons:Show()
     return
   end
-  f.smartGroup:SetShown(c.pairs); f.groupThresholdLabel:SetShown(c.pairs)
+  f.smartGroup:SetShown(c.pairs); f.groupThresholdLabel:SetShown(c.pairs); T.CardShown(f.groupTiles[2],c.pairs); T.CardShown(f.groupTiles[3],c.pairs); T.CardShown(f.groupTiles[4],c.pets and true or false); T.CardShown(f.groupTiles[5],c.maintenance and true or false)
   f.groupNeedSlider:SetShown(c.pairs); f.groupNeedSlider.valueText:SetShown(c.pairs)
   f.buffPets:SetShown(c.pets); f.readyTopUp:SetShown(c.maintenance)
   f.roleGuess:SetShown(c.roles); f.roleMark:SetShown(c.roles)
-  local shift=c.pairs and 0 or 84
-  f.groupSharedCard:SetHeight(146-shift)
+  local shift=c.pairs and -20 or 84
+  f.groupSharedCard:SetHeight(c.pairs and 162 or 66)
+  f.groupTitleRule:SetShown(c.pairs); f.groupColumnRule:SetShown(c.pairs)
+  f.groupNotes.smart:SetShown(c.pairs); f.groupNotes.need:SetShown(c.pairs)
+  f.groupNotes.pets:SetShown(c.pets and true or false); f.groupNotes.ready:SetShown(c.maintenance and true or false)
   local function move(o,x,y) o:ClearAllPoints(); o:SetPoint("TOPLEFT",x,y+shift) end
   -- All later sections reclaim the irrelevant threshold/pet rows.
   move(f.groupDivider,18,-204); f.groupDivider:SetPoint("TOPRIGHT",-18,-204+shift)
   move(f.perBuffHeading,18,-218); move(f.groupInstructions,18,-242)
   move(f.roleGuess,300,-213); move(f.roleMark,560,-212)
-  move(f.assignmentListCard,12,-270); f.assignmentListCard:SetHeight(300+shift)
+  move(f.assignmentListCard,12,-270); f.assignmentListCard:SetHeight(300+math.max(shift,0))
   move(f.assignmentListTitle,24,-282); move(f.assignScroll,18,-298)
-  move(f.assignChild,230,-270); f.assignChild:SetHeight(300+shift); f.assignmentDetailCard:SetHeight(300+shift)
+  f.groupFooterNote:ClearAllPoints(); f.groupFooterNote:SetPoint("TOPLEFT",18,c.pairs and -616 or -596)
+  move(f.assignChild,230,-270); f.assignChild:SetHeight(300+math.max(shift,0)); f.assignmentDetailCard:SetHeight(300+math.max(shift,0))
   for _,row in ipairs(f.assignRows) do
-    row:SetHeight(288+shift)
-    row.allClasses:ClearAllPoints(); row.allClasses:SetPoint("TOPLEFT",280,-258-shift)
-    row.resetClasses:ClearAllPoints(); row.resetClasses:SetPoint("TOPLEFT",374,-258-shift)
+    local grow=math.max(shift,0) -- the cards only shrink when the threshold rows are absent; otherwise they keep their full height and move down
+    row:SetHeight(288+grow)
+    row.allClasses:ClearAllPoints(); row.allClasses:SetPoint("TOPLEFT",280,-258-grow)
+    row.resetClasses:ClearAllPoints(); row.resetClasses:SetPoint("TOPLEFT",374,-258-grow)
   end
 end
 
@@ -3456,7 +3527,15 @@ function B:UpdateClassAwarePages()
   local function at(o,x,y) o:ClearAllPoints(); o:SetPoint("TOPLEFT",x,y) end
   local function movedCard(o,x,y,height)
     at(o,x,y); o:SetHeight(height)
-    if o.sectionTitle then at(o.sectionTitle,x+16,y-16) end
+    if o.sectionTitle then at(o.sectionTitle,x+16+((type(o.sectionTitle.sectionIcon)~="function" and o.sectionTitle.sectionIcon) and 22 or 0),y-16) end
+  end
+  local function guideCard(y)
+    local open=self.db.nearbyGuideOpen==true
+    movedCard(f.nearbyGuideCard,12,y,open and 418 or 52)
+    at(f.nearbyGuide,26,y-40); f.nearbyGuide:SetShown(open)
+    if f.nearbyGuideToggle then
+      at(f.nearbyGuideToggle,588,y-10); f.nearbyGuideToggle:SetText(self:Text(open and "Hide" or "Show"))
+    end
   end
   for _,o in ipairs({f.nearbyAll,f.nearbyInvites,f.nearbyFullNames,f.nearbyShowLevel,f.nearbyMarkSocial}) do o:Show() end
   f.nearbyBuffing:SetShown(c.buffs); f.nearbyWhileResting:SetShown(c.actions)
@@ -3468,11 +3547,11 @@ function B:UpdateClassAwarePages()
     at(f.nearbyAll,26,-112); at(f.nearbyFullNames,26,-140); at(f.nearbyShowLevel,26,-168)
     at(f.nearbyMarkSocial,374,-140); at(f.nearbyInvites,374,-112); at(f.nearbyClassHint,28,-224); f.nearbyClassHint:SetWidth(656)
     movedCard(f.nearbySettingsCard,12,-72,138)
-    movedCard(f.nearbyGuideCard,12,-252,418); at(f.nearbyGuide,26,-292)
+    guideCard(-252)
     f.pageHeaders[4].description:SetText(L("Browse nearby players, invite someone or ask for a buff."))
   else
     at(f.nearbyAll,374,-112); at(f.nearbyFullNames,374,-140); at(f.nearbyShowLevel,540,-140); at(f.nearbyMarkSocial,374,-168)
-    movedCard(f.nearbySettingsCard,12,-72,216); movedCard(f.nearbyGuideCard,12,-306,418); at(f.nearbyGuide,26,-346)
+    movedCard(f.nearbySettingsCard,12,-72,216); guideCard(-306)
     local y=-112
     for _,spec in ipairs({{f.nearbyBuffing,c.buffs,26},{f.nearbyRankUpgrades,c.upgrades,26},
       {f.nearbyWhileResting,c.actions,26},{f.nearbyHoldShort,c.buffs and c.short,50},
@@ -3499,7 +3578,7 @@ function B:UpdateClassAwarePages()
         for _,o in ipairs({page:GetChildren()}) do if o~=page.classEmpty then page.classHidden[#page.classHidden+1]={o,o:IsShown()} end end
         local h=f.pageHeaders[index]
         for _,o in ipairs({page:GetRegions()}) do
-          if o~=h.title and o~=h.description and o~=page.headerIcon and o~=page.headerRule then page.classHidden[#page.classHidden+1]={o,o:IsShown()} end
+          if o~=h.title and o~=h.description and o~=page.headerIcon and o~=page.headerRule and not (page.headerKeep and page.headerKeep[o]) then page.classHidden[#page.classHidden+1]={o,o:IsShown()} end
         end
       end
       for _,entry in ipairs(page.classHidden) do entry[1]:Hide() end

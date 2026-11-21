@@ -6,7 +6,7 @@ local _,B=...
 local WHITE="Interface\\Buttons\\WHITE8X8"
 local MEDIA="Interface\\AddOns\\BuffTap\\Media\\"
 local T={
-  window={.047,.054,.066,1}, sidebar={.036,.042,.052,1}, panel={0,0,0,0}, card={.071,.081,.099,1},
+  window={.034,.040,.050,1}, sidebar={.034,.040,.050,1}, panel={0,0,0,0}, card={.071,.081,.099,1},
   control={.105,.118,.140,1}, field={.040,.047,.058,1}, menu={.058,.066,.081,.99}, border={1,1,1,.10},
   row={.088,.100,.121,1}, rowAlt={.078,.089,.108,1},
   gold={.91,.71,.36,1}, muted={.55,.59,.64,1}, text={.86,.88,.91,1}, accent={.91,.71,.36,1},
@@ -49,10 +49,10 @@ local function font(key,weight,size,color,justify,flat)
 end
 local WHITE_TEXT={1,1,1,1}; local IDLE={.68,.71,.76,1}; local DARK={.06,.065,.08,1}
 -- Type scale. Page title 18, subheading 14, section label 11 caps, control label 13, body 12, caption 11.
-font("Title","SemiBold",18,WHITE_TEXT); font("Sub","SemiBold",14,WHITE_TEXT); font("Heading","Medium",13,T.text)
+font("Title","SemiBold",18,WHITE_TEXT); font("PageTitle","SemiBold",22,WHITE_TEXT); font("Sub","SemiBold",14,WHITE_TEXT); font("Heading","Medium",13,T.text)
 font("Body","Medium",13,T.text); font("Small","Regular",12,T.text); font("Muted","Regular",11,T.muted)
 font("Note","Regular",12,T.text)
-font("Section","SemiBold",11,T.gold); font("Value","Medium",12,T.text,"CENTER")
+font("Section","Bold",12,T.gold); font("Value","Medium",12,T.text,"CENTER")
 font("Button","Medium",12,T.text,"CENTER"); font("ButtonHover","Medium",12,WHITE_TEXT,"CENTER"); font("ButtonDisabled","Medium",12,T.muted,"CENTER")
 font("ButtonLeft","Medium",12,T.text,"LEFT"); font("ButtonLeftHover","Medium",12,WHITE_TEXT,"LEFT"); font("ButtonLeftDisabled","Medium",12,T.muted,"LEFT")
 font("ButtonDark","Bold",12,DARK,"CENTER",true)
@@ -310,6 +310,16 @@ function T.Card(parent,x,y,width,height)
   anchor.edges=box.all; anchor.box=box; anchor.visualCard=true
   return anchor
 end
+-- A tile sits inside a card: slightly lighter fill and a faint outline.
+function T.Tile(parent,x,y,width,height)
+  local anchor=parent:CreateTexture(nil,"BACKGROUND",nil,-8); anchor:SetColorTexture(0,0,0,0)
+  anchor:SetPoint("TOPLEFT",x,y); anchor:SetSize(width,height); anchor.optionsDecoration=true
+  -- One sublevel group above the card it sits on, so its rounded corners are not painted over.
+  local box=newBox(parent,"BACKGROUND",-4,8); box:Place(anchor); box:SetFill(unpack(T.row)); box:SetBorder(1,1,1,.07)
+  for _,t in ipairs(box.all) do t.optionsDecoration=true end
+  anchor.edges=box.all; anchor.box=box; anchor.visualCard=true
+  return anchor
+end
 function T.CardShown(card,shown)
   card:SetShown(shown)
   for _,edge in ipairs(card.edges or {}) do edge:SetShown(shown) end
@@ -507,6 +517,14 @@ local function syncCheck(control)
   local on=control:GetChecked() and true or false
   local enabled=control:IsEnabled() and true or false
   local r,g,b=accent(); local alpha=enabled and 1 or .4
+  if v.chip then
+    -- Pill-shaped choice: filled with the accent when on, outlined when off, dashed gold when mixed.
+    local mixed=control.mixedDash and control.mixedDash:IsShown()
+    if on then v.box:SetFill(r,g,b,alpha); v.box:SetBorder(r,g,b,alpha)
+    else v.box:SetFill(T.field[1],T.field[2],T.field[3],enabled and 1 or .5); if mixed then v.box:SetBorder(.91,.71,.30,alpha) else v.box:SetBorder(1,1,1,enabled and (control.visualHover and .4 or .24) or .1) end end
+    if control.Text then if on then control.Text:SetTextColor(.05,.06,.075,alpha) elseif mixed then control.Text:SetTextColor(.91,.71,.30,alpha) else control.Text:SetTextColor(unpack(enabled and T.text or T.muted)) end end
+    return
+  end
   if v.toggle then
     if on then v.track:Color(r,g,b,alpha) else v.track:Color(1,1,1,enabled and .16 or .07) end
     v.knob:ClearAllPoints(); v.knob:SetPoint("LEFT",control,"LEFT",on and 16 or 2,0)
@@ -529,9 +547,12 @@ function T.Check(control)
     local texture=type(control[getter])=="function" and control[getter](control)
     if texture then texture:SetAlpha(0) end
   end
-  local v={toggle=not compactCheck(control)}
+  local v={toggle=not compactCheck(control),chip=control.visualChip==true}
   local text=control.Text
-  if text then
+  if text and v.chip then
+    local object=mappedFont(text:GetFontObject()); if object then text:SetFontObject(object) end
+    text:ClearAllPoints(); text:SetPoint("CENTER",control,"CENTER",0,0); text:SetWordWrap(false); control:SetHitRectInsets(0,0,0,0)
+  elseif text then
     local object=mappedFont(text:GetFontObject()); if object then text:SetFontObject(object) end
     text:SetTextColor(unpack(T.text)); text:SetWordWrap(false)
     local width=text:GetStringWidth()
@@ -544,7 +565,9 @@ function T.Check(control)
       if type(width)=="number" then control:SetHitRectInsets(0,-math.min(280,width+(v.toggle and 18 or 10)),0,0) end
     end
   end
-  if v.toggle then
+  if v.chip then
+    v.box=newBox(control,"BACKGROUND",0,8); v.box:Place(control)
+  elseif v.toggle then
     v.track=newPill(control,"BACKGROUND",0); v.track:Set(control,0,0,32,18)
     v.knob=control:CreateTexture(nil,"ARTWORK"); v.knob:SetTexture(MEDIA.."UIKnob"); v.knob:SetSize(14,14)
   else
@@ -620,7 +643,11 @@ local function thinVertical(bar)
   for _,key in ipairs({"ScrollUpButton","ScrollDownButton"}) do local button=bar[key]; if button then button:SetAlpha(0); button:EnableMouse(false) end end
   for _,child in ipairs({bar:GetChildren()}) do if child:GetObjectType()=="Button" then child:SetAlpha(0); child:EnableMouse(false) end end
   local rail=bar:CreateTexture(nil,"BACKGROUND"); rail:SetColorTexture(1,1,1,.04); rail:SetPoint("TOP",0,0); rail:SetPoint("BOTTOM",0,0); rail:SetWidth(4); bar.visualRail=rail
-  if thumb then thumb:SetTexture(WHITE); thumb:SetVertexColor(1,1,1,.22); thumb:SetSize(4,40); thumb:SetAlpha(1) end
+  -- The native thumb ignored its tint and showed as a bright white block, so the bar gets its own faint thumb.
+  if thumb then thumb:SetAlpha(0) end
+  local mine=bar:CreateTexture(nil,"OVERLAY"); mine:SetColorTexture(1,1,1,.24); mine:SetSize(4,40)
+  if type(bar.SetThumbTexture)=="function" then bar:SetThumbTexture(mine) end
+  bar.visualThumb=mine
 end
 function T.ScrollTo(scroll,value,instant)
   local limit=scroll.optionsScrollRange
@@ -671,6 +698,12 @@ function T.ScrollBar(scroll)
   if not bar then return end
   scroll.visualScroll=true; thinVertical(bar)
   bar:ClearAllPoints(); bar:SetPoint("TOPLEFT",scroll,"TOPRIGHT",8,-2); bar:SetPoint("BOTTOMLEFT",scroll,"BOTTOMRIGHT",8,2)
+  -- A bar only shows when there is something to scroll.
+  local function fit(_,_,range)
+    if type(range)~="number" then range=scroll:GetVerticalScrollRange() end
+    bar:SetAlpha(type(range)=="number" and range>1 and 1 or 0)
+  end
+  scroll:HookScript("OnScrollRangeChanged",fit); scroll:HookScript("OnShow",fit); fit()
 end
 
 -- Applies typography, rounded surfaces, fields and scrollbars below a frame. Handled objects are skipped,
@@ -819,7 +852,7 @@ end
 function B:PolishOptionsSurfaces()
   local f=self.options
   if not f then return end
-  for _,control in ipairs({f.reminderSoundButton,f.supplySoundButton,f.channelButton,f.fontButton,f.colorButton,f.effectButton,f.effectColorButton,f.effectSpeedButton,f.labelSizeButton,f.labelOutlineButton,f.campingWarning,f.campingEffect,f.campingColor,f.campingSpeed,f.campingTextFont,f.campingTextSize,f.campingTextColor,f.campingTextOutline}) do T.Selector(control) end
+  for _,control in ipairs({f.reminderSoundButton,f.supplySoundButton,f.channelButton,f.fontButton,f.colorButton,f.effectButton,f.effectColorButton,f.effectSpeedButton,f.labelSizeButton,f.labelOutlineButton,f.campingWarning,f.campingEffect,f.campingColor,f.campingSpeed,f.campingTextFont,f.campingTextSize,f.campingTextColor,f.campingTextOutline,f.supplyTextFont,f.supplyTextColor,f.supplyTextOutline,f.supplyEffect,f.supplyColor,f.supplySpeed}) do T.Selector(control) end
   for _,control in pairs(f.weaponPickers or {}) do T.Selector(control) end
   for _,control in pairs(f.coatingPickers or {}) do T.Selector(control) end
   for _,row in ipairs(f.blessingRows or {}) do T.Selector(row.pick) end
@@ -831,9 +864,62 @@ function B:PolishOptionsSurfaces()
   end
 end
 -- Section titles use small capitals; text with non-ASCII letters keeps its case so accents stay correct.
-function T.SectionTitle(fs)
+local SECTION_ICONS={["what to remove"]="Cleanse",["never cleanse"]="Blacklist",["who"]="Groups",["resurrection"]="Helpers",
+  ["binding"]="Customization",["default sounds"]="Customization",["quick access"]="Helpers",["effect"]="Customization",["icon"]="Customization",
+  ["layout"]="Customization",["text"]="Customization",["position"]="Customization",["visible labels"]="Customization",["title bar"]="Customization",
+  ["window appearance"]="Customization",["interface"]="Customization",["how nearby works"]="Nearby",["player list"]="Nearby",
+  ["reminders"]="Buffs",["setup"]="Customization",["oils and stones"]="Weapons",["poisons"]="Weapons",["add to blacklist"]="Blacklist",["sharing"]="Profiles",["rules"]="Customization",
+  ["players"]="Groups",["guilds"]="Groups",["default target"]="Customization",["spell availability"]="Target",["default refresh"]="Buffs"}
+T.sectionTitles={}
+-- Rules need a measured string width, so they are placed once the text can be measured.
+function T.LayoutSectionRules()
+  for _,fs in ipairs(T.sectionTitles) do
+    local width=fs.GetStringWidth and fs:GetStringWidth()
+    if type(width)=="number" and width>0 and fs.sectionParent then
+      local rule=rawget(fs,"sectionRule")
+      if not rule then
+        rule=fs.sectionParent:CreateTexture(nil,"BORDER"); rule:SetColorTexture(unpack(T.rule)); rule.optionsDecoration=true; T.Track(rule,"rule")
+        rule:SetHeight(1); fs.sectionRule=rule
+      end
+      rule:ClearAllPoints()
+      rule:SetPoint("LEFT",fs,"TOPLEFT",width+12,-7); rule:SetPoint("RIGHT",fs,"TOPRIGHT",0,-7)
+    end
+  end
+end
+-- Titles arrive already translated, so the icon lookup also tries the English original.
+local reverseFor,reverse
+local function englishTitle(key)
+  local locale=B.locale; local strings=type(B.Locales)=="table" and locale and B.Locales[locale]
+  if type(strings)~="table" then return key end
+  if reverseFor~=strings then
+    reverseFor=strings; reverse={}
+    for english,translated in pairs(strings) do
+      if type(english)=="string" and type(translated)=="string" then reverse[translated:lower()]=english:lower() end
+    end
+  end
+  return reverse[key] or key
+end
+function T.SectionIconFor(fs,key)
+  if type(fs)=="table" and type(fs.sectionKey)=="string" then key=fs.sectionKey else key=englishTitle(key) end
+  for match,file in pairs(SECTION_ICONS) do if key:sub(1,#match)==match then return file end end
+end
+function T.SectionTitle(fs,rightEdge)
   if not fs then return end
   local text=fs:GetText()
+  local key=type(text)=="string" and text:lower() or ""
   if type(text)=="string" and not text:find("[\128-\255]") then fs:SetText(text:upper()) end
   fs.optionsSection=true
+  -- Small accent icon before the title and a hairline running to the card's right edge.
+  local icon=T.SectionIconFor(fs,key)
+  if icon and not rawget(fs,"sectionIcon") and fs.GetPoint and fs.GetParent then
+    local point,rel,relPoint,x,y=fs:GetPoint(1)
+    local parent=fs:GetParent()
+    if type(x)=="number" and type(y)=="number" and parent and parent.CreateTexture then
+      fs:ClearAllPoints(); fs:SetPoint(point,rel,relPoint,x+22,y); fs:SetWidth((fs.sectionRight or rightEdge or 688)-(x+22))
+      fs.sectionParent=parent; T.sectionTitles[#T.sectionTitles+1]=fs
+      local tex=parent:CreateTexture(nil,"ARTWORK"); tex:SetSize(16,16); tex:SetPoint("TOPLEFT",fs,"TOPLEFT",-22,2)
+      tex:SetTexture(T.media.."Nav"..icon); tex.optionsDecoration=true; T.Track(tex,"accentIcon"); fs.sectionIcon=tex
+      T.LayoutSectionRules()
+    end
+  end
 end

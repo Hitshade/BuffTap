@@ -31,7 +31,7 @@ else
    end
    assert(row.sound and row.classes.WARRIOR)
   end
-  assert(f.groupSharedCard.__draw.h==(c.pairs and 146 or 62))
+  assert(f.groupSharedCard.__draw.h==(c.pairs and 162 or 66))
   assert(f.assignmentListCard.__draw.h==f.assignmentDetailCard.__draw.h)
   for _,row in ipairs(f.assignRows) do local p=row.resetClasses.__draw.points[1]; assert(p[3]==(c.pairs and -258 or -342),'footer buttons must follow card height') end
  end
