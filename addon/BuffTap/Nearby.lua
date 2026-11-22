@@ -1015,8 +1015,25 @@ local function hint(button,title,body)
   end)
   button:SetScript("OnLeave",function() GameTooltip:Hide() end)
 end
+-- The list is held still while the mouse is on a row. The game does not always send OnLeave when
+-- the mouse sweeps off quickly or a row is hidden under it, which would leave the hold (and rows of
+-- players who already left) on screen. Real client only: IsMouseOver answers a plain false there.
+function B:NearbyMouseHoldIsStale()
+  local f=self.nearbyFrame
+  if not self.nearbyHovered or not f or not f.rows then return false end
+  for _,row in ipairs(f.rows) do
+    for _,part in ipairs({row,row.invite,row.request}) do
+      if part and type(part.IsMouseOver)=="function" then
+        local over=part:IsMouseOver()
+        if over~=false then return false end
+      else return false end
+    end
+  end
+  return true
+end
 function B:NearbyDisplayList(list)
   local now,fresh,seen,out=GetTime(),{},{},{}
+  if self:NearbyMouseHoldIsStale() then self.nearbyHovered=nil; if GameTooltip then GameTooltip:Hide() end end
   local frozen=self.nearbyHovered or self:NearbyResultActive()
   for _,entry in ipairs(list) do fresh[entry.guid]=entry end
   -- When each player came into range: the all-players view lists the newest arrivals first.
@@ -1394,7 +1411,11 @@ function B:NearbyCombatPlayers()
 end
 -- A visible slot with no player. Kept shown (out of combat, with Keep open in combat on) so the
 -- same rows can be refilled during combat, when the game does not allow showing or hiding them.
+local function stopMotion(row)
+  if row.motion and row.motion.ag and row.motion.ag:IsPlaying() then row.motion.ag:Stop() end
+end
 local function blankRow(row)
+  stopMotion(row)
   row.entry=nil; row.action=nil; row.style=nil; row.blank=true
   row.name:SetText(""); row.classIcon:Hide(); row.classEdge:Hide(); row.idle:Hide(); row.marker:Hide()
   row.cleanseTint:Hide(); row.cleanseBar:Hide(); row.invite:Hide(); row.request:Hide(); row.socialFlash:Hide()
@@ -1692,7 +1713,7 @@ function B:UpdateNearbyWindow()
       -- Keep open in combat: the slot stays shown but blank, ready to be refilled in combat.
       if row.result then row.result:Hide() end; dimRow(row,false); blankRow(row); row:SetAlpha(1)
       if not row:IsShown() then row:Show() end
-    else row.style=nil; row.invite:Hide(); row.request:Hide(); row.idle:Hide(); row.cleanseTint:Hide(); row.cleanseBar:Hide(); row.socialFlash:Hide(); if row.socialFx then row.socialFx:Hide() end; if row.result then row.result:Hide() end; dimRow(row,false); for _,tag in ipairs(row.tags) do tag:Hide() end; if row:IsShown() then row:Hide() end end
+    else row.style=nil; row.invite:Hide(); row.request:Hide(); row.idle:Hide(); row.cleanseTint:Hide(); row.cleanseBar:Hide(); row.socialFlash:Hide(); if row.socialFx then row.socialFx:Hide() end; if row.result then row.result:Hide() end; dimRow(row,false); for _,tag in ipairs(row.tags) do tag:Hide() end; stopMotion(row); row:SetAlpha(1); if row:IsShown() then row:Hide() end end
   end
   self:AnimateNearbyRows(f,ROWS)
   -- Friends who will not get a visible row (not listed in this view, paused, or scrolled out of
