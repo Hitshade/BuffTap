@@ -17,6 +17,7 @@ function B:BuildContextControls(parent,category,ui)
       for _,map in ipairs({f.weaponPickers or {},f.coatingPickers or {}}) do for _,pick in pairs(map) do pick.menu:Hide() end end
       if B.itemPicker then B.itemPicker:Hide() end
       B.editContexts=B.editContexts or {}; B.editContexts[category]=selected
+      if category=="buffs" then B.buffsHelpersView=nil end -- back from Class helpers to the buff list
       B:Options()
     end)
     button:SetSize(78,26); group.buttons[context]=button
@@ -27,15 +28,78 @@ function B:BuildContextControls(parent,category,ui)
     B:CustomizeSituation(B:EditorContext(category),category,false); B:Options()
   end)
   group.status=ui.label(parent,"",18,-40,"GameFontDisableSmall",680)
+  if category=="buffs" then
+    -- Class helpers sit beside Solo / Party / Raid but are not a setup: pet, Healthstone, Soulstone, Oath and tracking apply everywhere.
+    group.helpers=ui.flatButton(parent,"Class helpers",306,-8,172,function()
+      if A.Combat() then return end
+      local f=B.options
+      if f then
+        if f.activeSelector then f.activeSelector:Hide() end
+        for _,row in ipairs(f.buffRows or {}) do if row.order and row.order.ClearFocus then row.order:ClearFocus() end end
+      end
+      B.buffsHelpersView=true; B:Options()
+    end)
+    group.helpers:SetSize(172,26)
+    -- Same wand as the Helpers page in the sidebar; Navigation tints it with the tab.
+    local theme=B.OptionsTheme
+    group.helpers.icon=group.helpers:CreateTexture(nil,"ARTWORK"); group.helpers.icon:SetSize(16,16); group.helpers.icon:SetPoint("LEFT",14,0)
+    if theme and theme.media then group.helpers.icon:SetTexture(theme.media.."NavHelpers") end
+    local text=group.helpers.GetFontString and group.helpers:GetFontString()
+    if text then text:ClearAllPoints(); text:SetPoint("LEFT",36,0); text:SetPoint("RIGHT",-10,0); text:SetJustifyH("CENTER") end
+    -- The rule sits midway between Raid and the tab.
+    group.helpersRule=group.helpers:CreateTexture(nil,"ARTWORK"); group.helpersRule:SetColorTexture(.30,.33,.40,1)
+    group.helpersRule:SetSize(1,22); group.helpersRule:SetPoint("RIGHT",group.helpers,"LEFT",-21,0)
+    ui.addHelp(group.helpers,"Class helpers","Settings for your class and for tracking. They apply in every setup, so Solo, Party and Raid never change them.")
+  end
+end
+
+-- The tab's name says what is inside for this class.
+function B:ClassHelpersLabel()
+  local class=self.ReadinessClass and self:ReadinessClass()
+  if class=="WARLOCK" or class=="PALADIN" then return "Class helpers" end
+  if class=="HUNTER" then return "Pet and tracking" end
+  return "Tracking"
+end
+
+function B:ClassHelpersSummary()
+  local class=self.ReadinessClass and self:ReadinessClass()
+  if class=="WARLOCK" then return "Pet, Healthstone, Soulstone and tracking. These apply in every setup." end
+  if class=="PALADIN" then return "Oath and tracking. These apply in every setup." end
+  if class=="HUNTER" then return "Pet and tracking. These apply in every setup." end
+  return "Tracking reminders. These apply in every setup."
+end
+
+-- Swaps My buffs between the buff list and the Class helpers pane.
+function B:ApplyClassHelpersView()
+  local f=self.options; if not f or not f.helpersPane then return end
+  local view=self.buffsHelpersView==true
+  f.helpersPane:SetShown(view)
+  if f.buffContent then f.buffContent:SetShown(not view) end
+  local header=f.pageHeaders and f.pageHeaders[1]
+  if header and header.description then
+    if header.baseDescription==nil then header.baseDescription=header.description:GetText() or "" end
+    header.description:SetText(view and self:Text(self:ClassHelpersSummary()) or header.baseDescription)
+  end
+  local hp=self.helperWindow
+  if not view and hp then
+    if hp.soulMenu then hp.soulMenu:Hide() end
+    if hp.demonMenu then hp.demonMenu:Hide() end
+  end
 end
 
 function B:UpdateContextControls()
   for category,group in pairs(self.contextControls or {}) do
     local context=self:EditorContext(category)
-    for key,button in pairs(group.buttons) do B.OptionsTheme.Navigation(button,key==context) end
+    local helpers=category=="buffs" and group.helpers~=nil and self.buffsHelpersView==true
+    for key,button in pairs(group.buttons) do B.OptionsTheme.Navigation(button,key==context and not helpers) end
+    if group.helpers then
+      group.helpers:SetText(self:Text(self:ClassHelpersLabel()))
+      B.OptionsTheme.Navigation(group.helpers,helpers)
+    end
     local custom=self:SituationValues(context,category)
     group.active:SetText(self:SituationBadge())
-    group.reset:SetShown(context~="solo"); group.reset:SetEnabled(context~="solo" and not A.Combat())
-    group.status:SetText(self:Text(context=="solo" and "Solo preferences. Party and Raid follow unchanged settings." or custom and (context=="party" and "Applied automatically in a party. Other settings still follow Solo." or "Applied automatically in a raid. Other settings still follow Solo.") or (context=="party" and "Following Solo settings. Change a setting to customize Party." or "Following Solo settings. Change a setting to customize Raid.")))
+    group.reset:SetShown(context~="solo" and not helpers); group.reset:SetEnabled(context~="solo" and not A.Combat())
+    if helpers then group.status:SetText("") else group.status:SetText(self:Text(context=="solo" and "Solo preferences. Party and Raid follow unchanged settings." or custom and (context=="party" and "Applied automatically in a party. Other settings still follow Solo." or "Applied automatically in a raid. Other settings still follow Solo.") or (context=="party" and "Following Solo settings. Change a setting to customize Party." or "Following Solo settings. Change a setting to customize Raid."))) end
   end
+  self:ApplyClassHelpersView()
 end

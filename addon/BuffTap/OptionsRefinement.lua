@@ -409,7 +409,7 @@ function B:RefineCampingPage(ui,tabs)
   -- Current benefits: a night-camp picture on the left, the two timers beside it.
   ui.card(p,12,-72,692,138)
   local scene=p:CreateTexture(nil,"ARTWORK"); scene:SetTexture(CAMP_MEDIA.."CampScene"); scene:SetSize(215,136); scene:SetPoint("TOPLEFT",13,-73)
-  scene:SetTexCoord(0,215/256,0,136/256); scene.optionsDecoration=true
+  scene:SetTexCoord(0,430/512,0,272/512); scene.optionsDecoration=true
   local sceneEdge=p:CreateTexture(nil,"OVERLAY"); sceneEdge:SetColorTexture(unpack(T.rule)); sceneEdge:SetSize(1,136); sceneEdge:SetPoint("TOPLEFT",228,-73); sceneEdge.optionsDecoration=true; T.Track(sceneEdge,"rule")
   T.SectionTitle(ui.label(p,"Current benefits",248,-88,T.fonts.Section,300))
   f.campTiles={}
@@ -750,6 +750,7 @@ function B:StandardizeOptionsPages(ui,tabs)
     local group=self.contextControls[category]; local page=f.pages[category=="buffs" and 1 or 7]
     for _,control in pairs(group.buttons) do reparent(control,page.refinedCanvas) end
     reparent(group.active,page.refinedCanvas); reparent(group.reset,page.refinedCanvas); reparent(group.status,page.refinedCanvas)
+    if group.helpers then reparent(group.helpers,page.refinedCanvas) end
   end
   local groupPage=f.pages[2]; local party=f.partyView or f.groupParty; local raid=f.raidView or f.groupRaid
   place(party,groupPage.refinedCanvas,18,-8,78,26); place(raid,groupPage.refinedCanvas,102,-8,78,26)
@@ -788,6 +789,21 @@ function B:StandardizeOptionsPages(ui,tabs)
   f.resetBuffsButton:ClearAllPoints(); f.resetBuffsButton:SetPoint("BOTTOMRIGHT",rebuffFooter,"BOTTOMRIGHT",-14,14)
   ui.card(f.pages[3],12,-174,692,498)
   f.weaponHint:Hide()
+  -- Class helpers: the pet, Healthstone, Soulstone, Oath and tracking controls are built with the Helpers page but
+  -- shown here, in the area the buff list uses, when the Class helpers tab is selected.
+  local hp=self.helperWindow
+  if hp and hp.readiness and hp.helperSections and hp.helperSections.tracking and hp.soulMenu and hp.demonMenu then
+    local canvas=f.pages[1].refinedCanvas
+    local pane=CreateFrame("Frame",nil,canvas); pane:SetPoint("TOPLEFT",0,0); pane:SetPoint("BOTTOMRIGHT",0,0); pane:Hide(); f.helpersPane=pane
+    hp.readiness:SetParent(pane); hp.helperSections.tracking:SetParent(pane)
+    for _,menu in ipairs({hp.soulMenu,hp.demonMenu}) do
+      menu:SetParent(pane); menu:SetFrameStrata("FULLSCREEN_DIALOG"); menu:SetFrameLevel(pane:GetFrameLevel()+20)
+    end
+    -- The tracking dropdown's list belongs to the tracking section, so it moved with it: keep it above the pane's controls.
+    local pick=hp.trackerPick
+    if pick and type(pick.menu)=="table" and pick.menu.SetFrameLevel then pick.menu:SetFrameStrata("TOOLTIP"); pick.menu:SetFrameLevel(pane:GetFrameLevel()+60) end
+    pane:SetScript("OnHide",function() hp.soulMenu:Hide(); hp.demonMenu:Hide() end)
+  end
 end
 -- Sidebar status lights: a green light when a page's feature is on, a hollow ring when it is off.
 -- Pages with nothing to switch on have no light.

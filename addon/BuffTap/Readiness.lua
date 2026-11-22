@@ -234,7 +234,7 @@ function B:PetReadinessCandidate()
     if entry.id==id then return self:ReadinessSpell("pet",id,"summon your preferred demon while no living pet is present") end
   end
   return action("pet",0,"Choose a demon",136218,
-    "Select a learned summon in Helpers. Any living demon satisfies this reminder.",true)
+    "Select a learned summon under Class helpers in My buffs. Any living demon satisfies this reminder.",true)
 end
 
 -- Counts do not depend on item names, cooldowns, bank stock or use charges.

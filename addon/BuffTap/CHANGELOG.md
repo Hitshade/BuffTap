@@ -1,3 +1,34 @@
+# BuffTap 1.28.0
+
+### Added
+- My buffs: a **Class helpers** button beside Solo / Party / Raid (`BuildContextControls`, `group.helpers`, set apart by a thin rule texture so it does not read as a fourth setup). Its label comes from `B:ClassHelpersLabel()`: "Class helpers" for Warlock and Paladin, "Pet and tracking" for Hunter, "Tracking" for every other class. `B:ClassHelpersSummary()` replaces the page subtitle while it is open.
+- `B:ApplyClassHelpersView()` swaps `f.buffContent` (list, column headers, footers) for the new `f.helpersPane`. The view is session state (`B.buffsHelpersView`): choosing Solo, Party or Raid, or closing the options window, clears it, so My buffs always opens on the buff list.
+- Helpers page: a pointer card (`classHelpersCard`, `classHelpersTitle`, `classHelpersNote`, `classHelpersOpen`) and `B:OpenClassHelpers()`, which opens My buffs on the new tab.
+
+### Changed
+- The Tracking section and the Class readiness frame are still built by `BuildHelperPage`, but `StandardizeOptionsPages` reparents them into `f.helpersPane` and `UpdateHelperOptions` positions them there: class readiness first, tracking 8 px below it, or at the top for classes with no class readiness. Same widgets and the same `B.db` keys (helperTracking, helperTrackingFollow, helperTracker, helperTreasure, helperPet, helperHealthstone, helperSoulstone, helperOath, helperDemon, soulstoneParty, soulstoneRaid, soulstoneAssigned, soulstoneAssignedGUID, oathAssigned), so there is no saved-variable change or migration, and profiles export and import as before.
+- The Soulstone target and preferred demon menus are reparented with their controls and now open downward from their buttons.
+- The Hunter readiness card is shorter (100 px, Warlock and Paladin keep 144 px).
+- While the tab is open, "Use Solo settings" and the Party/Raid status line are hidden, and none of Solo, Party or Raid is highlighted. The page's other buffs footer and refresh-timing panels belong to the buff list and are hidden with it.
+- Text: the onboarding line and the demon diagnostic now say "Class helpers (My buffs)"; nine new strings (tab names, subtitles, pointer note, button, tab tooltip) with deDE, esES, frFR and ptBR translations, and one onboarding string replaced in all four locales.
+- tests/test_helpers_spacing_1268.py now checks the pointer card instead of the moved cards.
+
+- Helpers page redesign (`BuildHelperPage`): Solo thanks, Buff requests and Conveniences are now three full-width (692 px) cards stacked in that order with 8 px gaps, followed by the class helpers pointer card. Solo thanks gets a 215x224 picture on the left (`Media/ThanksScene.tga`, 256x256 TGA, `f.thanksScene` with a 1 px rule edge, same pattern as the Camping scene), its checkboxes beside it, the emote picker with the Delay picker beneath it, and the thank-you message across the full bottom. The Camping picture (`Media/CampScene.tga`) was replaced with a 430x272 image in a 512x512 texture (shown at the same 215x136); the Solo thanks picture is now a 430x448 image in a 512x512 texture (shown at 215x224 for sharpness on scaled UIs), colour-graded and edge-faded to the panel. The Conveniences checkboxes are in two columns. No setting keys, handlers or tooltips changed.
+- Helpers section titles (Solo thanks, Buff requests, Conveniences, Class helpers, Pet and tracking, Tracking) now get the same accent icon and hairline as other pages, through new `SECTION_ICONS` entries in OptionsStyle.lua. The thank-you message box and Reset button keep an 8 px gap.
+- The Solo thanks picture follows faction: `UnitFactionGroup("player")` (already used by Camping.lua), called under `pcall`, selects `Media/ThanksSceneHorde.tga` for Horde and `Media/ThanksScene.tga` for Alliance or when the faction cannot be read. Both are 430x448 images in 512x512 textures. tests/test_thanks_art_faction.py (4 cases: Horde, Alliance, nil, error) is imported by tests/run_release.py.
+- The Class helpers button gained a wand icon and more room from the Solo/Party/Raid separator.
+- tests/test_helpers_spacing_1268.py rewritten for the new order (gaps, full width, art present, footer clearance, provider sort position).
+
+### Known limits
+- The owner reviewed the Class helpers tab and the redesigned Helpers page in the Forever client (screenshots of Warlock, Hunter, Paladin and Druid). Not confirmed in the client: the downward opening of the Soulstone and demon menus, the Horde Solo thanks picture, and the new Camping picture.
+- Frame stacking of the reparented menus follows the pattern other moved controls use, but should be confirmed in game.
+
+### Validation
+- New tests/test_class_helpers_tab.py (15 cases: Druid, Warlock, Hunter and Paladin in enUS, deDE and frFR, plus combat, the Helpers pointer card and unchanged setting keys) is imported by tests/run_release.py. It covers the tab label per class, the pane replacing the list, Use Solo settings hidden on the tab, controls and menus reparented into the pane, the 8 px gap between class readiness and tracking, and the view resetting when Solo is chosen or the window closes.
+- Updated for the move: test_helpers_spacing_1268 (pointer card instead of the moved cards), test_readiness (1 case) and test_warlock_review (5 Soulstone cases now open the tab first). A first full run had exactly those 5 failures, all assuming the old page; none remained after the update.
+- Final full integrated mocked run on the release files: 3,319 PASS lines, zero FAIL records, no Lua tracebacks (log tests/release-1280-full.txt, kept locally). Includes tests/test_class_helpers_tab.py (15), the rewritten tests/test_helpers_spacing_1268.py and tests/test_thanks_art_faction.py (4). Not run in the Forever client; see Known limits.
+
+
 # BuffTap 1.27.1
 
 ### Fixed

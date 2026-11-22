@@ -2,6 +2,11 @@
 local _,B=...
 -- Keep the ten most recent releases within a 24 KiB content ceiling.
 B.PatchNotes={
+ {version="1.28.0",title="Class helpers move into My buffs",items={
+  "My buffs has a new tab beside Solo, Party and Raid. It holds the settings that follow your class instead of one setup: pet, Healthstone and Soulstone for Warlocks, pet for Hunters, your assigned Oath for Paladins, and tracking reminders for everyone.",
+  "The tab is named for what is inside it: Class helpers, Pet and tracking, or just Tracking. These settings apply in every setup, so Use Solo settings is hidden while you are on it.",
+  "Helpers keeps a small card at the bottom where those settings used to be, with a button that takes you to the new tab. Nothing you already set up has changed.",
+  "The Helpers page is roomier. Solo thanks now has a full-width card with a new picture, and Buff requests sits right below it, and the optional conveniences follow. Camping also has a redrawn camp scene. The Solo thanks picture changes with your faction."}},
  {version="1.27.1",title="Ghosts of Nearby players past",items={
   "Nearby no longer clings to players who have left. If you were sweeping your mouse around a crowded spot, the rows of people who had already walked off could linger for a moment, like a goodbye that went on too long. They now vanish when they should.",
   "Go ahead and spin your mouse like you are trying to start a campfire. Nearby lets go of a row the instant your mouse does, and the only thing left dizzy is you."}},
@@ -40,14 +45,6 @@ B.PatchNotes={
   "Role choices fit each buff: Thorns offers Tanks, and Fear Ward offers Tanks or Healers. Other buffs keep their class choices. Hidden old preferences stay saved.",
   "Use Solo settings stays available in Party and Raid outside combat. You can undo changes immediately, and Paladins can plan target blessings while Target and Nearby are off.",
   "New Warlocks and Shamans start with party utility buffing off. Existing Party and Raid choices are kept, and setup does not repeat."}},
- {version="1.26.8",title="Your next buff, at a glance",items={
-  "Pick your next buff. An optional row of smaller, clickable icons shows what else is due. Turn on Show next buffs below under Customization > Buff reminder. Your usual binding stays on the main icon.",
-  "Find a helping hand. Helpers > Buff requests now offers optional provider sorting for buffs you are missing. Your existing priorities come first, and every request still needs your click.",
-  "An early heads-up in combat. My buffs > Combat expiry warning can remind you when a buff may be running out. It is an estimate: dispels and another player's refresh can make it inaccurate. It starts off.",
-  "A little more time to say thanks. Solo Thanks waits longer for a briefly unavailable caster. If it still misses someone, capture Diagnostics > Full check-up soon afterward to help us investigate.",
-  "Paladins: Kings, Might and Wisdom are welcome in town again. Nearby no longer holds them back with short buffs such as Thorns.",
-  "Small icons, same style. Consumable and queue icons now follow your Classic or Modern choice, without reminder glows. Reminders also sit below more interface windows.",
-  "German translations have been expanded."},thanks="Thank you to tinect for the queue, combat warnings, window improvements and German translations, and to waggz81 for helping investigate Solo Thanks."}
 }
 function B:PatchNotesUnread()
   return self.profileDB and self.db.optionsPatchDot~=false and self.profileDB.global.patchNotesSeen~=self.version

@@ -1301,11 +1301,11 @@ function B:BuildHelperPage(parent)
     {"helperCoverage",L("Show missing party buffs"),L("Shows buffs your five-player party may be missing and who might provide them. Information only: no casting or chat messages.")},
     {"helperDiscovery",L("Find unrecognized consumables"),L("Lists bag consumables missing from BuffTap's supported list for review. It does not add or use them. View the report in Diagnostics.")},
   }
-  f.conveniencesCard=card(gr,362,-74,342,252)
-  T.SectionTitle(label(gr,L("Conveniences"),378,-88,T.fonts.Section))
+  f.conveniencesCard=card(gr,12,-464,692,140)
+  T.SectionTitle(label(gr,L("Conveniences"),28,-478,T.fonts.Section))
   for i,spec in ipairs(settings) do
     local key=spec[1]
-    f.checks[key]=check(gr,spec[2],378,-108-(i-1)*25,function(c)
+    f.checks[key]=check(gr,spec[2],i<=4 and 28 or 370,-498-((i<=4 and i-1 or 0)*26),function(c)
       if A.Combat() then return end
       B.db[key]=c:GetChecked()==true
       if key=="helperDiscovery" then B.helperDiscoverDirty=true end
@@ -1314,39 +1314,43 @@ function B:BuildHelperPage(parent)
     end)
     addHelp(f.checks[key],spec[2],spec[3])
   end
-  label(gr,L("Dismiss lasts"),378,-292,"GameFontHighlightSmall",130)
-  f.dismissMinutes=selector(gr,"",520,-286,170,function() return B:DismissChoices() end,function(v) B.db.helperDismissMinutes=v; B:Options() end)
+  label(gr,L("Dismiss lasts"),370,-580,"GameFontHighlightSmall",130)
+  f.dismissMinutes=selector(gr,"",520,-574,170,function() return B:DismissChoices() end,function(v) B.db.helperDismissMinutes=v; B:Options() end)
   addHelp(f.dismissMinutes,L("Dismiss a reminder for now"),L("How long a right-click dismiss lasts. Restore reminders brings everything back sooner."))
-  parent.pauseResting=check(gr,"Pause reminders while resting",378,-233,function(c)
+  parent.pauseResting=check(gr,"Pause reminders while resting",370,-524,function(c)
     if A.Combat() then return end
     setAndRefresh("pauseResting",c:GetChecked()==true); B:InvalidateSupplies(false); B:Refresh(false); B:Options()
   end)
   addHelp(parent.pauseResting,"Pause reminders while resting","Hide buff reminders and quiet automatic stock alerts in cities and inns. Settings remain accessible.")
-  parent.pvpProtection=check(gr,"Prevent accidental PvP flagging",378,-258,function(c)
+  parent.pvpProtection=check(gr,"Prevent accidental PvP flagging",370,-550,function(c)
     if A.Combat() then return end
     setAndRefresh("pvpProtection",c:GetChecked()==true); B:Refresh(false); B:Options()
   end)
   addHelp(parent.pvpProtection,"Prevent accidental PvP flagging","Skip flagged or unreadable recipients while unflagged or leaving PvP. Includes group spells. Battlegrounds and arenas are exempt.")
-  f.thanksCard=card(th,12,-74,342,252)
-  T.SectionTitle(label(th,L("Solo thanks"),28,-88,T.fonts.Section))
-  label(th,L("Say thanks when another player buffs you while you play solo."),28,-108,T.fonts.Sub,308)
-  f.checks.helperThanks=check(th,L("Thank players who buff me solo"),28,-150,function(c)
+  f.thanksCard=card(th,12,-74,692,226)
+  f.thanksScene=th:CreateTexture(nil,"ARTWORK"); local okFaction,faction=pcall(UnitFactionGroup,"player")
+  f.thanksScene:SetTexture(T.media..((okFaction and faction=="Horde") and "ThanksSceneHorde" or "ThanksScene")); f.thanksScene:SetSize(215,224); f.thanksScene:SetPoint("TOPLEFT",13,-75)
+  f.thanksScene:SetTexCoord(0,430/512,0,448/512); f.thanksScene.optionsDecoration=true
+  f.thanksSceneEdge=th:CreateTexture(nil,"OVERLAY"); f.thanksSceneEdge:SetColorTexture(unpack(T.rule)); f.thanksSceneEdge:SetSize(1,224); f.thanksSceneEdge:SetPoint("TOPLEFT",228,-75); f.thanksSceneEdge.optionsDecoration=true; T.Track(f.thanksSceneEdge,"rule")
+  T.SectionTitle(label(th,L("Solo thanks"),248,-88,T.fonts.Section))
+  label(th,L("Say thanks when another player buffs you while you play solo."),248,-110,"GameFontDisableSmall",440)
+  f.checks.helperThanks=check(th,L("Thank players who buff me solo"),248,-138,function(c)
     if A.Combat() then return end
     B.db.helperThanks=c:GetChecked()==true; B.helperThankSeen=nil; B:ObserveSoloThanks(true)
     B:RequestRefresh("solo thanks",0); B:Options()
   end)
   addHelp(f.checks.helperThanks,L("Solo thanks"),L("Thanks identified solo buff providers. Never in groups, instances or combat. Emotes are spaced one second apart, with a one-minute cooldown per player."))
-  f.thanksResting=check(th,L("Keep thanking while resting"),28,-176,function(c)
+  f.thanksResting=check(th,L("Keep thanking while resting"),248,-170,function(c)
     if A.Combat() then return end
     B.db.helperThanksResting=c:GetChecked()==true; B.helperThankSeen=nil; B:ObserveSoloThanks(true); B:Options()
   end)
   addHelp(f.thanksResting,L("Keep thanking while resting"),L("Thanks continue in cities and inns even when Pause reminders while resting is on."))
-  f.manualThanks=check(th,L("Offer a manual thank-you"),28,-202,function(c)
+  f.manualThanks=check(th,L("Offer a manual thank-you"),248,-202,function(c)
     if A.Combat() then return end
     B.db.manualThanks=c:GetChecked()==true; B:UpdateManualThanks(); B:Options()
   end)
   addHelp(f.manualThanks,"Offer a manual thank-you","If an incoming buff giver cannot be reached for automatic thanks, offer a thank-you whisper once their full name is known. Appears when no buff action is ready, expires after 15 seconds, and follows Keep thanking while resting. Works while mounted. Use your regular BuffTap binding or click to send; right-click to dismiss this thank-you.")
-  f.thankMessage=editbox(th,28,-232,222,false); f.thankMessage:SetFontObject(T.fonts.Small); f.thankMessage:SetJustifyH("LEFT"); f.thankMessage:SetMaxLetters(180)
+  f.thankMessage=editbox(th,248,-260,358,false); f.thankMessage:SetFontObject(T.fonts.Small); f.thankMessage:SetJustifyH("LEFT"); f.thankMessage:SetMaxLetters(180)
   f.thankMessage:SetScript("OnEnterPressed",function(control)
     local ok,why=B:SetManualThanksMessage(control:GetText())
     if not ok and why then B.Print(why) end
@@ -1357,16 +1361,17 @@ function B:BuildHelperPage(parent)
     T.Tooltip(control,L("Thank-you whisper"),L("Use %s for the buff name. Press Enter to save.","%s"))
   end)
   f.thankMessage:SetScript("OnLeave",function() if GameTooltip then GameTooltip:Hide() end end)
-  f.thankMessageReset=button(th,L("Reset"),258,-230,80,function()
+  f.thankMessageReset=button(th,L("Reset"),614,-258,76,function()
     if A.Combat() then return end
     B:SetManualThanksMessage(""); B:Options()
   end)
   addHelp(f.thankMessageReset,"Reset thank-you message","Restores the default thank-you message.")
-  label(th,L("Solo response emote"),30,-266,"GameFontNormal",200)
-  label(th,L("Delay"),240,-266,"GameFontNormal",98)
-  f.thankDelay=selector(th,"",238,-286,100,function() return B:ThankDelayChoices() end,function(v) B.db.helperThankDelay=v; B:Options() end)
+  label(th,L("Solo response emote"),500,-134,"GameFontHighlightSmall",192)
+  label(th,L("Delay"),500,-186,"GameFontHighlightSmall",190)
+  label(th,L("Thank-you message"),250,-242,"GameFontHighlightSmall",440)
+  f.thankDelay=selector(th,"",500,-202,190,function() return B:ThankDelayChoices() end,function(v) B.db.helperThankDelay=v; B:Options() end)
   addHelp(f.thankDelay,L("Delay"),L("Wait a moment before thanking, so it feels less automatic."))
-  f.thankEmote=selector(th,"",28,-286,202,function() return B:SoloThankEmotes() end,function(choice)
+  f.thankEmote=selector(th,"",500,-150,190,function() return B:SoloThankEmotes() end,function(choice)
     B.db.helperThankEmote=choice
     -- Configuration only: never sends an emote or resets cooldowns.
   end,"scroll")
@@ -1374,18 +1379,18 @@ function B:BuildHelperPage(parent)
   -- Class readiness keeps its authored coordinates; the frame is moved up as one block below Tracking.
   f.readiness=CreateFrame("Frame",nil,f); f.readiness:SetSize(712,1); f.readiness:SetPoint("TOPLEFT",0,-204)
   -- Eight-unit gaps between cards leave clearance above the footer, including class readiness.
-  q:ClearAllPoints(); q:SetPoint("TOPLEFT",0,-36); tr:ClearAllPoints(); tr:SetPoint("TOPLEFT",0,-32)
+  q:ClearAllPoints(); q:SetPoint("TOPLEFT",0,0); tr:ClearAllPoints(); tr:SetPoint("TOPLEFT",0,-32)
   -- Buff requests (Nearby): whisper a nearby player for a class buff you are missing. Off by default.
   f.requests=q
-  f.requestCard=card(q,12,-298,692,148)
-  T.SectionTitle(label(q,L("Buff requests"),28,-312,T.fonts.Section))
-  f.requestEnable=check(q,L("Offer buff requests in Nearby"),28,-332,function(c)
+  f.requestCard=card(q,12,-308,692,148)
+  T.SectionTitle(label(q,L("Buff requests"),28,-322,T.fonts.Section))
+  f.requestEnable=check(q,L("Offer buff requests in Nearby"),28,-342,function(c)
     if A.Combat() then return end
     B.db.nearbyRequests=c:GetChecked()==true; if B.nearbyFrame then B:UpdateNearbyWindow() end; B:Options()
   end)
   addHelp(f.requestEnable,L("Offer buff requests in Nearby"),L("When a player outside your group can cast a class buff you are missing, Nearby shows a button with that buff's icon. Clicking it whispers your request. Nothing is sent automatically.").."\n"..L("Each request is one whisper you click to send. You can ask the same player again after three minutes."))
-  label(q,L("Message"),330,-337,"GameFontHighlightSmall",64)
-  f.requestMessage=editbox(q,396,-331,294,false); f.requestMessage:SetFontObject(T.fonts.Small); f.requestMessage:SetJustifyH("LEFT"); f.requestMessage:SetMaxLetters(200)
+  label(q,L("Message"),330,-347,"GameFontHighlightSmall",64)
+  f.requestMessage=editbox(q,396,-341,294,false); f.requestMessage:SetFontObject(T.fonts.Small); f.requestMessage:SetJustifyH("LEFT"); f.requestMessage:SetMaxLetters(200)
   f.requestMessage:SetScript("OnEnterPressed",function(s)
     local text=(s:GetText() or ""):gsub("[|%c]","")
     B.db.requestMessage=(text==B:Text("Hi! Could I get %s, please? Thank you!")) and "" or text; s:ClearFocus(); B:Options()
@@ -1395,10 +1400,10 @@ function B:BuildHelperPage(parent)
   f.requestChecks={}
   for i,def in ipairs(B:CoverageDefinitions()) do
     local key=def.key
-    local c=check(q,def.name,28+((i-1)%3)*228,-362-math.floor((i-1)/3)*26,function(s) if not A.Combat() then B.db.requestBuffs[key]=s:GetChecked()==true; if B.nearbyFrame then B:UpdateNearbyWindow() end end end)
+    local c=check(q,def.name,28+((i-1)%3)*228,-372-math.floor((i-1)/3)*26,function(s) if not A.Combat() then B.db.requestBuffs[key]=s:GetChecked()==true; if B.nearbyFrame then B:UpdateNearbyWindow() end end end)
     f.requestChecks[key]=c
   end
-  f.providerSort=check(q,L("Prioritize providers"),484,-414,function(c)
+  f.providerSort=check(q,L("Prioritize providers"),484,-424,function(c)
     if A.Combat() then return end
     B.db.nearbyProviderSort=c:GetChecked()==true; B.nearbySnapshot=nil
     if B.nearbyFrame then B:UpdateNearbyWindow() end
@@ -1407,7 +1412,7 @@ function B:BuildHelperPage(parent)
   local r=f.readiness
   f.readinessCard=card(r,12,-374,692,144)
   f.readinessIcon=r:CreateTexture(nil,"ARTWORK")
-  f.readinessIcon:SetSize(24,24); f.readinessIcon:SetPoint("TOPLEFT",18,-378)
+  f.readinessIcon:SetSize(18,18); f.readinessIcon:SetPoint("TOPLEFT",28,-383)
   f.readinessIcon:SetTexture("Interface\\GLUES\\CHARACTERCREATE\\UI-CHARACTERCREATE-CLASSES")
   T.SectionTitle(label(r,L("Class readiness"),52,-386,T.fonts.Section))
   f.oathCheck=check(r,L("Maintain assigned Oath"),18,-414,function(c)
@@ -1452,7 +1457,7 @@ function B:BuildHelperPage(parent)
   end)
   selectorArrow(f.soulTarget)
   f.soulMenu=CreateFrame("Frame",nil,f,"BackdropTemplate")
-  local sm=f.soulMenu; sm:SetSize(400,394); sm:SetPoint("BOTTOMRIGHT",f.soulTarget,"TOPRIGHT",0,2)
+  local sm=f.soulMenu; sm:SetSize(400,394); sm:SetPoint("TOPRIGHT",f.soulTarget,"BOTTOMRIGHT",0,-2)
   sm:SetFrameStrata("FULLSCREEN_DIALOG"); sm:SetFrameLevel(f:GetFrameLevel()+20); sm:SetClampedToScreen(true); sm:EnableMouse(true)
   sm:SetBackdrop({bgFile="Interface\\Buttons\\WHITE8X8",edgeFile="Interface\\Tooltips\\UI-Tooltip-Border",edgeSize=12})
   sm:SetBackdropColor(unpack(T.menu)); sm:SetBackdropBorderColor(unpack(T.border)); T.Surface(sm,"menu"); sm:Hide()
@@ -1519,7 +1524,7 @@ function B:BuildHelperPage(parent)
   f.demonChoice.icon=f.demonChoice:CreateTexture(nil,"ARTWORK")
   f.demonChoice.icon:SetSize(20,20); f.demonChoice.icon:SetPoint("LEFT",3,0)
   f.demonMenu=CreateFrame("Frame",nil,f,"BackdropTemplate")
-  local menu=f.demonMenu; menu:SetSize(326,158); menu:SetPoint("BOTTOMLEFT",f.demonChoice,"TOPLEFT",0,2)
+  local menu=f.demonMenu; menu:SetSize(326,158); menu:SetPoint("TOPLEFT",f.demonChoice,"BOTTOMLEFT",0,-2)
   menu:SetFrameStrata("FULLSCREEN_DIALOG"); menu:SetFrameLevel(f:GetFrameLevel()+20); menu:SetClampedToScreen(true); menu:EnableMouse(true)
   menu:SetBackdrop({bgFile="Interface\\Buttons\\WHITE8X8",edgeFile="Interface\\Tooltips\\UI-Tooltip-Border",edgeSize=12})
   menu:SetBackdropColor(.04,.04,.04,1); T.Surface(menu,"menu"); menu.rows={}; menu:Hide()
@@ -1564,6 +1569,11 @@ function B:BuildHelperPage(parent)
     B:Options()
   end)
   addHelp(f.trackerFollow,L("Follow my minimap choice"),L("When you switch tracking in the minimap menu, BuffTap keeps up your new choice instead of switching you back. Turn off to always restore the tracking picked here."))
+  -- Pet, Healthstone, Soulstone, Oath and tracking are shown on My buffs (Class helpers tab); this card points the way.
+  f.classHelpersCard=card(f,12,-612,692,74)
+  f.classHelpersTitle=label(f,"",28,-626,T.fonts.Section); T.SectionTitle(f.classHelpersTitle)
+  f.classHelpersNote=label(f,"",28,-652,"GameFontDisableSmall",470)
+  f.classHelpersOpen=button(f,L("Open in My buffs"),506,-638,184,function() B:OpenClassHelpers() end)
   -- Page actions sit in the header, beside the description, so the body never needs to scroll.
   f.restoreButton=button(f,L("Restore reminders"),402,-38,146,function() B:RestoreHelpers(); B:Options() end)
   f.reportButton=button(f,L("View discovery report"),556,-38,148,function() B:ShowDiscoveryReport() end)
@@ -1574,6 +1584,21 @@ function B:UpdateHelperOptions()
   local f=self.helperWindow; if not f then return end
   local class=self:ReadinessClass(); local warlock=class=="WARLOCK"; local paladin=class=="PALADIN"
   f.readiness:SetShown(warlock or class=="HUNTER" or paladin); f.demonMenu:Hide()
+  -- Class readiness and tracking are drawn on the My buffs Class helpers tab: readiness on top, tracking beneath it.
+  local readyHeight=class=="HUNTER" and 100 or 144
+  f.readinessCard:SetHeight(readyHeight)
+  local pane=self.options and self.options.helpersPane
+  if pane then
+    local top=-62
+    f.readiness:ClearAllPoints(); f.readiness:SetPoint("TOPLEFT",pane,"TOPLEFT",0,top+374)
+    local trackTop=(warlock or class=="HUNTER" or paladin) and (top-readyHeight-8) or top
+    f.helperSections.tracking:ClearAllPoints(); f.helperSections.tracking:SetPoint("TOPLEFT",pane,"TOPLEFT",0,trackTop+458)
+  end
+  if f.classHelpersTitle then
+    local tabName=self:ClassHelpersLabel()
+    f.classHelpersTitle:SetText(self:Text(tabName)); T.SectionTitle(f.classHelpersTitle)
+    f.classHelpersNote:SetText(self:Text("These settings moved to My buffs, on the %s tab.",self:Text(tabName)))
+  end
   f.requestEnable:SetChecked(self.db.nearbyRequests==true)
   f.providerSort:SetChecked(self.db.nearbyProviderSort==true); f.providerSort:SetEnabled(self.db.nearbyRequests==true)
   if not f.requestMessage:HasFocus() then f.requestMessage:SetText(self.db.requestMessage~="" and self.db.requestMessage or self:Text("Hi! Could I get %s, please? Thank you!")) end
@@ -1647,8 +1672,8 @@ function B:UpdateHelperOptions()
   f.trackerLine:Hide()
   f.treasure:ClearAllPoints(); f.treasure:SetPoint("TOPLEFT",490,trackerY+2)
   f.trackerLine:ClearAllPoints(); f.trackerLine:SetPoint("TOPLEFT",18,trackerY+13); f.trackerLine:SetPoint("TOPRIGHT",-18,trackerY+13)
-  f.trackerHeading:ClearAllPoints(); f.trackerHeading:SetPoint("TOPLEFT",26,trackerY-4)
-  f.checks.helperTracking:ClearAllPoints(); f.checks.helperTracking:SetPoint("TOPLEFT",26,trackerY-28)
+  f.trackerHeading:ClearAllPoints(); f.trackerHeading:SetPoint("TOPLEFT",50,trackerY-4)
+  f.checks.helperTracking:ClearAllPoints(); f.checks.helperTracking:SetPoint("TOPLEFT",28,trackerY-28)
   f.emptyTracker:ClearAllPoints(); f.emptyTracker:SetPoint("TOPLEFT",254,trackerY-36)
   local current
   for _,entry in ipairs(trackers) do if entry.id==self.db.helperTracker then current=entry end end
@@ -1663,6 +1688,13 @@ end
 function B:HelperOptions()
   if A.Combat() then return end
   self:Options(); self.options.selectTab(TAB.Helpers)
+end
+
+-- Opens My buffs on the Class helpers tab (pet, Healthstone, Soulstone, Oath and tracking).
+function B:OpenClassHelpers()
+  if A.Combat() then return end
+  self.buffsHelpersView=true
+  self:Options(); self.options.selectTab(TAB.Buffs)
 end
 
 function B:ShowDiscoveryReport()
@@ -2721,6 +2753,7 @@ function B:Options()
       if f.blessingMenu then f.blessingMenu:Hide() end
       if f.resetConfirm then f.resetConfirm:Hide() end
       if B.appearancePreview then B.appearancePreview:Hide() end
+      B.buffsHelpersView=nil -- My buffs reopens on the buff list
     end)
     f:RegisterEvent("PLAYER_REGEN_DISABLED")
     f:SetScript("OnEvent",function(_,event)

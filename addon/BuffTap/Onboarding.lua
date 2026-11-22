@@ -460,7 +460,7 @@ function B:OnboardingFeaturesPage()
     table.insert(lines,#lines,"Underwater buffs are smart: Unending Breath, Water Breathing and Aquatic Form only remind while you are underwater. A player you target can still get a breathing buff any time.")
   end
   if class=="HUNTER" or class=="WARLOCK" or class=="PALADIN" then
-    table.insert(lines,#lines,"Class readiness (Helpers page): pet, Healthstone, Soulstone or Oath reminders for your class.")
+    table.insert(lines,#lines,"Class helpers (My buffs): pet, Healthstone, Soulstone or Oath reminders for your class.")
   end
   for _,line in ipairs(lines) do
     local fs=text(body,T.fonts.Note,16,y,WIDTH-112,line); track(f,fs)

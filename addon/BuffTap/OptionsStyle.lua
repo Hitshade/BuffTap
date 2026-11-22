@@ -869,7 +869,8 @@ local SECTION_ICONS={["what to remove"]="Cleanse",["never cleanse"]="Blacklist",
   ["layout"]="Customization",["text"]="Customization",["position"]="Customization",["visible labels"]="Customization",["title bar"]="Customization",
   ["window appearance"]="Customization",["interface"]="Customization",["how nearby works"]="Nearby",["player list"]="Nearby",
   ["reminders"]="Buffs",["setup"]="Customization",["oils and stones"]="Weapons",["poisons"]="Weapons",["add to blacklist"]="Blacklist",["sharing"]="Profiles",["rules"]="Customization",
-  ["players"]="Groups",["guilds"]="Groups",["default target"]="Customization",["spell availability"]="Target",["default refresh"]="Buffs"}
+  ["players"]="Groups",["guilds"]="Groups",["default target"]="Customization",["spell availability"]="Target",["default refresh"]="Buffs",
+  ["solo thanks"]="Groups",["buff requests"]="Nearby",["conveniences"]="Helpers",["class helpers"]="Buffs",["pet and tracking"]="Buffs",["tracking"]="Target"}
 T.sectionTitles={}
 -- Rules need a measured string width, so they are placed once the text can be measured.
 function T.LayoutSectionRules()

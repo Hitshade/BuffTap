@@ -1,3 +1,18 @@
+# BuffTap 1.28.0
+
+### Class settings now live in My buffs
+Pet, Healthstone, Soulstone, Oath and tracking settings used to sit at the bottom of the Helpers page, where they were easy to miss. They now have their own tab in My buffs, next to Solo, Party and Raid, set slightly apart so it does not look like another setup.
+
+The tab is named for what is inside it. Warlocks and Paladins see **Class helpers** (pet, Healthstone and Soulstone for Warlocks, the assigned Oath for Paladins, plus tracking), Hunters see **Pet and tracking**, and every other class sees **Tracking**. These settings apply in every setup, so the Use Solo settings button is hidden while you are on the tab.
+
+The Helpers page itself has more room now. Solo thanks has a full-width card with a new picture (it changes with your faction, and the Camping scene was redrawn too), Buff requests comes next, then the optional conveniences, and a short pointer to the new tab sits at the bottom.
+
+Everything works the way it did, including the Soulstone target menu, the preferred demon choice and the tracking reminder. Your saved choices carry over untouched. Helpers keeps a small card where the settings used to be, with a button that opens the new tab.
+
+### Known limits
+The new tab and the redesigned Helpers page were looked over in the Forever client on Warlock, Hunter, Paladin and Druid characters. The Horde version of the Solo thanks picture and the new Camping picture have only been checked in a simulated game so far, so please tell us if anything overlaps or looks wrong.
+
+
 # BuffTap 1.27.1
 
 ### Nearby: no more lingering rows
