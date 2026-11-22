@@ -11,6 +11,7 @@ Last updated: 2026-11-21, after 1.27.1. Update this file at the end of each sess
 - Latest release: 1.27.1 "Ghosts of Nearby players past" (GitHub release 454103857, ZIP sha256 0cddef8f54cf8e77b8cb9197e322a25931e1c632839d06037cb1176e7ab5d0ca, 1,830,219 bytes, 142 files). CurseForge submitted as Release for 1.60.1 with automatic publication after approval; confirm it went live.
 - 1.27.0 "A fresh coat of paint" (options window redesign, Nearby open in combat by default) shipped the same day.
 - Final full mocked run: 3,300 PASS, 0 FAIL.
+- Note: on 2026-11-21 the 8 commits after 1.26.15 were rewritten to fix a wrong author address, so tags `v1.27.0` and `v1.27.1` point at the pre-rewrite commits (same files, different IDs, not on `main`'s history). Leave them; do not rewrite history again.
 - Known, unexplained: a one-off brief reminder flash plus sound while resting in an inn (diagnostics showed the game's resting read was false at that instant). Not reproduced; deliberately no workaround. If it recurs, ask for the Full check-up and add logging of reminder shows with the resting reading.
 
 ## Release procedure
