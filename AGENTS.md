@@ -1,5 +1,9 @@
 # BuffTap contributor rules
 
+## Handoff between assistants
+
+Read `docs/HANDOFF.md` first. It holds the current state, how publishing works from each environment, working rules and deferred ideas. Update it at the end of every session or release, whichever assistant you are, so the next one can continue without the owner repeating anything.
+
 ## GitHub issue review: required workflow
 
 - At the start of development/review work and again before preparing any public release, check open and recently updated issues in `Hitshade/BuffTap`, including relevant issue comments. Prefer the connected GitHub tools. Do not rely only on screenshots or CurseForge comments.
@@ -19,8 +23,6 @@ For every user-visible release, including betas, write THREE independently autho
 Never copy the in-game `items` strings into `CHANGELOG.md` or into a GitHub or CurseForge release, and never generate the technical notes from `PatchNotes.lua`. Check every claim against the merged source and the tests. Separate "added", "fixed" and "known limits". Preserve contributor thanks in all applicable records. Never claim a test passed, or that something was verified in the Forever client, unless it was.
 
 In-game notes describe worthwhile player-visible features and fixes, not routine implementation details such as retaining checkbox selections. CurseForge notes explain affected classes, practical behavior, opt-in steps and meaningful limitations without function names, raw IDs or test internals. GitHub retains the full technical history.
-
-After owner-approved publication of 1.25.0 on both platforms, revise existing CurseForge file changelogs to the intermediate style. Keep each file attached to its original version, preserve credits and historical scope, and do not copy current-version features into older releases. Do not change the historical GitHub technical changelogs or re-upload addon archives merely to revise changelog text.
 
 Before publishing: read all three records and confirm their versions agree with `BuffTap.toc` and `Engine.lua`. Do not publish without owner approval.
 

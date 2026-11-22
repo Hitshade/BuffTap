@@ -17,6 +17,7 @@
 /docs/*
 !/docs/archive/
 !/docs/CURSEFORGE-DESCRIPTION.md
+!/docs/HANDOFF.md
 !/docs/GITHUB-BASELINE.md
 !/docs/CATALOG-DATA.md
 !/docs/RELEASE-REVIEW-1.1.0.md
