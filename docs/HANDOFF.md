@@ -8,7 +8,7 @@ Last updated: 2026-11-22, preparing 1.28.0. Update this file at the end of each 
 - Commit identity: author name `Hitshade`, email `283539417+Hitshade@users.noreply.github.com` (GitHub's private address for the owner). Never use the owner's personal email or a made-up `noreply@users.noreply.github.com` address, which belongs to an unrelated GitHub account.
 
 ## Current state
-- 1.28.0 "Class helpers move into My buffs" (prepared 2026-11-22, publication in progress; see DEVELOPMENT.md for the receipt): class readiness and tracking live on a My buffs tab (`f.helpersPane`, `B.buffsHelpersView`); Helpers page is four full-width cards; Solo thanks picture is faction-aware (`ThanksSceneHorde.tga`); full suite 3,319 PASS, 0 FAIL; ZIP 149 files, 2,847,638 bytes, SHA256 47de13026206f48e9c140a3606fc82a8739ddbacb138e71895ed283f587b1298.
+- 1.28.0 "Class helpers move into My buffs" (prepared 2026-11-22, publication in progress; see DEVELOPMENT.md for the receipt): class readiness and tracking live on a My buffs tab (`f.helpersPane`, `B.buffsHelpersView`); Helpers page is four full-width cards; Solo thanks picture is faction-aware (`ThanksSceneHorde.tga`); full suite 3,319 PASS, 0 FAIL; ZIP 149 files, 2,847,625 bytes, SHA256 925a4fb8b6495dc5ba9b7d88661dbbd6cf97dd10f939d8ce73f1296352e0dc79.
 - Previous release: 1.27.1 "Ghosts of Nearby players past" (GitHub release 454103857, ZIP sha256 0cddef8f54cf8e77b8cb9197e322a25931e1c632839d06037cb1176e7ab5d0ca, 1,830,219 bytes, 142 files). CurseForge submitted as Release for 1.60.1 with automatic publication after approval; confirm it went live.
 - 1.27.0 "A fresh coat of paint" (options window redesign, Nearby open in combat by default) shipped the same day.
 - Final full mocked run: 3,319 PASS, 0 FAIL (1.28.0).
