@@ -56,3 +56,8 @@ Last updated: 2026-11-22, preparing 1.28.0. Update this file at the end of each 
 - New or replaced image files need a full game restart. Textures are 512x512 TGA with the picture in the top-left (SetTexCoord to the used part); Media files appear in the ZIP automatically.
 - Section icons come from `SECTION_ICONS` in OptionsStyle.lua; `T.SectionTitle` moves the title 22 right and puts the icon at the old x, so code that later re-anchors a title must allow for that.
 - Artwork: use art without faction emblems or crests; image tools' licence terms are the owner's responsibility.
+
+### Publication receipts (1.28.0, 2026-11-22)
+- GitHub: release BuffTap 1.28.0, id 454625427, tag v1.28.0 on main, published (not draft). Asset BuffTap-1.28.0.zip, 2,847,625 bytes, sha256 925a4fb8b6495dc5ba9b7d88661dbbd6cf97dd10f939d8ce73f1296352e0dc79 (matches the built ZIP). Release commit c71e3f8, changelog and hash follow-up bfa0fd5.
+- CurseForge: BuffTap-1.28.0.zip uploaded as Release for Forever 1.60.1, auto-publish, LibDBIcon dependency; status "Uploading" at upload time, awaiting approval.
+- CurseForge replies posted (no links): Lufia_TM (Healthstone setting, now on My buffs > Class helpers) and user_e83iy6nbhigk93ij (tracking reminder exists, now the Tracking tab). Verified on the comments page. No reply posted to laysson (an author reply already existed) or Xprit44 (spec detection, unanswered).

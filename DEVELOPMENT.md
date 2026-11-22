@@ -257,3 +257,8 @@ GitHub release 453950695 (v1.27.0, Latest, not draft) published from da8b974; at
 
 ## 1.27.1 publication receipt
 GitHub release 454103857 (v1.27.1, Latest, not draft) published from abbbc27; attached BuffTap-1.27.1.zip digest sha256:0cddef8f54cf8e77b8cb9197e322a25931e1c632839d06037cb1176e7ab5d0ca matches the local archive (1,830,219 bytes, 142 files). The release form was filled in Chrome and the owner attached the ZIP and published. Full mocked run on the final files: 3,300 PASS, 0 FAIL. CurseForge: the owner attached the ZIP to the author form (changelog prefilled by Claude), Release for 1.60.1, automatic publication after approval. Lua-only change (Nearby stale mouse hold and row animation reset); installed locally.
+
+### Publication receipts (1.28.0, 2026-11-22)
+- GitHub: release BuffTap 1.28.0, id 454625427, tag v1.28.0 on main, published (not draft). Asset BuffTap-1.28.0.zip, 2,847,625 bytes, sha256 925a4fb8b6495dc5ba9b7d88661dbbd6cf97dd10f939d8ce73f1296352e0dc79 (matches the built ZIP). Release commit c71e3f8, changelog and hash follow-up bfa0fd5.
+- CurseForge: BuffTap-1.28.0.zip uploaded as Release for Forever 1.60.1, auto-publish, LibDBIcon dependency; status "Uploading" at upload time, awaiting approval.
+- CurseForge replies posted (no links): Lufia_TM (Healthstone setting, now on My buffs > Class helpers) and user_e83iy6nbhigk93ij (tracking reminder exists, now the Tracking tab). Verified on the comments page. No reply posted to laysson (an author reply already existed) or Xprit44 (spec detection, unanswered).
