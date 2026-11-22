@@ -1,3 +1,8 @@
+# BuffTap 1.27.1
+
+### Nearby: no more lingering rows
+If you swept your mouse around a crowded area with the animated list on, the rows of players who had just left could hang around for a moment before disappearing. Nearby now lets go of those rows as soon as your mouse leaves them. Nothing else changes, and no settings are affected. This is a Lua-only update, so a `/reload` is enough.
+
 # BuffTap 1.27.0
 
 ### A fresh look for the settings window

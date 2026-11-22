@@ -2,6 +2,9 @@
 local _,B=...
 -- Keep the ten most recent releases within a 24 KiB content ceiling.
 B.PatchNotes={
+ {version="1.27.1",title="Ghosts of Nearby players past",items={
+  "Nearby no longer clings to players who have left. If you were sweeping your mouse around a crowded spot, the rows of people who had already walked off could linger for a moment, like a goodbye that went on too long. They now vanish when they should.",
+  "Go ahead and spin your mouse like you are trying to start a campfire. Nearby lets go of a row the instant your mouse does, and the only thing left dizzy is you."}},
  {version="1.27.0",title="A fresh coat of paint",items={
   "The settings window has a new look. Every page shares one darker background and opens with a larger title, and section headings carry a small icon with a fine line beside them.",
   "Tidier pages: the boxes inside boxes are gone, and controls are lined up with even spacing. Weapons, Consumables, Supplies, Cleanse, My buffs, Target, Blacklist and Groups were all reworked.",
@@ -44,15 +47,7 @@ B.PatchNotes={
   "A little more time to say thanks. Solo Thanks waits longer for a briefly unavailable caster. If it still misses someone, capture Diagnostics > Full check-up soon afterward to help us investigate.",
   "Paladins: Kings, Might and Wisdom are welcome in town again. Nearby no longer holds them back with short buffs such as Thorns.",
   "Small icons, same style. Consumable and queue icons now follow your Classic or Modern choice, without reminder glows. Reminders also sit below more interface windows.",
-  "German translations have been expanded."},thanks="Thank you to tinect for the queue, combat warnings, window improvements and German translations, and to waggz81 for helping investigate Solo Thanks."},
- {version="1.26.7",title="Choose which reminders you hear",items={
-  "Give each buff a voice, or a little peace and quiet. Left-click its speaker to mute it; right-click to choose a sound. Personal, Party and Raid choices stay separate, and Use default follows your usual Reminder sound.",
-  "Find personal speakers in My buffs and group speakers under Groups. Paladins can open Buff sounds beside the Party and Raid tabs. Muting a buff leaves its icon and binding available.",
-  "Customization > Binding & sound now lets you switch Reminder, Supply, Camp, Cleanse and Friend sounds on or off separately. Preview lets you listen even while muted.",
-  "Ten new fantasy sounds are ready to try, including Crystal chime, Elven harp and Holy light. Sound lists open at your current choice and scroll more smoothly; Reduce animation keeps scrolling immediate.",
-  "Choosing alert sounds during first-time setup allows all sound categories. Optional features still have their own switches, and SmartShift returns and active buffing sequences stay quiet.",
-  "Druids and Priests get a simpler cleanse choice: learned Abolish replaces Cure at the same base mana cost. Cure remains the fallback before Abolish is learned."},thanks="Thanks to jimbo1111 for pointing out the equal-cost Cure and Abolish choice."},
-
+  "German translations have been expanded."},thanks="Thank you to tinect for the queue, combat warnings, window improvements and German translations, and to waggz81 for helping investigate Solo Thanks."}
 }
 function B:PatchNotesUnread()
   return self.profileDB and self.db.optionsPatchDot~=false and self.profileDB.global.patchNotesSeen~=self.version

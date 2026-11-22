@@ -1,3 +1,13 @@
+# BuffTap 1.27.1
+
+### Fixed
+- Nearby.lua: the list is held still while the mouse is on a row (`nearbyHovered`), so rows do not jump under a click. The game does not always deliver `OnLeave` when the mouse sweeps off quickly or a row is hidden under it, which left the hold set and kept rows of players who had already left on screen until the next mouse event. `NearbyDisplayList` now calls `NearbyMouseHoldIsStale`, which clears the hold when `IsMouseOver()` returns false for every row, invite button and request button. It only acts on a plain `false`, so the mocked environment (no real mouse) is unaffected.
+- A row that was blanked or hidden while its slide-and-fade animation (animated list) was playing could keep a faint ghost wash. `stopMotion` now stops that animation, and a hidden row is reset to full alpha.
+
+### Validation
+- Focused mocked runs of the Nearby modules (test_nearby, test_nearby_motion, test_nearby_invites, test_nearby_cleanse, test_nearby_resting, test_paladin_nearby_short, test_smartshift_nearby) and test_cleanups_12615: zero failures. Full integrated mocked run on the final files: 3,300 PASS records, zero FAIL records, exit 0.
+- Seen by the owner in the Forever client while sweeping the mouse in a crowded area with the animated list on, out of combat; not reproduced after the change, which is evidence rather than proof.
+
 # BuffTap 1.27.0
 
 ### Options window redesign
