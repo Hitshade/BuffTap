@@ -5,6 +5,7 @@ Last updated: 2026-11-21, after 1.27.1. Update this file at the end of each sess
 ## RULE 1: BuffTap is a WoW Forever-only addon
 - Client 1.60.1, interface 16001, Lua 5.1. The second value of `UnitName` is a surname (no realms). Buffs are hidden from addons in combat. No click-to-target on Nearby rows. Spell and item IDs follow Forever build 70888.
 - Never touch WTF or SavedVariables. Never claim in-game testing that did not happen.
+- Commit identity: author name `Hitshade`, email `283539417+Hitshade@users.noreply.github.com` (GitHub's private address for the owner). Never use the owner's personal email or a made-up `noreply@users.noreply.github.com` address, which belongs to an unrelated GitHub account.
 
 ## Current state
 - Latest release: 1.27.1 "Ghosts of Nearby players past" (GitHub release 454103857, ZIP sha256 0cddef8f54cf8e77b8cb9197e322a25931e1c632839d06037cb1176e7ab5d0ca, 1,830,219 bytes, 142 files). CurseForge submitted as Release for 1.60.1 with automatic publication after approval; confirm it went live.
