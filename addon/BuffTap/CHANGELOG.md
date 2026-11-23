@@ -1,3 +1,20 @@
+# BuffTap 1.28.1
+
+### Fixed
+- 1.28.0 regression: for a class with no aura buffs (Rogue) My buffs showed only the "No personal buff reminders for this class" card (`classEmpty`), so the Tracking pane that 1.28.0 moved onto My buffs was unreachable. My buffs for a class with no aura buffs to remind (Rogue; any class where `B:HasPersonalReminderBuffs()` is false) is now a compact page. New `B:MyBuffsCompact()` (SituationOptions.lua) is true for those classes. `UpdateContextControls()` then forces `B.buffsHelpersView=true` so the Tracking pane is shown directly, and hides the Solo / Party / Raid pills, the Class helpers tab strip, the Use Solo settings button and the status line. `UpdateHelperOptions()` starts the pane at `top=-8` instead of `-62` because no tab strip sits above it. `ClassHelpersSummary()` returns "This class has no aura buffs to remind. Tracking is below." for the page subtitle. Classes with buffs keep the full layout.
+- `UpdateClassAwarePages()` no longer replaces My buffs with the "No personal buff reminders for this class" card for these classes: page 1 stays applicable (`{1,true,...}`), so the Tracking controls remain reachable.
+
+### Changed
+- Nearby page, How Nearby works card: the lower-right notes (plates and combat) ran to the card's bottom border. The open card now starts 10 px higher (`guideCard(-296)`, was -306) and is 424 tall (was 418) so it still ends 8 px above the footer (page area is 728 tall); the guide frame moved to match (`-336`) and the toggle to `-306`. `DrawNearbyGuide` (shared with the Nearby introduction window) tightens three gaps in the right column (PvP note 46 -> 42, nameplate note 12 -> 8, combat note 8 -> 6). New assertion in tests/test_class_card_polish_1269.py: the open card's bottom stays at or above 720.
+
+### Added
+- SpecProbe.lua, a read-only probe for dual talent specs, added to the TOC after Extras.lua and reported in the Full check-up as "Talents and spec" (`B:SpecProbeLines()`, called from `CheckupLines()`). It reports `GetNumSpecGroups`, `C_SpecializationInfo.GetActiveSpecGroup`, `GetNumSpecializations`, `C_SpecializationInfo.GetSpecialization` (current), `CanPlayerUseTalentSpecUI`, `CanPlayerUseTalentUI`, `IsInitialized`, `GetNumUnspentTalents`, `C_ClassTalents.GetActiveConfigID`, and per spec group the spec index, spec id/name/role, `GetCombatConfigIDForSpecGroup` and the number of saved loadouts. It also registers talent and spec events (ACTIVE_TALENT_GROUP_CHANGED, PLAYER_TALENT_UPDATE, CHARACTER_POINTS_CHANGED, PLAYER_SPECIALIZATION_CHANGED, TALENT_GROUP_ROLE_CHANGED, ACTIVE_PLAYER_SPECIALIZATION_CHANGED, TRAIT_CONFIG_UPDATED) and lists which the client refused and which fired. Every call goes through `pcall` and a type check; nothing is written, no setting changes, and no spec feature exists yet. The classic calls (`GetNumTalentGroups`, `GetActiveTalentGroup`, `GetTalentTabInfo`) were checked on a single-spec Forever character and are absent from this client.
+- Text: one new string ("This class has no aura buffs to remind. Tracking is below.") with deDE, esES, frFR and ptBR translations.
+- Tests: tests/test_class_helpers_tab.py gains the compact-layout loop over the nine classes and two SpecProbe tests; tests/test_class_followup_1269.py now asserts My buffs stays open for every class; the Nearby guide height assertion in tests/test_polish_127.py is 442.
+
+### Known limits
+- The compact Rogue page and the taller Nearby card are checked in the mocked suite; the owner looked at the Rogue page in the client during development. The SpecProbe has only been run (by the owner, as chat one-liners) on a character with one spec. Output on a character with two specs is still unknown, which is why nothing is built on it.
+
 # BuffTap 1.28.0
 
 ### Added

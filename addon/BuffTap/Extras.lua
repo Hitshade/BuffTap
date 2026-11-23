@@ -378,6 +378,7 @@ function B:CheckupLines()
   add("Active buffs",safe(function() return self:BuffInspectorLines() end))
   add("Debug",safe(function() return self:CaptureOutput(function() B:Status(true) end) end))
   add("Nearby",safe(function() return self:NearbyDiagnosticsLines() end))
+  add("Talents and spec",safe(function() return self:SpecProbeLines() end))
   add("Supplies",safe(function() return self:CaptureOutput(function() B:ReportSupplies() end) end))
   add("Settings (import string, without your blacklist)",safe(function()
     local count=function(t) local n=0; for _ in pairs(t or {}) do n=n+1 end; return n end

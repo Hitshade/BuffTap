@@ -51,7 +51,7 @@ RECORD_PT=(_P('/home/claude/bufftap/tests/nearby_preview_record.lua')).read_text
 # Nearby: the how-it-works tutorial starts folded and remembers the choice.
 ng="local B=BuffTap; playerClass='DRUID'; "
 test('Nearby guide starts collapsed',ng+"B:Options(); local f=B.options; B:UpdateClassAwarePages(); assert(f.nearbyGuide.shown==false); assert(f.nearbyGuideCard.height==52)")
-test('Nearby guide opens and closes from the toggle',ng+"B.db.nearbyGuideOpen=true; B:Options(); local f=B.options; B:UpdateClassAwarePages(); assert(f.nearbyGuide.shown~=false); assert(f.nearbyGuideCard.height==418); B.db.nearbyGuideOpen=false; B:UpdateClassAwarePages(); assert(f.nearbyGuide.shown==false)")
+test('Nearby guide opens and closes from the toggle',ng+"B.db.nearbyGuideOpen=true; B:Options(); local f=B.options; B:UpdateClassAwarePages(); assert(f.nearbyGuide.shown~=false); assert(f.nearbyGuideCard.height==424); B.db.nearbyGuideOpen=false; B:UpdateClassAwarePages(); assert(f.nearbyGuide.shown==false)")
 
 # Nearby guide: the combat note is translated in every language file.
 cn="Nearby stays open in combat, so invitations still work. You can change this under Customization > Nearby window."
@@ -72,3 +72,4 @@ for loc in ('deDE','esES','frFR','ptBR'):
     for k in ("One group spell instead of several singles.","Also buff your pet and your group's pets.","Players needed before a group spell is used.","Refresh low buffs at ready checks."):
         assert 'B.Locales.'+loc+'["'+k+'"]=' in txt, (loc,k)
 test('Groups card helper lines show for a class with group spells',gem+"assert(f.groupNotes.smart.shown~=false and f.groupNotes.need.shown~=false); assert(f.groupSharedCard.height==162,tostring(f.groupSharedCard.height))")
+

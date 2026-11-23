@@ -14,7 +14,7 @@ assert(f.nearbyAll.shown~=false and f.nearbyInvites.shown~=false and f.nearbyFul
 assert(f.nearbySettingsCard.__draw.h==(c.actions and 216 or 138))
 local noTarget=playerClass=='WARRIOR' or playerClass=='HUNTER' or playerClass=='ROGUE'
 assert(f.pages[3].classEmpty.shown==noTarget,'target applicability')
-assert(f.pages[1].classEmpty.shown==(playerClass=='ROGUE'),'personal applicability')
+assert(f.pages[1].classEmpty.shown~=true and f.pages[1].classHidden==nil,'My buffs stays open for every class: the Tracking tab lives there')
 assert(B.db.nearbyManaFloor==50 and B.db.nearbyReturnFavor==true,'hidden prefs retained')
 if not c.actions then
  local p=f.nearbyInvites.__draw.points[1]; assert(p[2]==374 and p[3]==-112)

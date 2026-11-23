@@ -1,3 +1,13 @@
+# BuffTap 1.28.1
+
+### Rogues can reach Tracking again
+In 1.28.0, Tracking moved to a tab on My buffs, but for a Rogue that page showed only a note that the class has no buffs to remind, so the Tracking settings could not be reached. My buffs now opens straight to Tracking for Rogues, and for any class with no personal buffs, without an empty buff list or Solo, Party and Raid buttons that do not apply. Classes with buffs look the same as before.
+
+### For testers: Talents and spec
+The Full check-up on the Diagnostics page has a new Talents and spec section. It only reads information and changes nothing. We are looking into settings that follow your talent spec (for example a different weapon imbue for each spec). If you have a character with two specs and are willing to paste a check-up report taken before and after switching spec, it would help a lot.
+
+Nothing else changed, and your saved settings carry over untouched.
+
 # BuffTap 1.28.0
 
 ### Class settings now live in My buffs

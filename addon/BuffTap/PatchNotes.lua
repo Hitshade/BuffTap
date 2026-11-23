@@ -2,6 +2,9 @@
 local _,B=...
 -- Keep the ten most recent releases within a 24 KiB content ceiling.
 B.PatchNotes={
+ {version="1.28.1",title="Rogues, your Tracking is back",items={
+  "Since 1.28.0, a Rogue opening My buffs found only a note that the class has no buffs to remind, and the Tracking settings had no way in. My buffs now opens straight to Tracking for Rogues, and for any class with no personal buffs, without an empty buff list or Solo, Party and Raid buttons that do not apply.",
+  "The Full check-up on Diagnostics has a new Talents and spec section. It only reads information and changes nothing. We are looking into settings that follow your talent spec, so a report from a character with two specs is welcome."}},
  {version="1.28.0",title="Class helpers move into My buffs",items={
   "My buffs has a new tab beside Solo, Party and Raid. It holds the settings that follow your class instead of one setup: pet, Healthstone and Soulstone for Warlocks, pet for Hunters, your assigned Oath for Paladins, and tracking reminders for everyone.",
   "The tab is named for what is inside it: Class helpers, Pet and tracking, or just Tracking. These settings apply in every setup, so Use Solo settings is hidden while you are on it.",
@@ -35,16 +38,6 @@ B.PatchNotes={
   "The main reminder's choice also covers queue icons, consumable icons and combat expiry warnings. Settings and popup menus stay easy to reach."},thanks="Thanks to WareWolf44 for the layering feedback."},
  {version="1.26.10",title="A quieter Warrior reminder",items={
   "Battle Shout stays out of sight when you lack rage. Its normal reminder returns when you can cast it. Mana reminders are unchanged."},thanks="Thanks to ichkruchka for the Warrior feedback."},
- {version="1.26.9",title="Useful choices, shared blacklists",items={
-  "Keep one blacklist across your characters. Turn on Share across all characters under Blacklist, or choose another profile and Add entries. Existing entries are kept; sharing starts off. Newly blocked targets are skipped immediately.",
-  "Less clutter, more relevant choices. Groups hides pet, role and group-spell options your class or selected buff cannot use, so you only see the controls that make sense.",
-  "Nearby keeps useful browsing and invitation controls together, without casting options your class cannot use. Empty My buffs and Target pages explain where to go instead, including for Hunters and Warriors.",
-  "Weapon reminders stay quiet for items you cannot use at your level, unusable carried items or unknown level requirements. Your saved choices are kept for later.",
-  "Battle Shout and Trueshot Aura stay under My buffs. Their Groups page explains how they affect nearby group members automatically. Rogues get a shortcut to Weapons.",
-  "Pet buffs use an approved list, with mana-only buffs reserved for mana-using pets. Utility spells no longer become pet-maintenance jobs.",
-  "Role choices fit each buff: Thorns offers Tanks, and Fear Ward offers Tanks or Healers. Other buffs keep their class choices. Hidden old preferences stay saved.",
-  "Use Solo settings stays available in Party and Raid outside combat. You can undo changes immediately, and Paladins can plan target blessings while Target and Nearby are off.",
-  "New Warlocks and Shamans start with party utility buffing off. Existing Party and Raid choices are kept, and setup does not repeat."}},
 }
 function B:PatchNotesUnread()
   return self.profileDB and self.db.optionsPatchDot~=false and self.profileDB.global.patchNotesSeen~=self.version

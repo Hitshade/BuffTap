@@ -1480,6 +1480,7 @@ B.Locales.esES["Pet, Healthstone, Soulstone and tracking. These apply in every s
 B.Locales.esES["Oath and tracking. These apply in every setup."]="Juramento y rastreo. Se aplican en cualquier configuración."
 B.Locales.esES["Pet and tracking. These apply in every setup."]="Mascota y rastreo. Se aplican en cualquier configuración."
 B.Locales.esES["Tracking reminders. These apply in every setup."]="Avisos de rastreo. Se aplican en cualquier configuración."
+B.Locales.esES["This class has no aura buffs to remind. Tracking is below."]="Esta clase no tiene beneficios de aura que recordar. El rastreo está abajo."
 B.Locales.esES["These settings moved to My buffs, on the %s tab."]="Estos ajustes ahora están en Mis beneficios, en la pestaña %s."
 B.Locales.esES["Open in My buffs"]="Abrir en Mis beneficios"
 B.Locales.esES["Settings for your class and for tracking. They apply in every setup, so Solo, Party and Raid never change them."]="Ajustes de tu clase y del rastreo. Se aplican en cualquier configuración; Solo, Grupo y Banda nunca los cambian."

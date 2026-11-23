@@ -60,3 +60,57 @@ hp.checks.helperTracking:SetChecked(true); hp.checks.helperTracking.scripts.OnCl
 hp.soulTarget.scripts.OnClick(hp.soulTarget); assert(hp.soulMenu:IsShown())
 g.buttons.party.scripts.OnClick(g.buttons.party); assert(not hp.soulMenu:IsShown(),'menu closes with the tab')
 """)
+
+for cls in ('DRUID','WARLOCK','HUNTER','PALADIN','ROGUE','WARRIOR','MAGE','PRIEST','SHAMAN'):
+ test('Tracking tab reachable for '+cls,RECORD+"""
+playerClass='"""+cls+"""'; BuffTap:Options(); local f=BuffTap.options; local g=BuffTap.contextControls.buffs; local hp=BuffTap.helperWindow
+assert(g.helpers and g.helpers:GetText()~='' ,'tab button exists')
+assert(f.pages[1].classEmpty.shown~=true and f.pages[1].classHidden==nil,'My buffs page is not replaced by the empty card')
+g.helpers.scripts.OnClick(g.helpers)
+assert(BuffTap.buffsHelpersView==true and f.helpersPane:IsShown(),'pane opens')
+assert(hp.helperSections.tracking:GetParent()==f.helpersPane and hp.checks.helperTracking,'tracking controls are in the pane')
+assert(f.pages[1].classEmpty.shown~=true and f.pages[1].classHidden==nil,'still not replaced with the pane open')
+BuffTap.buffsHelpersView=nil; BuffTap:Options(); BuffTap.options.activeTab=nil
+hp=BuffTap.helperWindow
+hp.classHelpersOpen.scripts.OnClick(hp.classHelpersOpen)
+assert(BuffTap.buffsHelpersView==true and BuffTap.options.activeTab==1 and BuffTap.options.helpersPane:IsShown(),'Helpers pointer opens the tab')
+""")
+
+for cls in ('DRUID','WARLOCK','HUNTER','PALADIN','ROGUE','WARRIOR','MAGE','PRIEST','SHAMAN'):
+ test('My buffs compact layout '+cls,RECORD+"""
+playerClass='"""+cls+"""'; BuffTap:Options(); local f=BuffTap.options; local g=BuffTap.contextControls.buffs; local hp=BuffTap.helperWindow
+local compact=BuffTap:MyBuffsCompact()
+assert(compact==(not BuffTap:HasPersonalReminderBuffs()))
+if """+('true' if cls=='ROGUE' else 'false')+""" then assert(compact,'Rogue has no aura buffs') end
+if compact then
+  assert(BuffTap.buffsHelpersView==true and f.helpersPane:IsShown() and not f.buffContent:IsShown(),'Tracking fills the page')
+  for _,b in pairs(g.buttons) do assert(not b:IsShown(),'Solo/Party/Raid hidden') end
+  assert(not g.helpers:IsShown() and not g.reset:IsShown(),'tab strip hidden')
+  assert(f.pageHeaders[1].description:GetText()==BuffTap:Text('This class has no aura buffs to remind. Tracking is below.'),'subtitle explains')
+  assert(hp.helperSections.tracking:GetParent()==f.helpersPane and hp.checks.helperTracking,'tracking controls present')
+else
+  assert(not BuffTap.buffsHelpersView and f.buffContent:IsShown() and not f.helpersPane:IsShown(),'full layout keeps the buff list')
+  for _,b in pairs(g.buttons) do assert(b:IsShown(),'pills shown') end
+  assert(g.helpers:IsShown(),'tab shown')
+end
+""")
+
+# 1.28.1 talent probe: the Full check-up reports what the client offers, without raising.
+test('Spec probe reports missing talent calls without error',RECORD+"""
+local lines=BuffTap:SpecProbeLines(); local text=table.concat(lines,'\\n')
+assert(text:find('Read%-only probe'),'header'); assert(text:find('C_SpecializationInfo.GetActiveSpecGroup'),'lists active group call')
+assert(text:find('Events seen this session'),'lists events')
+local check=table.concat(BuffTap:CheckupLines(),'\\n'); assert(check:find('== Talents and spec =='),'in the full check-up')
+""")
+test('Spec probe reads spec groups and records events',RECORD+"""
+function GetNumSpecGroups() return 2 end
+C_SpecializationInfo=C_SpecializationInfo or {}
+function C_SpecializationInfo.GetActiveSpecGroup() return 2 end
+function C_SpecializationInfo.GetSpecialization(_,_,group) return group==1 and 1 or 3 end
+function C_SpecializationInfo.GetSpecializationInfo(index) return 260+index,'Spec'..index,'a','b','DAMAGER' end
+function C_SpecializationInfo.GetCombatConfigIDForSpecGroup(group) return 900+group end
+local text=table.concat(BuffTap:SpecProbeLines(),'\\n')
+assert(text:find('GetNumSpecGroups = 2'),text); assert(text:find('GetActiveSpecGroup = 2'),text)
+assert(text:find('Group 1: spec index 1 = 261, Spec1, DAMAGER'),text); assert(text:find('Group 2: spec index 3 = 263, Spec3'),text)
+assert(text:find('config 902'),text)
+""")

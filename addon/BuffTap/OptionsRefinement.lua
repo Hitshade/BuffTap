@@ -548,11 +548,11 @@ function B:RefineNearbyPage(ui,tabs)
   f.nearbyFavor:HookScript("OnEnter",function(s) T.Tooltip(s,B:Text("Return the favor"),B:Text("Someone who buffed you in the last five minutes moves to the top of the list, below cleanses, when they need your buff or theirs is a quarter gone. A buff that answers one of yours does not count, and each player moves up at most once per half hour.")) end)
   f.nearbyFavor:HookScript("OnLeave",function() if GameTooltip then GameTooltip:Hide() end end)
   -- How it works: the same drawn guide as the first-time introduction.
-  f.nearbyGuideCard=section(ui,p,"How Nearby works",12,-306,692,418)
-  local guide=CreateFrame("Frame",nil,p); guide:SetPoint("TOPLEFT",26,-346); guide:SetSize(664,366)
+  f.nearbyGuideCard=section(ui,p,"How Nearby works",12,-296,692,424)
+  local guide=CreateFrame("Frame",nil,p); guide:SetPoint("TOPLEFT",26,-336); guide:SetSize(664,366)
   f.nearbyGuide=guide; self:DrawNearbyGuide(guide,664)
   -- The tutorial starts folded away; the choice is remembered.
-  f.nearbyGuideToggle=ui.button(p,"Show",588,-316,104,function() B.db.nearbyGuideOpen=not B.db.nearbyGuideOpen; B:UpdateClassAwarePages() end)
+  f.nearbyGuideToggle=ui.button(p,"Show",588,-306,104,function() B.db.nearbyGuideOpen=not B.db.nearbyGuideOpen; B:UpdateClassAwarePages() end)
   f.nearbyClassHint=ui.label(p,"Your class can browse players, send invitations and request buffs here.",374,-150,"GameFontDisableSmall",294)
   self:BuildNearbyAppearance(ui,f.appearancePanes.nearby)
 end

@@ -1480,6 +1480,7 @@ B.Locales.frFR["Pet, Healthstone, Soulstone and tracking. These apply in every s
 B.Locales.frFR["Oath and tracking. These apply in every setup."]="Serment et pistage. Valable pour toutes les configurations."
 B.Locales.frFR["Pet and tracking. These apply in every setup."]="Familier et pistage. Valable pour toutes les configurations."
 B.Locales.frFR["Tracking reminders. These apply in every setup."]="Rappels de pistage. Valable pour toutes les configurations."
+B.Locales.frFR["This class has no aura buffs to remind. Tracking is below."]="Cette classe n'a aucun buff d'aura à rappeler. Le pistage est ci-dessous."
 B.Locales.frFR["These settings moved to My buffs, on the %s tab."]="Ces réglages sont maintenant dans Mes améliorations, onglet %s."
 B.Locales.frFR["Open in My buffs"]="Ouvrir dans Mes améliorations"
 B.Locales.frFR["Settings for your class and for tracking. They apply in every setup, so Solo, Party and Raid never change them."]="Réglages de votre classe et du pistage. Ils valent pour toutes les configurations : Solo, Groupe et Raid ne les modifient jamais."

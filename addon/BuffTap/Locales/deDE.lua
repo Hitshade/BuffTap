@@ -1631,6 +1631,7 @@ B.Locales.deDE["Pet, Healthstone, Soulstone and tracking. These apply in every s
 B.Locales.deDE["Oath and tracking. These apply in every setup."]="Eid und Tracking. Gilt in jeder Konfiguration."
 B.Locales.deDE["Pet and tracking. These apply in every setup."]="Begleiter und Tracking. Gilt in jeder Konfiguration."
 B.Locales.deDE["Tracking reminders. These apply in every setup."]="Tracking-Erinnerungen. Gilt in jeder Konfiguration."
+B.Locales.deDE["This class has no aura buffs to remind. Tracking is below."]="Diese Klasse hat keine Aura-Buffs zum Erinnern. Tracking steht unten."
 B.Locales.deDE["These settings moved to My buffs, on the %s tab."]="Diese Einstellungen sind jetzt unter Meine Buffs auf dem Reiter %s."
 B.Locales.deDE["Open in My buffs"]="In Meine Buffs öffnen"
 B.Locales.deDE["Settings for your class and for tracking. They apply in every setup, so Solo, Party and Raid never change them."]="Einstellungen für deine Klasse und das Tracking. Sie gelten in jeder Konfiguration, Solo, Gruppe und Schlachtzug ändern sie nie."

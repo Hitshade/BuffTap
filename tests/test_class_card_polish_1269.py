@@ -29,6 +29,7 @@ if not B:NearbyCapabilities().actions then
  x,y=pos(f.nearbyMarkSocial); assert(x==374 and y==-140)
  x,y=pos(f.nearbyClassHint); assert(x==28 and y==-224 and f.nearbyClassHint.__draw.w==656)
  x,y=pos(f.nearbyGuideCard); assert(x==12 and y==-252)
+ B.db.nearbyGuideOpen=true; B:UpdateClassAwarePages(); do local gx,gy=pos(f.nearbyGuideCard); assert(-gy+f.nearbyGuideCard.__draw.h<=720,'open How Nearby works card reaches the footer: '..tostring(-gy+f.nearbyGuideCard.__draw.h)) end; B.db.nearbyGuideOpen=false; B:UpdateClassAwarePages()
  x,y=pos(f.nearbyGuide); assert(x==26 and y==-292)
 end
 B:Options()

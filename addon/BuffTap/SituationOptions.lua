@@ -61,8 +61,14 @@ function B:ClassHelpersLabel()
   return "Tracking"
 end
 
+-- A class with no aura buffs (Rogue, Warrior) has nothing on the buff list, so My buffs shows only its Tracking controls.
+function B:MyBuffsCompact()
+  return self.HasPersonalReminderBuffs~=nil and not self:HasPersonalReminderBuffs()
+end
+
 function B:ClassHelpersSummary()
   local class=self.ReadinessClass and self:ReadinessClass()
+  if self:MyBuffsCompact() then return "This class has no aura buffs to remind. Tracking is below." end
   if class=="WARLOCK" then return "Pet, Healthstone, Soulstone and tracking. These apply in every setup." end
   if class=="PALADIN" then return "Oath and tracking. These apply in every setup." end
   if class=="HUNTER" then return "Pet and tracking. These apply in every setup." end
@@ -90,6 +96,8 @@ end
 function B:UpdateContextControls()
   for category,group in pairs(self.contextControls or {}) do
     local context=self:EditorContext(category)
+    local compact=category=="buffs" and self:MyBuffsCompact()
+    if compact then self.buffsHelpersView=true end
     local helpers=category=="buffs" and group.helpers~=nil and self.buffsHelpersView==true
     for key,button in pairs(group.buttons) do B.OptionsTheme.Navigation(button,key==context and not helpers) end
     if group.helpers then
@@ -99,7 +107,15 @@ function B:UpdateContextControls()
     local custom=self:SituationValues(context,category)
     group.active:SetText(self:SituationBadge())
     group.reset:SetShown(context~="solo" and not helpers); group.reset:SetEnabled(context~="solo" and not A.Combat())
-    if helpers then group.status:SetText("") else group.status:SetText(self:Text(context=="solo" and "Solo preferences. Party and Raid follow unchanged settings." or custom and (context=="party" and "Applied automatically in a party. Other settings still follow Solo." or "Applied automatically in a raid. Other settings still follow Solo.") or (context=="party" and "Following Solo settings. Change a setting to customize Party." or "Following Solo settings. Change a setting to customize Raid."))) end
+    if compact then
+      -- Nothing to switch between: no Solo / Party / Raid, no tab strip. The Tracking controls fill the page.
+      for _,button in pairs(group.buttons) do button:Hide() end
+      group.helpers:Hide(); group.active:Hide(); group.reset:Hide(); group.status:SetText("")
+    elseif category=="buffs" then
+      for _,button in pairs(group.buttons) do button:Show() end
+      if group.helpers then group.helpers:Show() end
+    end
+    if compact then elseif helpers then group.status:SetText("") else group.status:SetText(self:Text(context=="solo" and "Solo preferences. Party and Raid follow unchanged settings." or custom and (context=="party" and "Applied automatically in a party. Other settings still follow Solo." or "Applied automatically in a raid. Other settings still follow Solo.") or (context=="party" and "Following Solo settings. Change a setting to customize Party." or "Following Solo settings. Change a setting to customize Raid."))) end
   end
   self:ApplyClassHelpersView()
 end

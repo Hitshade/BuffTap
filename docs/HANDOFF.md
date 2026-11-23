@@ -1,6 +1,6 @@
 # BuffTap handoff (shared by Claude and Codex)
 
-Last updated: 2026-11-22, preparing 1.28.0. Update this file at the end of each session or release.
+Last updated: 2026-11-22, 1.28.1 released (evening). Update this file at the end of each session or release.
 
 ## RULE 1: BuffTap is a WoW Forever-only addon
 - Client 1.60.1, interface 16001, Lua 5.1. The second value of `UnitName` is a surname (no realms). Buffs are hidden from addons in combat. No click-to-target on Nearby rows. Spell and item IDs follow Forever build 70888.
@@ -8,6 +8,7 @@ Last updated: 2026-11-22, preparing 1.28.0. Update this file at the end of each 
 - Commit identity: author name `Hitshade`, email `283539417+Hitshade@users.noreply.github.com` (GitHub's private address for the owner). Never use the owner's personal email or a made-up `noreply@users.noreply.github.com` address, which belongs to an unrelated GitHub account.
 
 ## Current state
+- 1.28.1 "Rogues, your Tracking is back" (2026-11-22): fixes the 1.28.0 regression where Rogues (no aura buffs) saw only the "No personal buff reminders" card on My buffs and could not reach Tracking (`B:MyBuffsCompact()`, compact page); taller How Nearby works card (424, kept clear of the footer); new read-only `SpecProbe.lua` (Full check-up section "Talents and spec"). Final full mocked run: 3,339 PASS, 0 FAIL. ZIP 145 files. DUAL SPEC IS PINNED: this client has no classic talent calls; it has `GetNumSpecGroups`, `C_SpecializationInfo.GetActiveSpecGroup`, `GetSpecialization(false,false,group)`, `GetCombatConfigIDForSpecGroup`, `C_ClassTalents`. Nothing is built until someone with two specs reports the probe output; see claude/NEXT-SESSION.md in the Claude project for the design thinking.
 - 1.28.0 "Class helpers move into My buffs" (prepared 2026-11-22, publication in progress; see DEVELOPMENT.md for the receipt): class readiness and tracking live on a My buffs tab (`f.helpersPane`, `B.buffsHelpersView`); Helpers page is four full-width cards; Solo thanks picture is faction-aware (`ThanksSceneHorde.tga`); full suite 3,319 PASS, 0 FAIL; ZIP 149 files, 2,847,625 bytes, SHA256 925a4fb8b6495dc5ba9b7d88661dbbd6cf97dd10f939d8ce73f1296352e0dc79.
 - Previous release: 1.27.1 "Ghosts of Nearby players past" (GitHub release 454103857, ZIP sha256 0cddef8f54cf8e77b8cb9197e322a25931e1c632839d06037cb1176e7ab5d0ca, 1,830,219 bytes, 142 files). CurseForge submitted as Release for 1.60.1 with automatic publication after approval; confirm it went live.
 - 1.27.0 "A fresh coat of paint" (options window redesign, Nearby open in combat by default) shipped the same day.
@@ -20,7 +21,7 @@ Last updated: 2026-11-22, preparing 1.28.0. Update this file at the end of each 
 2. Bump `addon/BuffTap/BuffTap.toc` and `Engine.lua` (`B.version`); versions in the three notes must agree.
 3. Write the three independent notes: `PatchNotes.lua` (players, exactly ten versions, no em dashes, light humour welcome), `CHANGELOG.md` (technical), `RELEASE-NOTES.md` (CurseForge, moderate).
 4. Run the full suite: `BT_KEEP_GOING=1 python3 tests/run_release.py` (about 10 minutes; needs `lupa==2.8`, Lua 5.1 for `luac -p`). Count PASS and FAIL lines.
-5. Build the ZIP: single top-level `BuffTap/` folder containing the files of `addon/BuffTap`, omitting the five unregistered sounds (BuffTapAmber, BuffTapRipple, BuffTapSilver, BuffTapSoftPluck, BuffTapWood .ogg). 149 files as of 1.28.0. Record size and SHA-256.
+5. Build the ZIP: single top-level `BuffTap/` folder containing the files of `addon/BuffTap`, omitting the five unregistered sounds (BuffTapAmber, BuffTapRipple, BuffTapSilver, BuffTapSoftPluck, BuffTapWood .ogg). 145 files as of 1.28.1. Record size and SHA-256.
 6. Commit, push to `main`, publish the GitHub release (tag `vX.Y.Z`, CHANGELOG text), upload to CurseForge (project 1710644, RELEASE-NOTES text), then record a publication receipt in `DEVELOPMENT.md`.
 7. Publish only when the owner says so.
 

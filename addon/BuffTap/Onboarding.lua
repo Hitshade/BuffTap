@@ -624,7 +624,7 @@ function B:DrawNearbyGuide(g,width)
     local label=g:CreateFontString(nil,"OVERLAY",T.fonts.Muted); label:SetPoint("LEFT",icon,"RIGHT",6,0); label:SetText(self:Text(spec[2]))
   end
   local note=g:CreateFontString(nil,"OVERLAY",T.fonts.Muted); note:SetWidth(290); note:SetJustifyH("LEFT"); note:SetWordWrap(true)
-  note:SetPoint("TOPLEFT",tagsTitle,"BOTTOMLEFT",0,-46); note:SetText(self:Text("With PvP protection on, flagged players are skipped."))
+  note:SetPoint("TOPLEFT",tagsTitle,"BOTTOMLEFT",0,-42); note:SetText(self:Text("With PvP protection on, flagged players are skipped."))
   -- The numbered key, left of the picture.
   local rx=0; local cw=PX-20; local last
   local function heading(label,gap)
@@ -653,9 +653,9 @@ function B:DrawNearbyGuide(g,width)
   end
   item(6,"Nothing needed",self:Text("A dash means that player already has what you can give."))
   local plates=g:CreateFontString(nil,"OVERLAY",T.fonts.Muted); plates:SetWidth(290); plates:SetJustifyH("LEFT"); plates:SetWordWrap(true)
-  plates:SetPoint("TOPLEFT",note,"BOTTOMLEFT",0,-12); plates:SetText(self:Text("Nearby needs friendly nameplates (normally Shift+V). Window size, text and position: Customization > Nearby window."))
+  plates:SetPoint("TOPLEFT",note,"BOTTOMLEFT",0,-8); plates:SetText(self:Text("Nearby needs friendly nameplates (normally Shift+V). Window size, text and position: Customization > Nearby window."))
   local combat=g:CreateFontString(nil,"OVERLAY",T.fonts.Muted); combat:SetWidth(290); combat:SetJustifyH("LEFT"); combat:SetWordWrap(true)
-  combat:SetPoint("TOPLEFT",plates,"BOTTOMLEFT",0,-8); combat:SetText(self:Text("Nearby stays open in combat, so invitations still work. You can change this under Customization > Nearby window."))
+  combat:SetPoint("TOPLEFT",plates,"BOTTOMLEFT",0,-6); combat:SetText(self:Text("Nearby stays open in combat, so invitations still work. You can change this under Customization > Nearby window."))
 end
 -- Why Nearby helps, worded for the player's class. Classes without a buff for others still get
 -- one-click invites and polite buff requests to Mages, Priests, Druids and Paladins around them.

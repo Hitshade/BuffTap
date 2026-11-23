@@ -1589,7 +1589,7 @@ function B:UpdateHelperOptions()
   f.readinessCard:SetHeight(readyHeight)
   local pane=self.options and self.options.helpersPane
   if pane then
-    local top=-62
+    local top=self.MyBuffsCompact and self:MyBuffsCompact() and -8 or -62 -- no tab strip above the pane when My buffs is compact
     f.readiness:ClearAllPoints(); f.readiness:SetPoint("TOPLEFT",pane,"TOPLEFT",0,top+374)
     local trackTop=(warlock or class=="HUNTER" or paladin) and (top-readyHeight-8) or top
     f.helperSections.tracking:ClearAllPoints(); f.helperSections.tracking:SetPoint("TOPLEFT",pane,"TOPLEFT",0,trackTop+458)
@@ -3564,7 +3564,7 @@ function B:UpdateClassAwarePages()
   end
   local function guideCard(y)
     local open=self.db.nearbyGuideOpen==true
-    movedCard(f.nearbyGuideCard,12,y,open and 418 or 52)
+    movedCard(f.nearbyGuideCard,12,y,open and 424 or 52)
     at(f.nearbyGuide,26,y-40); f.nearbyGuide:SetShown(open)
     if f.nearbyGuideToggle then
       at(f.nearbyGuideToggle,588,y-10); f.nearbyGuideToggle:SetText(self:Text(open and "Hide" or "Show"))
@@ -3584,7 +3584,7 @@ function B:UpdateClassAwarePages()
     f.pageHeaders[4].description:SetText(L("Browse nearby players, invite someone or ask for a buff."))
   else
     at(f.nearbyAll,374,-112); at(f.nearbyFullNames,374,-140); at(f.nearbyShowLevel,540,-140); at(f.nearbyMarkSocial,374,-168)
-    movedCard(f.nearbySettingsCard,12,-72,216); guideCard(-306)
+    movedCard(f.nearbySettingsCard,12,-72,216); guideCard(-296)
     local y=-112
     for _,spec in ipairs({{f.nearbyBuffing,c.buffs,26},{f.nearbyRankUpgrades,c.upgrades,26},
       {f.nearbyWhileResting,c.actions,26},{f.nearbyHoldShort,c.buffs and c.short,50},
@@ -3593,7 +3593,8 @@ function B:UpdateClassAwarePages()
     end
   end
   local personal=self:HasPersonalReminderBuffs()
-  for _,spec in ipairs({{1,personal,"No personal buff reminders for this class"},
+  -- My buffs is always available: the Class helpers / Tracking tab lives there for every class, even one with no aura buffs.
+  for _,spec in ipairs({{1,true,"No personal buff reminders for this class"},
       {3,#self:TargetAssignableBuffs()>0,"No friendly-target buffs for this class"}}) do
     local index,applicable,title=spec[1],spec[2],spec[3]; local page=f.pages[index]
     if not page.classEmpty then
