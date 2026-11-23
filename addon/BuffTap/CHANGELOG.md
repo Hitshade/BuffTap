@@ -10,10 +10,10 @@
 ### Added
 - SpecProbe.lua, a read-only probe for dual talent specs, added to the TOC after Extras.lua and reported in the Full check-up as "Talents and spec" (`B:SpecProbeLines()`, called from `CheckupLines()`). It reports `GetNumSpecGroups`, `C_SpecializationInfo.GetActiveSpecGroup`, `GetNumSpecializations`, `C_SpecializationInfo.GetSpecialization` (current), `CanPlayerUseTalentSpecUI`, `CanPlayerUseTalentUI`, `IsInitialized`, `GetNumUnspentTalents`, `C_ClassTalents.GetActiveConfigID`, and per spec group the spec index, spec id/name/role, `GetCombatConfigIDForSpecGroup` and the number of saved loadouts. It also registers talent and spec events (ACTIVE_TALENT_GROUP_CHANGED, PLAYER_TALENT_UPDATE, CHARACTER_POINTS_CHANGED, PLAYER_SPECIALIZATION_CHANGED, TALENT_GROUP_ROLE_CHANGED, ACTIVE_PLAYER_SPECIALIZATION_CHANGED, TRAIT_CONFIG_UPDATED) and lists which the client refused and which fired. Every call goes through `pcall` and a type check; nothing is written, no setting changes, and no spec feature exists yet. The classic calls (`GetNumTalentGroups`, `GetActiveTalentGroup`, `GetTalentTabInfo`) were checked on a single-spec Forever character and are absent from this client.
 - Text: one new string ("This class has no aura buffs to remind. Tracking is below.") with deDE, esES, frFR and ptBR translations.
-- Tests: tests/test_class_helpers_tab.py gains the compact-layout loop over the nine classes and two SpecProbe tests; tests/test_class_followup_1269.py now asserts My buffs stays open for every class; the Nearby guide height assertion in tests/test_polish_127.py is 442.
+- Tests: tests/test_class_helpers_tab.py gains the compact-layout loop over the nine classes and two SpecProbe tests; tests/test_class_followup_1269.py now asserts My buffs stays open for every class; the open-card height assertion in tests/test_polish_127.py is 424.
 
 ### Known limits
-- The compact Rogue page and the taller Nearby card are checked in the mocked suite; the owner looked at the Rogue page in the client during development. The SpecProbe has only been run (by the owner, as chat one-liners) on a character with one spec. Output on a character with two specs is still unknown, which is why nothing is built on it.
+- The compact Rogue page and the reworked Nearby guide card are checked in the mocked suite, and the owner looked at both in the client. The SpecProbe has only been run (by the owner, as chat one-liners) on a character with one spec. Output on a character with two specs is still unknown, which is why nothing is built on it.
 
 # BuffTap 1.28.0
 
