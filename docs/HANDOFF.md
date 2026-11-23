@@ -1,6 +1,6 @@
 # BuffTap handoff (shared by Claude and Codex)
 
-Last updated: 2026-11-22, 1.28.1 released (evening). Update this file at the end of each session or release.
+Last updated: 2026-11-22, 1.28.1 released (evening); see DEVELOPMENT.md for receipts. Update this file at the end of each session or release.
 
 ## RULE 1: BuffTap is a WoW Forever-only addon
 - Client 1.60.1, interface 16001, Lua 5.1. The second value of `UnitName` is a surname (no realms). Buffs are hidden from addons in combat. No click-to-target on Nearby rows. Spell and item IDs follow Forever build 70888.
