@@ -319,6 +319,14 @@ stock(13512,17628); bags[13512]=9; bagEvent(); BuffTap:Refresh(); BuffTap.db.hel
 local row=BuffTap.quickChoices.rows[1]; row.itemID=13512; row.scripts.OnClick(row); advance(.1)
 assert(BuffTap.supplyEntries[1].ids[1]==13512)
 ''')
+test('Quick item choice belongs to the spec you are in', flask+'''
+GetNumSpecGroups=function() return 2 end; C_SpecializationInfo=C_SpecializationInfo or {}; C_SpecializationInfo.GetActiveSpecGroup=function() return 1 end
+stock(13512,17628); bags[13512]=9; bagEvent(); BuffTap:Refresh(); BuffTap:SetSpecEnabled(true); BuffTap:SetEditSpec(2); BuffTap.db.helperQuick=true; BuffTap:ShowQuickChoices(BuffTap.action)
+local row=BuffTap.quickChoices.rows[1]; row.itemID=13512; row.scripts.OnClick(row)
+local one=BuffTap:SpecValues(1,'consumables'); assert(one and one.consumableChoices and one.consumableChoices.flask==13512)
+local two=BuffTap:SpecValues(2,'consumables'); assert(not (two and two.consumableChoices and two.consumableChoices.flask==13512))
+assert(BuffTap.db.consumableChoices.flask~=13512)
+''')
 test('Consumable master options removes disabled supply warnings', flask+'''
 bags[13510]=0; bagEvent(); assert(#BuffTap.supplyWarnings==1); BuffTap:Options()
 local c=BuffTap.options.consumablesEnable; c:SetChecked(false); c.scripts.OnClick(c)

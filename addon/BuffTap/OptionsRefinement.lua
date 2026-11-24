@@ -710,6 +710,7 @@ function B:StandardizeOptionsPages(ui,tabs)
         for _,group in pairs(self.contextControls or {}) do if group.category=="consumables" then
           for _,control in pairs(group.buttons) do reparent(control,canvas) end
           reparent(group.active,canvas); reparent(group.reset,canvas); reparent(group.status,canvas)
+          for _,control in ipairs({group.specCheck,group.specLabel,group.specButtons and group.specButtons[1],group.specButtons and group.specButtons[2]}) do if control then reparent(control,canvas) end end
         end end
         -- 1.24.4: the Buff items / Supplies tabs are gone, so the content moves up into their row.
         f.consumableBody:ClearAllPoints(); f.consumableBody:SetPoint("TOPLEFT",0,4); f.consumableBody:SetPoint("BOTTOMRIGHT",0,0)
@@ -751,6 +752,7 @@ function B:StandardizeOptionsPages(ui,tabs)
     for _,control in pairs(group.buttons) do reparent(control,page.refinedCanvas) end
     reparent(group.active,page.refinedCanvas); reparent(group.reset,page.refinedCanvas); reparent(group.status,page.refinedCanvas)
     if group.helpers then reparent(group.helpers,page.refinedCanvas) end
+    for _,control in ipairs({group.specCheck,group.specLabel,group.specButtons and group.specButtons[1],group.specButtons and group.specButtons[2]}) do if control then reparent(control,page.refinedCanvas) end end
   end
   local groupPage=f.pages[2]; local party=f.partyView or f.groupParty; local raid=f.raidView or f.groupRaid
   place(party,groupPage.refinedCanvas,18,-8,78,26); place(raid,groupPage.refinedCanvas,102,-8,78,26)

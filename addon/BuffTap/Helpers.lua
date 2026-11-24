@@ -156,7 +156,9 @@ function B:BeginHelperAttempt(action)
 end
 function B:CheckHelperBounce()
   local attempt=self.helperAttempt
-  if A.Combat() or not attempt or (not attempt.action.nearby and not self:HelperEnabled("helperBounce")) or GetTime()-attempt.at>0.5 then
+  -- The game's rejection comes back from the server, so allow for a slow reply: about one global cooldown.
+  -- A later click starts its own attempt, so a stale one is never reused.
+  if A.Combat() or not attempt or (not attempt.action.nearby and not self:HelperEnabled("helperBounce")) or GetTime()-attempt.at>1.5 then
     self.helperAttempt=nil; return
   end
   -- FAILED supplies the spell identity; UI_ERROR_MESSAGE supplies the reason.
@@ -168,8 +170,11 @@ function B:CheckHelperBounce()
 end
 function B:HandleHelperError(message)
   self:CastRetryError(message)
+  -- Another error in between (for example "not ready yet" from a repeated press) must not
+  -- cancel the wait: only the matching failure plus the stronger-effect reason counts, and
+  -- CheckHelperBounce drops the attempt once its window has passed.
   if not A.Text(message) or not A.Text(SPELL_FAILED_AURA_BOUNCED) or message~=SPELL_FAILED_AURA_BOUNCED then
-    self.helperAttempt=nil; return
+    return
   end
   if self.helperAttempt then self.helperAttempt.bounced=true end
   self:CheckHelperBounce()
@@ -429,7 +434,9 @@ function B:SoloThanksBlockReason()
   -- Mounting pauses buff actions, not thanks. Resting remains an independent thanks choice.
   if paused and paused~="mounted" and not (paused=="resting" and self.db.helperThanksResting) then return paused end
   if self.db.helperThanksResting~=true and A.Call(IsResting)==true then return "resting" end
-  if A.Call(IsInGroup)~=false or A.Call(IsInRaid)~=false or A.Call(IsInInstance)~=false then return "solo outdoor play required" end
+  if A.Call(IsInInstance)~=false then return "solo outdoor play required" end
+  -- Grouped outdoors: only with "Thank players outside my group", and then only for casters outside the group.
+  if (A.Call(IsInGroup)~=false or A.Call(IsInRaid)~=false) and self.db.helperThanksOutsiders~=true then return "solo outdoor play required" end
   if A.Call(UnitIsDeadOrGhost,"player")~=false then return "player dead or unavailable" end
   if type(IsStealthed)=="function" and A.Call(IsStealthed)~=false then return "stealthed or hiding state unavailable" end
   if type(UnitIsFeignDeath)=="function" and A.Call(UnitIsFeignDeath,"player")~=false then return "Feign Death or state unavailable" end
@@ -452,6 +459,32 @@ function B:ScheduleThanksSettle()
     B.helperThankRetryPending=nil
     if B:SoloThanksAllowed() then B:ObserveSoloThanks() end
   end)
+end
+-- Is this caster in your party or raid? true = yes, false = no (or you are not grouped), nil = cannot be told.
+-- Callers treat anything but false as "do not thank": an unreadable roster never produces a thank-you.
+function B:ThanksInGroup(guid)
+  local inGroup,inRaid=A.Call(IsInGroup),A.Call(IsInRaid)
+  if inGroup==false and inRaid==false then return false end
+  if inGroup~=true and inRaid~=true then return nil end
+  if not A.Text(guid) then return nil end
+  local raid=inRaid==true
+  local units={"player"}
+  for i=1,raid and 40 or 4 do units[#units+1]=(raid and "raid" or "party")..i end
+  local unreadable=false
+  for _,unit in ipairs(units) do
+    local exists=A.Call(UnitExists,unit)
+    if exists==true then
+      local id=A.Call(UnitGUID,unit)
+      if not A.Text(id) then unreadable=true elseif id==guid then return true end
+    elseif exists==nil then unreadable=true end
+  end
+  if unreadable then return nil end
+  return false
+end
+local function groupBlock(guid)
+  local inside=B:ThanksInGroup(guid)
+  if inside==true then return "caster is in your group" end
+  if inside==nil then return "group membership unavailable" end
 end
 local function thankName(unit)
   local ok,name,second=pcall(UnitName,unit)
@@ -485,6 +518,7 @@ local function thankRecipient(source)
   if not name then return nil,"caster name unavailable: "..source,true end
   if name==thankName("player") then return nil,nil,false end
   if ignoredProvider(source,guid,name) then return nil,"provider is ignored",false end
+  local blocked=groupBlock(guid); if blocked then return nil,blocked,false end
   return {unit=source,guid=guid,name=name,key=guid and ("guid:"..guid) or ("name:"..name),nameKey="name:"..name,identity="source unit"}
 end
 function B:FindCasterUnit(guid,spellID)
@@ -534,6 +568,7 @@ function B:ThanksAuraRecipient(aura,cache)
   if not A.Text(own) then return nil,"player GUID unavailable",true end
   if guid==own or not guid:match("^Player%-") then return nil,nil,false end
   if ignoredProvider(nil,guid) then return nil,"provider is ignored",false end
+  local blocked=groupBlock(guid); if blocked then return nil,blocked,false end
   local found=cache[guid]
   if found==nil then found=self:FindCasterUnit(guid,aura.spellId) or false; cache[guid]=found end
   if found then
@@ -634,6 +669,8 @@ function B:DispatchSoloThanks()
         and (not candidate.guid or A.Call(UnitGUID,candidate.unit)==candidate.guid)
       if ignoredProvider(candidate.unit,candidate.guid,candidate.name) then
         self.helperThankStatus="Skipped thanks: provider is ignored"
+      elseif groupBlock(candidate.guid) then
+        self.helperThankStatus="Skipped thanks: "..groupBlock(candidate.guid)
       elseif held then
         if candidate.resolution then candidate.resolution.outcome="emote attempted" end
         local emote=C_ChatInfo and C_ChatInfo.PerformEmote or DoEmote

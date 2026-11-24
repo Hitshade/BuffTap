@@ -1,3 +1,23 @@
+# BuffTap 1.29.0
+
+### Added
+- Dual spec. One per-character switch, "Different settings per spec", on My buffs, Weapons and Consumables, with Spec 1 and Spec 2 pills keyed to the spec group number (`GetNumSpecGroups`, `C_SpecializationInfo.GetActiveSpecGroup`, read on every refresh; the spec index is not trusted). A green dot marks the active spec. While the switch is on, every edit on those pages goes to the spec shown; Solo, Party and Raid still apply underneath. Storage is `db.situationSettings.spec = {enabled, [1], [2]}` layered on top of the situation result in every context; "default" in a spec value falls back to the situation value, and explicit values are never removed for equalling the base.
+- Scope: every My buffs on/off row (`buffs` map), shield charge refresh (`buffCharges` for Lightning and Water Shield), the whole Weapons page and the whole Consumables page, for all nine classes. Shared across specs: buff timers, priorities and everything else. Rows show a "Spec N" tag (either-or families: mage armor, seals, paladin auras, shields, aspects, demon armor) or "Differs from Spec N" (other rows, Consumables).
+- The row shows for every character. With one spec group the active spec reads as Spec 1 and Spec 2 edits are stored and applied once dual spec is learned. If the group cannot be read, no spec layer is applied.
+- New code: `B:SpecGroup`, `SpecEnabled`, `ActiveSpec`, `EditSpec`, `SpecValues`, `SpecApplies`, `SpecRoutes`, `SpecDiffers`, `SpecTag`, `SetSpecEnabled`, `SetEditSpec`, `SetSpecValue` (Situations.lua); bar in SituationOptions.lua (controls set `visualInsetX` so the card inset leaves them alone); `SituationPreview(context,category,spec)`; Catalog.lua keeps `coverageFamily`.
+- Solo thanks: new "Thank players outside my group" switch (`helperThanksOutsiders`, default off, needs the first switch; shared across profiles). In a group outdoors it thanks casters outside the group only. `B:ThanksInGroup(guid)` is false when ungrouped, nil when the roster or GUID is unreadable and true for a member; nil blocks (fail closed). Checked at capture, at dispatch and for manual thank-yous (also re-checked when the manual thank-you is sent). Never in instances or combat; ignored players are still skipped. Thanks diagnostics reports the setting.
+- Quick item choice (main-icon popup) now writes to the spec you are in when the switch is on.
+- Text: new strings with deDE, esES, frFR and ptBR translations (author's own, not reviewed by a native speaker).
+- Tests: tests/test_dualspec.py (58) and tests/test_thanks_outsiders.py (about 20), plus quick-choice, Nearby bounce and manual-thanks coverage.
+
+### Fixed
+- Nearby: a stronger-effect failure ("A more powerful spell is already active") did not always clear the person, so BuffTap retried several times. `CheckHelperBounce` now allows 1.5 s (was 0.5 s) between the click and the failure, and `HandleHelperError` no longer cancels the wait on an unrelated error message.
+
+### Known limits
+- Dual spec has only been checked in the mocked suite and on single-spec characters in the client. Whether the game fires an event on a spec switch, and what a switch looks like in between, is unknown, so the spec is read on every refresh.
+- Outsider thanks depends on the game exposing who cast a stranger's buff while you are grouped. If it does not, nobody is thanked.
+- The Nearby fix is covered by tests but has not been seen with a real stronger-buff failure in the client.
+
 # BuffTap 1.28.1
 
 ### Fixed

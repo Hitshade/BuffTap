@@ -7,7 +7,7 @@ local shared={nearbyInCombat=true,nearbyInCombatRule=true,manualThanks=true,than
   showBuffName=true,showTargetName=true,showTimer=true,showGroupBadge=true,labelFont=true,labelColor=true,
   manualConsumablesDetached=true,manualConsumablesX=true,manualConsumablesY=true,
   sound=true,combatExpiry=true,buffQueue=true,reminderSound=true,alertSoundVersion=true,campAlertSound=true,supplySound=true,soundChannel=true,soundInterval=true,
-  pvpProtection=true,pauseResting=true,helperDismiss=true,helperBounce=true,helperThanks=true,helperThankEmote=true,helperThanksResting=true,nearbyRequests=true,nearbyButtonSide=true,requestMessage=true,requestBuffs=true,
+  pvpProtection=true,pauseResting=true,helperDismiss=true,helperBounce=true,helperThanks=true,helperThankEmote=true,helperThanksResting=true,helperThanksOutsiders=true,nearbyRequests=true,nearbyButtonSide=true,requestMessage=true,requestBuffs=true,
   helperQuick=true,helperDiscovery=true,minimap=true,brokerEnabled=true,
   -- Supplies reminder look and position (shared like the camping reminder's).
   supplySize=true,supplyOpacity=true,supplyX=true,supplyY=true,supplyShowName=true,supplyShowCount=true,supplyTextFont=true,

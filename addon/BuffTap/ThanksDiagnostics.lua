@@ -90,7 +90,7 @@ function B:SoloThanksDiagnostics()
   local profile=self.profileDB and A.Call(self.profileDB.GetCurrentProfile,self.profileDB)
   if A.Text(profile) and self.RememberReportName then self:RememberReportName(profile) end
   out[#out+1]="Thanks context: class="..tostring((A.Class("player"))).." | level="..tostring(A.Call(UnitLevel,"player")).." | profile="..(A.Text(profile) and profile or "unavailable")
-  out[#out+1]="Thanks settings: enabled="..tostring(d.helperThanks==true).." | while resting="..tostring(d.helperThanksResting==true).." | emote="..tostring(self:SoloThankEmote()).." | delay="..tostring(d.helperThankDelay).." | resting="..tostring(A.Call(IsResting))
+  out[#out+1]="Thanks settings: enabled="..tostring(d.helperThanks==true).." | while resting="..tostring(d.helperThanksResting==true).." | outsiders in group="..tostring(d.helperThanksOutsiders==true).." | emote="..tostring(self:SoloThankEmote()).." | delay="..tostring(d.helperThankDelay).." | resting="..tostring(A.Call(IsResting))
   out[#out+1]="Thanks now: block="..tostring(self:SoloThanksBlockReason() or "none").." | casting="..activity(UnitCastingInfo).." | channeling="..activity(UnitChannelInfo).." (observations, not extra gates)"
   out[#out+1]="Thanks status changed: "..age(self.thanksStatusAt).." | last observation: "..age(self.thanksObservedAt)
   local pending,oldest,known=0,0,0

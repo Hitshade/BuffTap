@@ -59,6 +59,9 @@ import test_corrections11611
 import test_camping
 import test_options1170
 import test_situations
+import test_dualspec
+import test_thanks_outsiders
+import test_reachability
 print('TOTAL',len(__import__('test_bufftap').tests))
 import test_group_contexts
 import test_pr6_adaptation

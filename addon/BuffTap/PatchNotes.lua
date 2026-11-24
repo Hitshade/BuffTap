@@ -2,6 +2,11 @@
 local _,B=...
 -- Keep the ten most recent releases within a 24 KiB content ceiling.
 B.PatchNotes={
+ {version="1.29.0",title="Two specs, two setups",items={
+  "If your character has dual spec, My buffs, Weapons and Consumables can now keep a separate set of choices for each spec. Turn on Different settings per spec, then pick Spec 1 or Spec 2 to set that one up. BuffTap follows the spec you are in, in Solo, Party and Raid, and a green dot marks it. It covers which buffs to keep up, weapon imbues, oils and stones, and consumables, for every class. Timers for buffs and everything else stay shared.",
+  "You do not need dual spec to prepare Spec 2. The switch is there from the start, so you can set it up before you learn dual spec. We could not test this on a character with two specs, so tell us how it goes.",
+  "Solo thanks can now thank players who are not in your group. Turn on Thank players outside my group on the Helpers page. It works outdoors only, never in instances or combat, and your own party or raid members are never thanked. If it misses a stranger who buffed you while you were grouped, a report would help.",
+  "Nearby gives up on a player sooner when a stronger buff is already on them. A cast that fails for that reason no longer leaves the row nagging you or trying again several times."}},
  {version="1.28.1",title="Rogues, your Tracking is back",items={
   "Since 1.28.0, a Rogue opening My buffs found only a note that the class has no buffs to remind, and the Tracking settings had no way in. My buffs now opens straight to Tracking for Rogues, and for any class with no personal buffs, without an empty buff list or Solo, Party and Raid buttons that do not apply.",
   "The Full check-up on Diagnostics has a new Talents and spec section. It only reads information and changes nothing. We are looking into settings that follow your talent spec, so a report from a character with two specs is welcome."}},
@@ -36,8 +41,6 @@ B.PatchNotes={
  {version="1.26.11",title="Reminders that make room",items={
   "Reminders now sit below ordinary game windows by default. Under Customization, Buff reminder, Camping and Supplies each offer Keep above other windows. Nearby keeps its own switch.",
   "The main reminder's choice also covers queue icons, consumable icons and combat expiry warnings. Settings and popup menus stay easy to reach."},thanks="Thanks to WareWolf44 for the layering feedback."},
- {version="1.26.10",title="A quieter Warrior reminder",items={
-  "Battle Shout stays out of sight when you lack rage. Its normal reminder returns when you can cast it. Mana reminders are unchanged."},thanks="Thanks to ichkruchka for the Warrior feedback."},
 }
 function B:PatchNotesUnread()
   return self.profileDB and self.db.optionsPatchDot~=false and self.profileDB.global.patchNotesSeen~=self.version

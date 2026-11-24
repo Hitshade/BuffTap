@@ -1,3 +1,20 @@
+# BuffTap 1.29.0
+
+### Separate settings for each spec
+If your character has dual spec, My buffs, Weapons and Consumables can now keep a different set of choices for each spec. Turn on **Different settings per spec** at the top of any of those pages, then pick **Spec 1** or **Spec 2** to set that one up. BuffTap follows the spec you are in, in Solo, Party and Raid, and a green dot shows which one that is. A tank, a healer and a damage dealer can now keep up different buffs, imbues, oils, stones and consumables. Works for every class.
+
+You can set up Spec 2 before you learn dual spec. Buff timers and the rest of your settings stay shared between specs.
+
+We could not test this on a character with two specs, so reports are very welcome.
+
+### Thank players outside your group
+Solo thanks has a new switch, **Thank players outside my group**, on the Helpers page. It thanks strangers who buff you while you are grouped outdoors. Your own party and raid members are never thanked, and nothing happens in instances or combat. It is off by default.
+
+### Nearby and stronger buffs
+When a Nearby cast fails because a stronger buff is already active, the person is now cleared right away instead of BuffTap trying several more times.
+
+Your saved settings carry over untouched. The new translations were written without a native review, so corrections are welcome.
+
 # BuffTap 1.28.1
 
 ### Rogues can reach Tracking again

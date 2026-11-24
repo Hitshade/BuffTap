@@ -97,7 +97,7 @@ for _,b in ipairs(B.Buffs) do
   if b.kind=="aspect" or b.kind=="aura" or untilCancelled[b.key] then b.noTimer=true; b.permanent=true end
 end
 for _,definition in ipairs(B.Buffs) do
-  if definition.coverage then definition.covers=coverage[definition.coverage]; definition.coverage=nil end
+  if definition.coverage then definition.covers=coverage[definition.coverage]; definition.coverageFamily=definition.coverage; definition.coverage=nil end
 end
 B.RankLevel={
   [5225]=32,

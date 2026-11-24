@@ -220,14 +220,14 @@ BuffTap:BeginHelperAttempt(BuffTap.action); BuffTap:HandleHelperError(SPELL_FAIL
 assert(not BuffTap.helperDismissed)
 BuffTap:HandleHelperFailure(999); assert(not BuffTap.helperDismissed and not BuffTap.helperAttempt)
 BuffTap:BeginHelperAttempt(BuffTap.action); BuffTap:HandleHelperFailure(BuffTap.action.id)
-assert(not BuffTap.helperDismissed); BuffTap:HandleHelperError('Other error'); assert(not BuffTap.helperAttempt)
+assert(not BuffTap.helperDismissed); BuffTap:HandleHelperError('Other error'); assert(BuffTap.helperAttempt and not BuffTap.helperDismissed)
 BuffTap:BeginHelperAttempt(BuffTap.action); BuffTap:HandleHelperError(SPELL_FAILED_AURA_BOUNCED)
 BuffTap:HandleHelperFailure(BuffTap.action.id); advance(.1); assert(BuffTap.action.key=='thorns')
 """)
 test('Late and interrupted failures cannot suppress reminders', """
 BuffTap.db.helperBounce=true; SPELL_FAILED_AURA_BOUNCED='Stronger effect'
 BuffTap:BeginHelperAttempt(BuffTap.action); BuffTap:HandleHelperError(SPELL_FAILED_AURA_BOUNCED)
-now=now+1; BuffTap:HandleHelperFailure(BuffTap.action.id); assert(not BuffTap.helperDismissed)
+now=now+2; BuffTap:HandleHelperFailure(BuffTap.action.id); assert(not BuffTap.helperDismissed)
 BuffTap:BeginHelperAttempt(BuffTap.action)
 BuffTap.events.scripts.OnEvent(nil,'UNIT_SPELLCAST_INTERRUPTED','player','cast',BuffTap.action.id)
 BuffTap:HandleHelperFailure(BuffTap.action.id); BuffTap:HandleHelperError(SPELL_FAILED_AURA_BOUNCED)

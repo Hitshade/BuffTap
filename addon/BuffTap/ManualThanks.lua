@@ -55,6 +55,7 @@ end
 function B:OfferManualThanks(aura)
   if not self:ManualThanksAllowed() or not A.Text(aura.casterGUID) then return end
   local guid=aura.casterGUID
+  if self:ThanksInGroup(guid)~=false then return end -- grouped: only casters confirmed outside the group
   if (self.manualThanksDismissed or {})[guid] and self.manualThanksDismissed[guid]>GetTime() then return end
   local name=self:ManualThanksName(guid)
   local buff=A.Text(aura.name) and aura.name or A.Call(C_Spell and C_Spell.GetSpellName,aura.spellId)
@@ -74,6 +75,7 @@ end
 function B:SendManualThanks(entry)
   if not entry or not self:ManualThanksAllowed() or self.action then return false end
   if not self.manualThanksQueue or self.manualThanksQueue[entry.guid]~=entry or GetTime()-entry.at>=15 then return false end
+  if self:ThanksInGroup(entry.guid)~=false then self:DropManualThanks(entry.guid); return false end -- invited into the group since the offer
   if self:ManualThanksName(entry.guid)~=entry.name then self:DropManualThanks(entry.guid); return false end
   local text=self:ManualThanksText(entry); local send=C_ChatInfo and C_ChatInfo.SendChatMessage or SendChatMessage
   if not text or type(send)~="function" then return false end

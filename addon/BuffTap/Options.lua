@@ -1339,18 +1339,24 @@ function B:BuildHelperPage(parent)
     B.db.helperThanks=c:GetChecked()==true; B.helperThankSeen=nil; B:ObserveSoloThanks(true)
     B:RequestRefresh("solo thanks",0); B:Options()
   end)
-  addHelp(f.checks.helperThanks,L("Solo thanks"),L("Thanks identified solo buff providers. Never in groups, instances or combat. Emotes are spaced one second apart, with a one-minute cooldown per player."))
-  f.thanksResting=check(th,L("Keep thanking while resting"),248,-170,function(c)
+  addHelp(f.checks.helperThanks,L("Solo thanks"),L("Thanks identified buff providers while you play solo. Never in instances or combat. Emotes are spaced one second apart, with a one-minute cooldown per player."))
+  f.thanksOutsiders=check(th,L("Thank players outside my group"),248,-166,function(c)
+    if A.Combat() then return end
+    B.db.helperThanksOutsiders=c:GetChecked()==true; B.helperThankSeen=nil; B:ObserveSoloThanks(true)
+    B:RequestRefresh("outsider thanks",0); B:Options()
+  end)
+  addHelp(f.thanksOutsiders,L("Thank players outside my group"),L("In a party or raid outdoors, thank buffs from players who are not in your group. Group members are never thanked. Needs the first switch. Never in instances or combat."))
+  f.thanksResting=check(th,L("Keep thanking while resting"),248,-194,function(c)
     if A.Combat() then return end
     B.db.helperThanksResting=c:GetChecked()==true; B.helperThankSeen=nil; B:ObserveSoloThanks(true); B:Options()
   end)
   addHelp(f.thanksResting,L("Keep thanking while resting"),L("Thanks continue in cities and inns even when Pause reminders while resting is on."))
-  f.manualThanks=check(th,L("Offer a manual thank-you"),248,-202,function(c)
+  f.manualThanks=check(th,L("Offer a manual thank-you"),248,-222,function(c)
     if A.Combat() then return end
     B.db.manualThanks=c:GetChecked()==true; B:UpdateManualThanks(); B:Options()
   end)
   addHelp(f.manualThanks,"Offer a manual thank-you","If an incoming buff giver cannot be reached for automatic thanks, offer a thank-you whisper once their full name is known. Appears when no buff action is ready, expires after 15 seconds, and follows Keep thanking while resting. Works while mounted. Use your regular BuffTap binding or click to send; right-click to dismiss this thank-you.")
-  f.thankMessage=editbox(th,248,-260,358,false); f.thankMessage:SetFontObject(T.fonts.Small); f.thankMessage:SetJustifyH("LEFT"); f.thankMessage:SetMaxLetters(180)
+  f.thankMessage=editbox(th,248,-268,358,false); f.thankMessage:SetFontObject(T.fonts.Small); f.thankMessage:SetJustifyH("LEFT"); f.thankMessage:SetMaxLetters(180)
   f.thankMessage:SetScript("OnEnterPressed",function(control)
     local ok,why=B:SetManualThanksMessage(control:GetText())
     if not ok and why then B.Print(why) end
@@ -1361,14 +1367,14 @@ function B:BuildHelperPage(parent)
     T.Tooltip(control,L("Thank-you whisper"),L("Use %s for the buff name. Press Enter to save.","%s"))
   end)
   f.thankMessage:SetScript("OnLeave",function() if GameTooltip then GameTooltip:Hide() end end)
-  f.thankMessageReset=button(th,L("Reset"),614,-258,76,function()
+  f.thankMessageReset=button(th,L("Reset"),614,-266,76,function()
     if A.Combat() then return end
     B:SetManualThanksMessage(""); B:Options()
   end)
   addHelp(f.thankMessageReset,"Reset thank-you message","Restores the default thank-you message.")
   label(th,L("Solo response emote"),500,-134,"GameFontHighlightSmall",192)
   label(th,L("Delay"),500,-186,"GameFontHighlightSmall",190)
-  label(th,L("Thank-you message"),250,-242,"GameFontHighlightSmall",440)
+  label(th,L("Thank-you message"),250,-250,"GameFontHighlightSmall",440)
   f.thankDelay=selector(th,"",500,-202,190,function() return B:ThankDelayChoices() end,function(v) B.db.helperThankDelay=v; B:Options() end)
   addHelp(f.thankDelay,L("Delay"),L("Wait a moment before thanking, so it feels less automatic."))
   f.thankEmote=selector(th,"",500,-150,190,function() return B:SoloThankEmotes() end,function(choice)
@@ -1604,6 +1610,7 @@ function B:UpdateHelperOptions()
   if not f.requestMessage:HasFocus() then f.requestMessage:SetText(self.db.requestMessage~="" and self.db.requestMessage or self:Text("Hi! Could I get %s, please? Thank you!")) end
   for key,c in pairs(f.requestChecks) do c:SetChecked(self:RequestEnabled(self:FindBuff(key) or {key=key})); c:SetEnabled(self.db.nearbyRequests==true) end
   f.thanksResting:SetChecked(self.db.helperThanksResting==true)
+  if f.thanksOutsiders then f.thanksOutsiders:SetChecked(self.db.helperThanksOutsiders==true); f.thanksOutsiders:SetEnabled(self.db.helperThanks==true) end
   if f.manualThanks then
     f.manualThanks:SetChecked(self.db.manualThanks==true); f.manualThanks:SetEnabled(self.db.helperThanks==true)
     if not f.thankMessage:HasFocus() then f.thankMessage:SetText(self:ManualThanksTemplate()) end
@@ -1729,7 +1736,9 @@ function B:ShowQuickChoices(action,page)
     for i=1,6 do
       local row=flatButton(f,"",12,-34-(i-1)*28,274,function(s)
         if A.Combat() or not s.itemID then return end
-        if f.situation then B:SetSituationValue(f.situation,"consumables","consumableChoices",s.itemID,f.family.key)
+        -- With separate spec settings on, a quick pick belongs to the spec you are in, not the shared base or the spec being edited.
+        if B:ActiveSpec() then B:SetSpecValue(B:ActiveSpec(),"consumables","consumableChoices",s.itemID,f.family.key)
+        elseif f.situation then B:SetSituationValue(f.situation,"consumables","consumableChoices",s.itemID,f.family.key)
         else B:SetConsumableChoice(f.family,s.itemID) end
         f:Hide(); B:RequestRefresh("quick item choice",0)
       end)
@@ -1740,7 +1749,7 @@ function B:ShowQuickChoices(action,page)
     end
     button(f,"<",12,-210,34,function() B:ShowQuickChoices(B.action,(f.page or 1)-1) end)
     button(f,">",52,-210,34,function() B:ShowQuickChoices(B.action,(f.page or 1)+1) end)
-    button(f,"All items",92,-210,92,function() f:Hide(); B:ChooseConsumable(f.family,nil,f.situation) end)
+    button(f,"All items",92,-210,92,function() f:Hide(); if B:ActiveSpec() then B.editSpec=nil; f.situation=f.situation or B.situationCurrent end; B:ChooseConsumable(f.family,nil,f.situation) end)
     button(f,L("Close"),192,-210,94,function() f:Hide() end)
   end
   local choices={}
@@ -2043,7 +2052,7 @@ function B:Options()
     local child=CreateFrame("Frame",nil,scroll); child:SetSize(692,1); scroll:SetScrollChild(child); f.buffChild=child; f.buffRows={}
 
     f.emptyBuffs=label(child,"No supported aura buffs for this class.",8,-12,"GameFontDisableSmall",610)
-    self:BuildContextControls(buffsPage,"buffs",{label=label,flatButton=flatButton,button=button,addHelp=addHelp})
+    self:BuildContextControls(buffsPage,"buffs",{label=label,flatButton=flatButton,button=button,addHelp=addHelp,check=check})
     local weapons=panel(f); f.pages[TAB.Weapons]=weapons
     local weaponsPage=weapons; weapons=CreateFrame("Frame",nil,weaponsPage); f.weaponContent=weapons; weapons:SetPoint("TOPLEFT",0,-60); weapons:SetPoint("BOTTOMRIGHT",0,0)
     f.weaponAppCard=card(weapons,12,-50,698,50); f.weaponClassCard=card(weapons,12,-116,698,110); f.coatingCard=card(weapons,12,-242,698,124); f.weaponTimingCard=card(weapons,12,-378,698,140)
@@ -2112,7 +2121,7 @@ function B:Options()
     -- Width stops short of the Retry reminders button to its right.
     f.weaponStatus=label(weapons,"",18,-550,"GameFontHighlightSmall",500)
     f.weaponUnavailable=label(weapons,"Class imbues are available to Rogues, Shamans and Mages.",18,-72,"GameFontDisableSmall",660)
-    self:BuildContextControls(weaponsPage,"weapons",{label=label,flatButton=flatButton,button=button,addHelp=addHelp})
+    self:BuildContextControls(weaponsPage,"weapons",{label=label,flatButton=flatButton,button=button,addHelp=addHelp,check=check})
     local timingLabel=buffs:CreateFontString(nil,"OVERLAY","GameFontNormal")
     timingLabel:SetPoint("BOTTOMLEFT",28,88); timingLabel:SetText(L("Default refresh timings")); f.timingLabel=timingLabel
     local timingHint=buffs:CreateFontString(nil,"OVERLAY","GameFontDisableSmall")
@@ -2363,7 +2372,7 @@ function B:Options()
         end
       end)
       row.icon=row:CreateTexture(nil,"ARTWORK"); row.icon:SetSize(30,30); row.icon:SetPoint("TOPLEFT",42,-8); row.icon:SetTexture(134400)
-      row.name=label(row,family.name,82,-8,"GameFontHighlight",210)
+      row.name=label(row,family.name,82,-8,"GameFontHighlight",210); row.name:SetWordWrap(false)
       row.auto=flatButton(row,L("Auto"),300,-5,62,function() if B:SetConsumableMode(family,"auto") then B:Options() end end)
       row.manual=flatButton(row,L("Manual"),366,-5,68,function() if B:SetConsumableMode(family,"manual") then B:Options() end end)
       row.auto:SetHeight(22); row.manual:SetHeight(22)
@@ -2399,7 +2408,7 @@ function B:Options()
     addHelp(f.consumeRetry,L("Retry reminders"),L("Restarts item loading and paused consumable reminders. Changed item effects remain blocked."))
     f.consumePauseStatus=label(consume,"",186,consumeFooterY-53,"GameFontHighlightSmall",496)
 
-    self:BuildContextControls(consumePage,"consumables",{label=label,flatButton=flatButton,button=button,addHelp=addHelp})
+    self:BuildContextControls(consumePage,"consumables",{label=label,flatButton=flatButton,button=button,addHelp=addHelp,check=check})
 
     -- CAMPING PAGE
     local camping=panel(f); f.pages[TAB.Camping]=camping; f.campingPage=camping; f.campingTab=TAB.Camping
@@ -2977,7 +2986,7 @@ function B:Options()
         if def and not A.Combat() then B.db.targetBuffs[def.key]=s:GetChecked()==true; B:InvalidateAura("target"); B:RequestRefresh("target buff toggle",0); B:Options() end
       end)
       row.icon=row:CreateTexture(nil,"ARTWORK"); row.icon:SetSize(32,32); row.icon:SetPoint("TOPLEFT",42,-8)
-      row.name=label(row,"",82,-6,"GameFontHighlightSmall",180)
+      row.name=label(row,"",82,-6,"GameFontHighlightSmall",180); row.name:SetWordWrap(false)
       row.detail=label(row,"",82,-24,"GameFontDisableSmall",180)
       row.classes=button(row,"",82,-25,170,function(s) B:ShowTargetClasses(s,s:GetParent().def) end); row.classes:SetHeight(18)
       addHelp(row.classes,"Classes","Choose which classes can get this buff when they are your friendly target or a Nearby player.")
@@ -3045,6 +3054,7 @@ function B:Options()
           end)
           row:SetScript("OnLeave",function() if GameTooltip then GameTooltip:Hide() end end)
         else addHelp(row,"Supported items in bags",self:ConsumableInventorySummary(family,20)) end
+        row.name:SetText(self:Text(family.name)..self:SpecTag("consumables",family))
         local active=self:ConsumableFamilyEnabled(family,self:EditorSettings("consumables"))
         if active then row.threshold:Enable(); row.threshold:SetAlpha(1) else row.threshold:Disable(); row.threshold:SetAlpha(0.45) end
         local threshold=self:ConsumableThreshold(family,self:EditorSettings("consumables"))
@@ -3260,7 +3270,7 @@ function B:Options()
         if parent.applyDim then parent.applyDim(s:GetChecked()==true) end
       end)
       row.icon=row:CreateTexture(nil,"ARTWORK"); row.icon:SetSize(34,34); row.icon:SetPoint("TOPLEFT",46,-10)
-      row.name=label(row,"",90,-9,"GameFontHighlight",186)
+      row.name=label(row,"",90,-9,"GameFontHighlight",186); row.name:SetWordWrap(false)
       row.groupIcon=row:CreateTexture(nil,"ARTWORK"); row.groupIcon:SetSize(16,16); row.groupIcon:SetPoint("TOPLEFT",90,-30)
       row.detail=label(row,"",112,-29,"GameFontDisableSmall",164)
       row.rebuff=compactSlider(row,0,600,5,166,formatSeconds,function(slider,value)
@@ -3324,7 +3334,7 @@ function B:Options()
     local shield=b.key=="lightning-shield" or b.key=="water-shield"
     row.def=b; row:ClearAllPoints(); row:SetPoint("TOPLEFT",0,-buffRowY); row:SetHeight(shield and 86 or 54)
     buffRowY=buffRowY+(shield and 92 or 60)
-    row:Show(); row.check:SetChecked(self:Enabled(b,self:EditorSettings("buffs"))); row.name:SetText(spellLabel(b)); row.icon:SetTexture(buffIcon(b))
+    row:Show(); row.check:SetChecked(self:Enabled(b,self:EditorSettings("buffs"))); row.name:SetText(spellLabel(b)..self:SpecTag("buffs",b)); row.icon:SetTexture(buffIcon(b))
     row.chargeLabel:SetShown(shield); row.charges:SetShown(shield)
     local chargeLimit=self:ShieldChargeLimit(b,self:EditorSettings("buffs"))
     row.charges:SetText(chargeLimit==0 and L("Off") or chargeLimit==1 and L("1 charge remaining") or L("2 charges remaining"))

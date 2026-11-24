@@ -85,7 +85,7 @@ function B:NormalizeConvenience()
   if d.iconStyle~="modern" then d.iconStyle="classic" end
   if d.campIconStyle~="modern" then d.campIconStyle="classic" end
   if d.labelPosition~="above" and d.labelPosition~="below" then d.labelPosition="split" end
-  for _,key in ipairs({"showSwipe","showOutOfRange","helperThanksResting","nearbyRequests"}) do if type(d[key])~="boolean" then d[key]=false end end
+  for _,key in ipairs({"showSwipe","showOutOfRange","helperThanksResting","helperThanksOutsiders","nearbyRequests"}) do if type(d[key])~="boolean" then d[key]=false end end
   if d.nearbyButtonSide~="right" then d.nearbyButtonSide="left" end
   -- Players who already use Nearby have seen what it does; the introduction is for first-time use.
   if d.nearbyEnabled==true then d.nearbyIntroSeen=true end
