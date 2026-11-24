@@ -262,6 +262,12 @@ GitHub release 453950695 (v1.27.0, Latest, not draft) published from da8b974; at
 ## 1.27.1 publication receipt
 GitHub release 454103857 (v1.27.1, Latest, not draft) published from abbbc27; attached BuffTap-1.27.1.zip digest sha256:0cddef8f54cf8e77b8cb9197e322a25931e1c632839d06037cb1176e7ab5d0ca matches the local archive (1,830,219 bytes, 142 files). The release form was filled in Chrome and the owner attached the ZIP and published. Full mocked run on the final files: 3,300 PASS, 0 FAIL. CurseForge: the owner attached the ZIP to the author form (changelog prefilled by Claude), Release for 1.60.1, automatic publication after approval. Lua-only change (Nearby stale mouse hold and row animation reset); installed locally.
 
+### Publication receipts (1.29.0, 2026-11-23)
+- Git: commit 1fdadbc "Release 1.29.0: dual spec, thanks outside the group, Nearby bounce fix" pushed to main (Hitshade). Final full mocked suite 3,277 PASS / 0 FAIL (FINAL_TOTAL 2417 and 3277) including the new nine-class tests/test_reachability.py.
+- GitHub: release BuffTap 1.29.0, id 456213197, tag v1.29.0 on main, published (not draft, not prerelease). Asset BuffTap-1.29.0.zip, 2,826,510 bytes, 145 files, sha256 15c152f90990e238ddc250849a8af56244f269e6389911220a0d8459c528babb (asset digest matches). No open GitHub issues at release time.
+- CurseForge: BuffTap-1.29.0.zip uploaded as Release for Forever 1.60.1, auto-publish, LibDBIcon embedded library; status "Under Review" at 21:00 ET, awaiting approval. BuffTap-1.28.1.zip is Approved (2.6K downloads), BuffTap-1.28.0.zip Approved.
+- Not verified by any player at release: dual spec on a real two-spec character, outsider thanks with a stranger's buff while grouped, the Nearby stronger-buff fix. Translations are the author's own.
+
 ### Publication receipts (1.28.1, 2026-11-22)
 - GitHub: release BuffTap 1.28.1, id 454869680, tag v1.28.1 on main, published (not draft). Asset BuffTap-1.28.1.zip, 2,818,031 bytes, sha256 9f10bfa112ebe18c695327cc61ba0399c61915ca1925a3c5f1108641ccbdd6c6, 145 files. Commits ed0b742 (release) and 100f812 (changelog correction), author Hitshade.
 - CurseForge: BuffTap-1.28.1.zip uploaded as Release for Forever 1.60.1, auto-publish, LibDBIcon dependency; status "Processing" at 19:50 ET, awaiting approval. 1.28.0 reached Approved.
