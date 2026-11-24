@@ -1,3 +1,8 @@
+# BuffTap 1.29.1
+
+### Fixed
+- Right-click dismiss did nothing on the greyed out-of-range reminder (Options: show out-of-range reminders). The display stood in for the blocked spell reminder but recorded the dismissal under its own `range:` key, and `OutOfRangeDisplay` always picked the first blocked player without checking suppression, so the icon stayed. `OutOfRangeDisplay` now skips players whose greyed notice was dismissed (their own `range:` key, same timer as other dismissals), so the next out-of-range player shows instead. The real spell reminder is not dismissed, so it returns by itself once the player is back in range and still missing the buff. Restore reminders clears it as before. Reported for Blessings; the same path served every buff. Test added in tests/test_review_1263.py.
+
 # BuffTap 1.29.0
 
 ### Added

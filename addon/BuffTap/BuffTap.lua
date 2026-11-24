@@ -349,10 +349,15 @@ end
 -- When the only pending buffs are on players out of range, optionally show the first one greyed out.
 -- It is display-only: no secure action and no key binding, exactly like other manual reminders.
 function B:OutOfRangeDisplay()
-  local blocked=self.rangeBlockedActions and self.rangeBlockedActions[1]
-  if not blocked or self:ReminderPauseReason() then return nil end
-  return {manual=true,valid=true,outOfRange=true,source="range",key=blocked.key,id=blocked.id,target=blocked.target,targetGUID=blocked.targetGUID,
-    icon=blocked.icon,name=blocked.name,targetName=(blocked.targetName or "").." ("..self:Text("out of range")..")",reason="target out of range"}
+  if self:ReminderPauseReason() then return nil end
+  -- Right-click dismisses only the greyed notice for that player. The real reminder is untouched, so it returns
+  -- on its own once they are back in range and still missing the buff.
+  for _,blocked in ipairs(self.rangeBlockedActions or {}) do
+    local display={manual=true,valid=true,outOfRange=true,source="range",key=blocked.key,id=blocked.id,target=blocked.target,targetGUID=blocked.targetGUID,
+      icon=blocked.icon,name=blocked.name,targetName=(blocked.targetName or "").." ("..self:Text("out of range")..")",reason="target out of range"}
+    if not self:HelperSuppressed(display) then return display end
+  end
+  return nil
 end
 
 -- Passive information on the existing reminder, without an action, override

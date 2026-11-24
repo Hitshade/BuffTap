@@ -1,3 +1,10 @@
+# BuffTap 1.29.1
+
+### Dismiss means dismissed
+Right-clicking the greyed-out "out of range" reminder for a party or group member, such as a missing Blessing, now dismisses it. Before, the icon stayed on screen. It only hides the out-of-range notice: once that player is back in range and still missing the buff, the normal reminder comes back by itself. If someone else is also out of range, their notice shows next. **Restore reminders** on the Helpers page brings dismissed reminders back.
+
+Thanks to the player who reported it.
+
 # BuffTap 1.29.0
 
 ### Separate settings for each spec

@@ -2,6 +2,8 @@
 local _,B=...
 -- Keep the ten most recent releases within a 24 KiB content ceiling.
 B.PatchNotes={
+ {version="1.29.1",title="Dismiss means dismissed",items={
+  "Right-clicking a greyed out-of-range reminder, such as a missing Blessing on a party member, now dismisses it. Before, the icon just stayed there. It only hides that notice: when they are back in range, the normal reminder still comes. Restore reminders on the Helpers page brings the notice back."}},
  {version="1.29.0",title="Two specs, two setups",items={
   "If your character has dual spec, My buffs, Weapons and Consumables can now keep a separate set of choices for each spec. Turn on Different settings per spec, then pick Spec 1 or Spec 2 to set that one up. BuffTap follows the spec you are in, in Solo, Party and Raid, and a green dot marks it. It covers which buffs to keep up, weapon imbues, oils and stones, and consumables, for every class. Timers for buffs and everything else stay shared.",
   "You do not need dual spec to prepare Spec 2. The switch is there from the start, so you can set it up before you learn dual spec. We could not test this on a character with two specs, so tell us how it goes.",
@@ -38,9 +40,6 @@ B.PatchNotes={
   "Really, really don't want to miss a thank-you? Helpers > Solo Thanks has a very optional whisper backup. It starts off and only offers THANK when automatic thanks has not fired and the buff giver's full name is known. Nothing is whispered automatically.",
   "Use your regular BuffTap binding or click THANK to whisper; right-click to dismiss this thank-you. The offer lasts 15 seconds, waits behind ready buffs and follows Keep thanking while resting.",
   "Make the message your own in Solo Thanks. It starts as Thank you for %s! and combines buffs from the same giver."}},
- {version="1.26.11",title="Reminders that make room",items={
-  "Reminders now sit below ordinary game windows by default. Under Customization, Buff reminder, Camping and Supplies each offer Keep above other windows. Nearby keeps its own switch.",
-  "The main reminder's choice also covers queue icons, consumable icons and combat expiry warnings. Settings and popup menus stay easy to reach."},thanks="Thanks to WareWolf44 for the layering feedback."},
 }
 function B:PatchNotesUnread()
   return self.profileDB and self.db.optionsPatchDot~=false and self.profileDB.global.patchNotesSeen~=self.version

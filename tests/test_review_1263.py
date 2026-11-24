@@ -233,3 +233,15 @@ C_Spell.GetSpellCooldown=function() return {startTime=now,duration=1.5,isEnabled
 B.nearbyEvents.scripts.OnEvent(nil,'UNIT_SPELLCAST_SUCCEEDED','player','cast',act.id)
 assert(B.nearbyResult.state=='ok'); advance(.11); assert(B.nearbyResult.state=='ok')
 """)
+test('Right-click dismiss removes the greyed out-of-range reminder for a blessing',R+"""
+B.db.showOutOfRange=true; B.db.helperDismiss=true
+local blocked={key='bok',id=20217,target='party1',targetGUID='Player-1-0001',name='Blessing of Kings',icon=135995,targetName='Ann'}
+B.rangeBlocked=true; B.rangeBlockedActions={blocked}; B.rangeBlockedKeys={}
+local shown=B:OutOfRangeDisplay(); assert(shown and shown.source=='range' and shown.key=='bok')
+B:DismissHelper(shown)
+assert(not B:HelperSuppressed(blocked),'the real reminder is NOT dismissed, so it returns when they are in range')
+assert(B:OutOfRangeDisplay()==nil,'icon is gone after the dismiss')
+local other={key='bok',id=20217,target='party2',targetGUID='Player-1-0002',name='Blessing of Kings',icon=135995,targetName='Bo'}
+B.rangeBlockedActions={blocked,other}; local next=B:OutOfRangeDisplay(); assert(next and next.target=='party2','the next out-of-range player still shows')
+B:RestoreHelpers(); B.rangeBlockedActions={blocked}; assert(B:OutOfRangeDisplay(),'Restore reminders brings it back')
+""")
