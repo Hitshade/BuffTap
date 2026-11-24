@@ -1,3 +1,5 @@
+**Prepared 1.29.1 "Dismiss means dismissed"**, 2026-11-24 (released). Right-clicking the greyed out-of-range reminder (reported on CurseForge, Blessings) now dismisses that player's notice for the usual dismiss timer; the real reminder is untouched and returns when they are back in range (`B:OutOfRangeDisplay` skips dismissed notices). New test in tests/test_review_1263.py. 1.29.0 notes follow.
+
 **Prepared 1.29.0 "Two specs, two setups"**, 2026-11-23 (not yet committed or published). Dual spec (per-character switch, Spec 1/2 pills, My buffs/Weapons/Consumables for all nine classes, shield charges), Solo thanks outside the group (`helperThanksOutsiders`), Nearby stronger-effect bounce fix (window 1.5 s), quick-choice and manual-thanks fixes from an independent review. Owner viewed it in the client; dual spec, outsider thanks and the Nearby fix await real-player testing. Translations are the author's own.
 
 **Prepared 1.28.1 "Rogues, your Tracking is back"**, 2026-11-22 (released). Fix for the 1.28.0 regression where Rogues could not reach Tracking (compact My buffs page, `B:MyBuffsCompact()`), taller How Nearby works card (442), and the read-only SpecProbe (`SpecProbe.lua`, Full check-up section "Talents and spec") that reports whether Forever exposes dual spec through `C_SpecializationInfo` / `C_ClassTalents`. Per-spec settings are deliberately NOT built: they wait for a report from a dual-spec character (see docs/HANDOFF.md).
@@ -261,6 +263,13 @@ GitHub release 453950695 (v1.27.0, Latest, not draft) published from da8b974; at
 
 ## 1.27.1 publication receipt
 GitHub release 454103857 (v1.27.1, Latest, not draft) published from abbbc27; attached BuffTap-1.27.1.zip digest sha256:0cddef8f54cf8e77b8cb9197e322a25931e1c632839d06037cb1176e7ab5d0ca matches the local archive (1,830,219 bytes, 142 files). The release form was filled in Chrome and the owner attached the ZIP and published. Full mocked run on the final files: 3,300 PASS, 0 FAIL. CurseForge: the owner attached the ZIP to the author form (changelog prefilled by Claude), Release for 1.60.1, automatic publication after approval. Lua-only change (Nearby stale mouse hold and row animation reset); installed locally.
+
+### Publication receipts (1.29.1, 2026-11-24)
+- Git: commit 482d6a0 "Release 1.29.1: right-click dismisses the greyed out-of-range reminder" pushed to main (Hitshade).
+- GitHub: release BuffTap 1.29.1, id 457363398, tag v1.29.1 on main, published (not draft). Asset BuffTap-1.29.1.zip, digest sha256:6a83c10771d227a5ffcf25149e07d35d85f62e9dd1fb57aac503df25fcfe1a09 (matches the local .sha256).
+- CurseForge: BuffTap-1.29.1.zip uploaded as Release for Forever 1.60.1, auto-publish; status "Processing" at 16:40 ET, awaiting approval. BuffTap-1.29.0.zip is Approved. Changelog thanks the reporter by CurseForge name.
+- Reply posted on the reporter's CurseForge comment (fixed in 1.29.1, normal reminder returns in range).
+- Not verified in game by anyone: the dismiss fix (check: Show out-of-range reminders on, right-click the greyed icon, walk the player into range, the normal reminder should appear).
 
 ### Publication receipts (1.29.0, 2026-11-23)
 - Git: commit 1fdadbc "Release 1.29.0: dual spec, thanks outside the group, Nearby bounce fix" pushed to main (Hitshade). Final full mocked suite 3,277 PASS / 0 FAIL (FINAL_TOTAL 2417 and 3277) including the new nine-class tests/test_reachability.py.
