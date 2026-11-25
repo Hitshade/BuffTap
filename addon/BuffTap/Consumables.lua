@@ -385,7 +385,7 @@ function B:ConsumableExplanation(family,settings)
   if not self.db or not family or family.multi then return "" end
   if A.Combat() then return self:Text("Buffs will be checked after combat.") end
   if not self:ConsumableFamilyEnabled(family,settings) then return self:Text("This reminder is turned off.") end
-  local paused=self:CategoryRestingPause("consumables")
+  local paused=self:CategoryRestingPause("consumables",family)
   if paused then
     return paused:find("outside",1,true) and self:Text("Consumable reminders are paused outside dungeons and raids.") or self:Text("Consumable reminders are paused while resting.")
   end
@@ -412,7 +412,7 @@ function B:ConsumableChecklistExplanation(parent,settings)
   if not self.db or not parent or not parent.multi then return "" end
   if A.Combat() then return self:Text("Buffs will be checked after combat.") end
   if not self:ConsumableFamilyEnabled(parent,settings) then return self:Text("This reminder is turned off.") end
-  local paused=self:CategoryRestingPause("consumables")
+  local paused=self:CategoryRestingPause("consumables",family)
   if paused then
     return paused:find("outside",1,true) and self:Text("Consumable reminders are paused outside dungeons and raids.") or self:Text("Consumable reminders are paused while resting.")
   end
@@ -504,8 +504,8 @@ end
 function B:ValidateConsumable(action,forceAura,forceInventory)
   if not self:SituationActionCurrent(action) then return false,"setup changed before item validation" end
   if not action or action.source~="consumable" then return false,"not a consumable action" end
-  local resting=self:CategoryRestingPause("consumables"); if resting then return false,"consumables "..resting end
   local family=self:ConsumableFamily(action.familyKey)
+  local resting=self:CategoryRestingPause("consumables",family); if resting then return false,"consumables "..resting end
   if not family or not self:ConsumableFamilyEnabled(family) then return false,"consumable family disabled" end
   if (self:ConsumableMode(family)=="manual")~=(action.manualConsumable==true) then return false,"consumable mode changed" end
 
@@ -623,9 +623,19 @@ function B:ResolveConsumable(family,manual)
   return nil,reason
 end
 
+-- Location rules inherit the old category switch until each visible category is edited.
+function B:ConsumableLocation(family,settings)
+  settings=settings or {consumableLocations=self:Preference("consumableLocations")}
+  local key=type(family)=="table" and (family.parent and family.parent.key or family.key) or family
+  local map=settings and settings.consumableLocations
+  local value=type(map)=="table" and map[key]
+  if value=="everywhere" or value=="instances" then return value end
+  return self.db and self.db.consumablesInstanceOnly==true and "instances" or "everywhere"
+end
+
 function B:SelectConsumable()
   if not self.db or not self:Preference("consumablesEnabled") then return nil,"consumables disabled" end
-  local resting=self:CategoryRestingPause("consumables"); if resting then return nil,"consumables "..resting end
+  local resting=self.db.consumablesPauseResting and A.Call(IsResting)==true; if resting then return nil,"consumables paused while resting" end
   if self.stats then self.stats.consumableSelects=(self.stats.consumableSelects or 0)+1 end
   self:RebuildConsumableCache(false)
   for _,family in ipairs(self.ConsumableFamilies or {}) do

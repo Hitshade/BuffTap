@@ -1,12 +1,12 @@
 -- This Source Code Form is subject to the terms of the Mozilla Public
 -- License, v. 2.0. See LICENSE-MPL-2.0.txt.
--- Originally curated from 1.60.1.70009; revalidated against 1.60.1.70888 and item tooltips.
+-- Originally curated from 1.60.1.70009; item-to-use mappings reviewed against 1.60.1.71091 client tables.
 -- Runtime metadata must still match before a secure action is offered.
 local _,B=...
 
 -- Curated Forever maintenance consumables. This is intentionally small and
 -- whitelist-only: unknown consumables never become secure actions.
-B.ForeverDataBuild = "1.60.1.70888"
+B.ForeverDataBuild = "1.60.1.71091"
 B.CampBenefitsSpellID = 1229741
 -- Exact hidden auras used by Forever's Camp Benefits tooltip. These are
 -- recognition-only; similar stats do not suppress class-buff reminders.
@@ -122,6 +122,7 @@ food.items={
   {id=13851,useSpell=1248391,auraIDs={1248420},name="Hot Wolf Ribs",note="10 Agility for 15 min. Additionally, experience gained from kills is increased by 5%."},
   {id=13927,useSpell=1249512,auraIDs={1249519},name="Cooked Glossy Mightfish",note="30 Attack Power for 15 min. Additionally, experience gained from kills is increased by 5%."},
   {id=13928,useSpell=1249522,auraIDs={1249523},name="Grilled Squid",note="1% Critical Strike chance for 15 min. Additionally, experience gained from kills is increased by 5%."},
+  {id=287974,useSpell=1249522,auraIDs={1249523},name="Grilled Squid",note="1% Critical Strike chance for 15 min. Additionally, experience gained from kills is increased by 5%."},
   {id=13929,useSpell=1249522,auraIDs={1249523},name="Hot Smoked Bass",note="1% Critical Strike chance for 15 min. Additionally, experience gained from kills is increased by 5%."},
   {id=13930,useSpell=1249514,auraIDs={1249521},name="Filet of Redgill",note="18 Fishing Skill for 15 min. Additionally, experience gained from kills is increased by 5%."},
   {id=13931,useSpell=1249513,auraIDs={1249520},name="Nightfin Soup",note="22 Spell Damage for 15 min. Additionally, experience gained from kills is increased by 5%."},
@@ -131,6 +132,7 @@ food.items={
   {id=13935,useSpell=1249516,auraIDs={1249520},name="Baked Salmon",note="28 Spell Damage for 15 min. Additionally, experience gained from kills is increased by 5%."},
   {id=17222,useSpell=1248394,auraIDs={1248406},name="Spider Sausage",note="15 Stamina for 15 min. Additionally, experience gained from kills is increased by 5%."},
   {id=18045,useSpell=1248395,auraIDs={1248420},name="Tender Wolf Steak",note="15 Agility for 15 min. Additionally, experience gained from kills is increased by 5%."},
+  {id=287973,useSpell=1248395,auraIDs={1248420},name="Tender Wolf Steak",note="15 Agility for 15 min. Additionally, experience gained from kills is increased by 5%."},
   {id=18254,useSpell=1248396,auraIDs={1248421},name="Runn Tum Tuber Surprise",note="15 Intellect for 15 min. Additionally, experience gained from kills is increased by 5%."},
   {id=20074,useSpell=1248391,auraIDs={1248420},name="Heavy Crocolisk Stew",note="10 Agility for 15 min. Additionally, experience gained from kills is increased by 5%."},
   {id=20452,useSpell=1248401,auraIDs={1248422},name="Smoked Desert Dumplings",note="20 Strength for 15 min. Additionally, experience gained from kills is increased by 5%."},

@@ -1,3 +1,19 @@
+# BuffTap 1.29.3
+
+### Added
+- Per-visible-family consumableLocations choices (everywhere/instances), routed through Solo/Party/Raid and spec overlays, including reset/copy and profile import/export allowlists. The legacy consumablesInstanceOnly flag remains the fallback for unset entries, preserving old choices. Food, Flask, Elixirs and Utility get selectors in existing rows; child checklist families inherit their parent location.
+- Optional groupRequests, off by default and independent of Nearby/group buffing. Helpers provides independent Nearby players / Party and raid switches plus an Open window shortcut. Requests are shown on the existing Nearby rows; no separate recipient selector remains. Groups also has a settings shortcut. Nameplate GUIDs are matched against the current party/raid roster, class and identity; missing buffs are rechecked on click. Reuses requestBuffs, requestMessage, blessing coverage and the shared 180-second per-GUID throttle. One explicit request-icon click sends one whisper; no bulk or automatic chat.
+- Full check-up includes on-demand learned maintenance spell usability/cooldown return shapes and carried bag slots. No polling or weaker readiness gate. Live cooldown responses remain to be collected.
+
+### Fixed and reviewed
+- A.CarriedBagIDs includes the extra equipped bag slot reported through Enum.BagIndex.ReagentBag or NUM_TOTAL_EQUIPPED_BAG_SLOTS. Discovery, camp bag lookup and class-item inventory/capacity checks use the same bounded carried-only enumeration. No bank or saved inventory scanning.
+- Reviewed all 207 existing visible consumable item-to-use-spell mappings against Blizzard Forever 1.60.1.71091 client DB2 exports mirrored by wago.tools: all matched. Added food variants 287973/287974 with existing use/effect chains. Mithril Head Trout was already supported. Eight new Endless elixirs remain deferred because client-table presence alone does not establish availability or maintenance suitability.
+- Auto, Manual and PreClick validation all honor category location rules. The resting switch remains common. Existing active-effect protection, item metadata/level checks and verified spell mappings remain intact.
+
+### Validation and limits
+- Owner approved stable publication after installing and reviewing the beta. Beta1 baseline: 3,518 full mocked scenarios passed, zero failed. This correction uses affected Nearby/group-request/provider-sort/consumable/layout checks; 350 affected mocked checks passed, zero failed (including real Nearby request-row clicks). Full suite not rerun for this scoped correction. Final visual follow-ups passed 144 affected mocked layout checks, zero failed; the full suite was not repeated. All 52 registered Lua modules compile. GitHub review on 2026-11-25 found no open or newly updated issues. UI geometry checks and translations are author-reviewed, not native client/native-speaker verification.
+- No shopping list, arbitrary buff groups, combat casting, automatic whispers or purchase/bank features added. No live-client result claimed. Evidence: research/consumables-1.29.3 and research/competitor-review-2026-11-24.json.
+
 # BuffTap 1.29.2
 
 ### Fixed

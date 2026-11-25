@@ -21,7 +21,7 @@ for _,row in ipairs(B.options.consumableRows) do
  assert(row.threshold.position[2]>400)
  if row.strip then
   for _,item in ipairs(row.strip) do
-   assert(item.position[3]<=-48 and item.position[3]-item.h>=-76)
+   local selectorBottom=-row.location.position[3]+row.location.h; assert(-item.position[3]>=selectorBottom+4,'selected icons must clear location control'); assert(-item.position[3]+item.h<=row.h-5,'selected icons must clear row border')
    assert(item.position[2]+item.w<350)
   end
  end

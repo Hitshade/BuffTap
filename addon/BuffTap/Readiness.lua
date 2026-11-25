@@ -257,10 +257,8 @@ local function stoneInventory(self,family,set,order,label)
     or type(C.GetContainerItemInfo)~="function" or type(C.GetContainerNumFreeSlots)~="function" then
     cache.reason="bag readiness API unavailable"; return cache
   end
-  local last=NUM_BAG_SLOTS
-  if not A.Number(last) or last<0 or last>5 then cache.reason="carried bag layout unavailable"; return cache end
   local capacity=false; local capacityUnknown=false
-  for bag=0,last do
+  for _,bag in ipairs(A.CarriedBagIDs()) do
     local slots=A.Call(C.GetContainerNumSlots,bag)
     if not A.Number(slots) or slots<0 or slots>200 or (bag==0 and slots==0) then
       cache.reason="bag contents not ready"; return cache

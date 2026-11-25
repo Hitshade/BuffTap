@@ -151,6 +151,44 @@ local function usable(id)
   return cd.isActive==nil or cd.isActive==false
 end
 
+-- On-demand only: records the actual client response without relaxing action eligibility.
+function B:MaintenanceProbeLines()
+  local lines={}; local ids={}; local seen={}
+  for _,list in pairs(self:CleanseAbilities()) do
+    for _,entry in ipairs(list) do if not seen[entry[1]] then ids[#ids+1]=entry[1]; seen[entry[1]]=true end end
+  end
+  for _,rebirth in ipairs({false,true}) do
+    local id=self:ReviveSpell(rebirth)
+    if id and not seen[id] then ids[#ids+1]=id; seen[id]=true end
+  end
+  table.sort(ids)
+  local function public(v)
+    if not A.Public(v) then return "restricted" end
+    if A.Number(v) or type(v)=="boolean" then return tostring(v) end
+    return v==nil and "nil" or type(v)
+  end
+  if A.Combat() then
+    lines[#lines+1]="Maintenance: checked after combat; no aura or cooldown probe performed."
+  else
+    for _,id in ipairs(ids) do
+      local state=A.SpellUsable(id)
+      local cd,err=A.Call(C_Spell and C_Spell.GetSpellCooldown,id)
+      local detail=type(cd)=="table" and A.Public(cd) and
+        ("enabled="..public(cd.isEnabled)..", start="..public(cd.startTime)..", duration="..public(cd.duration)..", active="..public(cd.isActive)..", GCD="..public(cd.isOnGCD))
+        or (err and "call failed" or public(cd))
+      lines[#lines+1]="Spell "..id..": usable="..public(state).." | cooldown="..detail.." | maintenance ready="..tostring(usable(id))
+    end
+    if #ids==0 then lines[#lines+1]="No learned cleanse or resurrection spells to probe." end
+  end
+  local bags={}
+  for _,bag in ipairs(A.CarriedBagIDs()) do
+    local count=A.Call(C_Container and C_Container.GetContainerNumSlots,bag)
+    bags[#bags+1]=bag..":"..public(count)
+  end
+  lines[#lines+1]="Carried bag slots (bag:slots): "..table.concat(bags,", ")
+  return lines
+end
+
 -- First thing to remove on one unit, or nil.
 function B:CleanseNeed(unit,abilities)
   if A.Call(UnitExists,unit)~=true or A.Call(UnitIsDeadOrGhost,unit)~=false then return nil end

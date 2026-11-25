@@ -754,6 +754,8 @@ function B:StandardizeOptionsPages(ui,tabs)
     if group.helpers then reparent(group.helpers,page.refinedCanvas) end
     for _,control in ipairs({group.specCheck,group.specLabel,group.specButtons and group.specButtons[1],group.specButtons and group.specButtons[2]}) do if control then reparent(control,page.refinedCanvas) end end
   end
+  f.pages[2].requestsShortcut=ui.button(f.pages[2],"Buff requests",566,-40,138,function() f.selectTab(tabs.Helpers) end)
+  f.pages[2].requestsShortcut:SetHeight(20)
   local groupPage=f.pages[2]; local party=f.partyView or f.groupParty; local raid=f.raidView or f.groupRaid
   place(party,groupPage.refinedCanvas,18,-8,78,26); place(raid,groupPage.refinedCanvas,102,-8,78,26)
   f.groupContextHint=ui.label(groupPage.refinedCanvas,"Applies automatically when you join a party or raid.",198,-15,"GameFontDisableSmall",f.partyView and 340 or 488)

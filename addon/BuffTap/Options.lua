@@ -1388,15 +1388,22 @@ function B:BuildHelperPage(parent)
   q:ClearAllPoints(); q:SetPoint("TOPLEFT",0,0); tr:ClearAllPoints(); tr:SetPoint("TOPLEFT",0,-32)
   -- Buff requests (Nearby): whisper a nearby player for a class buff you are missing. Off by default.
   f.requests=q
-  f.requestCard=card(q,12,-308,692,148)
+  f.requestCard=card(q,12,-308,692,180)
   T.SectionTitle(label(q,L("Buff requests"),28,-322,T.fonts.Section))
-  f.requestEnable=check(q,L("Offer buff requests in Nearby"),28,-342,function(c)
+  f.requestEnable=check(q,L("Nearby players"),28,-342,function(c)
     if A.Combat() then return end
-    B.db.nearbyRequests=c:GetChecked()==true; if B.nearbyFrame then B:UpdateNearbyWindow() end; B:Options()
+    B.db.nearbyRequests=c:GetChecked()==true; B.nearbySnapshot=nil; if B.nearbyFrame then B:UpdateNearbyWindow() end; B:Options()
   end)
   addHelp(f.requestEnable,L("Offer buff requests in Nearby"),L("When a player outside your group can cast a class buff you are missing, Nearby shows a button with that buff's icon. Clicking it whispers your request. Nothing is sent automatically.").."\n"..L("Each request is one whisper you click to send. You can ask the same player again after three minutes."))
-  label(q,L("Message"),330,-347,"GameFontHighlightSmall",64)
-  f.requestMessage=editbox(q,396,-341,294,false); f.requestMessage:SetFontObject(T.fonts.Small); f.requestMessage:SetJustifyH("LEFT"); f.requestMessage:SetMaxLetters(200)
+  f.groupRequestEnable=check(q,L("Party and raid"),256,-342,function(c)
+    if A.Combat() then return end
+    B.db.groupRequests=c:GetChecked()==true; B.nearbySnapshot=nil; if B.nearbyFrame then B:UpdateNearbyWindow() end; B:Options()
+  end)
+  addHelp(f.groupRequestEnable,L("Party and raid"),L("Show request icons beside party and raid members in the Nearby list when you are missing their buffs. Click an icon to whisper that player. Uses the same buff choices, message and cooldown as Nearby players. Nothing is sent automatically."))
+  f.groupRequestsOpen=button(q,L("Open window"),490,-341,200,function() B:OpenNearbyForRequests() end)
+  addHelp(f.groupRequestsOpen,L("Buff requests"),L("Opens the Nearby list. Click a request icon beside a player to ask for missing buffs. Party and raid requests use the same list."))
+  label(q,L("Message"),28,-377,"GameFontHighlightSmall",74)
+  f.requestMessage=editbox(q,110,-371,580,false); f.requestMessage:SetFontObject(T.fonts.Small); f.requestMessage:SetJustifyH("LEFT"); f.requestMessage:SetMaxLetters(200)
   f.requestMessage:SetScript("OnEnterPressed",function(s)
     local text=(s:GetText() or ""):gsub("[|%c]","")
     B.db.requestMessage=(text==B:Text("Hi! Could I get %s, please? Thank you!")) and "" or text; s:ClearFocus(); B:Options()
@@ -1406,10 +1413,10 @@ function B:BuildHelperPage(parent)
   f.requestChecks={}
   for i,def in ipairs(B:CoverageDefinitions()) do
     local key=def.key
-    local c=check(q,def.name,28+((i-1)%3)*228,-372-math.floor((i-1)/3)*26,function(s) if not A.Combat() then B.db.requestBuffs[key]=s:GetChecked()==true; if B.nearbyFrame then B:UpdateNearbyWindow() end end end)
+    local c=check(q,def.name,28+((i-1)%3)*228,-404-math.floor((i-1)/3)*26,function(s) if not A.Combat() then B.db.requestBuffs[key]=s:GetChecked()==true; if B.nearbyFrame then B:UpdateNearbyWindow() end end end)
     f.requestChecks[key]=c
   end
-  f.providerSort=check(q,L("Prioritize providers"),484,-424,function(c)
+  f.providerSort=check(q,L("Prioritize providers"),484,-456,function(c)
     if A.Combat() then return end
     B.db.nearbyProviderSort=c:GetChecked()==true; B.nearbySnapshot=nil
     if B.nearbyFrame then B:UpdateNearbyWindow() end
@@ -1576,10 +1583,11 @@ function B:BuildHelperPage(parent)
   end)
   addHelp(f.trackerFollow,L("Follow my minimap choice"),L("When you switch tracking in the minimap menu, BuffTap keeps up your new choice instead of switching you back. Turn off to always restore the tracking picked here."))
   -- Pet, Healthstone, Soulstone, Oath and tracking are shown on My buffs (Class helpers tab); this card points the way.
-  f.classHelpersCard=card(f,12,-612,692,74)
-  f.classHelpersTitle=label(f,"",28,-626,T.fonts.Section); T.SectionTitle(f.classHelpersTitle)
-  f.classHelpersNote=label(f,"",28,-652,"GameFontDisableSmall",470)
-  f.classHelpersOpen=button(f,L("Open in My buffs"),506,-638,184,function() B:OpenClassHelpers() end)
+  gr:ClearAllPoints(); gr:SetPoint("TOPLEFT",0,-32)
+  f.classHelpersCard=card(f,12,-644,692,66)
+  f.classHelpersTitle=label(f,"",28,-658,T.fonts.Section); T.SectionTitle(f.classHelpersTitle)
+  f.classHelpersNote=label(f,"",28,-684,"GameFontDisableSmall",470)
+  f.classHelpersOpen=button(f,L("Open in My buffs"),506,-670,184,function() B:OpenClassHelpers() end)
   -- Page actions sit in the header, beside the description, so the body never needs to scroll.
   f.restoreButton=button(f,L("Restore reminders"),402,-38,146,function() B:RestoreHelpers(); B:Options() end)
   f.reportButton=button(f,L("View discovery report"),556,-38,148,function() B:ShowDiscoveryReport() end)
@@ -1606,9 +1614,10 @@ function B:UpdateHelperOptions()
     f.classHelpersNote:SetText(self:Text("These settings moved to My buffs, on the %s tab.",self:Text(tabName)))
   end
   f.requestEnable:SetChecked(self.db.nearbyRequests==true)
+  f.groupRequestEnable:SetChecked(self.db.groupRequests==true)
   f.providerSort:SetChecked(self.db.nearbyProviderSort==true); f.providerSort:SetEnabled(self.db.nearbyRequests==true)
   if not f.requestMessage:HasFocus() then f.requestMessage:SetText(self.db.requestMessage~="" and self.db.requestMessage or self:Text("Hi! Could I get %s, please? Thank you!")) end
-  for key,c in pairs(f.requestChecks) do c:SetChecked(self:RequestEnabled(self:FindBuff(key) or {key=key})); c:SetEnabled(self.db.nearbyRequests==true) end
+  for key,c in pairs(f.requestChecks) do c:SetChecked(self:RequestEnabled(self:FindBuff(key) or {key=key})); c:SetEnabled(self.db.nearbyRequests==true or self.db.groupRequests==true) end
   f.thanksResting:SetChecked(self.db.helperThanksResting==true)
   if f.thanksOutsiders then f.thanksOutsiders:SetChecked(self.db.helperThanksOutsiders==true); f.thanksOutsiders:SetEnabled(self.db.helperThanks==true) end
   if f.manualThanks then
@@ -2346,12 +2355,10 @@ function B:Options()
     end)
     f.consumeBuild=label(consume,"Data: -",410,-77,"GameFontDisableSmall",260)
     f.consumableRestPause=check(consume,L("Pause while resting"),18,-58,function(c) if not A.Combat() then B.db.consumablesPauseResting=c:GetChecked()==true; B:RequestRefresh("consumable resting pause",0) end end)
-    f.consumableInstanceOnly=check(consume,L("Only in dungeons and raids"),0,0,function(c) if not A.Combat() then B.db.consumablesInstanceOnly=c:GetChecked()==true; B:RequestRefresh("consumable instance only",0) end end)
-    f.consumableInstanceOnly:ClearAllPoints(); f.consumableInstanceOnly:SetPoint("TOPLEFT",f.consumableRestPause,"TOPLEFT",340,0)
     -- Tiles sit behind the two rules and the footer, anchored to the controls so page shifts keep them aligned.
     local function tileBehind(control,dx,dy,w,h) local t=T.Tile(consume,0,0,w,h); t:ClearAllPoints(); t:SetPoint("TOPLEFT",control,"TOPLEFT",dx,dy); return t end
     f.consumeTiles={rules=tileBehind(f.consumableRestPause,-6,6,692,36)}
-    addHelp(f.consumableInstanceOnly,"Only in dungeons and raids","Skip food, flask, elixir and utility reminders outside dungeons and raids. Buff reminders continue everywhere.")
+    label(consume,L("Choose where each category reminds you."),352,-63,"GameFontDisableSmall",330)
     addHelp(f.consumableRestPause,"Pause while resting","Skip food, flask, elixir and utility reminders in cities and inns, so you do not use them while resting. Buff reminders continue as usual.")
     line(consume,-108)
     f.consumableRows={}
@@ -2360,7 +2367,7 @@ function B:Options()
     B.ConsumableVisibleFamilies=visibleFamilies
     for index,family in ipairs(visibleFamilies) do
       local row=CreateFrame("Frame",nil,consume,"BackdropTemplate")
-      row:SetSize(692,76); row:SetPoint("TOPLEFT",12,-120-(index-1)*92)
+      row:SetSize(692,104); row:SetPoint("TOPLEFT",12,-120-(index-1)*116)
       row:SetBackdrop({bgFile="Interface\\Buttons\\WHITE8X8"}); row:SetBackdropColor(unpack(T.row)); T.Row(row,8)
       row.family=family
       row.enable=check(row,"",8,-8,function(c)
@@ -2379,34 +2386,43 @@ function B:Options()
       local modeHelp="Auto: offered by BuffTap's normal binding. Manual: shown below the icon; click its small icon to use it. Never uses your BuffTap binding."
       addHelp(row.auto,"Consumable mode",modeHelp); addHelp(row.manual,"Consumable mode",modeHelp)
       row.choice=label(row,"Auto",82,-29,"GameFontHighlightSmall",420)
+      row.location=selector(row,"",82,-49,210,function()
+        return {{key="everywhere",name=L("Everywhere")},{key="instances",name=L("Dungeons and raids")}}
+      end,function(value)
+        if A.Combat() then return end
+        B:SetSituationValue(B:EditorContext("consumables"),"consumables","consumableLocations",value,family.key)
+        B:InvalidateAura("player"); B:RequestRefresh("consumable location",0); B:Options()
+      end)
+      row.location.getSelection=function() return B:ConsumableLocation(family,B:EditorSettings("consumables")) end
+      addHelp(row.location,L("Where to remind"),L("Choose where this category appears. Applies to Auto and Manual reminders. Pause while resting still applies. Party, Raid and spec choices can be edited separately."))
       row.prev=button(row,L("Choose"),592,-8,86,function(btn) B:ChooseConsumable(btn:GetParent().family,btn,B:EditorContext("consumables")) end)
       row.inventory=label(row,"",450,-11,"GameFontHighlightSmall",120)
-      label(row,family.protectPresent and (family.key=="utility" and "Preserve active utility; remind after expiry" or "Preserve active elixirs; remind after expiry") or "Rebuff at",350,-52,"GameFontDisableSmall",family.protectPresent and 320 or 62)
+      label(row,family.protectPresent and (family.key=="utility" and "Preserve active utility; remind after expiry" or "Preserve active elixirs; remind after expiry") or "Rebuff at",350,-57,"GameFontDisableSmall",family.protectPresent and 320 or 62)
       addHelp(row.enable,"Maintain this consumable buff","Enable this family to monitor its selected effects. Auto offers items on your normal binding; Manual uses separate click-only icons. Enable consumable reminders above too. Preferences stay saved when supplies run out.")
       row.threshold=compactSlider(row,30,1800,30,230,formatSeconds,function(slider,value)
         local fam=slider:GetParent().family
         if fam then B:SetSituationValue(B:EditorContext("consumables"),"consumables","consumableSeconds",value,fam.key); B:InvalidateAura("player"); B:RequestRefresh("consumable threshold",0.08) end
       end)
-      row.threshold:SetPoint("TOPLEFT",420,-50)
+      row.threshold:SetPoint("TOPLEFT",420,-54)
       if family.multi then
         -- Ticked items: a row of icons (hover for the name and stock).
         row.strip={}
         for j=1,12 do
-          local b=CreateFrame("Frame",nil,row); b:SetSize(18,18); b:SetPoint("TOPLEFT",42+(j-1)*21,-50); b:EnableMouse(true)
+          local b=CreateFrame("Frame",nil,row); b:SetSize(18,18); b:SetPoint("TOPLEFT",42+(j-1)*21,-80); b:EnableMouse(true)
           b.tex=b:CreateTexture(nil,"ARTWORK"); b.tex:SetAllPoints(); b:Hide()
           b:SetScript("OnEnter",function(s) if s.title then T.Tooltip(s,s.title,s.body) end end)
           b:SetScript("OnLeave",function() if GameTooltip then GameTooltip:Hide() end end)
           row.strip[j]=b
         end
-        row.more=label(row,"",42+12*21,-52,"GameFontDisableSmall",40)
+        row.more=label(row,"",42+12*21,-82,"GameFontDisableSmall",40)
       end
       f.consumableRows[index]=row
     end
-    local consumeFooterY=-120-(#visibleFamilies)*92+8
+    local consumeFooterY=-120-(#visibleFamilies)*116+8
 
-        f.consumeRetry=button(consume,L("Retry reminders"),528,consumeFooterY-48,154,function() B:RetryConsumableReminders(); B:Options() end)
+        f.consumeRetry=button(consume,L("Retry reminders"),550,consumeFooterY-20,154,function() B:RetryConsumableReminders(); B:Options() end)
     addHelp(f.consumeRetry,L("Retry reminders"),L("Restarts item loading and paused consumable reminders. Changed item effects remain blocked."))
-    f.consumePauseStatus=label(consume,"",186,consumeFooterY-53,"GameFontHighlightSmall",496)
+    f.consumePauseStatus=label(consume,"",12,consumeFooterY-27,"GameFontHighlightSmall",510)
 
     self:BuildContextControls(consumePage,"consumables",{label=label,flatButton=flatButton,button=button,addHelp=addHelp,check=check})
 
@@ -3026,12 +3042,13 @@ function B:Options()
   f.targetChild:SetHeight(math.max(1,#targetBuffs*52))
 
   if f.consumablesEnable then
-    f.consumablesEnable:SetChecked(self:EditorSettings("consumables").consumablesEnabled==true); f.consumableRestPause:SetChecked(self.db.consumablesPauseResting==true); f.consumableInstanceOnly:SetChecked(self.db.consumablesInstanceOnly==true)
+    f.consumablesEnable:SetChecked(self:EditorSettings("consumables").consumablesEnabled==true); f.consumableRestPause:SetChecked(self.db.consumablesPauseResting==true)
     f.consumeBuild:Hide()
     if self.RebuildConsumableCache then self:RebuildConsumableCache(false) end
     for index,family in ipairs(self.ConsumableVisibleFamilies or {}) do
       local row=f.consumableRows[index]
       if row then
+        row.location:SetText(L(self:ConsumableLocation(family,self:EditorSettings("consumables"))=="instances" and "Dungeons and raids" or "Everywhere"))
         row.enable:SetChecked(self.ConsumableFamilySelected and self:ConsumableFamilySelected(family,self:EditorSettings("consumables")) or false)
         local choice,icon=consumableChoiceLabel(family)
         row.choice:SetText(choice)

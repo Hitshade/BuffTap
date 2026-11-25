@@ -379,7 +379,7 @@ function B:DiscoverConsumables()
   local seen={}; local pending=0
   local getter=C_Item and C_Item.GetItemInfo or GetItemInfo
   if type(getter)~="function" then self.helperDiscoveryStatus="Item information API unavailable"; return end
-  for bag=0,math.min(5,tonumber(NUM_BAG_SLOTS) or 4) do
+  for _,bag in ipairs(A.CarriedBagIDs()) do
     local slots=A.Call(container.GetContainerNumSlots,bag)
     for slot=1,A.Number(slots) and math.min(slots,200) or 0 do
       local id=A.Call(container.GetContainerItemID,bag,slot)

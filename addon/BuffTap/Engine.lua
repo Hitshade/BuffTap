@@ -4,7 +4,7 @@
 
 local _, B = ...
 _G.BuffTap = B
-B.version = "1.29.2"
+B.version = "1.29.3"
 B.API = {}
 local A = B.API
 
@@ -49,6 +49,17 @@ function A.Text(v) return A.Public(v) and type(v) == "string" and v ~= "" end
 function A.Class(unit)
   local ok,_,class=pcall(UnitClass,unit)
   if ok and A.Text(class) then return class end
+end
+-- Carried bags only. Forever can expose an extra equipped slot separately from NUM_BAG_SLOTS.
+function A.CarriedBagIDs()
+  local last=rawget(_G,"NUM_BAG_SLOTS")
+  if not A.Number(last) or last<0 or last>5 or last%1~=0 then last=4 end
+  local total=rawget(_G,"NUM_TOTAL_EQUIPPED_BAG_SLOTS")
+  if A.Number(total) and total%1==0 and total>=0 and total<=5 then last=math.max(last,total) end
+  local extra=type(Enum)=="table" and type(Enum.BagIndex)=="table" and Enum.BagIndex.ReagentBag
+  if A.Number(extra) and extra%1==0 and extra>=0 and extra<=5 then last=math.max(last,extra) end
+  local list={}; for bag=0,last do list[#list+1]=bag end
+  return list
 end
 function A.Combat() return not InCombatLockdown or InCombatLockdown() end
 -- Forever is the "camelot" game type (project 18). Checked by game type, not version text, so it
@@ -140,7 +151,7 @@ function B:InitDB()
     helperDiscovery=false, manualThanks=false, thankMessage="Thank you for %s!", helperThanks=false, helperThankEmote="THANK", helperQuick=false, helperTracker=0, helperPet=false, helperHealthstone=false, helperSoulstone=false, helperOath=false, oathAssigned={}, soulstoneParty="healer", soulstoneRaid="remind", soulstoneAssigned="", soulstoneAssignedGUID="", helperDemon=0,
     raidGroups={true,true,true,true,true,true,true,true},
     buffRoles={}, buffSelf={}, blessingRoleChoices={}, blessingRolePriorities={}, roleMarks={}, roleGuess=false, helperThanksResting=false, helperThanksOutsiders=false,
-    nearbyRequests=false, requestMessage="", requestBuffs={}, nearbyButtonSide="left",
+    nearbyRequests=false, groupRequests=false, requestMessage="", requestBuffs={}, nearbyButtonSide="left",
     iconStyle="classic", campIconStyle="classic", labelPosition="split", showSwipe=false, showOutOfRange=false}
   -- 1.20.0: right-click dismiss is on for 10 minutes on new characters; existing ones keep their choice.
   local existingDismiss=type(self.db.helperDismiss)=="boolean" and self.db.helperDismissMinutes==nil
@@ -233,6 +244,11 @@ function B:InitDB()
   if type(self.db.targetClasses) ~= "table" then self.db.targetClasses = {} end
   for key,map in pairs(self.db.targetClasses) do if type(key)~="string" or type(map)~="table" then self.db.targetClasses[key]=nil end end
   if type(self.db.consumableFamilies) ~= "table" then self.db.consumableFamilies = {} end
+  if type(self.db.consumableLocations)~="table" then self.db.consumableLocations={} end
+  for key,value in pairs(self.db.consumableLocations) do
+    if not self:ConsumableFamily(key) or (value~="everywhere" and value~="instances") then self.db.consumableLocations[key]=nil end
+  end
+  if type(self.db.groupRequests)~="boolean" then self.db.groupRequests=false end
   if type(self.db.consumableModes)~="table" then self.db.consumableModes={} end
   for key,value in pairs(self.db.consumableModes) do
     local family=self.ConsumableFamily and self:ConsumableFamily(key)
@@ -384,10 +400,10 @@ function B:InGroupInstance()
   local ok,inside,kind=pcall(IsInInstance)
   return ok and A.Public(inside) and A.Public(kind) and inside==true and (kind=="party" or kind=="raid") or false
 end
-function B:CategoryRestingPause(category)
+function B:CategoryRestingPause(category,family)
   local key=category=="weapons" and "weaponsPauseResting" or category=="consumables" and "consumablesPauseResting"
   if key and self.db and self.db[key] and A.Call(IsResting)==true then return "paused while resting" end
-  if category=="consumables" and self.db and self.db.consumablesInstanceOnly==true then
+  if category=="consumables" and self.db and (family and self:ConsumableLocation(family)=="instances" or not family and self.db.consumablesInstanceOnly==true) then
     if not self:InGroupInstance() then return "paused outside dungeons and raids" end
   end
 end

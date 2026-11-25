@@ -5,11 +5,11 @@ local groups={solo=true,party=true,raid=true}
 local keys={
   buffs={"buffs","priorities","buffSeconds","buffCharges","seconds"},
   weapons={"weaponReminder","weaponMainHand","weaponOffHand","weaponChoices","weaponCoatings","weaponSeconds"},
-  consumables={"consumablesEnabled","consumableFamilies","consumableChoices","consumableSeconds","consumableModes"},
+  consumables={"consumablesEnabled","consumableFamilies","consumableChoices","consumableSeconds","consumableModes","consumableLocations"},
 }
 local categoryFor={}; for category,list in pairs(keys) do for _,key in ipairs(list) do categoryFor[key]=category end end
 local limits={seconds={15,180},weaponSeconds={0,300}}
-local maps={buffs=true,priorities=true,buffSeconds=true,buffCharges=true,weaponChoices=true,weaponCoatings=true,consumableFamilies=true,consumableChoices=true,consumableSeconds=true,consumableModes=true}
+local maps={buffs=true,priorities=true,buffSeconds=true,buffCharges=true,weaponChoices=true,weaponCoatings=true,consumableFamilies=true,consumableChoices=true,consumableSeconds=true,consumableModes=true,consumableLocations=true}
 local function clone(value)
   if type(value)~="table" then return value end
   local copy={}; for key,v in pairs(value) do if type(key)=="string" and (type(v)=="boolean" or A.Text(v) or A.Number(v)) then copy[key]=v end end
@@ -138,6 +138,7 @@ function B:CleanSituationCategory(category,source)
             if family then
               if v==false or (key=="consumableFamilies" and v=="default") then clean[name]=v
               elseif key=="consumableFamilies" and type(v)=="boolean" then clean[name]=v
+              elseif key=="consumableLocations" and (v=="everywhere" or v=="instances") then clean[name]=v
               elseif key=="consumableModes" and not family.hidden and (v=="auto" or v=="manual") then clean[name]=v
               elseif key=="consumableSeconds" then clean[name]=bounded(v,30,1800)
               elseif key=="consumableChoices" and A.Number(v) then

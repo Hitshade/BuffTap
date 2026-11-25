@@ -1,3 +1,17 @@
+# BuffTap 1.29.3
+
+### Choose where your consumables remind you
+Each row on Consumables now has its own location choice: Everywhere or Dungeons and raids. You can keep food reminders while leveling and save flasks, elixirs and utility items for instances. The choices follow the Solo, Party, Raid and spec setup you are editing. Your old setting remains in effect until you change a category. Pause while resting still applies to them all.
+
+### Ask your group for a missing buff
+On Helpers, under Buff requests, enable Party and raid, then open the Nearby window. Party and raid members who are nearby show the same request icon as other players. Click their icon to send your request. It uses your existing buff choices and message, and checks again before sending so it does not ask for a buff you just received. Requests to the same player are spaced three minutes apart. Nothing is sent automatically. Groups includes a shortcut to these controls.
+
+### Inventory and food updates
+Camp item lookup, consumable discovery and class-item inventory checks now include an extra equipped bag slot when the game reports one. Two additional versions of Tender Wolf Steak and Grilled Squid are supported after checking their client data. The existing supported consumables were also checked against the newer Forever tables.
+
+### Settings and compatibility
+Your existing choices are preserved. Party and raid requests are optional and start switched off. Nearby requests still need a visible friendly nameplate, and the usual out-of-combat restrictions apply. Full check-up now includes more information about maintenance readiness and equipped bag slots.
+
 # BuffTap 1.29.2
 
 ### More reliable reminders

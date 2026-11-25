@@ -25,7 +25,7 @@ assert(f.thankMessage.__draw.w>=350,'message spans the bottom')
 local mp=f.thankMessage.__draw.points[#f.thankMessage.__draw.points]; local rp=f.thankMessageReset.__draw.points[#f.thankMessageReset.__draw.points]
 assert(rp[2]-(mp[2]+f.thankMessage.__draw.w)==8,'message and Reset gap')
 local p=f.providerSort.__draw.points[#f.providerSort.__draw.points]
-assert(p[2]==484 and p[3]==-424 and f.providerSort:GetParent()==f.requests)
+assert(p[2]==484 and p[3]==-456 and f.providerSort:GetParent()==f.requests)
 assert(f.dismissMinutes.__draw.points[#f.dismissMinutes.__draw.points][2]+f.dismissMinutes.__draw.w==690,'dismiss right edge')
 assert(f.requestMessage.__draw.points[#f.requestMessage.__draw.points][2]+f.requestMessage.__draw.w==690,'message right edge')
 local bp=f.classHelpersOpen.__draw.points[#f.classHelpersOpen.__draw.points]

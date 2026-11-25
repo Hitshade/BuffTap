@@ -67,7 +67,7 @@ function B:ManualConsumableProjection(auras,cache)
   local nextWake
   if not self.db or not self.db.enabled or not self:Preference("consumablesEnabled") then return entries end
   for _,family in ipairs(self.ConsumableFamilies or {}) do
-    if not family.multi and self:ConsumableMode(family)=="manual" and self:ConsumableFamilyEnabled(family) then
+    if not family.multi and self:ConsumableMode(family)=="manual" and self:ConsumableFamilyEnabled(family) and not self:CategoryRestingPause("consumables",family) then
       local missing,state,_,_,wake=self:ConsumableFamilyState(family,auras)
       if A.Number(wake) and wake>0 then nextWake=math.min(nextWake or wake,wake) end
       if missing~=false then
@@ -167,10 +167,10 @@ function B:UpdateManualConsumables()
   if self.db and self.db.enabled and self:Preference("consumablesEnabled") then
     for key,mode in pairs(self:Preference("consumableModes") or {}) do
       local family=mode=="manual" and self:ConsumableFamily(key)
-      if family and not family.hidden and self:ConsumableFamilyEnabled(family) then any=true; break end
+      if family and not family.hidden and self:ConsumableFamilyEnabled(family) and not self:CategoryRestingPause("consumables",family) then any=true; break end
     end
   end
-  local pause=self:ActionPauseReason({source="consumable"}) or self:CategoryRestingPause("consumables")
+  local pause=self:ActionPauseReason({source="consumable"}) or (self.db.consumablesPauseResting and A.Call(IsResting)==true and "paused while resting")
   if not any or unsafe() or self.editModeActive or pause then
     self.manualConsumableEntries={}; self:DisarmManualConsumables(); return
   end
@@ -209,7 +209,7 @@ function B:UpdateManualConsumables()
       if i<=shown and entry and not button.driverFailed then
         local family=entry.family; local action,why
         if not entry.unknown then
-          local pause=self:ActionPauseReason({source="consumable"}) or self:CategoryRestingPause("consumables")
+          local pause=self:ActionPauseReason({source="consumable"}) or self:CategoryRestingPause("consumables",family)
           if not pause then action,why=self:ResolveConsumable(family,true) else why=pause end
         else why="Buff state unknown" end
         if action then

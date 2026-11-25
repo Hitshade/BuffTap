@@ -1665,3 +1665,13 @@ B.Locales.deDE["Waiting for cooldown."]="Warten auf Abklingzeit."
 B.Locales.deDE["Click: next appropriate buff"]="Klicken: nächste passende Stärkung"
 B.Locales.deDE["Right-click: whisper, invite, ignore or blacklist"]="Rechtsklick: flüstern, einladen, ignorieren oder sperren"
 B.Locales.deDE["Mouse wheel: scroll players"]="Mausrad: Spielerliste scrollen"
+
+-- Category location choices and explicit group requests.
+B.Locales.deDE["Choose where each category reminds you."]="Wähle, wo jede Kategorie erinnern soll."
+B.Locales.deDE["Everywhere"]="Überall"
+B.Locales.deDE["Dungeons and raids"]="Dungeons und Schlachtzüge"
+B.Locales.deDE["Where to remind"]="Wo erinnern"
+B.Locales.deDE["Choose where this category appears. Applies to Auto and Manual reminders. Pause while resting still applies. Party, Raid and spec choices can be edited separately."]="Wähle, wo diese Kategorie erscheint. Gilt für automatische und manuelle Erinnerungen. Die Ruhepause gilt weiterhin. Gruppe, Schlachtzug und Spezialisierungen lassen sich getrennt einstellen."
+B.Locales.deDE["Party and raid"]="Gruppe und Schlachtzug"
+B.Locales.deDE["Show request icons beside party and raid members in the Nearby list when you are missing their buffs. Click an icon to whisper that player. Uses the same buff choices, message and cooldown as Nearby players. Nothing is sent automatically."]="Zeigt Anfragesymbole neben Gruppen- und Schlachtzugsmitgliedern in der Liste In der Nähe, wenn dir ihre Stärkungen fehlen. Klicke ein Symbol, um den Spieler anzuflüstern. Nutzt dieselben Stärkungen, dieselbe Nachricht und Wartezeit wie andere Spieler in der Nähe. Nichts wird automatisch gesendet."
+B.Locales.deDE["Opens the Nearby list. Click a request icon beside a player to ask for missing buffs. Party and raid requests use the same list."]="Öffnet die Liste In der Nähe. Klicke auf das Anfragesymbol neben einem Spieler, um fehlende Stärkungen zu erbitten. Gruppen- und Schlachtzugsanfragen nutzen dieselbe Liste."

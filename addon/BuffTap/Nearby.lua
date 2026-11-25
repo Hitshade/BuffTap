@@ -724,10 +724,11 @@ function B:NearbyPlayers()
         if socialKind and not grouped then self:NoteNearbySocial(entry) end
         if entry.marker=="blocked" then self.nearbyCounts.blocked=self.nearbyCounts.blocked+1
         elseif entry.marker and self.db.pvpProtection==true then self.nearbyCounts.flagged=self.nearbyCounts.flagged+1 end
+        entry.groupRequest=grouped and self.db.groupRequests==true and self:RequestableBuffs(entry)~=nil or false
         entry.requestProvider=self.db.nearbyProviderSort==true and entry.marker~="blocked" and self:RequestableBuffs(entry)~=nil or false
         local needs=#entry.actions>0
         if needs then self.nearbyCounts.need=self.nearbyCounts.need+1 end
-        if needs or entry.requestProvider or (self.db.nearbyShowAll and not grouped) then out[#out+1]=entry end
+        if needs or entry.groupRequest or entry.requestProvider or (self.db.nearbyShowAll and not grouped) then out[#out+1]=entry end
       end
     end
   end
@@ -856,10 +857,14 @@ function B:RequestBuffChoices()
   for _,def in ipairs(self:CoverageDefinitions()) do list[#list+1]=def end
   return list
 end
-function B:RequestableBuffs(entry)
-  if not self.db.nearbyRequests or not self.db.enabled or not self.db.nearbyEnabled or A.Combat() or not entry or not A.Text(entry.class) then return nil end
-  if self:NearbyGroupMember(entry.unit) or A.Call(UnitIsUnit,entry.unit,"player")==true then return nil end
-  local myClass=A.Class("player"); if not myClass or entry.class==myClass then return nil end
+function B:RequestableBuffs(entry,scope)
+  local group=scope=="group" or (scope==nil and entry and self:NearbyGroupMember(entry.unit))
+  if not self.db.enabled or A.Combat() or not entry or not A.Text(entry.class) then return nil end
+  if group then
+    if self.db.groupRequests~=true or not self:GroupRequestRecipient(entry) then return nil end
+  elseif not self.db.nearbyRequests or not self.db.nearbyEnabled or self:NearbyGroupMember(entry.unit) then return nil end
+  if A.Call(UnitIsUnit,entry.unit,"player")==true then return nil end
+  local myClass=A.Class("player"); if not myClass or (not group and entry.class==myClass) then return nil end
   local scan=self:GetAuras("player",false); if not scan then return nil end
   local list,blessing,hasBlessing={},nil,nil
   for _,def in ipairs(self:CoverageDefinitions()) do
@@ -893,17 +898,17 @@ function B:BuffRequestText(list)
   if template:find("%%s") then message=template:gsub("%%s",function() return joined end,1) else message=template.." ("..joined..")" end
   return message:sub(1,250)
 end
-function B:RequestBuffFrom(entry)
+function B:RequestBuffFrom(entry,scope)
   self:PruneNearbyHistory()
   if A.Combat() or not entry then return false end
-  local list=self:RequestableBuffs(entry); if not list then return false end
+  local list=self:RequestableBuffs(entry,scope); if not list or not A.Text(entry.guid) then return false end
   self.nearbyRequested=self.nearbyRequested or {}
   local at=self.nearbyRequested[entry.guid]; if at and GetTime()-at<REQUEST_COOLDOWN then return false end
   if C_ChatInfo and type(C_ChatInfo.InChatMessagingLockdown)=="function" and A.Call(C_ChatInfo.InChatMessagingLockdown)==true then return false end
   local name=self:NearbyCastName({target=entry.unit,targetGUID=entry.guid})
   if not A.Text(name) or type(SendChatMessage)~="function" then return false end
-  local ok=pcall(SendChatMessage,self:BuffRequestText(list),"WHISPER",nil,name)
-  if not ok then return false end
+  local ok,result=pcall(SendChatMessage,self:BuffRequestText(list),"WHISPER",nil,name)
+  if not ok or result==false then return false end
   self.nearbyRequested[entry.guid]=GetTime()
   self:UpdateNearbyWindow()
   return true
@@ -1065,7 +1070,7 @@ function B:NearbyDisplayList(list)
     end
     local safe=A.Call(UnitGUID,old.entry.unit)==old.entry.guid and self.nearbyUnits[old.entry.unit]==old.entry.guid
       and A.Call(UnitCanAssist,"player",old.entry.unit)==true
-      and (self.db.nearbyShowAll or ((not delayed or self:NearbyResultFor(old.entry.guid)) and self:NearbyRecipientSafe(old.entry.unit)))
+      and (self.db.nearbyShowAll or (old.entry.groupRequest and self:RequestableBuffs(old.entry)~=nil) or ((not delayed or self:NearbyResultFor(old.entry.guid)) and self:NearbyRecipientSafe(old.entry.unit)))
       and not (self.db.nearbyShowAll and self:NearbyGroupMember(old.entry.unit) and not entry)
     if not safe then
       safetyRemoved=true

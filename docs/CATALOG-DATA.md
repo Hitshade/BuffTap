@@ -28,3 +28,8 @@ Historical releases, their notices and local provenance records are retained.
 
 ## Generator maintenance note (2026-11-24)
 The historical build_catalog.py and build_coatings.py defaults are not a complete rebuild recipe for the current curated release. They can overwrite later catalog additions or provenance. Use an isolated output directory/copy, explicitly select the reviewed source build, then inspect the complete diff and run the relevant catalog/runtime checks before adopting generated output. Runtime item-effect/equipment guards remain necessary. This review did not regenerate data or revalidate every ID against a new live export.
+
+## Consumables review, 1.29.3-beta1 (2026-11-25)
+All 207 existing visible item-to-use mappings matched client build 1.60.1.71091. Comparing the supported items and their recursive spell effects with 1.60.1.70888 found no changes to item requirements, spell descriptions, effect fields, durations or range indices. Two item variants (287973 Tender Wolf Steak, 287974 Grilled Squid) use existing supported food spells and auras and are now included, for 209 visible items. Mithril Head Trout was already present.
+
+Blizzard client data was retrieved through wago.tools DB2 exports. Current source URLs and hashes are in research/consumables-1.29.3/sources.json; older source hashes, mapping checks, effect diff and candidate exclusions are beside it. These exports are development evidence and are not shipped. Eight Endless elixirs were found but remain excluded pending availability/suitability evidence; client-table presence is not an acquisition claim. Runtime item checks are unchanged.

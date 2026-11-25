@@ -1516,3 +1516,13 @@ B.Locales.frFR["Waiting for cooldown."]="En attente du temps de recharge."
 B.Locales.frFR["Click: next appropriate buff"]="Clic : prochaine amélioration adaptée"
 B.Locales.frFR["Right-click: whisper, invite, ignore or blacklist"]="Clic droit : chuchoter, inviter, ignorer ou bloquer"
 B.Locales.frFR["Mouse wheel: scroll players"]="Molette : faire défiler les joueurs"
+
+-- Category location choices and explicit group requests.
+B.Locales.frFR["Choose where each category reminds you."]="Choisissez où chaque catégorie vous rappelle."
+B.Locales.frFR["Everywhere"]="Partout"
+B.Locales.frFR["Dungeons and raids"]="Donjons et raids"
+B.Locales.frFR["Where to remind"]="Où rappeler"
+B.Locales.frFR["Choose where this category appears. Applies to Auto and Manual reminders. Pause while resting still applies. Party, Raid and spec choices can be edited separately."]="Choisissez où cette catégorie apparaît. Cela concerne les rappels automatiques et manuels. La pause au repos reste applicable. Le groupe, le raid et les spécialisations peuvent être réglés séparément."
+B.Locales.frFR["Party and raid"]="Groupe et raid"
+B.Locales.frFR["Show request icons beside party and raid members in the Nearby list when you are missing their buffs. Click an icon to whisper that player. Uses the same buff choices, message and cooldown as Nearby players. Nothing is sent automatically."]="Affiche des icônes de demande à côté des membres du groupe et du raid dans la liste des joueurs proches quand leurs améliorations vous manquent. Cliquez pour chuchoter au joueur. Les choix, le message et le délai sont les mêmes que pour les autres joueurs proches. Rien n’est envoyé automatiquement."
+B.Locales.frFR["Opens the Nearby list. Click a request icon beside a player to ask for missing buffs. Party and raid requests use the same list."]="Ouvre la liste des joueurs proches. Cliquez sur une icône de demande à côté d’un joueur pour demander les améliorations manquantes. Le groupe et le raid utilisent la même liste."

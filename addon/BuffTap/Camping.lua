@@ -142,7 +142,7 @@ function B:CampingEntries()
 end
 function B:CampBagSlot(id)
   if not C_Container or type(C_Container.GetContainerItemInfo)~="function" then return nil end
-  for bag=0,(NUM_BAG_SLOTS or 4) do
+  for _,bag in ipairs(A.CarriedBagIDs()) do
     local count=read(C_Container.GetContainerNumSlots,bag)
     if A.Number(count) then for slot=1,count do
       local info=read(C_Container.GetContainerItemInfo,bag,slot)

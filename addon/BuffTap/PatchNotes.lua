@@ -2,6 +2,10 @@
 local _,B=...
 -- Keep the ten most recent releases within a 24 KiB content ceiling.
 B.PatchNotes={
+ {version="1.29.3",title="Food for the road, buffs for the group",items={
+  "Consumables now lets you choose Everywhere or Dungeons and raids for each category. Keep food reminders on while leveling without being asked to use your flask. Your previous location choices are preserved.",
+  "Helpers > Buff requests now has an optional Party and raid switch. Party and raid members now use the request icons in the Nearby list, just like other nearby players. Click an icon to ask for buffs you are missing. Uses your existing message and buff choices; nothing is sent automatically. Groups has a shortcut too.",
+  "Extra equipped bag slots are now included when checking camp items, discovering consumables and checking space for class items. Two more versions of Tender Wolf Steak and Grilled Squid are recognized."}},
  {version="1.29.2",title="A few loose ends, tied up",items={
   "Resurrection reminders now keep their spell ready when you use your binding or click. Cleansing and resurrection wait when the game cannot confirm the spell is ready.",
   "Out-of-range Nearby players no longer appear on your main reminder. With greyed reminders enabled, a missing cleanse on your group or friendly target can now show there, and returns to a normal reminder when they are in range.",
@@ -37,8 +41,7 @@ B.PatchNotes={
   "Less work behind the scenes in busy raids, and no empty scrollbar on short Groups buff lists."}},
  {version="1.26.14",title="Group buffs without the reagent",items={
   "Group buffs now respect Forever effects that remove their normal vendor reagent cost. When the game allows the cast, BuffTap offers the group buff instead of unnecessarily switching to individual buffs."}},
- {version="1.26.13",title="Catch a brief chance to say thanks",items={
-  "Solo Thanks now captures the buff giver as the buff arrives, helping when their details disappear from the next buff check. The usual identity checks still apply."},thanks="Thanks to waggz81 for continuing to help investigate missed thanks."},
+
 }
 function B:PatchNotesUnread()
   return self.profileDB and self.db.optionsPatchDot~=false and self.profileDB.global.patchNotesSeen~=self.version
