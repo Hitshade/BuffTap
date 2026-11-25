@@ -140,10 +140,15 @@ function B:CleanseSpellFor(debuff,sameType,abilities)
 end
 
 local function usable(id)
-  if A.SpellUsable(id)==false then return false end
+  if A.SpellUsable(id)~=true then return false end
   local cd=A.Call(C_Spell and C_Spell.GetSpellCooldown,id)
-  if type(cd)=="table" and A.Number(cd.startTime) and A.Number(cd.duration) and cd.startTime>0 and cd.duration>1.6 then return false end
-  return true
+  if type(cd)~="table" or not A.Public(cd.isEnabled) or cd.isEnabled~=true
+    or not A.Number(cd.startTime) or not A.Number(cd.duration) or cd.startTime<0 or cd.duration<0
+    or not A.Public(cd.isActive) or not A.Public(cd.isOnGCD) then return false end
+  local active=cd.isActive==true or cd.duration>0 and cd.startTime+cd.duration>GetTime()
+  -- Do not mistake a short ability cooldown for the GCD. Maintenance waits until it ends.
+  if active then return false end
+  return cd.isActive==nil or cd.isActive==false
 end
 
 -- First thing to remove on one unit, or nil.
@@ -207,7 +212,13 @@ local function tryUnit(self,unit,abilities,nearby,scope)
   if not action then return nil end
   action.scope=scope
   local inRange=self:SpellRange(action)
-  if inRange==false then return nil end
+  if inRange==false then
+    if not nearby then
+      self.cleanseRangeBlocked=self.cleanseRangeBlocked or {}
+      if #self.cleanseRangeBlocked<48 then self.cleanseRangeBlocked[#self.cleanseRangeBlocked+1]=action end
+    end
+    return nil
+  end
   if nearby and not self:PrepareNearbyCast(action) then return nil end
   return action
 end
@@ -481,7 +492,7 @@ function B:ValidateRevive(action)
 end
 -- Revive first by default; "Cleanse before resurrection" swaps the two. Both come before ordinary buffs.
 function B:Select()
-  self.reviveRangeBlocked=nil
+  self.reviveRangeBlocked=nil; self.cleanseRangeBlocked=nil
   local cleanseFirst=self.db and self.db.cleanseFirst==true
   local firstSelector,firstSource,secondSelector,secondSource
   if cleanseFirst then firstSelector,firstSource,secondSelector,secondSource=self.SelectCleanse,"cleanse",self.SelectRevive,"revive"
@@ -492,6 +503,7 @@ function B:Select()
   if action then return action,source end
   local ordinary,why=baseSelect(self)
   for _,candidate in ipairs(self.reviveRangeBlocked or {}) do self:AddRangeBlocked(candidate) end
+  for _,candidate in ipairs(self.cleanseRangeBlocked or {}) do self:AddRangeBlocked(candidate) end
   return ordinary,why
 end
 local reviveBaseValidate=B.Validate

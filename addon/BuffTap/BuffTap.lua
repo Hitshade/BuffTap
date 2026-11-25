@@ -13,7 +13,7 @@ end
 -- One reset path for the settings window and /bt reset confirm: settings plus every derived cache.
 function B:ResetEverything()
   if A.Combat() then return false end
-  self:ResetCharacterSettings(); self.helperDismissed={}; self.helperThankSeen=nil; self.bookDirty=true
+  self:ResetCharacterSettings(); self:ClearHelperDismissals(); self.helperThankSeen=nil; self.bookDirty=true
   self.resolveCache=nil; self.rankChoiceCache=nil; self.coverCache=nil; self:InvalidateRoster(); self:InvalidateAura(); self.appearance=nil
   return true
 end
@@ -307,6 +307,8 @@ function B:CreateButton()
     end
     local valid=B:Validate(action)
     if not valid then B:Commit(nil,"click validation failed"); return end
+    -- Resurrection was checked by ValidateRevive; it is not a catalogued buff.
+    if action.source=="revive" then return end
     if action.groupCast and B.GroupReagents and B.GroupReagents[action.id] then
       if not B:RevalidateGroupAction(action) then
         B:Commit(nil,"group no longer needs this cast"); B:RequestRefresh("group click changed",0.05)
@@ -639,6 +641,7 @@ function B:ScheduleRangeHeartbeat(action)
       for _,candidate in ipairs(current or {}) do
         local eligible
         if candidate.source=='revive' then eligible=B:ValidateRevive(candidate)
+        elseif candidate.source=='cleanse' then eligible=B:ValidateCleanse(candidate)
         else eligible=B:TargetEligible(candidate,true) end
         if eligible then B:RequestRefresh('out-of-range target returned',.03); return end
       end
@@ -646,6 +649,7 @@ function B:ScheduleRangeHeartbeat(action)
         if B.action~=action then return end
         local eligible,why
         if action.source=='revive' then eligible=B:ValidateRevive(action)
+        elseif action.source=='cleanse' then eligible=B:ValidateCleanse(action)
         elseif action.target=='player' then eligible=true
         else eligible,why=B:TargetEligible(action,true) end
         if not eligible then B:RequestRefresh(why or "range/target changed",0.03); return end

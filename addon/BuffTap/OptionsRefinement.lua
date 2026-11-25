@@ -614,7 +614,7 @@ function B:BuildNearbyAppearance(ui,p)
   f.nearbyInCombat:SetScript("OnEnter",function(s) T.Tooltip(s,B:Text("Keep open in combat"),B:Text("Off: Nearby hides while you are in combat. On: it stays open so you can still invite players or ask to join a group. Buffing waits until combat ends, and the list updates afterwards.")) end)
   f.nearbyInCombat:SetScript("OnLeave",function() if GameTooltip then GameTooltip:Hide() end end)
   ui.button(p,"Move reminders",26,-416,190,function() B:MoveAllFrames("nearby") end)
-  T.Confirm(ui.button(p,"Restore window defaults",450,-416,234,function()
+  f.nearbyResetLook=T.Confirm(ui.button(p,"Restore window defaults",450,-416,234,function()
     B.db.nearbyOnTop=false; B.db.nearbyInCombat=true; B.db.nearbyScale=1; B.db.nearbyRows=5; B.db.nearbyWidth=240; B.db.nearbyOpacity=.5; B.db.nearbyX=240; B.db.nearbyY=0; B.db.nearbyButtonSide="left"; B.db.nearbyFont="default"; B.db.nearbyFontSize=0; B.db.nearbyFontOutline="none"
     if B.nearbyFrame then B.nearbyFrame.positionX=nil; B.nearbyFrame.positionY=nil; B:UpdateNearbyWindow() end; B:Options()
   end))

@@ -1,3 +1,18 @@
+# BuffTap 1.29.2
+
+### More reliable reminders
+Resurrection reminders now keep the prepared spell when you use your normal binding or click. Cleansing and resurrection wait when the game cannot confirm that the spell is usable or its cooldown is ready.
+
+With greyed out-of-range reminders enabled, a needed cleanse for a party member or friendly target can now appear there too. It becomes a normal reminder when the player returns to range. Right-click dismisses only the notice. Nearby players remain in Nearby and no longer create an out-of-range notice on the main reminder.
+
+### Thanks and tidying up
+The optional setting to thank players outside your group now waits for complete group information before treating someone as a stranger. This also protects the manual thank-you backup. No new chat messages or settings are added.
+
+Expired reminder timers and old Nearby social/request records are cleaned up. Several translated labels and Nearby tooltips are filled in, and existing in-game patch notes have a light wording polish. Your saved settings are preserved.
+
+### Settings and compatibility
+No setup changes are required. This update keeps your existing choices and adds no new settings. Combat casting remains unavailable. Translations have not had a native-speaker review.
+
 # BuffTap 1.29.1
 
 ### Dismiss means dismissed

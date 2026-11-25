@@ -4,7 +4,7 @@
 
 local _, B = ...
 _G.BuffTap = B
-B.version = "1.29.1"
+B.version = "1.29.2"
 B.API = {}
 local A = B.API
 
@@ -1279,6 +1279,9 @@ function B:TargetEligible(action,checkRange)
 end
 
 function B:AddRangeBlocked(action)
+  -- Nearby players are probed with the same Validate as the reminder, but they are never the reminder's own target: an
+  -- out-of-range stranger must not pause the reminder or show as a greyed notice. Nearby actions target a nameplate unit.
+  if action and A.Text(action.target) and action.target:match("^nameplate%d+$") then return end
   self.rangeBlocked=true
   if not action then return end
   self.rangeBlockedActions=self.rangeBlockedActions or {}

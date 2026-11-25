@@ -1,9 +1,8 @@
 -- This Source Code Form is subject to the Mozilla Public License, v. 2.0.
 -- See LICENSE-MPL-2.0.txt.
--- 1.28.1: read-only probe for dual talent specs. It changes nothing and only reports, in the Full
--- check-up, which talent calls and events this client has, so a per-spec feature (such as a weapon
--- imbue for each spec) can be judged on facts. Every call is guarded: a missing or failing call is
--- reported, never raised.
+-- Read-only talent/spec diagnostics for the Full check-up. Spec settings are implemented in
+-- Situations.lua; this module records available APIs and events for live troubleshooting.
+-- Every call is guarded: a missing or failing call is reported, never raised.
 local _,B=...
 local A=B.API
 

@@ -4,7 +4,7 @@ from test_nearby_invites import social
 # Nearby in combat: on by default, migrated once.
 test('Existing 1.26.15 setting is switched on once',"BuffTap.db.nearbyInCombat=false; BuffTap.db.nearbyInCombatRule=nil; BuffTap:InitDB(); assert(BuffTap.db.nearbyInCombat==true and BuffTap.db.nearbyInCombatRule==1)")
 test('A later choice to turn it off sticks',"BuffTap.db.nearbyInCombat=false; BuffTap.db.nearbyInCombatRule=1; BuffTap:InitDB(); assert(BuffTap.db.nearbyInCombat==false)")
-test('Restore defaults turns Nearby in combat back on',social+"BuffTap.db.nearbyInCombat=false; BuffTap:Options(); local o=BuffTap.options; assert(o.nearbyResetLook or true)")
+test('Restore defaults turns Nearby in combat back on',social+"BuffTap.db.nearbyInCombat=false; BuffTap:Options(); local o=BuffTap.options; local reset=o.nearbyResetLook; assert(reset and reset.visualConfirm); reset.scripts.OnClick(reset); assert(BuffTap.db.nearbyInCombat==false); reset.scripts.OnClick(reset); assert(BuffTap.db.nearbyInCombat==true and BuffTap.nearbyFrame.keepsCombat==true)")
 
 # Scrollbars only show when there is something to scroll.
 sc="local T=BuffTap.OptionsTheme; local function make(range) local s=CreateFrame('ScrollFrame'); s.hooks={}; s.HookScript=function(self,k,fn) self.hooks[k]=fn end; local bar=CreateFrame('Slider'); bar.SetAlpha=function(self,a) self.alpha=a end; s.ScrollBar=bar; s.range=range; s.GetVerticalScrollRange=function(self) return self.range end; T.ScrollBar(s); return s end; "
@@ -46,8 +46,8 @@ offrow="local B=BuffTap; B.db.weaponReminder=true; "
 test('Paladin has no Off hand oil row',offrow+"playerClass='PALADIN'; B:Options(); assert(B.options.coatingPickers.off.shown==false)")
 test('Rogue keeps the Off hand oil row',offrow+"playerClass='ROGUE'; B:Options(); assert(B.options.coatingPickers.off.shown==true)")
 
-from pathlib import Path as _P
-RECORD_PT=(_P('/home/claude/bufftap/tests/nearby_preview_record.lua')).read_text(encoding='utf-8-sig')
+from test_bufftap import ROOT
+RECORD_PT=(ROOT/'tests/nearby_preview_record.lua').read_text(encoding='utf-8-sig')
 # Nearby: the how-it-works tutorial starts folded and remembers the choice.
 ng="local B=BuffTap; playerClass='DRUID'; "
 test('Nearby guide starts collapsed',ng+"B:Options(); local f=B.options; B:UpdateClassAwarePages(); assert(f.nearbyGuide.shown==false); assert(f.nearbyGuideCard.height==52)")
@@ -56,7 +56,7 @@ test('Nearby guide opens and closes from the toggle',ng+"B.db.nearbyGuideOpen=tr
 # Nearby guide: the combat note is translated in every language file.
 cn="Nearby stays open in combat, so invitations still work. You can change this under Customization > Nearby window."
 for loc in ('deDE','esES','frFR','ptBR'):
-    txt=open('/home/claude/bufftap/addon/BuffTap/Locales/'+loc+'.lua',encoding='utf-8').read()
+    txt=open(ROOT/('addon/BuffTap/Locales/'+loc+'.lua'),encoding='utf-8').read()
     assert 'B.Locales.'+loc+'["'+cn+'"]=' in txt, loc
 test('Paladin hides the Off hand switch too',offrow+"playerClass='PALADIN'; B:Options(); assert(B.options.weaponOff.shown==false)")
 test('Rogue shows the Off hand switch',offrow+"playerClass='ROGUE'; B:Options(); assert(B.options.weaponOff.shown~=false)")
@@ -68,7 +68,7 @@ gem="local B=BuffTap; playerClass='DRUID'; B.db.group=true; B:Options(); local f
 test('Groups card has an emblem tile',gem+"assert(f.groupEmblem and f.groupEmblemTile); assert(f.groupEmblem.texture and tostring(f.groupEmblem.texture):find('GroupParty'),tostring(f.groupEmblem.texture))")
 test('Raid context swaps the emblem',gem+"f.groupContext='Raid'; B:Options(); assert(tostring(B.options.groupEmblem.texture):find('GroupRaid'),tostring(B.options.groupEmblem.texture))")
 for loc in ('deDE','esES','frFR','ptBR'):
-    txt=open('/home/claude/bufftap/addon/BuffTap/Locales/'+loc+'.lua',encoding='utf-8').read()
+    txt=open(ROOT/('addon/BuffTap/Locales/'+loc+'.lua'),encoding='utf-8').read()
     for k in ("One group spell instead of several singles.","Also buff your pet and your group's pets.","Players needed before a group spell is used.","Refresh low buffs at ready checks."):
         assert 'B.Locales.'+loc+'["'+k+'"]=' in txt, (loc,k)
 test('Groups card helper lines show for a class with group spells',gem+"assert(f.groupNotes.smart.shown~=false and f.groupNotes.need.shown~=false); assert(f.groupSharedCard.height==162,tostring(f.groupSharedCard.height))")

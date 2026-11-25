@@ -94,7 +94,7 @@ function B:ClassHelpersLabel()
   return "Tracking"
 end
 
--- A class with no aura buffs (Rogue, Warrior) has nothing on the buff list, so My buffs shows only its Tracking controls.
+-- A class with no supported aura buffs opens My buffs directly on its Tracking controls.
 function B:MyBuffsCompact()
   return self.HasPersonalReminderBuffs~=nil and not self:HasPersonalReminderBuffs()
 end
@@ -148,7 +148,7 @@ function B:UpdateContextControls()
       for _,button in pairs(group.buttons) do button:Show() end
       if group.helpers then group.helpers:Show() end
     end
-    -- Dual spec bar: only for characters with two spec groups, and not on the Class helpers pane.
+    -- The spec bar also lets single-spec characters prepare Spec 2; never on Class helpers.
     local showBar=group.specCheck~=nil and not compact and not helpers and self:SpecApplies(category)
     local specOn=showBar and self:SpecEnabled()
     if group.specCheck then

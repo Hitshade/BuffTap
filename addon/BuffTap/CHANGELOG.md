@@ -1,3 +1,21 @@
+# BuffTap 1.29.2
+
+### Fixed
+- Main PreClick returns after successful resurrection-specific validation rather than trying to resolve a revive:<GUID> key as a catalogued buff. Preserves all existing revive recipient, scope, incoming-resurrection and spell checks. Adds successful click and invalidation regressions for Priest, Paladin, Shaman and Druid.
+- Cleanse.lua requires explicit spell usability and readable, enabled, non-active cooldown data. Maintenance waits for active cooldowns, including the GCD, rather than guessing from a short duration. Nil/restricted/error answers no longer authorize the reminder. Existing unknown-range compatibility behavior is unchanged.
+- Non-Nearby out-of-range cleanses collect bounded candidates alongside revive candidates. The range heartbeat uses ValidateCleanse for cleanse actions. Grey-notice dismissal remains separate from the real cast. Retains beta1's nameplate exclusion so Nearby never feeds main range notices.
+- ThanksInGroup requires explicit group/raid state, a valid roster count and complete readable expected units before authorizing an outsider. It rechecks group state/count before returning false. Shared automatic/manual callers inherit the stricter gate without new settings, caches or messages.
+
+### Cleanup and text
+- Restore reminders, zone resets and ResetEverything cancel dismissal timers as well as their maps. Nearby history pruning removes expired favor, request and social records during existing activity, at most once a minute; no new polling timer.
+- Replaced three hard-coded Linux test paths with ROOT. Replaced the Nearby reset test's tautology with actual two-click confirmation and false-to-true assertions. The aggregate prints its true final total after every import and exits nonzero for recorded failures.
+- Localized remaining reported Nearby tooltip paths and seven missing reminder/Camping/Thanks labels in deDE/esES/frFR/ptBR. These are author-written translations, not native-speaker verification. Lightly revised the ten in-game note records, preserving historical scope and retained credits.
+- Updated stale spec comments; dual-spec routing and event coverage are unchanged. No new settings, SavedVariables schema changes, dependencies or secure-button layout changes. Archived release receipts remain historical.
+
+### Validation and status
+- Validation: 531 focused and 3,481 full mocked scenarios passed, zero failed. The portable aggregate completed without harness errors in 332.5 seconds; Lua/Python/TOC source hashes were unchanged throughout. All 51 registered Lua modules compile. No additional live-client verification claimed. Stable promotion changes only version identity and release wording; the tested beta2 behavior is unchanged.
+- Owner authorized stable publication after installing beta2. GitHub review on 2026-11-24 found no open or newly updated issues; historical #3/#4/#5 reports and existing contributor credits remain unchanged.
+
 # BuffTap 1.29.1
 
 ### Fixed

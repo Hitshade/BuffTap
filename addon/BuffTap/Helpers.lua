@@ -89,8 +89,14 @@ function B:DismissHelper(action,reason)
   else self.helperDismissUntil[key]=nil end
   self:RequestRefresh("reminder dismissed",0)
 end
+function B:ClearHelperDismissals()
+  for slot in pairs(self.timers or {}) do
+    if type(slot)=="string" and slot:match("^dismiss%-") then self:CancelTimer(slot) end
+  end
+  self.helperDismissed={}; self.helperDismissUntil={}
+end
 function B:RestoreHelpers()
-  self.helperDismissed={}; self.helperDismissUntil={}; self.helperAttempt=nil; self.castRetry={}; self.castRetryAttempt=nil
+  self:ClearHelperDismissals(); self.helperAttempt=nil; self.castRetry={}; self.castRetryAttempt=nil
   self:RequestRefresh("restore reminders",0)
 end
 function B:RememberSelfBuffAttempt(action)
@@ -464,23 +470,29 @@ end
 -- Callers treat anything but false as "do not thank": an unreadable roster never produces a thank-you.
 function B:ThanksInGroup(guid)
   local inGroup,inRaid=A.Call(IsInGroup),A.Call(IsInRaid)
-  if inGroup==false and inRaid==false then return false end
-  if inGroup~=true and inRaid~=true then return nil end
+  if type(inGroup)~="boolean" or type(inRaid)~="boolean" then return nil end
+  if not inGroup and not inRaid then return false end
   if not A.Text(guid) then return nil end
-  local raid=inRaid==true
-  local units={"player"}
-  for i=1,raid and 40 or 4 do units[#units+1]=(raid and "raid" or "party")..i end
+  local countFn=inRaid and GetNumGroupMembers or GetNumSubgroupMembers
+  local count=A.Call(countFn)
+  if not A.Number(count) or count<1 or count>(inRaid and 40 or 4) or count~=math.floor(count) then return nil end
+  local own=A.Call(UnitGUID,"player")
+  if not A.Text(own) then return nil end
+  if own==guid then return true end
   local unreadable=false
-  for _,unit in ipairs(units) do
-    local exists=A.Call(UnitExists,unit)
-    if exists==true then
+  for i=1,count do
+    local unit=(inRaid and "raid" or "party")..i
+    if A.Call(UnitExists,unit)~=true then unreadable=true
+    else
       local id=A.Call(UnitGUID,unit)
       if not A.Text(id) then unreadable=true elseif id==guid then return true end
-    elseif exists==nil then unreadable=true end
+    end
   end
-  if unreadable then return nil end
+  -- Absence is trustworthy only while the roster is complete and unchanged.
+  if unreadable or A.Call(IsInGroup)~=inGroup or A.Call(IsInRaid)~=inRaid or A.Call(countFn)~=count then return nil end
   return false
 end
+
 local function groupBlock(guid)
   local inside=B:ThanksInGroup(guid)
   if inside==true then return "caster is in your group" end
@@ -807,7 +819,7 @@ function B:HelperEvent(event,arg,arg2,spellID)
     self.buffQueueQuietUntil=nil
     self.helperThankQueue={}; self:CancelTimer("thanks-send")
     self.helperThankBaseline=nil; self.helperThankPending=nil; self.helperThankRetries=0; self.helperThankRetryPending=nil; self:CancelTimer("thanks-settle")
-    self.helperDismissed={}; self.helperAttempt=nil; self.castRetry={}; self.castRetryAttempt=nil; self.helperThankSeen=nil; self.helperDiscoverDirty=true
+    self:ClearHelperDismissals(); self.helperAttempt=nil; self.castRetry={}; self.castRetryAttempt=nil; self.helperThankSeen=nil; self.helperDiscoverDirty=true
   elseif event=="GROUP_ROSTER_UPDATE" then self.castRetry={}; self.castRetryAttempt=nil; self.helperThankSeen=nil; self.helperThankBaseline=nil; self.helperThankPending=nil; self.helperThankQueue={}; self:CancelTimer("thanks-send")
   elseif event=="UI_ERROR_MESSAGE" then self:HandleHelperError(arg2)
   elseif event=="UNIT_SPELLCAST_FAILED" and arg=="player" then self:HandleHelperFailure(spellID)

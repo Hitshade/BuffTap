@@ -245,3 +245,13 @@ local other={key='bok',id=20217,target='party2',targetGUID='Player-1-0002',name=
 B.rangeBlockedActions={blocked,other}; local next=B:OutOfRangeDisplay(); assert(next and next.target=='party2','the next out-of-range player still shows')
 B:RestoreHelpers(); B.rangeBlockedActions={blocked}; assert(B:OutOfRangeDisplay(),'Restore reminders brings it back')
 """)
+test('A nearby stranger out of range never becomes the greyed reminder',R+"""
+B.db.showOutOfRange=true
+B.rangeBlocked=false; B.rangeBlockedActions={}; B.rangeBlockedKeys={}
+B:AddRangeBlocked({key='motw',id=8907,target='nameplate2',targetGUID='Player-1-0009',name='Mark of the Wild',icon=1,targetName='Stranger'})
+assert(B.rangeBlocked==false and #B.rangeBlockedActions==0,'a nameplate (Nearby) target is not recorded')
+assert(B:OutOfRangeDisplay()==nil,'no greyed icon for a Nearby player')
+B:AddRangeBlocked({key='motw',id=8907,target='party1',targetGUID='Player-1-0001',name='Mark of the Wild',icon=1,targetName='Ann'})
+assert(B.rangeBlocked==true and #B.rangeBlockedActions==1,'a party member still is')
+local shown=B:OutOfRangeDisplay(); assert(shown and shown.target=='party1')
+""")

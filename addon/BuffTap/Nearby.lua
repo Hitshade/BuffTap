@@ -625,12 +625,25 @@ B.NearbyTagStyles=MARKERS
 -- up the Nearby list when they need one of your buffs, or theirs is at least a quarter gone. A buff that
 -- answers one of yours does not count, and each player is bumped at most once per half hour.
 local FAVOR_WINDOW,REPLY_WINDOW,BUMP_COOLDOWN=300,300,1800
+local HISTORY_WINDOWS={favors=FAVOR_WINDOW,favorGiven=REPLY_WINDOW,favorBumped=BUMP_COOLDOWN,nearbyRequested=180,
+  socialPresent=60,socialAlerted=3600,socialPending=30}
+function B:PruneNearbyHistory()
+  local now=GetTime()
+  if self.nearbyHistoryPrunedAt and now-self.nearbyHistoryPrunedAt<60 then return end
+  self.nearbyHistoryPrunedAt=now
+  for field,window in pairs(HISTORY_WINDOWS) do
+    for guid,at in pairs(self[field] or {}) do
+      if not A.Number(at) or now-at>=window then self[field][guid]=nil end
+    end
+  end
+end
 function B:FavorActive(guid)
   if not self.db or self.db.nearbyReturnFavor==false or not A.Text(guid) then return false end
   local at=self.favors and self.favors[guid]
   return at and GetTime()-at<FAVOR_WINDOW or false
 end
 function B:NoteFavor(guid)
+  self:PruneNearbyHistory()
   local now=GetTime()
   self.favors=self.favors or {}; self.favorGiven=self.favorGiven or {}; self.favorBumped=self.favorBumped or {}
   if self.favorGiven[guid] and now-self.favorGiven[guid]<REPLY_WINDOW then return end
@@ -735,6 +748,7 @@ end
 local SOCIAL_COLORS={friend={.42,.72,1},guild={.35,.9,.42}}
 function B:SettleSocialAlerts(seconds) self.socialReadyAt=GetTime()+(seconds or 8) end
 function B:NoteNearbySocial(entry)
+  self:PruneNearbyHistory()
   local d=self.db
   if d.nearbySocialAlert~=true or not A.Text(entry.guid) then return end
   local kind=entry.socialKind or entry.social
@@ -880,6 +894,7 @@ function B:BuffRequestText(list)
   return message:sub(1,250)
 end
 function B:RequestBuffFrom(entry)
+  self:PruneNearbyHistory()
   if A.Combat() or not entry then return false end
   local list=self:RequestableBuffs(entry); if not list then return false end
   self.nearbyRequested=self.nearbyRequested or {}
@@ -924,6 +939,7 @@ function B:SelectNearby()
   end
 end
 function B:TrackNearby(unit)
+  self:PruneNearbyHistory()
   if not A.Text(unit) or not unit:match("^nameplate%d+$") then return end
   if A.Call(UnitCanAssist,"player",unit)~=true then return end
   local guid=A.Call(UnitGUID,unit)
@@ -1010,8 +1026,8 @@ local function wash(parent,layer,r,g,b,a)
 end
 local function hint(button,title,body)
   button:SetScript("OnEnter",function()
-    GameTooltip:SetOwner(button,"ANCHOR_RIGHT"); GameTooltip:SetText(title())
-    if body then GameTooltip:AddLine(body,.8,.8,.8,true) end; GameTooltip:Show()
+    GameTooltip:SetOwner(button,"ANCHOR_RIGHT"); GameTooltip:SetText(B:Text(title()))
+    if body then GameTooltip:AddLine(B:Text(body),.8,.8,.8,true) end; GameTooltip:Show()
   end)
   button:SetScript("OnLeave",function() GameTooltip:Hide() end)
 end
@@ -1293,9 +1309,9 @@ function B:CreateNearbyWindow()
         GameTooltip:SetText(B:Text("Request to join %s's group",row.entry.name))
         GameTooltip:AddLine(B:Text("Click to ask to join this player's group. The group leader decides."),.80,.82,.86,true); GameTooltip:Show(); return
       end
-      GameTooltip:SetText((mode=="SUGGEST_INVITE" and "Suggest party invite: " or "Send party invite to ")..row.entry.name)
+      GameTooltip:SetText(self:Text(mode=="SUGGEST_INVITE" and "Suggest party invite: %s" or "Send party invite to %s",row.entry.name))
       local at=self.nearbyInvited and self.nearbyInvited[row.entry.guid]
-      GameTooltip:AddLine(at and GetTime()-at<10 and "Party invite or suggestion sent. Waiting briefly before allowing another." or "Click to "..(mode=="SUGGEST_INVITE" and "suggest this player to your group leader." or "send this player a party invite."),.8,.8,.8,true); GameTooltip:Show()
+      GameTooltip:AddLine(self:Text(at and GetTime()-at<10 and "Party invite or suggestion sent. Waiting briefly before allowing another." or mode=="SUGGEST_INVITE" and "Click to suggest this player to your group leader." or "Click to send this player a party invite."),.8,.8,.8,true); GameTooltip:Show()
     end)
     row.invite:SetScript("OnLeave",function()
       self.nearbyHovered=nil; GameTooltip:Hide()
@@ -1338,19 +1354,19 @@ function B:CreateNearbyWindow()
       GameTooltip:SetOwner(button,"ANCHOR_RIGHT"); GameTooltip:SetText(button.entry.name)
       if A.Combat() then GameTooltip:AddLine(self:Text("In combat. Buffs wait until combat ends; invites still work."),1,.55,.25,true)
       elseif button.action then for _,action in ipairs(button.entry.actions) do GameTooltip:AddLine(action.name,1,1,1) end
-      elseif not button.entry.marker then GameTooltip:AddLine("No buff queued. Buffs may be covered, excluded, or unavailable.",.7,.7,.7,true) end
+      elseif not button.entry.marker then GameTooltip:AddLine(self:Text("No buff queued. Buffs may be covered, excluded, or unavailable."),.7,.7,.7,true) end
       if button.entry.social=="friend" then GameTooltip:AddLine(self:Text("On your friends list."),.42,.72,1,true)
       elseif button.entry.social=="guild" then GameTooltip:AddLine(self:Text("In your guild."),.35,.9,.42,true) end
       if button.entry.marker=="pvp" and self.db.pvpProtection~=true then GameTooltip:AddLine(self:Text("PvP flagged. Buffing them will flag you too."),1,.45,.4,true)
       elseif button.entry.marker=="pvp" then GameTooltip:AddLine(self:Text("PvP flagged. Buffing them would flag you, so PvP protection skips them."),1,.45,.4,true)
       elseif button.entry.marker=="pvp-unknown" then GameTooltip:AddLine(self:Text("PvP status unknown, so PvP protection skips them."),.75,.75,.75,true)
       elseif button.entry.marker=="blocked" then GameTooltip:AddLine(self:Text("Blacklisted. BuffTap offers no buffs or invites."),1,.4,.35,true) end
-      if button.action and not button.action.ready then GameTooltip:AddLine("Waiting for cooldown.",.8,.8,.7)
+      if button.action and not button.action.ready then GameTooltip:AddLine(self:Text("Waiting for cooldown."),.8,.8,.7)
       elseif button.action and button.action.source=="cleanse" then GameTooltip:AddLine(self:Text("Click: cleanse %s",button.action.debuffName or ""),1,.82,0)
-      elseif button.action then GameTooltip:AddLine("Click: next appropriate buff",1,.82,0) end
+      elseif button.action then GameTooltip:AddLine(self:Text("Click: next appropriate buff"),1,.82,0) end
       if not A.Combat() then
-        GameTooltip:AddLine("Right-click: whisper, invite, ignore or blacklist",.7,.7,.7,true)
-        GameTooltip:AddLine("Mouse wheel: scroll players",.7,.7,.7,true)
+        GameTooltip:AddLine(self:Text("Right-click: whisper, invite, ignore or blacklist"),.7,.7,.7,true)
+        GameTooltip:AddLine(self:Text("Mouse wheel: scroll players"),.7,.7,.7,true)
       end
       GameTooltip:Show()
     end)

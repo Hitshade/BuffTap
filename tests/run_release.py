@@ -146,3 +146,11 @@ import test_cleanups_12615
 import test_polish_127
 import test_class_helpers_tab
 import test_thanks_art_faction
+
+import test_revive_preclick_review1292
+
+import test_review_fixes_1292
+
+_review=__import__("test_bufftap")
+print("RELEASE_FINAL",len(_review.tests),"PASS",len(_review.failures),"FAIL")
+if _review.failures: raise SystemExit(1)

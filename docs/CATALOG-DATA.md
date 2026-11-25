@@ -25,3 +25,6 @@ This documents an independent data-driven replacement, not a claim of a clean-ro
 process: the prior catalog was available during compatibility review. Preserving
 setting identifiers does not make the earlier catalog the source of client facts.
 Historical releases, their notices and local provenance records are retained.
+
+## Generator maintenance note (2026-11-24)
+The historical build_catalog.py and build_coatings.py defaults are not a complete rebuild recipe for the current curated release. They can overwrite later catalog additions or provenance. Use an isolated output directory/copy, explicitly select the reviewed source build, then inspect the complete diff and run the relevant catalog/runtime checks before adopting generated output. Runtime item-effect/equipment guards remain necessary. This review did not regenerate data or revalidate every ID against a new live export.
