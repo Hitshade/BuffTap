@@ -1,6 +1,11 @@
 # BuffTap handoff (shared by Claude and Codex)
 
-Last updated: 2026-11-25. Main now contains stable 1.29.2 (source b8c15e3). Owner authorized a local 1.29.2-beta2 implementing the review fixes and cleanup, plus light in-game note revisions. Owner authorized stable 1.29.2 publication on 2026-11-24, superseding the earlier local-only restriction. Owner subsequently requested installation; beta2 is installed in the Forever AddOns folder, all 145 packaged files hash-verified. Previous addon backed up under releases/betas; install receipt is BuffTap-1.29.2-beta2-install-receipt.json. Update this file at the end of each session or release.
+Last updated: 2026-11-25. Stable 1.29.3 is published on GitHub, submitted to CurseForge (Processing), and installed locally. Source cd05444. Owner authorization and receipts are recorded below. Update this file at the end of each session or release.
+
+## Stable 1.29.3 publication (2026-11-25)
+- Owner approved publication after reviewing beta2 and visual follow-ups. Source commit cd05444; GitHub release 458403375, tag v1.29.3, published 12:09 ET. CurseForge file 9812855 submitted as Release for 1.60.1 with automatic publication; last observed Processing at 12:10 ET.
+- ZIP contains all 146 verified files, 2,819,249 bytes, SHA256 cf51325f936c04133504cf38722f1e3f70a6330638932a9d8078560f1893907a. Includes the Rebuff at and footer alignment follow-ups. Stable installed locally, all 146 files hash-verified, prior installation backed up. Receipts: releases/receipts/BuffTap-1.29.3-*.
+- Retained beta1 full 3,518 PASS / 0 FAIL and beta2 focused 350 PASS / 0 FAIL. Final affected layout run 144 PASS / 0 FAIL; all 52 Lua modules compile. No redundant full run or new live-client verification. GitHub review found no open or newly updated issues.
 
 ## Stable 1.29.3 preparation
 - Owner authorized publication on 2026-11-25 after reviewing the installed beta and alignment fixes. GitHub review found no open or newly updated issues. Final affected layout checks: 144 PASS / 0 FAIL; no additional full suite run. Stable package must include both installed Options.lua alignment follow-ups.

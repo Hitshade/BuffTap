@@ -1,3 +1,8 @@
+## Stable 1.29.3 publication (2026-11-25)
+- Owner approved publication after reviewing beta2 and visual follow-ups. Source commit cd05444; GitHub release 458403375, tag v1.29.3, published 12:09 ET. CurseForge file 9812855 submitted as Release for 1.60.1 with automatic publication; last observed Processing at 12:10 ET.
+- ZIP contains all 146 verified files, 2,819,249 bytes, SHA256 cf51325f936c04133504cf38722f1e3f70a6330638932a9d8078560f1893907a. Includes the Rebuff at and footer alignment follow-ups. Stable installed locally, all 146 files hash-verified, prior installation backed up. Receipts: releases/receipts/BuffTap-1.29.3-*.
+- Retained beta1 full 3,518 PASS / 0 FAIL and beta2 focused 350 PASS / 0 FAIL. Final affected layout run 144 PASS / 0 FAIL; all 52 Lua modules compile. No redundant full run or new live-client verification. GitHub review found no open or newly updated issues.
+
 **Local 1.29.3-beta2**, 2026-11-25: owner-requested correction moves party/raid requests onto existing Nearby rows; removes Ask someone selector and its choice cache. Group identity is matched against current roster GUIDs, missing-buff and shared cooldown checks retained. Party switch remains column-aligned; explicit Open window shortcut enables/shows Nearby. 350 focused mocked checks passed / zero failures; 52 Lua modules compile. Beta1 full 3,518 checks remain historical baseline, full suite not repeated. Installation authorized; no commit or publication.
 
 **Installed local 1.29.3-beta1**, owner-authorized 2026-11-25. All 146 packaged files hash-verified in the Forever AddOns folder; prior addon backed up. No saved settings accessed. Receipt: releases/betas/BuffTap-1.29.3-beta1-install-receipt.json. No commit or publication.
