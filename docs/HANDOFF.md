@@ -1,6 +1,6 @@
 # BuffTap handoff (shared by Claude and Codex)
 
-Last updated: 2026-11-24. Main remains 1.29.1 (c73e959). Owner authorized a local 1.29.2-beta2 implementing the review fixes and cleanup, plus light in-game note revisions. Owner authorized stable 1.29.2 publication on 2026-11-24, superseding the earlier local-only restriction. Owner subsequently requested installation; beta2 is installed in the Forever AddOns folder, all 145 packaged files hash-verified. Previous addon backed up under releases/betas; install receipt is BuffTap-1.29.2-beta2-install-receipt.json. Update this file at the end of each session or release.
+Last updated: 2026-11-24. Main now contains stable 1.29.2 (source b8c15e3). Owner authorized a local 1.29.2-beta2 implementing the review fixes and cleanup, plus light in-game note revisions. Owner authorized stable 1.29.2 publication on 2026-11-24, superseding the earlier local-only restriction. Owner subsequently requested installation; beta2 is installed in the Forever AddOns folder, all 145 packaged files hash-verified. Previous addon backed up under releases/betas; install receipt is BuffTap-1.29.2-beta2-install-receipt.json. Update this file at the end of each session or release.
 
 ## RULE 1: BuffTap is a WoW Forever-only addon
 - Client 1.60.1, interface 16001, Lua 5.1. The second value of `UnitName` is a surname (no realms). Buffs are hidden from addons in combat. No click-to-target on Nearby rows. Spell and item IDs follow Forever build 70888.
@@ -29,9 +29,12 @@ Last updated: 2026-11-24. Main remains 1.29.1 (c73e959). Owner authorized a loca
 - Focused mocked checks: 531 PASS / 0 FAIL. Final full portable run: 3,481 PASS / 0 FAIL in 332.5 seconds, no harness errors, source unchanged. Log/summary: docs/reviews/1.29.2-beta2-full-suite*. Build receipt and local ZIP: releases/betas/BuffTap-1.29.2-beta2*. No native client, taint, layout or translation verification claimed. Spec-event/unknown-spec UX questions remain deferred.
 - Build artifacts belong in `releases/betas`; QA and review evidence are under `docs/reviews` (ignored on disk). Stable 1.29.2 publication is now authorized; no external replies or saved-settings access. Owner-authorized beta2 installation completed after packaging; all 145 files verified and prior addon backed up.
 
-## Stable 1.29.2 preparation
+## Stable 1.29.2 publication
 - Promotes installed beta2 without behavior changes; version and release wording only. Retains 3,481 full mocked passes and 531 focused passes. Final 51 Lua modules compile; all 145 ZIP files hash-verified, and comparison with beta2 confirms only the five version/notes files differ.
-- Publication receipts pending under releases/receipts. GitHub final review: no open or newly updated reports on 2026-11-24. Previous CurseForge 1.29.1 is Approved.
+- Publication complete on GitHub; CurseForge upload submitted and awaiting approval. Receipts recorded under releases/receipts. GitHub final review: no open or newly updated reports on 2026-11-24. Previous CurseForge 1.29.1 is Approved.
+
+### Final publication receipt
+- Published 1.29.2 on 2026-11-24 at 22:53 ET: source b8c15e3, GitHub release 457631110 (tag v1.29.2, not draft), verified asset 2,813,146 bytes, SHA256 07463c331f043185498241174e8baa78c507e9011300ae80a5922e7f2b93f6df. CurseForge file 9804838 submitted as Release for 1.60.1 with automatic publication after approval; last observed Uploading, approval not yet verified. Stable installed locally, all 145 files hash-verified. Receipts are in releases/receipts/BuffTap-1.29.2-*. Retained 3,481 full mocked passes and 531 focused passes; promotion changed only identity and notes.
 
 ## Release procedure
 1. Check open GitHub issues first (see AGENTS.md).
