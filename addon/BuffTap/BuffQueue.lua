@@ -20,7 +20,7 @@ local function isBuffSpell(action)
 end
 
 -- Select state that the extra passes must not leave behind for status text, wakes or diagnostics.
-local SAVED={"nextWakeDelay","rangeBlocked","rangeBlockedActions","rangeBlockedKeys","powerBlocked","manaFloorBlocked","manaBlocked",
+local SAVED={"nextWakeDelay","rangeBlocked","rangeBlockedActions","rangeBlockedKeys","powerBlocked","manaFloorBlocked","manaBlocked","mainManaBlocked",
   "cooldownBlocked","dataPending","targetDataPending","buffDataUnavailable","ownershipUnavailable","pvpBlocked","deferredBlocked",
   "blessingClassList","diagnostics","captureDiagnostics"}
 

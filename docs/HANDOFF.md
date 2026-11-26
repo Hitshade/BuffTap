@@ -2,6 +2,11 @@
 
 Last updated: 2026-11-25. Stable 1.29.3 is published on GitHub, submitted to CurseForge (Processing), and installed locally. Source cd05444. Owner authorization and receipts are recorded below. Update this file at the end of each session or release.
 
+## Mana-display correction, stable 1.29.4 authorized (2026-11-26)
+- Owner reported a grey main mana pause on a fully buffed Priest with Nearby open. Shared manaBlocked/manaFloorBlocked flags could be set by Nearby probes or the friendly-target reserve gate before establishing missing work.
+- Local uncommitted fix: mainManaBlocked is reset each Select and set only by non-Nearby, non-nameplate spell validation or SmartShift restoration. ShowManaWait uses that main-action flag; reserve-only state remains in Nearby/status. Queue passes preserve the new flag. Existing global power/mana flags and recovery events remain intact. No settings, casting eligibility or Nearby behavior changed.
+- 250 affected mocked checks passed, zero failed (mana display, Nearby and Warrior suppression). Regression coverage includes no needed personal buff + reserve, Nearby-only spell shortage, and real personal shortage clearing after buffing. Log docs/reviews/mana-scope-1293.txt. Owner subsequently authorized 1.29.4 publication. Final affected validation: 562 PASS / 0 FAIL including SmartShift and buff queues; all 52 Lua modules compile. No full suite or live-client run. GitHub open/recent issue searches were empty on 2026-11-26.
+
 ## Stable 1.29.3 publication (2026-11-25)
 - Owner approved publication after reviewing beta2 and visual follow-ups. Source commit cd05444; GitHub release 458403375, tag v1.29.3, published 12:09 ET. CurseForge file 9812855 submitted as Release for 1.60.1 with automatic publication; last observed Processing at 12:10 ET.
 - ZIP contains all 146 verified files, 2,819,249 bytes, SHA256 cf51325f936c04133504cf38722f1e3f70a6330638932a9d8078560f1893907a. Includes the Rebuff at and footer alignment follow-ups. Stable installed locally, all 146 files hash-verified, prior installation backed up. Receipts: releases/receipts/BuffTap-1.29.3-*.

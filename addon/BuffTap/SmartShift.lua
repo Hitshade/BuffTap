@@ -79,7 +79,7 @@ function B:ValidateSmartShift(action,click)
   local usable,why=A.SpellUsable(action.id)
   if usable~=true then
     self.powerBlocked=true
-    if why==true then self.manaBlocked=true; self.manaWaitIcon=self.manaWaitIcon or action.icon end
+    if why==true then self.manaBlocked=true; self.mainManaBlocked=true; self.manaWaitIcon=self.manaWaitIcon or action.icon end
     return false,why==true and "not enough mana for return form" or "return form not usable"
   end
   local cd=A.Call(C_Spell and C_Spell.GetSpellCooldown,action.id)

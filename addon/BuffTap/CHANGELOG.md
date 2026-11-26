@@ -1,3 +1,13 @@
+# BuffTap 1.29.4
+
+### Fixed
+- The passive main mana-wait display used shared manaBlocked/manaFloorBlocked flags. Nearby validation and the friendly-target reserve gate could set them without any pending main buff, showing a grey main icon on a fully buffed character. This dates to the mana-wait display added in 1.26.1 and is not Priest-specific.
+- mainManaBlocked is reset during Select and set by non-Nearby, non-nameplate spell validation or a needed SmartShift return. ShowManaWait now requires this main-action evidence. Queue passes save/restore it. Existing shared resource flags, recovery events, cast eligibility, reserve settings and Nearby pause/status handling are unchanged. No settings migration.
+
+### Validation and limits
+- Affected mocked checks cover mana displays, Nearby, Warrior rage suppression, SmartShift and buff queues. 562 checks passed, zero failed; the full suite was not repeated for this scoped fix. All registered Lua modules compile. No live-client verification claimed.
+- GitHub open/recent issue searches on 2026-11-26 found no reports requiring additional scope.
+
 # BuffTap 1.29.3
 
 ### Added

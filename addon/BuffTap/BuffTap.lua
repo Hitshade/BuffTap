@@ -366,14 +366,14 @@ end
 -- binding, sound or polling. Power events already wake resource-blocked work.
 function B:ShowManaWait()
   if A.Combat() or self.action or not self.db.enabled or self:ActionPauseReason(nil)
-    or A.Call(UnitIsDeadOrGhost,'player')~=false or not (self.manaBlocked or self.manaFloorBlocked) then return end
+    or A.Call(UnitIsDeadOrGhost,'player')~=false or not self.mainManaBlocked then return end
   local b=self.button
   if not b or b:GetAttribute('state-safety')=='blocked' or b:GetAttribute('type1')~=nil then return end
   local class=A.Class('player')
   -- Rage is earned by fighting, not passively replenished while travelling.
   if class=='WARRIOR' then return end
   local usesMana=class~='WARRIOR' and class~='ROGUE'
-  local title=self.manaFloorBlocked and self:Text('Saving mana') or self:Text(usesMana and 'Waiting for mana' or 'Waiting for power')
+  local title=self:Text(usesMana and 'Waiting for mana' or 'Waiting for power')
   self.manaWaitVisible=true; self.manaWaitTitle=title
   b:SetSize(self.db.size,self.db.size); b:ClearAllPoints(); b:SetPoint('CENTER',UIParent,'CENTER',self.db.x,self.db.y)
   b.icon:SetTexture(self.manaWaitIcon or 'Interface\\Icons\\Spell_Nature_Sleep')

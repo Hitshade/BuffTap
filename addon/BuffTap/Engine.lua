@@ -4,7 +4,7 @@
 
 local _, B = ...
 _G.BuffTap = B
-B.version = "1.29.3"
+B.version = "1.29.4"
 B.API = {}
 local A = B.API
 
@@ -1409,6 +1409,8 @@ function B:Validate(action)
     if err==true then
       self.powerBlocked=true
       self.manaBlocked=true
+      -- Nearby shortages belong to its own list, even when it shares the binding.
+      if not action.nearby and not (A.Text(action.target) and action.target:match("^nameplate%d+$")) then self.mainManaBlocked=true end
       self.manaWaitIcon=self.manaWaitIcon or action.icon
       return false,"not enough mana"
     end
@@ -2161,7 +2163,7 @@ function B:Select()
   self.rangeBlockedActions={}
   self.rangeBlockedKeys={}
   self.powerBlocked=false; self.manaFloorBlocked=nil
-  self.manaBlocked=false
+  self.manaBlocked=false; self.mainManaBlocked=nil
   self.manaWaitIcon=nil
   self.cooldownBlocked=false
   self.dataPending=false

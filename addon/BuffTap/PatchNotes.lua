@@ -2,6 +2,8 @@
 local _,B=...
 -- Keep the ten most recent releases within a 24 KiB content ceiling.
 B.PatchNotes={
+ {version="1.29.4",title="Mana waits in the right place",items={
+  "Nearby saving mana no longer lights up the main reminder when your buffs are already up. The main icon still shows Waiting for mana when a needed main action cannot be cast. Nearby keeps its own pause notice."}},
  {version="1.29.3",title="Food for the road, buffs for the group",items={
   "Consumables now lets you choose Everywhere or Dungeons and raids for each category. Keep food reminders on while leveling without being asked to use your flask. Your previous location choices are preserved.",
   "Helpers > Buff requests now has an optional Party and raid switch. Party and raid members now use the request icons in the Nearby list, just like other nearby players. Click an icon to ask for buffs you are missing. Uses your existing message and buff choices; nothing is sent automatically. Groups has a shortcut too.",
@@ -39,8 +41,7 @@ B.PatchNotes={
   "The list keeps showing players as they arrive and leave, with a Paused: in combat banner. Buffing resumes when the fight ends.",
   "More settings and help text now appear in German, Spanish, French and Brazilian Portuguese.",
   "Less work behind the scenes in busy raids, and no empty scrollbar on short Groups buff lists."}},
- {version="1.26.14",title="Group buffs without the reagent",items={
-  "Group buffs now respect Forever effects that remove their normal vendor reagent cost. When the game allows the cast, BuffTap offers the group buff instead of unnecessarily switching to individual buffs."}},
+
 
 }
 function B:PatchNotesUnread()

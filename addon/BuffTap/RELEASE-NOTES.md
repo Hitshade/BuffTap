@@ -1,3 +1,10 @@
+# BuffTap 1.29.4
+
+### A quieter main reminder
+The main icon could turn grey for a mana pause even when your own buffs were already up, because Nearby was saving mana. That pause now stays with Nearby. The main reminder still shows Waiting for mana when a needed main action is short of mana.
+
+This fixes a shared display issue across classes, rather than a Priest-only problem. Your mana reserve and other settings are preserved, and Nearby still resumes buffing normally as mana recovers. No setup changes are needed.
+
 # BuffTap 1.29.3
 
 ### Choose where your consumables remind you

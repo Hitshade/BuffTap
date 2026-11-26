@@ -37,9 +37,10 @@ local B=BuffTap; C_Spell.IsSpellUsable=function() return nil,nil end; B:Refresh(
 assert(not B.manaWaitVisible and not B.action)
 """)
 
-test('Mana status: configured reserve has a distinct label', WAIT+"""
+test('Mana status: reserve alone cannot invent a main shortage', WAIT+"""
+B:Commit(nil,'nothing actionable'); B.mainManaBlocked=nil
 B.manaBlocked=false; B.manaFloorBlocked=true; B:ShowManaWait()
-assert(B.button.nameLabel.text=='Saving mana')
+assert(not B.manaWaitVisible and not B.button.shown)
 """)
 
 test('Mana status: hidden reminder preference is retained', WAIT+"""
@@ -50,4 +51,31 @@ B.db.showReminder=false; B:Refresh(); assert(B.button.testAlpha==0 and B.button.
 
 test('Mana status: non-mana classes are labelled as power', WAIT+"""
 playerClass='ROGUE'; B:ShowManaWait(); assert(B.button.nameLabel.text=='Waiting for power')
+""")
+
+from test_nearby import setup as NEARBY
+
+test('Mana status: Nearby reserve stays in Nearby when personal buffs are complete', NEARBY+"""
+local B=BuffTap; UnitPower=function() return 10 end; UnitPowerMax=function() return 100 end
+B.db.nearbyManaFloor=25; B.db.friendlyTarget=true; refresh()
+assert(B.manaFloorBlocked and B.powerBlocked and not B.action)
+assert(not B.mainManaBlocked and not B.manaWaitVisible and not B.button.shown)
+assert(not B.button.attrs.type1 and not next(bindings))
+""")
+
+test('Mana status: Nearby spell shortage cannot light the main reminder', NEARBY+"""
+local B=BuffTap; C_Spell.IsSpellUsable=function() return false,true end; refresh()
+assert(B.manaBlocked and B.powerBlocked and not B.action)
+assert(not B.mainManaBlocked and not B.manaWaitVisible and not B.button.shown)
+""")
+
+test('Mana status: real personal shortage survives Nearby reserve and clears after buffing', NEARBY+"""
+local B=BuffTap; B.db.showBuffName=true; auras={}; B:InvalidateAura()
+C_Spell.IsSpellUsable=function() return false,true end
+UnitPower=function() return 10 end; UnitPowerMax=function() return 100 end
+B.db.nearbyManaFloor=25; B.db.friendlyTarget=true; refresh()
+assert(B.mainManaBlocked and B.manaWaitVisible and B.button.shown)
+assert(B.button.nameLabel.text=='Waiting for mana')
+aura('player',5232,'Mark of the Wild'); aura('player',467,'Thorns'); refresh()
+assert(not B.mainManaBlocked and not B.manaWaitVisible and not B.button.shown)
 """)
