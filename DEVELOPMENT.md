@@ -1,3 +1,8 @@
+## Stable 1.29.4 publication (2026-11-26)
+- Source edf71a7; GitHub release 459860267, tag v1.29.4, published 15:12 ET. CurseForge file 9833371 submitted as Release for 1.60.1, automatic publication once approved; last observed Processing at 15:13 ET. Previous 1.29.3 confirmed Approved.
+- 146 packaged files, 2,819,824 bytes, SHA256 be03d7988861391a9e5a794d4a5eaaea38379e4b5a470f6f85da2a118cc82aed. Stable installed locally with backup, all 146 files verified. Publication/build/install receipts under releases/receipts/BuffTap-1.29.4-*.
+- Final affected mocked checks: 562 PASS / 0 FAIL (mana display, Nearby, Warrior, SmartShift, queues), all 52 Lua modules compile. No redundant full suite or live-client verification. Three note audiences updated, exactly ten in-game versions retained. No open/recent GitHub issues on release review.
+
 ## Stable 1.29.3 publication (2026-11-25)
 - Owner approved publication after reviewing beta2 and visual follow-ups. Source commit cd05444; GitHub release 458403375, tag v1.29.3, published 12:09 ET. CurseForge file 9812855 submitted as Release for 1.60.1 with automatic publication; last observed Processing at 12:10 ET.
 - ZIP contains all 146 verified files, 2,819,249 bytes, SHA256 cf51325f936c04133504cf38722f1e3f70a6330638932a9d8078560f1893907a. Includes the Rebuff at and footer alignment follow-ups. Stable installed locally, all 146 files hash-verified, prior installation backed up. Receipts: releases/receipts/BuffTap-1.29.3-*.

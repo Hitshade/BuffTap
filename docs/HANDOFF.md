@@ -1,10 +1,15 @@
 # BuffTap handoff (shared by Claude and Codex)
 
-Last updated: 2026-11-25. Stable 1.29.3 is published on GitHub, submitted to CurseForge (Processing), and installed locally. Source cd05444. Owner authorization and receipts are recorded below. Update this file at the end of each session or release.
+Last updated: 2026-11-26. Stable 1.29.4 is published on GitHub, submitted to CurseForge (Processing), and installed locally. Source edf71a7. Update this file at the end of each session or release.
+
+## Stable 1.29.4 publication (2026-11-26)
+- Source edf71a7; GitHub release 459860267, tag v1.29.4, published 15:12 ET. CurseForge file 9833371 submitted as Release for 1.60.1, automatic publication once approved; last observed Processing at 15:13 ET. Previous 1.29.3 confirmed Approved.
+- 146 packaged files, 2,819,824 bytes, SHA256 be03d7988861391a9e5a794d4a5eaaea38379e4b5a470f6f85da2a118cc82aed. Stable installed locally with backup, all 146 files verified. Publication/build/install receipts under releases/receipts/BuffTap-1.29.4-*.
+- Final affected mocked checks: 562 PASS / 0 FAIL (mana display, Nearby, Warrior, SmartShift, queues), all 52 Lua modules compile. No redundant full suite or live-client verification. Three note audiences updated, exactly ten in-game versions retained. No open/recent GitHub issues on release review.
 
 ## Mana-display correction, stable 1.29.4 authorized (2026-11-26)
 - Owner reported a grey main mana pause on a fully buffed Priest with Nearby open. Shared manaBlocked/manaFloorBlocked flags could be set by Nearby probes or the friendly-target reserve gate before establishing missing work.
-- Local uncommitted fix: mainManaBlocked is reset each Select and set only by non-Nearby, non-nameplate spell validation or SmartShift restoration. ShowManaWait uses that main-action flag; reserve-only state remains in Nearby/status. Queue passes preserve the new flag. Existing global power/mana flags and recovery events remain intact. No settings, casting eligibility or Nearby behavior changed.
+- Implemented fix: mainManaBlocked is reset each Select and set only by non-Nearby, non-nameplate spell validation or SmartShift restoration. ShowManaWait uses that main-action flag; reserve-only state remains in Nearby/status. Queue passes preserve the new flag. Existing global power/mana flags and recovery events remain intact. No settings, casting eligibility or Nearby behavior changed.
 - 250 affected mocked checks passed, zero failed (mana display, Nearby and Warrior suppression). Regression coverage includes no needed personal buff + reserve, Nearby-only spell shortage, and real personal shortage clearing after buffing. Log docs/reviews/mana-scope-1293.txt. Owner subsequently authorized 1.29.4 publication. Final affected validation: 562 PASS / 0 FAIL including SmartShift and buff queues; all 52 Lua modules compile. No full suite or live-client run. GitHub open/recent issue searches were empty on 2026-11-26.
 
 ## Stable 1.29.3 publication (2026-11-25)
