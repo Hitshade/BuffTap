@@ -79,3 +79,33 @@ assert(B.button.nameLabel.text=='Waiting for mana')
 aura('player',5232,'Mark of the Wild'); aura('player',467,'Thorns'); refresh()
 assert(not B.mainManaBlocked and not B.manaWaitVisible and not B.button.shown)
 """)
+
+for show_all in (True, False):
+    test('Nearby mana banner survives visible rows, all players='+str(show_all), NEARBY+"""
+local B=BuffTap; B.db.nearbyShowAll=SHOWALL
+local low=true; C_Spell.IsSpellUsable=function() return not low,low end
+refresh(); B:UpdateNearbyWindow()
+local f=B.nearbyFrame
+assert(f.pauseRow and f.pauseRow.shown and f.pauseRow.reason=='manaLow')
+assert(f.pauseRow.text.text:find('Not enough mana to buff.',1,true))
+assert(not B.manaWaitVisible and not B.button.shown)
+if SHOWALL then assert(f.rows[2].entry and not f.rows[2].attrs.type1) end
+low=false; B.events.scripts.OnEvent(nil,'UNIT_POWER_UPDATE','player','MANA'); advance(.2); B:UpdateNearbyWindow()
+assert(not f.pauseRow.shown and B.action and B.action.nearby)
+""".replace('SHOWALL',str(show_all).lower()))
+
+test('Nearby personal mana shortage alone does not invent a Nearby banner', NEARBY+"""
+local B=BuffTap; B.db.nearbyShowAll=true
+auras={}; aura('nameplate1',5232,'Mark of the Wild'); aura('nameplate1',467,'Thorns')
+C_Spell.IsSpellUsable=function() return false,true end; refresh(); B:UpdateNearbyWindow()
+assert(B.mainManaBlocked and not B.nearbyManaBlocked)
+assert(not (B.nearbyFrame.pauseRow and B.nearbyFrame.pauseRow.shown))
+""")
+
+test('Nearby affordable action prevents a misleading whole-list mana pause', NEARBY+"""
+local B=BuffTap; B.db.nearbyShowAll=true
+C_Spell.IsSpellUsable=function(id) return id==467,id~=467 end
+refresh(); B:UpdateNearbyWindow()
+assert(B.nearbyManaBlocked and B.action and B.action.nearby and B.action.id==467)
+assert(not (B.nearbyFrame.pauseRow and B.nearbyFrame.pauseRow.shown))
+""")

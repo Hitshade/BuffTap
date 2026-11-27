@@ -561,34 +561,58 @@ function B:BuildCleansePage(ui,tabs,headerSwitch,section)
     B.db.cleanseEnabled=c:GetChecked()==true; B:RequestRefresh("cleanse toggled",0); B:UpdateCleansePage(); B:UpdateNavStatus()
   end)
   headerSwitch(f.cleanseEnable,p)
-  section(ui,p,"What to remove",12,-76,692,224)
+  local page=p
+  f.cleansePanes={}; f.cleanseViewButtons={}
+  for i,spec in ipairs({{"cleansing","Cleansing"},{"combat","Combat cleansing"}}) do
+    local key=spec[1]
+    local pane=CreateFrame("Frame",nil,page); pane:SetPoint("TOPLEFT",0,key=="cleansing" and -32 or 0); pane:SetSize(712,740); pane:Hide()
+    f.cleansePanes[key]=pane
+    local b=ui.flatButton(page,spec[2],186+(i-1)*174,-68,174,function() B:SetCleanseView(key) end)
+    b.navStyle="underline"; f.cleanseViewButtons[key]=b
+  end
+  T.Rule(page,12,-95,692)
+  p=f.cleansePanes.cleansing
+  ui.card(p,12,-76,692,202)
+  T.SectionTitle(ui.label(p,"What to remove",252,-90,"GameFontNormalSmall",430))
+  f.cleanseScene=p:CreateTexture(nil,"ARTWORK")
+  local okFaction,faction=pcall(UnitFactionGroup,"player")
+  f.cleanseScene:SetTexture(T.media..((okFaction and faction=="Horde") and "CleanseSceneHorde" or "CleanseScene"))
+  f.cleanseScene:SetSize(215,200); f.cleanseScene:SetPoint("TOPLEFT",13,-77)
+  f.cleanseScene:SetTexCoord(0,430/512,0,400/512); f.cleanseScene.optionsDecoration=true
+  f.cleanseSceneEdge=p:CreateTexture(nil,"OVERLAY"); f.cleanseSceneEdge:SetColorTexture(unpack(T.rule))
+  f.cleanseSceneEdge:SetSize(1,200); f.cleanseSceneEdge:SetPoint("TOPLEFT",228,-77); f.cleanseSceneEdge.optionsDecoration=true; T.Track(f.cleanseSceneEdge,"rule")
   f.cleanseRows={}
   f.cleanseTiles={}
   for i,kind in ipairs(TYPE_ORDER) do
-    local y=-112-(i-1)*34
+    local y=-108-(i-1)*28
     f.cleanseTiles[#f.cleanseTiles+1]=noTile(p,22,y+3,672,30)
-    local swatch=p:CreateTexture(nil,"ARTWORK"); swatch:SetSize(10,10); swatch:SetPoint("TOPLEFT",32,y-7)
+    local swatch=p:CreateTexture(nil,"ARTWORK"); swatch:SetSize(10,10); swatch:SetPoint("TOPLEFT",250,y-7)
     local c=B.CleanseColors[kind]; swatch:SetColorTexture(c[1],c[2],c[3],1)
     local row={kind=kind,swatch=swatch}
-    row.check=ui.check(p,kind,48,y,function(s)
+    row.check=ui.check(p,kind,268,y,function(s)
       if A.Combat() then return end
       B.db.cleanseTypes[kind]=s:GetChecked()==true; B:RequestRefresh("cleanse types",0)
     end)
-    row.spell=ui.label(p,"",260,y-6,"GameFontDisableSmall",420)
+    row.spell=ui.label(p,"",412,y-6,"GameFontDisableSmall",280)
     f.cleanseRows[i]=row
   end
-  f.cleanseAbolishInfo=ui.label(p,"",34,-246,"GameFontDisableSmall",640)
+  f.cleanseAbolishInfo=ui.label(p,"",252,-225,"GameFontDisableSmall",430)
   f.cleanseTiles[#f.cleanseTiles+1]=noTile(p,22,-262,672,30)
-  f.cleanseBorder=ui.check(p,"Border colour by type",30,-265,function(c)
-    B.db.cleanseBorder=c:GetChecked()==true; B:UpdateOverlay()
+  f.cleanseBorder=ui.check(p,"Border colour by type",268,-250,function(c)
+    B.db.cleanseBorder=c:GetChecked()==true; B:UpdateOverlay(); B:UpdateCleansePage()
   end)
-  section(ui,p,"Who",12,-316,692,70)
+  f.cleanseBorderSwatch=p:CreateTexture(nil,"ARTWORK"); f.cleanseBorderSwatch:SetSize(10,10)
+  f.cleanseBorderSwatch:SetPoint("TOPLEFT",250,-257); f.cleanseBorderSwatch:SetColorTexture(.4,.42,.44,1)
+  f.cleanseBorderGlow=p:CreateTexture(nil,"OVERLAY"); f.cleanseBorderGlow:SetSize(20,20)
+  f.cleanseBorderGlow:SetPoint("CENTER",f.cleanseBorderSwatch,"CENTER")
+  f.cleanseBorderGlow:SetTexture(T.media.."ModernSquareGlowSoft")
+  section(ui,p,"Who",12,-294,692,72)
   local who={{"cleanseSelf","You",30,190},{"cleanseGroup","Your group",228,140},{"cleanseTarget","Your target",376,140},{"cleanseNearby","Nearby players",524,178}}
   f.cleanseWho={}
   for _,entry in ipairs(who) do
     local key=entry[1]
-    noTile(p,entry[3]-8,-347,entry[4],32)
-    f.cleanseWho[key]=ui.check(p,entry[2],entry[3],-352,function(c)
+    noTile(p,entry[3]-8,-319,entry[4],32)
+    f.cleanseWho[key]=ui.check(p,entry[2],entry[3],-330,function(c)
       if A.Combat() then return end
       B.db[key]=c:GetChecked()==true; B:RequestRefresh("cleanse who",0)
     end)
@@ -596,45 +620,54 @@ function B:BuildCleansePage(ui,tabs,headerSwitch,section)
   f.cleanseWho.cleanseNearby:HookScript("OnEnter",function(s) T.Tooltip(s,B:Text("Nearby players"),B:Text("Also offer to cleanse players in the Nearby list. Uses the same safety rules as Nearby buffing.")) end)
   f.cleanseWho.cleanseNearby:HookScript("OnLeave",function() if GameTooltip then GameTooltip:Hide() end end)
   -- The cleanse sound lives with the other sounds under Customization > Binding & sound.
-  f.cleanseSoundShortcut=ui.button(p,"Sound settings",566,-40,138,function() f.selectTab(tabs.Appearance); B:SetAppearanceView("binding") end); f.cleanseSoundShortcut:SetHeight(20)
-  -- Resurrection: one row. Works whether or not cleansing is on.
-  section(ui,p,"Resurrection",12,-402,692,108)
-  for _,col in ipairs({{22,190},{220,140},{368,140},{516,178}}) do noTile(p,col[1],-432,col[2],32) end
-  noTile(p,22,-470,330,32)
-  f.reviveEnable=ui.check(p,"Offer resurrection",30,-437,function(c)
+  f.cleanseSoundShortcut=ui.button(page,"Sound settings",566,-40,138,function() f.selectTab(tabs.Appearance); B:SetAppearanceView("binding") end); f.cleanseSoundShortcut:SetHeight(20)
+  p=f.cleansePanes.cleansing
+  -- Class applicability is separate from whether the spell has been learned.
+  local class=A.Class("player"); local resurrectionApplies=class=="DRUID" or REVIVE[class or ""]~=nil
+  f.cleanseRevivePane=CreateFrame("Frame",nil,p); f.cleanseRevivePane:SetPoint("TOPLEFT",0,0); f.cleanseRevivePane:SetSize(712,740)
+  f.cleanseRevivePane:SetShown(resurrectionApplies); p=f.cleanseRevivePane
+  -- Primary recipients first, secondary choices on their own row.
+  section(ui,p,"Resurrection",12,-380,692,90)
+  for _,col in ipairs({{22,190},{220,140},{368,140},{516,178}}) do noTile(p,col[1],-410,col[2],32) end
+  noTile(p,22,-436,330,32)
+  f.reviveEnable=ui.check(p,"Offer resurrection",30,-409,function(c)
     if A.Combat() then return end
     B.db.reviveEnabled=c:GetChecked()==true; B:RequestRefresh("revive toggled",0); B:UpdateCleansePage()
   end)
   f.reviveEnable:HookScript("OnEnter",function(s) T.Tooltip(s,B:Text("Offer resurrection"),B:Text("Out of combat, puts your resurrection spell on the reminder for a dead group member, or a dead player you target. Never for someone who has released their spirit or already has a resurrection coming. Dead players have no nameplate, so Nearby can't offer it: target their corpse instead.")) end)
   f.reviveEnable:HookScript("OnLeave",function() if GameTooltip then GameTooltip:Hide() end end)
-  f.reviveGroup=ui.check(p,"Your group",228,-437,function(c) if A.Combat() then return end; B.db.reviveGroup=c:GetChecked()==true; B:RequestRefresh("revive who",0) end)
-  f.reviveTarget=ui.check(p,"Your target",376,-437,function(c) if A.Combat() then return end; B.db.reviveTarget=c:GetChecked()==true; B:RequestRefresh("revive who",0) end)
-  f.reviveRebirth=ui.check(p,"Also use Rebirth",524,-437,function(c) if A.Combat() then return end; B.db.reviveRebirth=c:GetChecked()==true; B:RequestRefresh("revive rebirth",0) end)
+  f.reviveGroup=ui.check(p,"Your group",228,-409,function(c) if A.Combat() then return end; B.db.reviveGroup=c:GetChecked()==true; B:RequestRefresh("revive who",0) end)
+  f.reviveTarget=ui.check(p,"Your target",376,-409,function(c) if A.Combat() then return end; B.db.reviveTarget=c:GetChecked()==true; B:RequestRefresh("revive who",0) end)
+  f.reviveRebirth=ui.check(p,"Also use Rebirth",376,-441,function(c) if A.Combat() then return end; B.db.reviveRebirth=c:GetChecked()==true; B:RequestRefresh("revive rebirth",0) end)
   f.reviveRebirth:HookScript("OnEnter",function(s) T.Tooltip(s,B:Text("Also use Rebirth"),B:Text("Rebirth has a long cooldown, so it is off unless you turn it on. When on, it is offered out of combat like any resurrection.")) end)
   f.reviveRebirth:HookScript("OnLeave",function() if GameTooltip then GameTooltip:Hide() end end)
-  f.reviveNote=ui.label(p,"",524,-444,"GameFontDisableSmall",160)
-  f.cleanseFirst=ui.check(p,"Cleanse before resurrection",30,-475,function(c) if A.Combat() then return end; B.db.cleanseFirst=c:GetChecked()==true; B:RequestRefresh("cleanse/revive order",0) end)
+  f.reviveNote=ui.label(p,"",524,-416,"GameFontDisableSmall",160)
+  f.cleanseFirst=ui.check(p,"Cleanse before resurrection",30,-441,function(c) if A.Combat() then return end; B.db.cleanseFirst=c:GetChecked()==true; B:RequestRefresh("cleanse/revive order",0) end)
   f.cleanseFirst:HookScript("OnEnter",function(s) T.Tooltip(s,B:Text("Cleanse before resurrection"),B:Text("When both are needed after a fight, offer a cleanse first. Leave off to offer resurrection first.")) end)
   f.cleanseFirst:HookScript("OnLeave",function() if GameTooltip then GameTooltip:Hide() end end)
-  section(ui,p,"Never cleanse (shared by all your characters)",12,-526,692,192)
-  f.cleanseInput=ui.editbox(p,26,-564,260,false); f.cleanseInput:SetMaxLetters(80)
+  p=f.cleansePanes.cleansing
+  local recovered=resurrectionApplies and 0 or 104
+  f.cleanseNeverPane=CreateFrame("Frame",nil,p); f.cleanseNeverPane:SetPoint("TOPLEFT",0,recovered); f.cleanseNeverPane:SetSize(712,740)
+  p=f.cleanseNeverPane
+  section(ui,p,"Never cleanse (shared by all your characters)",12,-484,692,206+recovered)
+  f.cleanseInput=ui.editbox(p,26,-522,260,false); f.cleanseInput:SetMaxLetters(80)
   local function add()
     local text=f.cleanseInput:GetText()
     if A.Text(text) then B:SetCleanseNever(text,true); f.cleanseInput:SetText(""); f.cleanseInput:ClearFocus(); B:UpdateCleansePage() end
   end
   f.cleanseInput:SetScript("OnEnterPressed",add)
   f.cleanseInput:SetScript("OnEscapePressed",function(s) s:ClearFocus() end)
-  ui.button(p,"Add",298,-562,90,add)
-  ui.label(p,"Type the debuff's name, or right-click a cleanse reminder to add it.",400,-568,"GameFontDisableSmall",290)
+  ui.button(p,"Add",298,-520,90,add)
+  ui.label(p,"Type the debuff's name, or right-click a cleanse reminder to add it.",400,-526,"GameFontDisableSmall",290)
   f.cleanseScroll=CreateFrame("ScrollFrame",nil,p,"UIPanelScrollFrameTemplate")
-  f.cleanseRestore=ui.button(p,"Restore built-in entries",486,-532,204,function()
+  f.cleanseRestore=ui.button(p,"Restore built-in entries",486,-490,204,function()
     if A.Combat() then return end
     for id in pairs(B:CleanseBuiltInAllowed()) do B:SetCleanseBuiltInAllowed(id,false) end
     B:UpdateCleansePage()
   end)
   f.cleanseRestore:SetHeight(20)
-  f.cleanseScroll:SetPoint("TOPLEFT",26,-596); f.cleanseScroll:SetSize(640,112)
-  f.cleanseList=CreateFrame("Frame",nil,f.cleanseScroll); f.cleanseList:SetSize(640,112); f.cleanseScroll:SetScrollChild(f.cleanseList)
+  f.cleanseScroll:SetPoint("TOPLEFT",26,-554); f.cleanseScroll:SetSize(640,122+recovered)
+  f.cleanseList=CreateFrame("Frame",nil,f.cleanseScroll); f.cleanseList:SetSize(640,122+recovered); f.cleanseScroll:SetScrollChild(f.cleanseList)
   f.cleanseListRows={}
   function f.cleanseRow(index)
     local row=f.cleanseListRows[index]; if row then return row end
@@ -649,6 +682,19 @@ function B:BuildCleansePage(ui,tabs,headerSwitch,section)
       B:UpdateCleansePage()
     end)
     f.cleanseListRows[index]=row; return row
+  end
+  self:SetCleanseView(self.cleanseView or "cleansing")
+end
+
+function B:SetCleanseView(key)
+  local f=self.options
+  if not f or not f.cleansePanes then return end
+  if not f.cleansePanes[key] then key="cleansing" end
+  self.cleanseView=key
+  for name,pane in pairs(f.cleansePanes) do
+    pane:SetShown(name==key)
+    local b=f.cleanseViewButtons[name]; b.selected=name==key
+    B.OptionsTheme.Navigation(b,name==key)
   end
 end
 
@@ -689,6 +735,12 @@ function B:UpdateCleansePage()
     row.check:SetEnabled(classCan)
     row.swatch:SetAlpha(classCan and 1 or .3)
     row.spell:SetText(not classCan and self:Text("Your class can't remove this") or #names==0 and self:Text("Not learned yet") or table.concat(names,", "))
+  end
+  if f.cleanseBorderGlow then
+    local color=self.CleanseColors.Magic
+    for _,kind in ipairs(TYPE_ORDER) do if self:CleanseClassSpells(kind) then color=self.CleanseColors[kind]; break end end
+    f.cleanseBorderGlow:SetVertexColor(color[1],color[2],color[3],1)
+    f.cleanseBorderGlow:SetShown(d.cleanseBorder==true)
   end
   local class=A.Class("player")
   f.cleanseAbolishInfo:SetShown(class=="DRUID" or class=="PRIEST")

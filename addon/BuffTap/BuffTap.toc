@@ -2,7 +2,7 @@
 ## Title: BuffTap
 ## Notes: One-tap buff maintenance for WoW Forever.
 ## Author: BuffTap contributors
-## Version: 1.29.4
+## Version: 1.30.0
 ## SavedVariables: BuffTapProfiles
 ## SavedVariablesPerCharacter: BuffTapDB
 ## OptionalDeps: LibSharedMedia-3.0, SharedMedia
@@ -62,3 +62,5 @@ CombatExpiry.lua
 BuffQueue.lua
 
 ManualThanks.lua
+CombatCleanse.lua
+CombatCleanseGrid.lua

@@ -380,6 +380,7 @@ function B:CheckupLines()
   add("Nearby",safe(function() return self:NearbyDiagnosticsLines() end))
   add("Talents and spec",safe(function() return self:SpecProbeLines() end))
   add("Maintenance and carried bags",safe(function() return self:MaintenanceProbeLines() end))
+  add("Combat self-cleanse beta",safe(function() return self:CombatCleanseProbeLines() end))
   add("Supplies",safe(function() return self:CaptureOutput(function() B:ReportSupplies() end) end))
   add("Settings (import string, without your blacklist)",safe(function()
     local count=function(t) local n=0; for _ in pairs(t or {}) do n=n+1 end; return n end
@@ -462,6 +463,9 @@ function B:MoveAllFrames(returnView)
     for _,key in ipairs({"x","y","nearbyX","nearbyY","campX","campY","supplyX","supplyY","manualConsumablesX","manualConsumablesY"}) do
       snapshot.values[key]={value=self.db[key]}
     end
+    if self.CombatGridSettings then
+      local g=self:CombatGridSettings(); snapshot.combatGrid={x=g.x,y=g.y,follow=g.follow}
+    end
     self.movePositionSnapshot=snapshot
   end
   local bar=self.moveDoneBar
@@ -488,12 +492,26 @@ function B:FinishMovingFrames(cancel)
   local snapshot=self.movePositionSnapshot; self.movePositionSnapshot=nil
   if cancel and snapshot and snapshot.db==self.db and snapshot.profile==(self.profileDB and self.profileDB.profile) then
     for key,saved in pairs(snapshot.values) do self.db[key]=saved.value end
+    if snapshot.combatGrid then
+      self.db.combatGrid=self.db.combatGrid or {}
+      for key,value in pairs(snapshot.combatGrid) do self.db.combatGrid[key]=value end
+      if self.ScheduleCombatGridSync then self:ScheduleCombatGridSync() end
+    end
     self.appearance=nil; self:Refresh(false)
     if self.UpdateNearbyWindow then self:UpdateNearbyWindow() end
     if self.UpdateCamping then self:UpdateCamping() end
     if self.UpdateSupplyBadge then self:UpdateSupplyBadge() end
   end
-  if not A.Combat() then self:Options(); if self.options and self.options.selectTab then self.options.selectTab(8) end; if self.SetAppearanceView then self:SetAppearanceView(self.moveReturnView or "binding") end end
+  if not A.Combat() then
+    self:Options()
+    if self.moveReturnView=="cleanse-combat" then
+      if self.options and self.options.selectTab then self.options.selectTab(14) end
+      self:SetCleanseView("combat")
+    else
+      if self.options and self.options.selectTab then self.options.selectTab(8) end
+      if self.SetAppearanceView then self:SetAppearanceView(self.moveReturnView or "binding") end
+    end
+  end
 end
 
 -- Optional Nearby key: bound to the row holding the first ready buff, so it uses the row's own checks.

@@ -151,6 +151,8 @@ import test_revive_preclick_review1292
 
 import test_review_fixes_1292
 import test_consumables_1293
+import test_combat_cleanse
+import test_combat_grid
 
 _review=__import__("test_bufftap")
 print("RELEASE_FINAL",len(_review.tests),"PASS",len(_review.failures),"FAIL")

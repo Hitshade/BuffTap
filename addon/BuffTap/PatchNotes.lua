@@ -2,6 +2,12 @@
 local _,B=...
 -- Keep the ten most recent releases within a 24 KiB content ceiling.
 B.PatchNotes={
+ {version="1.30.0",title="A helping hand, mid-fight",items={
+  "Combat cleansing is here, by popular request! Open Cleanse > Combat cleansing to enable a personal warning, a party and raid grid, or both. Click the indicated L or R mouse button to cleanse. Your usual buff binding stays unchanged, and combat warnings stay silent.",
+  "Make the grid your own with 18–64 px icons, spacing, growth, subgroup layout and colors. Move frames shows all 40 positions at actual size, even while solo. Only present members appear during play; layout changes wait until combat ends.",
+  "The personal combat option follows your main icon and has an invisible click area throughout combat, even without a warning. Never cleanse filters cannot be guaranteed in combat, so choose whether removal is safe before clicking. Both combat options start off.",
+  "Cleansing has faction artwork, tidier controls and a roomier Never cleanse list. Classes without resurrection get that space back too. Thanks to everyone who asked for combat cleansing and helped shape it.",
+  "Nearby keeps its low-mana notice visible alongside the player list, without lighting your main reminder."}},
  {version="1.29.4",title="Mana waits in the right place",items={
   "Nearby saving mana no longer lights up the main reminder when your buffs are already up. The main icon still shows Waiting for mana when a needed main action cannot be cast. Nearby keeps its own pause notice."}},
  {version="1.29.3",title="Food for the road, buffs for the group",items={
@@ -36,11 +42,6 @@ B.PatchNotes={
   "Supplies has roomier item rows. Weapons only shows Off hand for classes that can use it. Camping has benefit icons, and Party and Raid have a small emblem and short setting descriptions.",
   "Nearby stays open in combat by default for invitations and requests to join a group. Prefer it hidden? Turn off Keep open in combat under Customization > Nearby window. Press Show to open the folded How Nearby works guide.",
   "Scrollbars appear only when needed. Customization tabs are evenly spaced, and the Effect card has more room."}},
- {version="1.26.15",title="Invites, even mid-fight",items={
-  "Keep Nearby open during combat for invitations and requests to join a group. Enable Keep open in combat under Customization > Nearby window. It starts off in this version.",
-  "The list keeps showing players as they arrive and leave, with a Paused: in combat banner. Buffing resumes when the fight ends.",
-  "More settings and help text now appear in German, Spanish, French and Brazilian Portuguese.",
-  "Less work behind the scenes in busy raids, and no empty scrollbar on short Groups buff lists."}},
 
 
 }

@@ -4,7 +4,7 @@
 
 BuffTap detects missing or expiring buffs, follows your priorities, and prepares the next spell or item. **Scroll to buff, then keep adventuring.** Prefer a different control? Use a custom keybind, mouse button, or the clickable reminder.
 
-BuffTap automates detection and preparation; every cast or item use still requires your input. Designed for out-of-combat maintenance, with event-driven updates and cached information.
+BuffTap automates detection and preparation; every cast or item use still requires your input. The regular binding handles out-of-combat maintenance; optional prepared mouse buttons add combat cleansing.
 
 ## 🛡️ Buff yourself, your party, or your raid
 
@@ -14,6 +14,14 @@ Choose what to maintain, who receives it, and when to refresh it.
 - **Per-buff raid-group and class filters**, priorities, and refresh thresholds.
 - **Smart group spells** that check who still needs the buff before spending reagents.
 - **Paladin blessing assignments and ordered priorities** with separate party/raid plans, uniform or per-class choices, subgroup overrides, visual assignment icons, and player exceptions. Your own exception is saved, and **Remember** keeps another player's exception for the next time you group.
+
+## 💧 Cleansing, in combat and out
+
+Out of combat, BuffTap prepares cleansing and resurrection through your usual binding, with class-appropriate spells, recipient controls and a shared Never cleanse list.
+
+For fights, opt in under **Cleanse > Combat cleansing**. Choose a self-targeted warning at the main-icon position, a party/raid grid, or both. Directly left- or right-click the indicated frame; hover for its spell guide. Combat displays stay silent and do not change the normal buff binding. The group grid supports 18–64 px icons, layout/colors and a full 40-slot positioning preview.
+
+Both combat options start off. The personal combat option retains an invisible click area throughout combat, even without a warning. **Never cleanse exclusions cannot be guaranteed in combat**; the player decides whether removal is safe. Resurrection reminders remain outside combat.
 
 ## 👥 Nearby buffing & quick party invites
 
@@ -26,7 +34,7 @@ Share buffs with nearby players from a **compact, movable window**, with class-c
 - **Your existing preferences apply**: Target settings for strangers and Groups settings for current party or raid members. Group members leave the list when no eligible buff is queued.
 - **Quiet buffing**, with no extra reminder icon or notification ding.
 
-**Friendly player nameplates must be enabled**, normally with **Shift+V**. Nearby starts disabled. Every cast and invitation requires your input, and the window hides during combat. PvP and recipient-combat checks continue to protect buff casting.
+**Friendly player nameplates must be enabled**, normally with **Shift+V**. Nearby starts disabled. Every cast and invitation requires your input, and Nearby can remain open during combat for social controls; buff casting still waits until combat ends. PvP and recipient-combat checks continue to protect buff casting.
 
 ## ⚔️ Keep your weapons ready
 

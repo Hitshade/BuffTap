@@ -1,3 +1,29 @@
+# BuffTap 1.30.0: a helping hand, mid-fight
+
+### Combat cleansing, by popular request
+You can now choose prepared click-to-cleanse controls during a fight. Open **Cleanse > Combat cleansing** and enable either option, or both:
+
+- **Yourself (main icon)** gives you a personal warning at your existing buff-icon position, including while grouped. It follows that icon's size and appearance.
+- **Party and raid** gives your current group a compact grid, including you. Only occupied positions appear, up to 40 raid members. Idle frames stay visible while grouped.
+
+Both start off, so updating does not add anything to your screen unless you choose it. Follow the small **L/R** cue to left- or right-click a frame; hover it for the player name and full spell guide. Your ordinary buff binding still handles out-of-combat maintenance. Combat cleansing requires a direct mouse click and stays silent, with no stream of group alert sounds.
+
+### A grid that fits your UI
+Choose 18–64 px icons, spacing, growth direction and line length, or keep raid subgroups on five-frame lines. Adjust idle opacity, class or custom idle colors, debuff colors and modern/classic styling. Position the grid separately or have it follow the main icon.
+
+**Move frames** shows the complete 40-slot footprint at actual size even while solo, with a non-casting preview and the usual Done/Cancel controls. Layout and subgroup sorting update after combat; newly arriving members may use reserved positions until then.
+
+### A tidier Cleanse page
+The **Cleansing** tab keeps removal choices, recipients, resurrection and Never cleanse together, with Alliance/Horde artwork and more list space. Classes without resurrection no longer have to stare at unused controls. Existing choices are kept.
+
+### Before you enable it
+The personal combat option has an invisible click area throughout combat, even when no warning is showing; clicking that spot can attempt a self-cleanse. The game controls the combat debuff display. **Never cleanse exclusions cannot be guaranteed in combat**, so decide whether removing a debuff is safe before clicking. Ordinary out-of-combat cleansing retains its existing safeguards. Resurrection remains an out-of-combat reminder feature.
+
+### Also fixed
+Nearby's low-mana notice remains visible alongside its player rows and clears as mana recovers. It does not light your main reminder when no main action is waiting.
+
+Thanks to everyone who asked for combat cleansing and helped shape the controls.
+
 # BuffTap 1.29.4
 
 ### A quieter main reminder

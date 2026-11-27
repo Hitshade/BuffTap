@@ -1,0 +1,7 @@
+{
+  "version": "1.30.0",
+  "passed": 3584,
+  "failed": 0,
+  "harness_error": null,
+  "command": "BT_KEEP_GOING=1 python tests/run_release.py"
+}

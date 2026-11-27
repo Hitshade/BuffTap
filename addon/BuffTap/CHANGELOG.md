@@ -1,3 +1,25 @@
+# BuffTap 1.30.0
+
+### Added: optional combat cleansing
+BuffTap can now prepare manual combat-cleanse buttons for the player and a party/raid grid. Both options default off under Cleanse > Combat cleansing. This is separate from the existing out-of-combat maintenance queue: every combat cast requires a direct left/right mouse click, and the normal buff binding is unchanged. Combat displays do not schedule alert sounds.
+
+- CombatCleanse.lua prepares a conventional secure action parent for player, with mouse-disabled native aura indicators. Fixed learned-spell mouse mappings cover Druid Curse/Poison, Priest Magic/Disease, Shaman Poison/Disease, Mage Curse and Paladin cleansing. The self display follows main-icon position, size, opacity, style and strata, works while grouped when enabled, and retains an invisible hit area throughout alive combat even without a warning.
+- CombatCleanseGrid.lua prepares 40 raid tokens plus player/four party tokens outside combat. Each secure unit matches its native aura container unit. Exclusive party/raid native visibility drivers require unit existence; no addon combat aura inspection, protected retargeting, automatic casts or override-binding changes are introduced. Group frames remain visible while grouped, including outside combat.
+- Grid settings include 18–64 px icons, spacing, columns, four growth directions, five-slot subgroup lines, modern/classic styling, idle opacity/color, class idle colors, per-dispel colors and independent positioning or main-icon following. Compact L/R cues and current-unit hover guides explain prepared mouse assignments. Group layout/subgroup reflow and spell updates defer until combat ends; unique reserved positions avoid overlaps for newly occupied tokens.
+- One coordinate/bounds calculation drives live placement, settings preview and the non-casting 40-slot actual-size Edit Mode preview. Move frames uses the standard Done/Cancel session, returns to Combat cleansing and restores grid placement/following on Cancel.
+
+### Changed: clearer cleansing settings
+- Two underline-navigation tabs match Customization. Cleansing retains type/scope choices, resurrection and the shared Never cleanse list. Owner-provided faction illustrations use padded native TGA assets. Compact cards recover list space; non-resurrecting classes omit the unused resurrection panel and gain another 104 UI units. Applicable low-level classes can still configure resurrection before learning it.
+- Border-color sample aligns with type toggles. Subgroup mode clearly disables and fixes line length at five while retaining the stored free-layout column preference. New settings are class-scoped through existing profile copying; defaults preserve previous behavior.
+
+### Fixed: Nearby mana notice
+- Nearby spell-cost failures have their own scan-local state and pinned shortage banner when no Nearby action is affordable. The notice remains visible alongside player rows, clears after recovery and does not feed the personal reminder. Existing reserve, casting and browsing eligibility remains unchanged.
+
+### Compatibility, limits and verification
+- Existing out-of-combat identity, eligibility, PvP and Never cleanse checks are unchanged. Native hidden combat auras may ignore spell-ID exclusions; name-based Never cleanse matching cannot run there. No guarantee of combat exclusions is made. The player decides whether removing a debuff is safe. No friendly-target combat display or combat resurrection grid is included.
+- Owner confirmed live self-cleansing in beta4 and successful group combat cleansing during release preparation. Combat roster transitions across all raid sizes/classes are not exhaustively live-tested. Final full release runner: 3,584 mocked scenarios passed, zero failed. The earlier 161 focused scenarios covered setup, mappings, driver emission, combat deferral, failure cleanup, layout and move flows. Mock contracts do not establish native secure casting. New captions currently use English fallback where translations are unavailable.
+- Public Decursive and Blizzard AuraContainer sources informed the design. Implementation is independent, with no copied Decursive dependency. Thanks to the players requesting combat cleansing, including user_kbs7uyenzaek2kc2, and the owner's beta feedback. GitHub open/recent searches on 2026-11-27 returned no issues.
+
 # BuffTap 1.29.4
 
 ### Fixed

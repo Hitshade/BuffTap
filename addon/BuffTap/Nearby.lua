@@ -291,10 +291,10 @@ function B:ShowNearbyRowResult(row,r)
 end
 -- While Nearby is paused (stealthed, mounted, resting), the first row is pinned to say so, in the
 -- same style as the cast results. The rows below keep listing players for invites.
-local PAUSE_TEXT={combat="Paused: in combat",stealthed="Paused: stealthed",mounted="Paused: mounted",resting="Paused: resting",mana="Paused: saving mana"}
+local PAUSE_TEXT={combat="Paused: in combat",stealthed="Paused: stealthed",mounted="Paused: mounted",resting="Paused: resting",mana="Paused: saving mana",manaLow="Not enough mana to buff."}
 function B:NearbyPauseRowText(reason,browsing)
   local text=self:Text(PAUSE_TEXT[reason] or "Paused")
-  if browsing then text=text..". "..self:Text("Invites still work.") end
+  if browsing then text=text..(text:sub(-1)=="." and " " or ". ")..self:Text("Invites still work.") end
   return text
 end
 function B:ShowNearbyPauseRow(f,reason,browsing)
@@ -500,6 +500,7 @@ function B:NearbyActions(entry)
     action.reason="nearby player: "..need.reason
     -- Cached need decisions never bypass fresh recipient/range/power checks.
     local valid,why=self:Validate(action)
+    if why=="not enough mana" then self.nearbyManaBlocked=true end
     action.ready=valid==true
     action.waiting=not valid and why=="cooldown / global cooldown"
     self.nearbyProbes=self.nearbyProbes or {}
@@ -523,7 +524,7 @@ end
 function B:NearbyCandidates(force)
   if not force and self.nearbySnapshot then return self.nearbySnapshot end
   local out,seen={},{}
-  self.nearbyProbes={}; self.nearbyCastError=nil; self.nearbySafetyReason=nil
+  self.nearbyProbes={}; self.nearbyCastError=nil; self.nearbySafetyReason=nil; self.nearbyManaBlocked=nil
   if not self.db or not self.db.enabled or not self.db.nearbyEnabled or not platesOn()
     or A.Combat() or self:NearbyPauseReason() or A.Call(UnitIsDeadOrGhost,"player")~=false then return out end
   for unit,guid in pairs(self.nearbyUnits or {}) do
@@ -574,6 +575,7 @@ function B:NearbyGroupActions(unit)
         local need=missing[1]; local action=need.action
         action.blessingAssigned=plan and def.kind=="blessing" or nil
         local valid,why=self:Validate(action)
+        if why=="not enough mana" then self.nearbyManaBlocked=true end
         action.ready=valid==true; action.waiting=why=="cooldown / global cooldown"
         if valid or action.waiting then
           action.nearbyGroup=true; action.needState=need.reason; action.remaining=need.remaining; action.threshold=need.threshold
@@ -1636,6 +1638,13 @@ function B:UpdateNearbyWindow()
   -- Paused (stealthed, mounted, resting): the first row says so and the list starts one row lower.
   local browse=self:NearbyBrowsePause()
   local paused=self.db.enabled and self.db.nearbyEnabled and platesOn() and self:NearbyPauseReason() or nil
+  if not paused and self.db.enabled and self.db.nearbyEnabled and platesOn() and self.nearbyManaBlocked then
+    -- A spell-cost shortage is display-only: keep scanning on mana recovery,
+    -- and do not call the whole list paused if another action is still ready.
+    local ready=false
+    for _,entry in ipairs(list) do if nextAction(entry,true) then ready=true; break end end
+    if not ready then paused="manaLow"; browse=self.db.nearbyShowAll and "manaLow" or nil end
+  end
   if not PAUSE_TEXT[paused or ""] then paused=nil end
   local pin=paused and 1 or 0
   if f.keepsCombat and not f.pauseRow then self:ShowNearbyPauseRow(f,"combat",true) end

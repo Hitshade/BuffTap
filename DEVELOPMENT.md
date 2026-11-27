@@ -308,3 +308,8 @@ GitHub release 454103857 (v1.27.1, Latest, not draft) published from abbbc27; at
 - GitHub: release BuffTap 1.28.0, id 454625427, tag v1.28.0 on main, published (not draft). Asset BuffTap-1.28.0.zip, 2,847,625 bytes, sha256 925a4fb8b6495dc5ba9b7d88661dbbd6cf97dd10f939d8ce73f1296352e0dc79 (matches the built ZIP). Release commit c71e3f8, changelog and hash follow-up bfa0fd5.
 - CurseForge: BuffTap-1.28.0.zip uploaded as Release for Forever 1.60.1, auto-publish, LibDBIcon dependency; status "Uploading" at upload time, awaiting approval.
 - CurseForge replies posted (no links): Lufia_TM (Healthstone setting, now on My buffs > Class helpers) and user_e83iy6nbhigk93ij (tracking reminder exists, now the Tracking tab). Verified on the comments page. No reply posted to laysson (an author reply already existed) or Xprit44 (spec detection, unanswered).
+
+
+## 1.30.0 release preparation (2026-11-27)
+
+Opt-in combat cleansing for self and party/raid, rewritten release notes, revised class-aware Cleanse UI and Nearby mana banner. Owner confirmed self and group combat clicks. Full release runner: 3,584 passed, zero failed; 54 Lua modules compile. Package 150 files, SHA256 945601e9ca9259ac9754b9a5e1ad6862a60922620a5c35c52b5d44d3c6f37035. Publication receipt follows after external verification.
