@@ -1,6 +1,14 @@
 # BuffTap handoff (shared by Claude and Codex)
 
-Last updated: 2026-11-27. BuffTap 1.30.0 is release-ready after full checks and owner-confirmed self/group combat cleansing. Publication in progress; see newest receipts under releases/receipts.
+Last updated: 2026-11-27. Stable 1.30.0 is published on GitHub and installed locally. CurseForge file 9853287 submitted as Release with automatic publication; last observed Processing. Description and requested user reply updated.
+
+## 1.30.0 publication receipt (2026-11-27)
+- Source commit 6a1f3d3 pushed to main. GitHub release 460955231, tag v1.30.0, public (draft=false), asset digest matches local package. https://github.com/Hitshade/BuffTap/releases/tag/v1.30.0 .
+- CurseForge file 9853287 uploaded as Release for 1.60.1, existing Embedded Library dependency retained, automatic publication enabled. Last observed Processing; approval not yet verified. https://www.curseforge.com/wow/addons/bufftap/files/9853287 .
+- Full live description saved and reread after reload: new 1.30.0 combat cleansing section present, old explicit no-combat disclaimer absent. Explains opt-in direct clicks, independent self/grid, silent combat displays, full-size preview, invisible personal hit area and combat Never limitations; stale Nearby combat-hiding sentence corrected.
+- Requested reply to latest commenter user_kbs7uyenzaek2kc2 is posted and verified after reload. Thanks them, says requests prompted implementation, gives Cleanse > Combat cleansing and direct L/R instructions, and accurately says submitted/awaiting CurseForge approval. No unrelated replies posted.
+- Stable installed with prior beta backed up to releases/betas/BuffTap-before-1.30.0-20261127-134649.zip. All 150 files byte-verified; no WTF/SavedVariables access. ZIP 3,710,138 bytes, SHA256 945601e9ca9259ac9754b9a5e1ad6862a60922620a5c35c52b5d44d3c6f37035. Receipts/build/independent notes in releases/receipts/BuffTap-1.30.0*.
+- Full release runner 3,584 PASS / 0 FAIL, 54 Lua modules compile. Source/runtime unchanged after the run apart from verification wording/docs. Owner confirmed self and group combat cleansing; not exhaustive all-class/raid-transition validation. New captions use existing English fallback where untranslated.
 
 ## 1.30.0 release preparation (2026-11-27)
 - Owner requested a full version bump, rewritten release notes/description and a reply to the latest combat cleansing requester. Owner subsequently confirmed group combat cleansing works great. Earlier self combat cleansing was confirmed too; do not claim exhaustive native roster/class coverage.

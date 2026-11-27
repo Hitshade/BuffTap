@@ -313,3 +313,8 @@ GitHub release 454103857 (v1.27.1, Latest, not draft) published from abbbc27; at
 ## 1.30.0 release preparation (2026-11-27)
 
 Opt-in combat cleansing for self and party/raid, rewritten release notes, revised class-aware Cleanse UI and Nearby mana banner. Owner confirmed self and group combat clicks. Full release runner: 3,584 passed, zero failed; 54 Lua modules compile. Package 150 files, SHA256 945601e9ca9259ac9754b9a5e1ad6862a60922620a5c35c52b5d44d3c6f37035. Publication receipt follows after external verification.
+
+
+## 1.30.0 publication (2026-11-27)
+
+Published source 6a1f3d3 on GitHub, release 460955231 / tag v1.30.0. Asset SHA256 945601e9ca9259ac9754b9a5e1ad6862a60922620a5c35c52b5d44d3c6f37035 matches the local ZIP. CurseForge file 9853287 submitted as Release for 1.60.1, automatic publication; last observed Processing. Description and the requested user reply saved and verified. Stable installed with backup and 150 byte-verified files; no saved-settings access. Full runner 3,584 passed, zero failed; 54 modules compile. Publication receipts under releases/receipts/BuffTap-1.30.0*.
