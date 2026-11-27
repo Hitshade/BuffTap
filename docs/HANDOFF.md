@@ -1,6 +1,6 @@
 # BuffTap handoff
 
-Updated 2026-11-27. Owner accepted 1.30.1-beta1 and authorized publishing **1.30.1**. Full verification passed; publication is in progress.
+Updated 2026-11-27. Stable **1.30.1** is published on GitHub and installed. CurseForge file 9854529 submitted as Release with automatic publication; last observed Uploading, approval pending.
 
 ## Working location and rules
 - Active checkout: `C:/Users/hitsh/Desktop/AI Projects/BuffTap/review-1.29.2`. The folder name is historical; main base is 071019e after 1.30.0 publication. Do not switch to the archived 1.26.14 checkout.
@@ -8,6 +8,12 @@ Updated 2026-11-27. Owner accepted 1.30.1-beta1 and authorized publishing **1.30
 - Ordinary maintenance retains readable unchanged identity and current eligibility at selection/click time. The owner's explicit combat design uses fixed secure player/party/raid unit slots and cannot apply the normal dynamic aura/blacklist/PvP checks. Explain those limits; never add combat aura inspection.
 - Preserve user changes. Do not commit, push, publish or post replies without session authorization. Release author identity: Hitshade <283539417+Hitshade@users.noreply.github.com>.
 - Keep UI changes small and reuse established controls. Avoid full-suite reruns for presentation-only edits. Register regression modules; never describe mocks as native testing.
+
+## 1.30.1 publication receipt
+- Gameplay source e7f8036 pushed to main. GitHub release 461000821 / tag v1.30.1 public; uploaded asset digest matches local ZIP. https://github.com/Hitshade/BuffTap/releases/tag/v1.30.1 .
+- CurseForge file 9854529 submitted as Release for 1.60.1, automatic publication, existing Embedded Library dependency kept. Last observed Uploading; approval not yet verified. Previous 1.30.0 is Approved.
+- Installed stable over beta with backup (see ../releases/receipts/BuffTap-1.30.1-install.json), all 150 files byte-verified. No WTF/SavedVariables access. ZIP 3,717,731 bytes; SHA256 032c250746b16d82c5051da2104231e05cd961c107f57f0a6e1e11210e5e362c.
+- Full run 3,600 PASS / 0 FAIL, all 54 modules compile; five-file promotion-only difference against owner-accepted beta. Public description additionally clarifies current slot targeting and bypassed blacklist/PvP safeguards. No unrelated public replies sent.
 
 ## 1.30.1 release preparation
 - Owner reported the local beta seems good and requested publication. Promotion changes only the five version/release-note files; gameplay files exactly match the installed beta.
