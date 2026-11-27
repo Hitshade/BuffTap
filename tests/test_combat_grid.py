@@ -137,14 +137,14 @@ setup(); B:ShowCombatGridEditPreview()
 assert(B.action==action and bindings.MOUSEWHEELDOWN==binding)
 ''')
 
-test('Grid slider changes debounce native rebuilds while layout changes reuse prepared buttons',GRID+'''
+test('Grid slider changes debounce native styling while reusing prepared buttons',GRID+'''
 setup(); local f=B.combatGridFrame
 B:SetCombatGridSetting('gap',6); advance(.2)
 assert(B.combatGridFrame==f and f.layout.slots[2].x==26)
 B:SetCombatGridSetting('size',24); B:SetCombatGridSetting('size',28)
 assert(B.combatGridFrame==f)
-advance(.2); assert(B.combatGridFrame~=f and B.combatGridFrame.buttons[1].width==28)
-assert(not f.shown and not f.buttons[1].container.enabled)
+advance(.2); assert(B.combatGridFrame==f and B.combatGridFrame.buttons[1].width==28)
+assert(f.shown and f.buttons[1].container.enabled)
 ''')
 
 test('Grid master switch and missing learned spell retire prepared buttons',GRID+'''

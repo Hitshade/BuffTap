@@ -84,12 +84,12 @@ local function retire(self)
     for _,b in ipairs(f.buttons) do UnregisterStateDriver(b,"visibility"); b:Hide(); if b.container then b.container:SetEnabled(false) end end
     f:Hide()
   end
-  self.combatGridFrame=nil; self.combatGridSignature=nil
+  self.combatGridFrame=nil; self.combatGridSignature=nil; self.combatGridLayoutKey=nil
 end
 local function signature(g,plan)
   local parts={g.size,g.style}
   for _,kind in ipairs(KINDS) do for _,v in ipairs(g.colors[kind]) do parts[#parts+1]=v end end
-  for _,p in ipairs(plan) do parts[#parts+1]=p.kind; parts[#parts+1]=p.id end
+  parts[#parts+1]=B:CombatCleansePlanKey(plan)
   return table.concat(parts,"|")
 end
 
@@ -103,29 +103,41 @@ function B:SyncCombatGrid()
   local d=self.db
   if not d.enabled or not d.cleanseEnabled or d.combatCleanseGroup~=true then retire(self); self.combatGridError=nil; return end
   if self.combatGridSyncPending then return end
-  local g=self:CombatGridSettings(); local layout=self:CombatGridLayout(40,g); local plan=self:CombatCleansePlan()
+  local g=self:CombatGridSettings(); local plan=self:CombatCleansePlan()
   if #plan==0 then retire(self); self.combatGridError=L("No learned cleanse spell for the selected types."); return end
   local sig=signature(g,plan)
+  local key={sig,self:GameplayStrata("buff"),tostring(self.combatGridRosterRevision or 0)}
+  for _,name in ipairs({"gap","columns","groupGap","subgroup","direction","idleOpacity","classColors","follow","x","y"}) do key[#key+1]=tostring(g[name]) end
+  for _,v in ipairs(g.idleColor) do key[#key+1]=tostring(v) end
+  key=table.concat(key,"|")
+  if self.combatGridFrame and self.combatGridLayoutKey==key then return end
+  local layout=self:CombatGridLayout(40,g)
   if not self.combatGridFrame or self.combatGridSignature~=sig then
-    retire(self)
-    local f=CreateFrame("Frame",nil,UIParent); f:Hide(); f:EnableMouse(false); f.buttons={}
+    local f=self.combatGridPool
+    if not f then
+      f=CreateFrame("Frame",nil,UIParent); f:Hide(); f:EnableMouse(false); f.buttons={}; self.combatGridPool=f
+    end
     local ok,err=pcall(function()
       for i=1,45 do
         local unit=i<=40 and "raid"..i or i==41 and "player" or "party"..(i-41)
-        local b=CreateFrame("Button",nil,f,"SecureActionButtonTemplate,SecureHandlerStateTemplate")
+        local b=f.buttons[i]
+        if not b then b=CreateFrame("Button",nil,f,"SecureActionButtonTemplate,SecureHandlerStateTemplate"); f.buttons[i]=b end
         b:Hide(); b.unitToken=unit; b.raidIndex=i<=40 and i or nil; b.partyIndex=i>40 and i-40 or nil
-        f.buttons[#f.buttons+1]=b; b:SetSize(g.size,g.size); b:EnableMouse(true)
+        b:SetSize(g.size,g.size); b:EnableMouse(true)
         self:ConfigureCombatCleanseButton(b,unit,plan,g.size,{compact=true,style=g.style,colors=g.colors})
+        if not b.idle then
         b.idle=b:CreateTexture(nil,"BACKGROUND"); b.idle:SetAllPoints()
         for _,edge in ipairs({{"TOPLEFT","TOPRIGHT",g.size,1},{"BOTTOMLEFT","BOTTOMRIGHT",g.size,1},{"TOPLEFT","BOTTOMLEFT",1,g.size},{"TOPRIGHT","BOTTOMRIGHT",1,g.size}}) do
-          local t=b:CreateTexture(nil,"BORDER"); t:SetPoint(edge[1],b,edge[1]); t:SetPoint(edge[2],b,edge[2]); t:SetSize(edge[3],edge[4]); t:SetColorTexture(.1,.1,.1,.65)
+          local t=b:CreateTexture(nil,"BORDER"); t:SetPoint(edge[1],b,edge[1]); t:SetPoint(edge[2],b,edge[2]); if edge[3]==1 then t:SetWidth(1) else t:SetHeight(1) end; t:SetColorTexture(.1,.1,.1,.65)
+        end
         end
         b:SetScript("OnEnter",function(s)
           if not GameTooltip then return end
           local name=self.FullUnitName and self.FullUnitName(s.unitToken)
           GameTooltip:SetOwner(s,"ANCHOR_RIGHT"); GameTooltip:SetText(A.Text(name) and name or s.unitToken)
           local seen={}
-          for _,p in ipairs(plan) do if not seen[p.button] then GameTooltip:AddLine(L(p.button==1 and "Left click" or "Right click")..": "..p.name,.85,.85,.85,true); seen[p.button]=true end end
+          for _,p in ipairs(s.cleansePlan or {}) do if not seen[p.button] then GameTooltip:AddLine(L(p.button==1 and "Left click" or "Right click")..": "..p.name,.85,.85,.85,true); seen[p.button]=true end end
+          GameTooltip:AddLine(L(B.CombatCleanseSafetyText),1,.75,.35,true)
           GameTooltip:Show()
         end)
         b:SetScript("OnLeave",function() if GameTooltip then GameTooltip:Hide() end end)
@@ -147,7 +159,7 @@ function B:SyncCombatGrid()
     b:ClearAllPoints(); b:SetPoint("TOPLEFT",f,"TOPLEFT",slot.x-layout.minX,slot.y-layout.maxY)
     local c=idleColor(g,b.unitToken); b.idle:SetColorTexture(c[1],c[2],c[3],g.idleOpacity)
   end
-  f.layout=layout; f:Show()
+  f.layout=layout; f:Show(); self.combatGridLayoutKey=key
 end
 
 function B:SetCombatGridSetting(key,value)
@@ -213,7 +225,7 @@ function B:ShowCombatGridEditPreview()
       t:SetColorTexture(1,.5,0,1)
     end
     f.caption=f:CreateFontString(nil,"OVERLAY","GameFontNormalSmall"); f.caption:SetPoint("BOTTOMLEFT",f,"TOPLEFT",0,6)
-    f.caption:SetText(L("Combat cleanse · 40 slots · drag to move"))
+    f.caption:SetText(L("Combat cleanse: 40 slots (drag to move)"))
     local header=f:CreateTexture(nil,"BACKGROUND"); header:SetPoint("TOPLEFT",f.caption,"TOPLEFT",-5,4); header:SetPoint("BOTTOMRIGHT",f.caption,"BOTTOMRIGHT",5,-4); header:SetColorTexture(.025,.03,.04,.92)
     f:SetScript("OnDragStart",function(s) if not A.Combat() then s.dragging=true; s:StartMoving() end end)
     f.savePosition=function(s)
@@ -243,10 +255,13 @@ function B:HideEditMovers(...) self:HideCombatGridEditPreview(); hideMovers(self
 local refresh=B.Refresh
 function B:Refresh(...) local result=refresh(self,...); if not A.Combat() then self:SyncCombatGrid() end; return result end
 local events=CreateFrame("Frame")
-for _,event in ipairs({"GROUP_ROSTER_UPDATE","PLAYER_REGEN_ENABLED","PLAYER_REGEN_DISABLED","PLAYER_ENTERING_WORLD","SPELLS_CHANGED"}) do events:RegisterEvent(event) end
+for _,event in ipairs({"GROUP_ROSTER_UPDATE","PLAYER_REGEN_ENABLED","PLAYER_REGEN_DISABLED","PLAYER_ENTERING_WORLD","SPELLS_CHANGED","UNIT_NAME_UPDATE","UNIT_CONNECTION","UNIT_FACTION"}) do events:RegisterEvent(event) end
 events:SetScript("OnEvent",function(_,event)
   if event=="PLAYER_REGEN_DISABLED" then B:HideCombatGridEditPreview()
-  elseif not A.Combat() then B:ScheduleCombatGridSync() end
+  else
+    B.combatGridRosterRevision=(B.combatGridRosterRevision or 0)+1
+    if not A.Combat() then B:ScheduleCombatGridSync() end
+  end
 end)
 B.combatGridEvents=events
 
@@ -279,7 +294,7 @@ function B:BuildCleansePage(ui,...)
     if A.Combat() then return end
     B.db.combatCleanseGroup=c:GetChecked()==true; B:SyncCombatGrid(); B:UpdateCombatGridOptions()
   end)
-  ui.help(controls.enabled,"Party and raid","Prepared click-to-cleanse frames for current party or raid members, including you. Remain visible while grouped; no automatic casts or normal binding changes. Never cleanse filters cannot be guaranteed in combat.")
+  ui.help(controls.enabled,"Party and raid",L("Prepared click-to-cleanse frames for current party or raid members, including you. Frames remain visible while grouped. No automatic casts or normal binding changes.").."\n\n"..L(B.CombatCleanseSafetyText))
   ui.label(p,"Main-icon and group warnings are independent. L = left click; R = right click.",28,-165,"GameFontDisableSmall",650)
   section(ui,p,"Layout",12,-198,410,204)
   local function slider(key,title,y,low,high,unit)
@@ -317,7 +332,7 @@ function B:BuildCleansePage(ui,...)
   controls.preview=CreateFrame("Frame",nil,host); controls.preview:EnableMouse(false)
   controls.footprint=ui.label(p,"",452,-592,"GameFontDisableSmall",240)
   controls.status=ui.label(p,"Edit Mode shows all 40 at actual size.",452,-612,"GameFontDisableSmall",240)
-  section(ui,p,"Position",12,-652,692,70)
+  section(ui,p,"Position",12,-652,692,68)
   controls.follow=ui.check(p,"Follow my buff icon",28,-683,function(c) B:SetCombatGridSetting("follow",c:GetChecked()==true) end)
   controls.move=ui.button(p,"Move frames",378,-681,148,function()
     if A.Combat() then return end

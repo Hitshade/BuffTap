@@ -2,6 +2,10 @@
 local _,B=...
 -- Keep the ten most recent releases within a 24 KiB content ceiling.
 B.PatchNotes={
+ {version="1.30.1",title="A lighter touch",items={
+  "Combat cleansing reuses its existing controls when you change their look or learn new spells, keeping repeated adjustments lighter. Unchanged group frames no longer get laid out again on every update.",
+  "Elixirs and Utility now explain their Everywhere or Dungeons and raids choice correctly. Combat cleansing controls are translated into German, Spanish, French and Brazilian Portuguese, with clearer click-safety guidance.",
+  "Direct combat clicks use the player currently in each slot and bypass BuffTap's blacklist and PvP protection. Never cleanse exclusions are not guaranteed in combat. Check the player and debuff before clicking."}},
  {version="1.30.0",title="A helping hand, mid-fight",items={
   "Combat cleansing is here, by popular request! Open Cleanse > Combat cleansing to enable a personal warning, a party and raid grid, or both. Click the indicated L or R mouse button to cleanse. Your usual buff binding stays unchanged, and combat warnings stay silent.",
   "Make the grid your own with 18–64 px icons, spacing, growth, subgroup layout and colors. Move frames shows all 40 positions at actual size, even while solo. Only present members appear during play; layout changes wait until combat ends.",
@@ -36,13 +40,6 @@ B.PatchNotes={
   "Helpers has roomier full-width cards for Solo thanks, Buff requests and Conveniences. Solo thanks has a faction-themed picture, and Camping has a new camp scene."}},
  {version="1.27.1",title="Ghosts of Nearby players past",items={
   "Nearby now lets go of players who have left, even after moving your mouse through a busy list. Rows no longer linger after their players have gone."}},
- {version="1.27.0",title="A fresh coat of paint",items={
-  "The settings window has a new look, with a shared dark background, larger page titles, and small section icons beside fine separator lines.",
-  "Tidier pages, fewer nested boxes, and more consistent spacing across Weapons, Consumables, Supplies, Cleanse, My buffs, Target, Blacklist and Groups.",
-  "Supplies has roomier item rows. Weapons only shows Off hand for classes that can use it. Camping has benefit icons, and Party and Raid have a small emblem and short setting descriptions.",
-  "Nearby stays open in combat by default for invitations and requests to join a group. Prefer it hidden? Turn off Keep open in combat under Customization > Nearby window. Press Show to open the folded How Nearby works guide.",
-  "Scrollbars appear only when needed. Customization tabs are evenly spaced, and the Effect card has more room."}},
-
 
 }
 function B:PatchNotesUnread()

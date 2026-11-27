@@ -23,7 +23,7 @@ Out of combat, BuffTap prepares cleansing and resurrection through your usual bi
 
 For fights, opt in under **Cleanse > Combat cleansing**. Choose a self-targeted warning at the main-icon position, a party/raid grid, or both. Directly left- or right-click the indicated frame; hover for its spell guide. Combat displays stay silent and do not change the normal buff binding. The group grid supports 18–64 px icons, layout/colors and a full 40-slot positioning preview.
 
-Both combat options start off. The personal combat option retains an invisible click area throughout combat, even without a warning. **Never cleanse exclusions cannot be guaranteed in combat**; the player decides whether removal is safe. Resurrection reminders remain outside combat.
+Both combat options start off. The personal combat option retains an invisible click area throughout combat, even without a warning. **Never cleanse exclusions cannot be guaranteed in combat**; the player decides whether removal is safe. Direct combat clicks follow current unit slots and do not apply BuffTap's blacklist or PvP protection. Resurrection reminders remain outside combat.
 
 ## 👥 Nearby buffing & quick party invites
 

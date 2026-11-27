@@ -5,8 +5,9 @@ from test_bufftap import test
 NATIVE = r'''
 local B=BuffTap
 local create=CreateFrame
-nativeContainers={}; nativeSlots={}; nativeWrites=0
+nativeContainers={}; nativeSlots={}; nativeWrites=0; nativeFrames=0; nativeTextures=0; nativeFonts=0; nativeLookups=0
 Enum=Enum or {}; Enum.CustomAuraButtonDispelTypeTextureStyle={PreserveAsset=3}
+CreateColor=function(r,g,b,a) return {r=r,g=g,b=b,a=a} end
 CreateFrame=function(kind,name,parent,template)
   if kind~='AuraContainer' then
     local f=create(kind,name,parent,template)
@@ -25,7 +26,11 @@ CreateFrame=function(kind,name,parent,template)
   c.AddAuraSlot=function(self,key,filter,options)
     assert(not combat); assert(filter=='HARMFUL')
     assert(options.templateNames==nil,'native indicators must not inherit action handlers')
+    assert(not self.slots[key],'duplicate native slot')
+    nativeFrames=nativeFrames+1
     local ab=create('Button',nil,self)
+    local texture=ab.CreateTexture; ab.CreateTexture=function(s,...) nativeTextures=nativeTextures+1; return texture(s,...) end
+    local font=ab.CreateFontString; ab.CreateFontString=function(s,...) nativeFonts=nativeFonts+1; return font(s,...) end
     ab:Hide(); ab.caption={}
     ab.SetIcon=function(s,t) s.nativeIcon=t end
     ab.ClearDispelTypeTextures=function() end
@@ -36,6 +41,9 @@ CreateFrame=function(kind,name,parent,template)
     options.initializeFrame(ab)
     self.slots[key]={button=ab,options=options}; nativeSlots[key]=self.slots[key]
   end
+  c.GetAuraSlotFrame=function(self,key) assert(not combat,'forbidden native slot access'); nativeLookups=nativeLookups+1; return self.slots[key] and self.slots[key].button end
+  c.SetAuraSlotEnabled=function(self,key,v) assert(not combat); assert(self.slots[key]); self.slots[key].enabled=v end
+  c.SetAuraSlotCandidateFilters=function(self,key,filters) assert(not combat); self.slots[key].options.candidateFilters=filters end
   c.SetUnit=function(self,u) assert(not combat and (u=='player' or u:match('^party[1-4]$') or u:match('^raid%d+$'))); self.unit=u end
   c.SetEnabled=function(self,v) assert(not combat); self.enabled=v end
   return c
@@ -44,7 +52,7 @@ local function nativeDisplay(kind)
   -- Simulate only native assignment, without calling an addon aura observer.
   for key,slot in pairs(nativeSlots) do
     slot.button.secure=true
-    slot.button:SetShown(kind~=nil and slot.options.candidateFilters.includeDispelTypes[kind]==true)
+    slot.button:SetShown(slot.enabled~=false and kind~=nil and slot.options.candidateFilters.includeDispelTypes[kind]==true)
     slot.button.secure=nil
   end
 end
@@ -109,7 +117,7 @@ assert(B.combatCleanseFrame.attrs['*spell1']==527)
 combat=true; spell(988,'Dispel Magic rank 2'); B.combatCleanseEvents.scripts.OnEvent(nil,'SPELLS_CHANGED')
 assert(B.combatCleanseFrame==old)
 combat=false; B.combatCleanseEvents.scripts.OnEvent(nil,'PLAYER_REGEN_ENABLED')
-assert(B.combatCleanseFrame~=old and not old.shown)
+assert(B.combatCleanseFrame==old)
 assert(B.combatCleanseFrame.attrs['*spell1']==988)
 ''')
 
@@ -146,7 +154,7 @@ assert(f.testPoint[2]==UIParent and f.testPoint[4]==132 and f.testPoint[5]==-217
 assert(nativeSlots.BUFFTAP_SELF_Magic.button.buffTapIconStyle=='modern')
 B.db.x=-80; B.db.y=40; B.db.size=80; B.db.opacity=.9; B:Refresh()
 local moved=B.combatCleanseFrame
-assert(moved~=f and not f.shown and moved.width==80 and moved.testAlpha==.9)
+assert(moved==f and moved.width==80 and moved.testAlpha==.9)
 assert(moved.testPoint[4]==-80 and moved.testPoint[5]==40)
 """)
 

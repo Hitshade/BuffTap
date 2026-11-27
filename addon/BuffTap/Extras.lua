@@ -380,7 +380,7 @@ function B:CheckupLines()
   add("Nearby",safe(function() return self:NearbyDiagnosticsLines() end))
   add("Talents and spec",safe(function() return self:SpecProbeLines() end))
   add("Maintenance and carried bags",safe(function() return self:MaintenanceProbeLines() end))
-  add("Combat self-cleanse beta",safe(function() return self:CombatCleanseProbeLines() end))
+  add("Combat cleansing",safe(function() return self:CombatCleanseProbeLines() end))
   add("Supplies",safe(function() return self:CaptureOutput(function() B:ReportSupplies() end) end))
   add("Settings (import string, without your blacklist)",safe(function()
     local count=function(t) local n=0; for _ in pairs(t or {}) do n=n+1 end; return n end
@@ -641,7 +641,7 @@ function B:ShowBlacklist()
   self:Options(); if self.options and self.options.selectTab then self.options.selectTab(13) end
 end
 
--- Combat probe (beta): /bt combatprobe records, during the next fight, whether Forever still lets
+-- Combat probe: /bt combatprobe records, during the next fight, whether Forever still lets
 -- addons read who cast your buffs and send emotes. Results print once combat ends. Nothing is cast or sent.
 local function secretFlag(v) if issecretvalue then local ok,r=pcall(issecretvalue,v); return ok and r==true end; return false end
 function B:CombatProbeReading(label)

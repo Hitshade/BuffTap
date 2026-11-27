@@ -412,7 +412,7 @@ function B:ConsumableChecklistExplanation(parent,settings)
   if not self.db or not parent or not parent.multi then return "" end
   if A.Combat() then return self:Text("Buffs will be checked after combat.") end
   if not self:ConsumableFamilyEnabled(parent,settings) then return self:Text("This reminder is turned off.") end
-  local paused=self:CategoryRestingPause("consumables",family)
+  local paused=self:CategoryRestingPause("consumables",parent)
   if paused then
     return paused:find("outside",1,true) and self:Text("Consumable reminders are paused outside dungeons and raids.") or self:Text("Consumable reminders are paused while resting.")
   end

@@ -1,3 +1,16 @@
+# BuffTap 1.30.1
+
+### Lighter combat-frame adjustments
+Changing combat icon size, style or colors now updates the existing controls. Repeatedly trying different looks no longer keeps adding replacement controls for the rest of your session. The group grid also leaves its layout alone when nothing has changed. Click assignments, your chosen appearance and the usual combat restrictions stay the same.
+
+### More accurate consumable status
+Elixirs and Utility now describe their location choice correctly. A category restricted to dungeons and raids should say so outdoors, even if your older shared setting was different. This corrects the explanation; item-use eligibility was already following the right choice.
+
+### Clearer controls and limits
+Combat cleansing labels, previews and tooltips now include German, Spanish, French and Brazilian Portuguese translations. Old beta labels on the feature have been removed. The combat settings also explain that direct clicks use the player currently occupying each unit slot and do not apply BuffTap's normal blacklist or PvP protection. Never cleanse exclusions cannot be guaranteed in combat, so check the recipient and debuff before clicking.
+
+Your existing choices are kept. No new setup is required, and combat cleansing still uses the same direct mouse clicks.
+
 # BuffTap 1.30.0: a helping hand, mid-fight
 
 ### Combat cleansing, by popular request

@@ -1,5 +1,5 @@
 -- This Source Code Form is subject to the Mozilla Public License, v. 2.0.
--- Experimental self-only secure click target with native aura indicators.
+-- Self-targeted secure click control with native aura indicators.
 -- Invisible hit area is explicitly opt-in and persists during combat.
 -- Blizzard owns warning visibility; no addon aura inspection in combat.
 local _,B=...
@@ -9,6 +9,7 @@ local BUTTONS={DRUID={Curse=1,Poison=2},PRIEST={Magic=1,Disease=2},
   MAGE={Curse=1},PALADIN={Magic=1,Poison=1,Disease=1},SHAMAN={Poison=1,Disease=2}}
 local VISIBILITY="[combat,nodead] show; hide"
 local function text(s,...) return B:Text(s,...) end
+B.CombatCleanseSafetyText="Combat clicks follow current unit slots and bypass BuffTap's blacklist and PvP protection. Never cleanse exclusions are not guaranteed. Check the player and debuff before clicking."
 
 function B:CombatCleansePlan()
   local out={}; local map=BUTTONS[A.Class("player")] or {}
@@ -31,7 +32,7 @@ local function retire(self)
     f:Hide()
     if f.container then f.container:SetEnabled(false) end
   end
-  self.combatCleanseFrame=nil
+  self.combatCleanseFrame=nil; self.combatCleanseSignature=nil
 end
 
 local function position(self,f,size)
@@ -43,83 +44,109 @@ local function position(self,f,size)
   f:SetFrameStrata(self:GameplayStrata("buff")); f:SetClampedToScreen(true)
 end
 
-local function decorate(button,size,entry,priority,options)
-  options=options or {}
-  button:SetSize(size,size); button:ClearAllPoints(); button:SetPoint("CENTER",button:GetParent(),"CENTER",0,0)
+-- GetAuraSlotFrame is used only out of combat. Keep cosmetic resources, never
+-- aura data, visibility observations or a retained native button reference.
+local function decorate(button,size,entry,priority,options,v)
+  options=options or {}; v=v or {}
+  button:ClearAllPoints(); button:SetAllPoints(button:GetParent())
   button:SetFrameLevel(button:GetParent():GetFrameLevel()+priority+2)
-  local icon=button:CreateTexture(nil,"ARTWORK"); icon:SetAllPoints()
-  button:SetIcon(icon)
-  if B.ApplyIconStyle then B:ApplyIconStyle(button,icon,options.style or B.db.iconStyle) end
+  if not v.icon then v.icon=button:CreateTexture(nil,"ARTWORK"); v.icon:SetAllPoints(); button:SetIcon(v.icon) end
+  B:ApplyIconStyle(button,v.icon,options.style or B.db.iconStyle)
   button:ClearDispelTypeTextures()
   local colorMap
   if options.colors and type(CreateColor)=="function" then
     colorMap={}; for kind,c in pairs(options.colors) do colorMap[kind]=CreateColor(c[1],c[2],c[3],1) end
   end
-  for _,edge in ipairs({{"TOPLEFT","TOPRIGHT",size,2},{"BOTTOMLEFT","BOTTOMRIGHT",size,2},
-    {"TOPLEFT","BOTTOMLEFT",2,size},{"TOPRIGHT","BOTTOMRIGHT",2,size}}) do
-    local border=button:CreateTexture(nil,"OVERLAY")
-    border:SetPoint(edge[1],button,edge[1]); border:SetPoint(edge[2],button,edge[2]); border:SetSize(edge[3],edge[4])
-    border:SetColorTexture(1,1,1,1)
+  v.borders=v.borders or {}
+  for i,edge in ipairs({{"TOPLEFT","TOPRIGHT"},{"BOTTOMLEFT","BOTTOMRIGHT"},{"TOPLEFT","BOTTOMLEFT"},{"TOPRIGHT","BOTTOMRIGHT"}}) do
+    local border=v.borders[i]
+    if not border then
+      border=button:CreateTexture(nil,"OVERLAY"); border:SetPoint(edge[1],button,edge[1]); border:SetPoint(edge[2],button,edge[2])
+      if i<=2 then border:SetHeight(2) else border:SetWidth(2) end
+      border:SetColorTexture(1,1,1,1); v.borders[i]=border
+    end
     button:AddDispelTypeTexture(border,{showWhenHarmful=true,showWhenHelpful=false,
       showWithoutDispelType=false,style=Enum.CustomAuraButtonDispelTypeTextureStyle.PreserveAsset,customDispelColorMap=colorMap})
   end
   if options.compact then
-    local cue=button:CreateFontString(nil,"OVERLAY","GameFontHighlightSmall")
-    cue:SetPoint("BOTTOMRIGHT",-1,1); cue:SetText(entry.button==1 and "L" or "R")
-    local font,_,flags=cue:GetFont(); if font then cue:SetFont(font,math.max(8,math.min(12,size*.4)),flags) end
-    cue:SetShadowColor(0,0,0,1); cue:SetShadowOffset(1,-1)
-    return
+    if not v.cue then
+      v.cue=button:CreateFontString(nil,"OVERLAY","GameFontHighlightSmall"); v.cue:SetPoint("BOTTOMRIGHT",-1,1)
+      v.cue:SetShadowColor(0,0,0,1); v.cue:SetShadowOffset(1,-1)
+    end
+    v.cue:SetText(entry.button==1 and "L" or "R")
+    local font,_,flags=v.cue:GetFont(); if font then v.cue:SetFont(font,math.max(8,math.min(12,size*.4)),flags) end
+  else
+    if not v.caption then
+      v.backing=button:CreateTexture(nil,"OVERLAY",nil,2); v.backing:SetPoint("BOTTOMLEFT",2,2); v.backing:SetPoint("BOTTOMRIGHT",-2,2)
+      v.backing:SetHeight(18); v.backing:SetColorTexture(0,0,0,.85)
+      v.caption=button:CreateFontString(nil,"OVERLAY","GameFontHighlightSmall"); v.caption:SetPoint("BOTTOM",0,5)
+      v.kind=button:CreateFontString(nil,"OVERLAY","GameFontHighlightSmall"); v.kind:SetPoint("TOP",0,-5)
+      v.kind:SetShadowColor(0,0,0,1); v.kind:SetShadowOffset(1,-1)
+    end
+    v.caption:SetText(size<40 and (entry.button==1 and "L" or "R") or text(entry.button==1 and "Left click" or "Right click"))
+    v.kind:SetText(text(entry.kind)); v.kind:SetShown(size>=48)
   end
-  local backing=button:CreateTexture(nil,"OVERLAY",nil,2)
-  backing:SetPoint("BOTTOMLEFT",2,2); backing:SetPoint("BOTTOMRIGHT",-2,2); backing:SetHeight(18); backing:SetColorTexture(0,0,0,.85)
-  local caption=button:CreateFontString(nil,"OVERLAY","GameFontHighlightSmall")
-  caption:SetPoint("BOTTOM",0,5); caption:SetText(size<40 and (entry.button==1 and "L" or "R") or text(entry.button==1 and "Left click" or "Right click"))
-  local kind=button:CreateFontString(nil,"OVERLAY","GameFontHighlightSmall")
-  kind:SetPoint("TOP",0,-5); kind:SetText(text(entry.kind)); kind:SetShown(size>=48); kind:SetShadowColor(0,0,0,1); kind:SetShadowOffset(1,-1)
+  return v
+end
+
+function B:CombatCleansePlanKey(plan)
+  local parts={}
+  for _,p in ipairs(plan) do parts[#parts+1]=p.kind..":"..p.id..":"..p.name end
+  local exclusions={}
+  for id in pairs(self.CleanseBuiltInNever) do if not self:CleanseBuiltInAllowed()[id] then exclusions[#exclusions+1]=id end end
+  table.sort(exclusions); for _,id in ipairs(exclusions) do parts[#parts+1]=tostring(id) end
+  return table.concat(parts,"|")
 end
 
 function B:ConfigureCombatCleanseButton(root,unit,plan,size,options)
-  local initialized=0
-    root:SetAttribute("unit",unit)
-    root:SetAttribute("useOnKeyDown",false)
-    root:SetAttribute("checkselfcast",false); root:SetAttribute("checkfocuscast",false); root:SetAttribute("checkmouseovercast",false)
-    for _,action in ipairs(plan) do
-      root:SetAttribute("*type"..action.button,"spell")
-      root:SetAttribute("*spell"..action.button,action.id)
-    end
-    root:RegisterForClicks("LeftButtonUp","RightButtonUp")
-    -- Observe input only; no protected writes, aura reads or cast decisions here.
+  if A.Combat() then return end
+  root:SetAttribute("unit",unit); root:SetAttribute("useOnKeyDown",false)
+  root:SetAttribute("checkselfcast",false); root:SetAttribute("checkfocuscast",false); root:SetAttribute("checkmouseovercast",false)
+  for i=1,2 do root:SetAttribute("*type"..i,nil); root:SetAttribute("*spell"..i,nil) end
+  for _,action in ipairs(plan) do root:SetAttribute("*type"..action.button,"spell"); root:SetAttribute("*spell"..action.button,action.id) end
+  root.cleansePlan=plan
+  root:RegisterForClicks("LeftButtonUp","RightButtonUp")
+  if not root.cleanseInputHooked then
+    root.cleanseInputHooked=true
     root:HookScript("PostClick",function(_,button,down)
       if down then return end
       B.combatCleanseInputCount=(B.combatCleanseInputCount or 0)+1
-      B.combatCleanseLastInput=A.Text(button) and button or "unreadable"
-      B.combatCleanseLastUnit=unit
+      B.combatCleanseLastInput=A.Text(button) and button or "unreadable"; B.combatCleanseLastUnit=unit
     end)
-    local c=CreateFrame("AuraContainer",nil,root,"CustomAuraContainerTemplate")
-    assert(type(c.AddAuraSlot)=="function" and type(c.SetUnit)=="function" and type(c.SetEnabled)=="function")
-    root.container=c; c:SetAllPoints(root); c:EnableMouse(false)
-    local excluded={}
-    for id in pairs(self.CleanseBuiltInNever) do if not self:CleanseBuiltInAllowed()[id] then excluded[id]=true end end
-    for index,entry in ipairs(plan) do
-      local prepared=entry
-      c:AddAuraSlot("BUFFTAP_SELF_"..prepared.kind,"HARMFUL",{
-        sortMethod=0,sortDirection=0,
-        candidateFilters={includeDispelTypes={[prepared.kind]=true},excludeSpellIDs=excluded},
+  end
+  local c=root.container
+  if not c then
+    c=CreateFrame("AuraContainer",nil,root,"CustomAuraContainerTemplate"); root.container=c
+    c:SetAllPoints(root); c:EnableMouse(false); root.cleanseSlots={}; root.cleanseVisuals={}
+  end
+  assert(type(c.AddAuraSlot)=="function" and type(c.GetAuraSlotFrame)=="function" and type(c.SetAuraSlotEnabled)=="function" and type(c.SetAuraSlotCandidateFilters)=="function")
+  local excluded,active={},{}
+  for id in pairs(self.CleanseBuiltInNever) do if not self:CleanseBuiltInAllowed()[id] then excluded[id]=true end end
+  for index,entry in ipairs(plan) do
+    local prepared=entry; local key="BUFFTAP_SELF_"..entry.kind; active[entry.kind]=true
+    local filters={includeDispelTypes={[entry.kind]=true},excludeSpellIDs=excluded}
+    if not root.cleanseSlots[entry.kind] then
+      c:AddAuraSlot(key,"HARMFUL",{sortMethod=0,sortDirection=0,candidateFilters=filters,
         initializeFrame=function(ab)
-          assert(not A.Combat(),"native cleanse button initialized during combat")
-          -- Never retain or inspect ab after this callback: it becomes forbidden.
-          assert(type(ab.SetIcon)=="function" and type(ab.AddDispelTypeTexture)=="function")
-          decorate(ab,size,prepared,index,options)
-          ab:SetCancelAuraButtons(nil)
-          -- These native frames are indicators only. Their forbidden script/input
-          -- restrictions must not own the cast. Input passes to the secure parent.
-          ab:EnableMouse(false)
-          initialized=initialized+1
-        end,
-      })
+          if A.Combat() then
+            B.combatCleanseLateInitialization=true; B.combatCleanseSignature=nil; B.combatGridSignature=nil; B.combatGridLayoutKey=nil
+            return
+          end
+          root.cleanseVisuals[prepared.kind]=decorate(ab,size,prepared,index,options)
+          ab:SetCancelAuraButtons(nil); ab:EnableMouse(false)
+        end})
+      root.cleanseSlots[entry.kind]=key
+      assert(root.cleanseVisuals[entry.kind],"native cleanse initialization incomplete")
+    else
+      c:SetAuraSlotCandidateFilters(key,filters)
+      local ab=c:GetAuraSlotFrame(key); assert(ab,"native cleanse slot unavailable")
+      root.cleanseVisuals[entry.kind]=decorate(ab,size,prepared,index,options,root.cleanseVisuals[entry.kind])
+      ab:SetCancelAuraButtons(nil); ab:EnableMouse(false)
     end
-    assert(initialized==#plan,"native cleanse initialization incomplete")
-    c:SetUnit(unit); c:SetEnabled(true); c:Show()
+    c:SetAuraSlotEnabled(key,true)
+  end
+  for kind,key in pairs(root.cleanseSlots) do if not active[kind] then c:SetAuraSlotEnabled(key,false) end end
+  c:SetUnit(unit); c:SetEnabled(true); c:Show()
 end
 
 function B:SyncCombatCleanse()
@@ -136,26 +163,34 @@ function B:SyncCombatCleanse()
   local plan=self:CombatCleansePlan()
   local size=A.Number(d.size) and d.size or 64
   local signature={tostring(size),tostring(d.x),tostring(d.y),tostring(d.opacity),tostring(d.iconStyle),self:GameplayStrata("buff")}
-  for _,entry in ipairs(plan) do signature[#signature+1]=entry.kind..":"..entry.id end
+  signature[#signature+1]=self:CombatCleansePlanKey(plan)
   signature=table.concat(signature,"|")
   if self.combatCleanseSignature==signature then return end
-  retire(self); self.combatCleanseSignature=signature; self.combatCleanseError=nil; self.combatCleanseErrorDetail=nil
-  if #plan==0 then self.combatCleanseError=text("No learned cleanse spell for the selected types."); return end
+  self.combatCleanseError=nil; self.combatCleanseErrorDetail=nil
+  if #plan==0 then retire(self); self.combatCleanseError=text("No learned cleanse spell for the selected types."); return end
   local root
   local ok,setupError=pcall(function()
     assert(type(RegisterStateDriver)=="function" and type(UnregisterStateDriver)=="function")
     assert(Enum and Enum.CustomAuraButtonDispelTypeTextureStyle and Enum.CustomAuraButtonDispelTypeTextureStyle.PreserveAsset)
-    root=CreateFrame("Button",nil,UIParent,"SecureActionButtonTemplate,SecureHandlerStateTemplate")
+    root=self.combatCleansePool
+    if not root then
+      root=CreateFrame("Button",nil,UIParent,"SecureActionButtonTemplate,SecureHandlerStateTemplate"); self.combatCleansePool=root
+    end
     root:Hide(); root:EnableMouse(true)
     position(self,root,size)
-    self:ConfigureCombatCleanseButton(root,"player",plan,size)
+    local visualKey=tostring(size).."|"..tostring(d.iconStyle).."|"..self:CombatCleansePlanKey(plan)
+    if root.cleanseVisualKey~=visualKey then
+      self:ConfigureCombatCleanseButton(root,"player",plan,size); root.cleanseVisualKey=visualKey
+    else root.container:SetEnabled(true) end
     RegisterStateDriver(root,"visibility",VISIBILITY)
+    self.combatCleanseSignature=signature
   end)
   if not ok then
     if root then
       pcall(UnregisterStateDriver,root,"visibility"); pcall(root.Hide,root)
       if root.container then pcall(root.container.SetEnabled,root.container,false) end
     end
+    self.combatCleanseFrame=nil; self.combatCleanseSignature=nil
     self.combatCleanseError=text("Combat cleanse setup unavailable on this client.")
     self.combatCleanseErrorDetail=A.Text(setupError) and setupError:sub(1,250) or "unreadable setup error"
     return
@@ -194,7 +229,7 @@ function B:BuildCleansePage(ui,...)
     B.db.combatCleanse=c:GetChecked()==true; B:SyncCombatCleanse(); B:UpdateCleansePage()
   end)
   f.combatCleanse:HookScript("OnEnter",function(s)
-    B.OptionsTheme.Tooltip(s,text("Combat: yourself (beta)"),text("Optional self-targeted combat button, including while grouped. Enable cleansing and You. Follow its Left click or Right click label. The warning appears for selected, learned removal types. An invisible click area stays active at this position throughout combat, even without a warning; clicking it can still attempt a self-cleanse. Never cleanse filters cannot be guaranteed for hidden combat debuffs; choose whether to cleanse. Follows your buff icon position and appearance. Your normal binding is unchanged."),B.combatCleanseError or nil)
+    B.OptionsTheme.Tooltip(s,text("Combat cleansing: yourself"),text("Self-targeted combat cleansing, including while grouped. Enable cleansing and You. Follow the Left click or Right click label. The invisible click area stays active throughout combat, even without a warning. Uses your main buff icon settings; your normal binding is unchanged.").."\n\n"..text(B.CombatCleanseSafetyText),B.combatCleanseError or nil)
   end)
   f.combatCleanse:HookScript("OnLeave",function() if GameTooltip then GameTooltip:Hide() end end)
   f.combatCleansePreviewButton=ui.button(p,"Self preview",550,-137,138,function() B:PreviewCombatCleanse() end)
@@ -235,5 +270,5 @@ function B:CombatCleanseProbeLines()
   return {"Combat self-cleanse: enabled="..tostring(self.db and self.db.combatCleanse==true)..
     " | prepared="..tostring(self.combatCleanseFrame~=nil).." | invisible hit area during combat | self only",
     "Combat cleanse input: count="..tostring(self.combatCleanseInputCount or 0).." | last="..tostring(self.combatCleanseLastInput or "none"),
-    "Native setup: "..(self.combatCleanseErrorDetail or self.combatCleanseError or "no setup error recorded")}
+    "Native setup: late initialization="..tostring(self.combatCleanseLateInitialization==true).." | "..(self.combatCleanseErrorDetail or self.combatCleanseError or "no setup error recorded")}
 end

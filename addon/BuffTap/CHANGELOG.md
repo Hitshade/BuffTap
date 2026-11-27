@@ -1,3 +1,20 @@
+# BuffTap 1.30.1
+
+### Fixed
+- Combat self/grid controls retain a bounded pool of conventional secure buttons, native containers and cosmetic resources instead of discarding/recreating them on signature changes. Appearance is reapplied outside combat using the public GetAuraSlotFrame interface; native references and aura observations are not retained. Existing native slots are enabled/filtered in place; learning a previously unsupported type creates only its first slot per unit. Removed actions clear stale mouse spell attributes. Input hooks are installed once. Position/opacity-only self updates do not restyle native controls.
+- Grid refresh computes a lightweight settings/plan/revision key and skips layout, raid subgroup reads, all 45 anchor writes and idle recoloring when unchanged. Group/identity/connection/faction and combat-exit events invalidate the cached placement. Combat changes still defer to combat exit; no cast-target or aura-reading behavior is added.
+- ConsumableChecklistExplanation now passes parent to CategoryRestingPause. Elixirs/Utility status respects the family's location override instead of an undefined variable selecting the legacy category gate. Runtime consumable eligibility is unchanged.
+
+### Clarity and maintenance
+- Added 36 combat-control, direction, preview, status and safety strings in each supported locale: deDE, esES, frFR and ptBR. Authored translations are not native-speaker verified. Removed stale experimental/beta wording from stable feature tooltips and the diagnostic heading.
+- Combat self/group tooltips and the group hover guide explicitly explain current-unit slot targeting and bypassed blacklist/PvP protection; combat Never cleanse exclusions remain unguaranteed. No attempt is made to inspect secret combat auras or silently add dynamic click-time gates.
+- Position card ends at the page's 720-unit bound. Unexpected native initialization during combat records a diagnostic and returns without touching the frame, instead of throwing. Historical handoff/development receipts are archived intact, with current docs consolidated.
+- Reviewed duplicate food names: the additional Grilled Squid/Tender Wolf Steak IDs are intentional distinct items sharing effects. Picker data has no duplicate IDs; carried quantities and exact selected IDs remain separate. No item variants were removed.
+
+### Validation
+- Affected regression run: 1,222 mocked scenarios passed, zero failed (combat controls, cleansing, consumables, manual consumables and profile persistence). Full release runner: 3,600 mocked scenarios passed, zero failed. Dedicated allocation checks cover repeated size/style/color/spell/toggle changes, zero unchanged-refresh layout work, palette updates, combat deferral and correct location explanations. The owner reports the local beta seems good after testing. This is not exhaustive class/raid-transition validation; mocks cannot prove native forbidden/secure interoperability.
+- GitHub open/recent issue searches on 2026-11-27 returned no issues. Owner approved promotion of the tested local beta to 1.30.1; gameplay code is unchanged during promotion.
+
 # BuffTap 1.30.0
 
 ### Added: optional combat cleansing
