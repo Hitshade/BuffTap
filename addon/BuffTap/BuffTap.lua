@@ -1203,12 +1203,12 @@ SlashCmdList.BUFFTAP=function(text)
       if not def or not value then say("Usage: /bt groupneed 3 OR /bt groupneed motw 4"); return end
       B:SetGroupNeed(def,value)
     else
-      local value=tonumber(arg); if not value then say("Specify 2 through 5 players."); return end
-      B:GroupSettings(nil,true).groupNeed=math.max(2,math.min(5,math.floor(value+0.5))); B:NormalizeGroupNeeds(B:ActiveGroupContext()); B:InitDB()
+      local value=tonumber(arg); if not value then say("Specify 1 through 5 players."); return end
+      B:GroupSettings(nil,true).groupNeed=math.max(1,math.min(5,math.floor(value+0.5))); B:NormalizeGroupNeeds(B:ActiveGroupContext()); B:InitDB()
     end
   elseif cmd=="blessingneed" then
-    local value=tonumber(arg); if not value then say("Specify 2 through 5 players."); return end
-    B:GroupSettings(nil,true).blessingNeed=math.max(2,math.min(5,math.floor(value+0.5))); B:NormalizeGroupNeeds(B:ActiveGroupContext()); B:InitDB()
+    local value=tonumber(arg); if not value then say("Specify 1 through 5 players."); return end
+    B:GroupSettings(nil,true).blessingNeed=math.max(1,math.min(5,math.floor(value+0.5))); B:NormalizeGroupNeeds(B:ActiveGroupContext()); B:InitDB()
   elseif cmd=="targetrebuff" then
     local buffKey,value=arg:match("^(%S+)%s+(%d+)$")
     if buffKey then

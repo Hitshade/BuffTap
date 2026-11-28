@@ -155,6 +155,7 @@ import test_combat_cleanse
 import test_combat_grid
 import test_review_1301
 import test_group_fallback_1302
+import test_group_threshold_1303
 
 _review=__import__("test_bufftap")
 print("RELEASE_FINAL",len(_review.tests),"PASS",len(_review.failures),"FAIL")

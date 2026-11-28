@@ -542,7 +542,7 @@ function B:BuildBlessingOptions(parent)
   casting:SetBackdropColor(unpack(T.menu)); casting:SetBackdropBorderColor(unpack(T.border)); casting:EnableMouse(true); casting:SetClampedToScreen(true)
   label(casting,"Greater Blessings",18,-16,"GameFontNormalLarge")
   label(casting,"Use a Greater Blessing when this many recipients need it.",18,-43,"GameFontDisableSmall",424)
-  f.blessingThreshold=compactSlider(casting,2,5,1,180,function(v) return tostring(v).."+" end,function(_,v)
+  f.blessingThreshold=compactSlider(casting,1,5,1,180,function(v) return tostring(v).."+" end,function(_,v)
     B:GroupEditorSettings().blessingNeed=v; B:NormalizeGroupNeeds(B:EditingGroupContext()); B:RequestRefresh("blessing threshold",0.08)
   end); f.blessingThreshold:SetPoint("TOPLEFT",22,-72)
   label(casting,"Same-class assignments must agree across the full group.",18,-100,"GameFontDisableSmall",424)
@@ -2229,7 +2229,7 @@ function B:Options()
         f.groupChecks[i]=c
       end
       f.groupThresholdLabel=label(shared,L("Group threshold"),377,-118,"GameFontHighlight",110)
-      f.groupNeedSlider=compactSlider(shared,2,5,1,180,function(v) return tostring(v).."+" end,function(_,v)
+      f.groupNeedSlider=compactSlider(shared,1,5,1,180,function(v) return tostring(v).."+" end,function(_,v)
         B:GroupEditorSettings().groupNeed=v; B:NormalizeGroupNeeds(B:EditingGroupContext()); B:InitDB(); B:RequestRefresh("group threshold default",0.08)
       end)
       f.groupNeedSlider:SetScript("OnMouseUp",function() if not A.Combat() then B:Options() end end)
@@ -2879,7 +2879,7 @@ function B:Options()
           end)
           c:SetSize(20,20); row.checks[i]=c
         end
-        row.need=compactSlider(row,2,5,1,168,function(v) return tostring(v).."+" end,function(slider,value)
+        row.need=compactSlider(row,1,5,1,168,function(v) return tostring(v).."+" end,function(slider,value)
           local def=slider:GetParent().def
           if def then B:SetGroupNeed(def,value,B:EditingGroupContext()); B:RequestRefresh("group threshold",0) end
         end)

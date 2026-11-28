@@ -13,7 +13,7 @@ local function clean(owner,values)
   local out={}
   for key in pairs(fields) do
     local value=values[key]; local base=owner.db[key]
-    if key=="groupNeed" or key=="blessingNeed" then out[key]=A.Number(value) and math.max(2,math.min(5,math.floor(value+.5))) or base
+    if key=="groupNeed" or key=="blessingNeed" then out[key]=A.Number(value) and math.max(1,math.min(5,math.floor(value+.5))) or base
     elseif key=="group" or key=="smartGroup" or key=="blessingAssignments" then out[key]=type(value)=="boolean" and value; if type(value)~="boolean" then out[key]=base end
     elseif key=="buffRoles" then
       out[key]={}
@@ -33,7 +33,7 @@ local function clean(owner,values)
       for name,v in pairs(type(value)=="table" and value or {}) do
         local def=type(name)=="string" and owner:FindBuff(name)
         if def then
-          if key=="buffGroupNeed" then if A.Number(v) then out[key][name]=math.max(2,math.min(5,math.floor(v+.5))) end
+          if key=="buffGroupNeed" then if A.Number(v) then out[key][name]=math.max(1,math.min(5,math.floor(v+.5))) end
           elseif type(v)=="table" then
             local map={}; out[key][name]=map
             if key=="buffGroups" then for i=1,8 do if type(v[i])=="boolean" then map[i]=v[i] end end

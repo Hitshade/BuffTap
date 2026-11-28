@@ -1,3 +1,12 @@
+# BuffTap 1.30.3
+
+### A group spell for one
+You can now lower group-spell thresholds to one player for any class. This includes Greater Blessings, making it easier to use their longer duration when only one member of a class needs a buff. Thanks to Pepperybacon for suggesting this for Legacy builds. The choice is available to everyone.
+
+Under Groups, adjust the shared threshold or the threshold for a particular buff. Party and Raid keep their own choices. Existing defaults stay as they were, and each cast still needs your click or binding. Choosing one does not bypass exclusions or the spell's normal requirements.
+
+Existing spell requirements and group protections still apply. No Legacy talent setup is required to use this preference.
+
 # BuffTap 1.30.2
 
 ### More useful group buffing

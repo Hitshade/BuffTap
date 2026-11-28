@@ -694,7 +694,7 @@ B.Locales.deDE["Small buttons beside player rows: + invites, > suggests an invit
 B.Locales.deDE["Solo is the baseline. Party and Raid follow these preferences until you change individual choices in those setups."]="Solo ist die Grundlage. Gruppe und Schlachtzug folgen diesen Einstellungen, bis du einzelne Auswahlen dort änderst."
 B.Locales.deDE["Solo preferences. Party and Raid follow unchanged settings."]="Solo-Einstellungen. Gruppe und Schlachtzug folgen unveränderten Einstellungen."
 B.Locales.deDE["Soulstone target"]="Seelenstein-Ziel"
-B.Locales.deDE["Specify 2 through 5 players."]="Gib 2 bis 5 Spieler an."
+B.Locales.deDE["Specify 1 through 5 players."]="Gib 1 bis 5 Spieler an."
 B.Locales.deDE["Specify a number."]="Gib eine Zahl an."
 B.Locales.deDE["Spell availability & refresh timing"]="Zauberverfügbarkeit & Auffrischungstiming"
 B.Locales.deDE["Stop explicit party and raid blessing assignments. Existing plans stay saved. Group blessings follow enabled Buffs, priorities and recipient filters instead."]="Ausdrückliche Gruppen- und Schlachtzugssegenszuweisungen beenden. Bestehende Pläne bleiben gespeichert. Gruppensegen folgen stattdessen aktivierten Stärkungen, Prioritäten und Empfängerfiltern."

@@ -2,6 +2,8 @@
 local _,B=...
 -- Keep the ten most recent releases within a 24 KiB content ceiling.
 B.PatchNotes={
+ {version="1.30.3",title="Group buffs, even for one",items={
+  "Group spell thresholds can now go down to one player for every class, including Greater Blessings. Choose one under Groups to prefer group spells even when only one eligible player needs the buff. Existing defaults are unchanged. Thanks to Pepperybacon for suggesting this for Legacy builds."}},
  {version="1.30.2",title="A better fit for your group",items={
   "Group buffs now count across the raid. Classes and pets that do not benefit from a buff no longer hold up a useful group cast. Your explicit exclusions and different blessing assignments still matter.",
   "Mixed-level groups use the same ten-level rank allowance as ordinary buffs. Raid-wide spells are prepared on you, so they do not depend on another player's direct casting range.",
@@ -37,11 +39,7 @@ B.PatchNotes={
  {version="1.28.1",title="Rogues, your Tracking is back",items={
   "Rogues can reach Tracking again. My buffs now opens straight to those controls when your class has no personal buffs, without an empty buff list or setup buttons that do not apply.",
   "Diagnostics > Full check-up now includes Talents and spec. It only reads information and changes nothing. Reports from characters with two specs are especially helpful."}},
- {version="1.28.0",title="Class helpers move into My buffs",items={
-  "My buffs has a new tab beside Solo, Party and Raid for class helpers: Warlock pets and stones, Hunter pets, Paladin Oaths, and tracking reminders.",
-  "The tab is named for its contents: Class helpers, Pet and tracking, or Tracking. These choices apply in every setup, so Use Solo settings is hidden there.",
-  "Helpers now has a shortcut to the new tab. Your existing choices are kept.",
-  "Helpers has roomier full-width cards for Solo thanks, Buff requests and Conveniences. Solo thanks has a faction-themed picture, and Camping has a new camp scene."}},
+
 
 
 }

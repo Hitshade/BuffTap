@@ -4,7 +4,7 @@
 
 local _, B = ...
 _G.BuffTap = B
-B.version = "1.30.2"
+B.version = "1.30.3"
 B.API = {}
 local A = B.API
 
@@ -217,7 +217,7 @@ function B:InitDB()
   end
   if type(self.db.raidGroups) ~= "table" then self.db.raidGroups = {true,true,true,true,true,true,true,true} end
   for i=1,8 do if type(self.db.raidGroups[i]) ~= "boolean" then self.db.raidGroups[i] = true end end
-  for k,limits in pairs({size={24,160}, opacity={0,1}, x={-4000,4000}, y={-4000,4000}, seconds={15,180}, targetSeconds={30,1800}, groupNeed={2,5}, blessingNeed={2,5}}) do
+  for k,limits in pairs({size={24,160}, opacity={0,1}, x={-4000,4000}, y={-4000,4000}, seconds={15,180}, targetSeconds={30,1800}, groupNeed={1,5}, blessingNeed={1,5}}) do
     local v = self.db[k]
     if v ~= v then v = defaults[k] end
     self.db[k] = math.max(limits[1], math.min(limits[2], v))
@@ -278,7 +278,7 @@ function B:InitDB()
   end
   for key,value in pairs(self.db.buffGroupNeed) do
     if type(value) ~= "number" or value ~= value then self.db.buffGroupNeed[key] = nil
-    else self.db.buffGroupNeed[key] = math.max(2, math.min(5, math.floor(value + 0.5))) end
+    else self.db.buffGroupNeed[key] = math.max(1, math.min(5, math.floor(value + 0.5))) end
   end
   for key,value in pairs(self.db.targetBuffs) do
     if type(value) ~= "boolean" then self.db.targetBuffs[key] = nil end
@@ -677,7 +677,7 @@ function B:GroupNeed(b,context)
   local settings=self:GroupSettings(context,false)
   local key=self:RootKey(b)
   local value=key and settings.buffGroupNeed and settings.buffGroupNeed[key]
-  if type(value)=="number" then return math.max(2,math.min(5,math.floor(value+0.5))) end
+  if type(value)=="number" then return math.max(1,math.min(5,math.floor(value+0.5))) end
   if b and (b.kind=="blessing" or b.classWide) then return settings.blessingNeed or b.minNeed or 2 end
   return settings.groupNeed or (b and b.minNeed) or 3
 end
@@ -688,7 +688,7 @@ function B:SetGroupNeed(b,value,context)
   if not key then return end
   local pair=b and b.groupKey and self:FindBuff(b.groupKey) or b
   local fallback=(pair and (pair.kind=="blessing" or pair.classWide)) and settings.blessingNeed or settings.groupNeed
-  value=math.max(2,math.min(5,math.floor((tonumber(value) or fallback or 3)+0.5)))
+  value=math.max(1,math.min(5,math.floor((tonumber(value) or fallback or 3)+0.5)))
   if value==(fallback or 3) then settings.buffGroupNeed[key]=nil else settings.buffGroupNeed[key]=value end
 end
 

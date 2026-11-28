@@ -1,3 +1,12 @@
+# BuffTap 1.30.3
+
+### Added
+- GitHub #7: allow all group-spell thresholds to range from 1 to 5, including Greater Blessings. Updated legacy settings normalization, Party/Raid context cloning, per-buff setter/resolver, slash commands and all three threshold sliders. Defaults remain groupNeed=3 and blessingNeed=2; no migration or talent detection required.
+- Existing assignments, explicit exclusions, spell/rank/resource checks, live reagent-usability policy and bounded group-cast fallback remain in effect. Player input is still required. Thanks to Pepperybacon (GitHub #7) for the suggestion; expanded to all classes at the owner's request.
+
+### Validation and limits
+- 414 focused mocked checks passed, zero failed, including 12 new threshold cases. All 55 Lua modules compile. Existing 1.30.2 full-suite evidence remains separate; no full-suite rerun or native Forever test is claimed for this narrow change.
+
 # BuffTap 1.30.2
 
 ### Group eligibility and affected scope

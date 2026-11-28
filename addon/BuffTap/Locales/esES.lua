@@ -694,7 +694,7 @@ B.Locales.esES["Small buttons beside player rows: + invites, > suggests an invit
 B.Locales.esES["Solo is the baseline. Party and Raid follow these preferences until you change individual choices in those setups."]="Solo es la base. Grupo y Banda siguen estas preferencias hasta que cambies opciones concretas en esas configuraciones."
 B.Locales.esES["Solo preferences. Party and Raid follow unchanged settings."]="Preferencias de Solo. Grupo y Banda siguen los ajustes sin cambios."
 B.Locales.esES["Soulstone target"]="Objetivo de la piedra de alma"
-B.Locales.esES["Specify 2 through 5 players."]="Indica de 2 a 5 jugadores."
+B.Locales.esES["Specify 1 through 5 players."]="Indica de 1 a 5 jugadores."
 B.Locales.esES["Specify a number."]="Indica un número."
 B.Locales.esES["Spell availability & refresh timing"]="Disponibilidad de hechizos y tiempos de renovación"
 B.Locales.esES["Stop explicit party and raid blessing assignments. Existing plans stay saved. Group blessings follow enabled Buffs, priorities and recipient filters instead."]="Detener las asignaciones explícitas de bendiciones de grupo y banda. Los planes existentes siguen guardados. Las bendiciones de grupo siguen en su lugar los beneficios activados, las prioridades y los filtros de receptores."
