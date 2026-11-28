@@ -1,6 +1,12 @@
 # BuffTap handoff
 
-Updated 2026-11-27. Owner accepted 1.30.2-beta1 and authorized stable publication. **1.30.2** release checks: 3,632 PASS / 0 FAIL; 55 Lua modules compile. Stable promotion differs from accepted beta only in five version/note files. Package: 151 files, 3,708,938 bytes; SHA256 f5a643727ab7c19bbf43da205d30937960986d69f6e5aa8819a0af6e4c2376ff. Final publication/installation receipt follows once verified. Previous 1.30.1 CurseForge file 9854529 is Approved. No open/recent GitHub issues found during final review.
+Updated 2026-11-27. Owner accepted 1.30.2-beta1 and authorized stable publication. **1.30.2** release checks: 3,632 PASS / 0 FAIL; 55 Lua modules compile. Stable promotion differs from accepted beta only in five version/note files. Package: 151 files, 3,708,938 bytes; SHA256 f5a643727ab7c19bbf43da205d30937960986d69f6e5aa8819a0af6e4c2376ff. GitHub v1.30.2 is public, CurseForge file 9862618 submitted (Uploading; approval not yet verified), stable installed with backup and reporter reply posted. Previous 1.30.1 CurseForge file 9854529 is Approved. No open/recent GitHub issues found during final review.
+
+## 1.30.2 publication receipt
+- Source ffb123802caea8802764f3fc26af55401cb5414b pushed to main. GitHub release 461302615 / tag v1.30.2 is public: https://github.com/Hitshade/BuffTap/releases/tag/v1.30.2 . Uploaded asset SHA256 matches the 151-file package.
+- CurseForge file 9862618 submitted as Release for 1.60.1, automatic publication, LibDBIcon-1.0 Embedded Library preserved. Last observed Uploading; approval not yet verified. Previous 1.30.1 Approved.
+- Stable installed to the existing _forever_ addon directory with packaged-file backup; all 151 files byte-verified. No WTF/SavedVariables access. Install/build/publication receipts under ../releases/receipts/BuffTap-1.30.2*.
+- Requested restrained reply posted and visibly verified under the Arcane Brilliance reporter's latest comment. Says adjustments may help, submission awaits approval, and requests full check-up while singles are offered if it persists. No confirmed diagnosis claimed.
 
 ## 1.30.2 implementation
 - Default benefit preferences and pets no longer veto paired group casts or inflate player thresholds. Explicit class/subgroup/self exclusions and reminder dismissals remain respected; Greater Blessing assignment/replacement checks stay class-wide.

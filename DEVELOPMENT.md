@@ -3,7 +3,7 @@
 ## 1.30.2 release (2026-11-27)
 Owner accepted the researched group-buff beta and authorized publication. Corrected default usefulness versus explicit exclusions, pets, paired raid-wide scope, minus-ten recipient ranks, PvE-instance PvP gating and bounded failed-group recovery. Reagent semantics unchanged; diagnostics expanded. The reporter's exact setup has not been reproduced.
 
-Full mocked release suite: 3,632 PASS / 0 FAIL; all 55 Lua modules compile. Promotion changes only five version/notes files from accepted beta. Package: 151 files, 3,708,938 bytes; SHA256 f5a643727ab7c19bbf43da205d30937960986d69f6e5aa8819a0af6e4c2376ff. Receipts under ../releases/receipts/BuffTap-1.30.2*; final external status in docs/HANDOFF.md.
+Full mocked release suite: 3,632 PASS / 0 FAIL; all 55 Lua modules compile. Promotion changes only five version/notes files from accepted beta. Package: 151 files, 3,708,938 bytes; SHA256 f5a643727ab7c19bbf43da205d30937960986d69f6e5aa8819a0af6e4c2376ff. Receipts under ../releases/receipts/BuffTap-1.30.2*; source ffb1238 and GitHub release 461302615 / v1.30.2 public. CurseForge file 9862618 submitted, last observed Uploading. Stable installed with backup and 151-file verification; requested reporter reply posted. Final evidence in docs/HANDOFF.md.
 
 ## 1.30.1 release (2026-11-27)
 Local fixes from the 1.30.0 review: reuse combat controls/native slots, skip unchanged grid layout, correct Elixirs/Utility location explanations, complete combat-control localization and explain bypassed combat click safeguards. Stable gameplay intent/settings unchanged. Owner accepted the local beta and approved publication.
