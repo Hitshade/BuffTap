@@ -1,3 +1,12 @@
+# BuffTap 1.30.4
+
+### Fixed
+- CleanseNeed accepts positive remaining lifetime instead of requiring more than three seconds. This shared predicate applies to out-of-combat selection and fresh input validation, including group/target/Nearby scopes. A short remaining duration no longer cancels an otherwise valid cleanse. Expired records still fail; untimed effects keep their existing behavior.
+- Never cleanse, allowed types, scope/identity, range, resource and existing Abolish suppression policies unchanged. Combat native controls do not use this duration predicate and are unchanged. No saved-settings migration.
+
+### Validation
+- 114 focused mocked checks passed, zero failed, including actual input validation at 3, 1 and 0.1 seconds, expired-record rejection and last-second Never cleanse coverage. Owner accepted the installed beta for release. No full-suite rerun or native combat testing claimed; combat implementation unchanged.
+
 # BuffTap 1.30.3
 
 ### Added

@@ -2,6 +2,8 @@
 local _,B=...
 -- Keep the ten most recent releases within a 24 KiB content ceiling.
 B.PatchNotes={
+ {version="1.30.4",title="Cleanse until the last moment",items={
+  "Cleansing no longer stops offering a removable debuff in its final three seconds. Your usual cleanse reminder stays usable while the debuff is still active. Never cleanse exclusions still apply outside combat."}},
  {version="1.30.3",title="Group buffs, even for one",items={
   "Group spell thresholds can now go down to one player for every class, including Greater Blessings. Choose one under Groups to prefer group spells even when only one eligible player needs the buff. Existing defaults are unchanged. Thanks to Pepperybacon for suggesting this for Legacy builds."}},
  {version="1.30.2",title="A better fit for your group",items={
@@ -36,9 +38,7 @@ B.PatchNotes={
   "You can prepare Spec 2 before learning dual spec. This has not yet been tested on a character with two specs, so feedback is welcome.",
   "Want to thank strangers while grouped? Enable Thank players outside my group on Helpers. It works outdoors, never in instances or combat, and skips your own party and raid members.",
   "Nearby stops retrying sooner when a cast fails because a stronger buff is already active."}},
- {version="1.28.1",title="Rogues, your Tracking is back",items={
-  "Rogues can reach Tracking again. My buffs now opens straight to those controls when your class has no personal buffs, without an empty buff list or setup buttons that do not apply.",
-  "Diagnostics > Full check-up now includes Talents and spec. It only reads information and changes nothing. Reports from characters with two specs are especially helpful."}},
+
 
 
 

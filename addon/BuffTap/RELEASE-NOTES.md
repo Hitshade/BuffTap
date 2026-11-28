@@ -1,3 +1,10 @@
+# BuffTap 1.30.4
+
+### More time to cleanse
+Outside combat, cleanse reminders now remain available through a debuff's final seconds. You can use your usual binding or click with one second left, provided the debuff is still active and can otherwise be removed. BuffTap no longer makes that decision for you three seconds before expiry.
+
+Your Never cleanse list and other existing requirements still apply. The separate combat cleansing buttons are unchanged. No settings changes are needed.
+
 # BuffTap 1.30.3
 
 ### A group spell for one

@@ -1,14 +1,22 @@
 # BuffTap handoff
 
-Updated 2026-11-28. **1.30.3** published on GitHub and installed locally. CurseForge file 9874434 submitted as Release for 1.60.1 with automatic publication; last observed Uploading, approval pending. Pepperybacon thanked by name in all three release-note audiences for GitHub #7. Preserve named user credit for future suggestions/reports. Focused checks: 414 PASS / 0 FAIL; 55 modules compile. No full-suite rerun or native testing claimed.
+Updated 2026-11-28. Owner accepted the cleanse beta and authorized 1.30.4 publication; promotion in progress. Gameplay matches installed beta, only version/notes differ. 114 focused checks passed; all 55 modules compile. No new full suite required for this one-predicate change.
+
+Previous receipt: Updated 2026-11-28. **1.30.3** published on GitHub and installed locally. CurseForge file 9874434 submitted as Release for 1.60.1 with automatic publication; last observed Uploading, approval pending. Pepperybacon thanked by name in all three release-note audiences for GitHub #7. Preserve named user credit for future suggestions/reports. Focused checks: 414 PASS / 0 FAIL; 55 modules compile. No full-suite rerun or native testing claimed.
 
 Previous receipt: Updated 2026-11-27. Owner accepted 1.30.2-beta1 and authorized stable publication. **1.30.2** release checks: 3,632 PASS / 0 FAIL; 55 Lua modules compile. Stable promotion differs from accepted beta only in five version/note files. Package: 151 files, 3,708,938 bytes; SHA256 f5a643727ab7c19bbf43da205d30937960986d69f6e5aa8819a0af6e4c2376ff. GitHub v1.30.2 is public, CurseForge file 9862618 submitted (Uploading; approval not yet verified), stable installed with backup and reporter reply posted. Previous 1.30.1 CurseForge file 9854529 is Approved. No open/recent GitHub issues found during final review.
+
+## 1.30.4-beta1 local cleanse expiry fix (2026-11-28)
+- Owner objected to the three-second cleanse cutoff. CleanseNeed now requires only positive remaining lifetime; untimed effects unchanged. Shared out-of-combat selection/input validation remain available at 1 second or less, while stale expired records fail. All scopes use the same predicate. Native combat self/grid controls do not use this cutoff and are untouched.
+- Existing Never cleanse, type/scope/identity/resource/range and Abolish policies preserved. No automatic dispelling introduced.
+- Focused cleanse run: 114 PASS / 0 FAIL, including real PreClick at 3/1/0.1 seconds, expired rejection and last-second Never cleanse. Changed Lua modules compile; patch notes retain ten versions. No full-suite/native test claimed. Log docs/reviews/cleanse-expiry-1304.txt.
+- Three audience notes and version fields prepared as 1.30.4-beta1. Owner requested beta installation: packaged and installed 1.30.4-beta1 with backup; all 151 files byte-verified. Build/install receipts under ../releases/receipts/BuffTap-1.30.4-beta1*. No saved settings touched. Uncommitted/unpublished; public version remains 1.30.3. GitHub open-issue review succeeded (none). Also posted requested Supplies tracking explanation to Xprit44 and asked whether another display/alert was intended; verified on CurseForge.
 
 ## 1.30.3 publication receipt
 - Source 21b0f94e11943289b38e7805a814bf868bfa2ef7 pushed to main. GitHub release 461760610 / v1.30.3 public; uploaded asset digest verified. https://github.com/Hitshade/BuffTap/releases/tag/v1.30.3 .
 - Stable package: 151 files, 3,709,370 bytes; SHA256 7d1eef1bf5d1fe249dbece432fbf5d379f5ca573828e2c630f6ef8c0bf42d4c2. Only five version/note files differ from installed beta. Stable installed with backup; 151 files byte-verified; no saved settings touched.
 - CurseForge file 9874434 submitted, last observed Uploading; LibDBIcon Embedded Library retained. Previous 1.30.2 file 9862618 verified Approved during this publication.
-- Receipts and independent audience notes: ../releases/receipts/BuffTap-1.30.3*. GitHub issue/comment review succeeded; #7 sole recent issue. No issue reply or closure performed; named thanks included in published notes. No unrelated feature changes.
+- Receipts and independent audience notes: ../releases/receipts/BuffTap-1.30.3*. GitHub issue/comment review succeeded; #7 sole recent issue. Owner subsequently requested reply/closure: thanked @Pepperybacon by name, linked 1.30.3 and explained Groups > Casting threshold 1; comment 7243721807 posted. GitHub #7 verified closed as completed on 2026-11-28. Named thanks also included in published notes. No unrelated feature changes.
 
 ## 1.30.3-beta1 local source preparation (2026-11-28)
 - Owner authorized GitHub #7 and explicitly expanded one-recipient thresholds to all classes. UI sliders, slash commands, legacy settings clamps, Party/Raid normalization and per-buff override resolution now accept 1 through 5. Defaults remain ordinary group 3 / Greater 2. Updated four translations of slash usage guidance.

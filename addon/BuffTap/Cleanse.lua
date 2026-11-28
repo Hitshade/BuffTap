@@ -199,7 +199,7 @@ function B:CleanseNeed(unit,abilities)
   local abolishRunning
   for _,d in ipairs(list) do
     local left=d.expires>0 and d.expires-GetTime() or math.huge
-    if d.type and abilities[d.type] and self.db.cleanseTypes[d.type]~=false and left>3 and not neverOffer(self,d) then
+    if d.type and abilities[d.type] and self.db.cleanseTypes[d.type]~=false and left>0 and not neverOffer(self,d) then
       local id,abolish=self:CleanseSpellFor(d,counts[d.type],abilities)
       if id then
         -- Abolish already ticking on this player: let it work.
