@@ -1,5 +1,10 @@
 # BuffTap development record
 
+## 1.30.3 release (2026-11-28)
+GitHub #7 by Pepperybacon: all group spell thresholds can be 1 through 5, including Greater Blessings. Existing defaults retained. Updated normalization, contexts, per-buff settings, UI and slash guidance. Named credit in all three release-note audiences. 414 focused mocked checks passed, zero failed; 55 modules compile. No full-suite rerun or native test claimed.
+
+Source 21b0f94 pushed; GitHub release 461760610 / v1.30.3 public. CurseForge file 9874434 submitted as Release for 1.60.1, automatic publication; last observed Uploading. Stable installed with backup, 151 files verified. ZIP 3,709,370 bytes, SHA256 7d1eef1bf5d1fe249dbece432fbf5d379f5ca573828e2c630f6ef8c0bf42d4c2. Receipts under ../releases/receipts/BuffTap-1.30.3*. Previous 1.30.2 CurseForge file confirmed Approved.
+
 ## 1.30.2 release (2026-11-27)
 Owner accepted the researched group-buff beta and authorized publication. Corrected default usefulness versus explicit exclusions, pets, paired raid-wide scope, minus-ten recipient ranks, PvE-instance PvP gating and bounded failed-group recovery. Reagent semantics unchanged; diagnostics expanded. The reporter's exact setup has not been reproduced.
 
