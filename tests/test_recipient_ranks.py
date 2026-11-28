@@ -85,6 +85,15 @@ for key,name,spell_id,level in [
     ('unending-breath','Unending Breath',5697,16),('detect-invis','Detect Invisibility',11743,50),
     ('battle-shout','Battle Shout',11551,52),('trueshot','Trueshot Aura',20906,60),
 ]:
+    group = key in ('ab','gotw','pof','pos','posp','gbom','gbow')
+    if group:
+        test('Group rank permits the ten-level recipient allowance for '+key,setup(key,name,[(spell_id,level)])+f'''
+UnitLevel=function() return {level-10} end; assert(B:Resolve(def,'target').id=={spell_id})
+B.rankChoiceCache={{}}; UnitLevel=function() return {level-11} end; assert(not B:Resolve(def,'target'))
+B.rankChoiceCache={{}}; UnitLevel=function() return nil end
+assert(not B:Resolve(def,'target'))
+''')
+        continue
     test('Recipient rank preserves separate policy for '+key,setup(key,name,[(spell_id,level)])+f'''
 UnitLevel=function() return {level-1} end; assert(not B:Resolve(def,'target'))
 B.rankChoiceCache={{}}; UnitLevel=function() return {level} end

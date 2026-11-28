@@ -1,3 +1,21 @@
+# BuffTap 1.30.2
+
+### Group eligibility and affected scope
+- Centralized the five supported long-duration Mage/Priest/Druid paired spells as caster-centered raid-wide casts. Selection counts eligible missing players across raid subgroups and revalidates the current roster at input time. Greater Blessings remain class-wide with assignment/replacement checks.
+- Group candidate ranks now apply the catalog learning-level-minus-ten allowance to individually known paired ranks. Unknown external levels still fail closed; ordinary singles and unpaired broadcasts retain their existing rank policy. Current server recipient minima have not been independently tested.
+- Automatic class-benefit defaults govern counts without vetoing incidental coverage. Explicit false class/subgroup/self preferences and dismissal protections remain meaningful. Pets neither count toward player group thresholds nor veto group casts.
+- Caster-centered preparation no longer relies on direct range to each recipient. An explicitly verified UnitDistanceSquared result outside 100 yards excludes that need; unavailable distance falls back to the existing visible, connected, identified roster checks without claiming exact radius verification.
+- PvPGuardActive exempts PvE party/raid instances, retaining the existing battleground/arena exemptions. Outdoors, paired raid casts and the client-data-backed raid-wide Battle Shout guard inspect all affected raid members, rather than just the anchor subgroup.
+
+### Bounded recovery and diagnostics
+- Added session-only group-family/raid-or-class fallback. Real input captures recipient identities; sent cast GUIDs correlate result events when available. Matching recipient-level refusal holds the group family for five minutes; an unspecified rejection uses a short 15-second fallback. Recognized caster, resource, cooldown, range and line-of-sight errors do not imply recipient ineligibility.
+- After success, two settled out-of-combat reads can identify the same still-missing recipients and offer singles for 60 seconds. A single late read, unreadable aura, changed identity, combat interruption, disabled addon or changed context does not establish failed coverage. Roster/zone changes reset temporary state; all casting continues to require ordinary user input.
+- Full check-up captures scope/count/threshold/rank rejection, explicit versus default-filter semantics, validation failure and native usability/no-power plus reagent stock. Extra diagnostic reagent queries run only during capture. Debug/check-up include the bounded latest cast outcome and active fallback count. No permanent polling or combat aura inspection added.
+- Existing reagent IDs, quantity policy and live-usability waiver behavior are unchanged. No saved-settings migration. New English tooltip guidance explains incidental group coverage and outdoor-only PvP protection; localized fallback remains available.
+
+### Validation and limits
+- Owner accepted the local beta for release. Full release verification is recorded in the release build receipt. No native Forever test is claimed. Not a confirmed diagnosis or resolution of the original Arcane Brilliance report. Thanks to the reporter for prompting the review; existing contributor credits remain intact.
+
 # BuffTap 1.30.1
 
 ### Fixed

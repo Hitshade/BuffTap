@@ -6,6 +6,20 @@ local pets={motw=true,thorns=true,fort=true,sp=true,ai="mana",spirit="mana"}
 local roles={thorns={tank=true},["fear-ward"]={tank=true,healer=true}}
 local broadcasts={["battle-shout"]=true,trueshot=true}
 local utility={["water-breathing"]=true,["water-walking"]=true,["unending-breath"]=true,["detect-invis"]=true}
+local raidCasts={ab=true,gotw=true,pof=true,pos=true,posp=true}
+function B:GroupCastScope(b)
+  if not b then return nil end
+  if raidCasts[b.key] then return "raid" end
+  if b.singleKey and b.kind=="blessing" then return "class" end
+end
+-- The supported Forever long-duration group pairs are caster-centered raid effects.
+function B:GroupCastRecipientReach(unit)
+  if type(UnitDistanceSquared)=="function" then
+    local ok,squared,checked=pcall(UnitDistanceSquared,unit)
+    if ok and self.API.Public(checked) and checked==true and self.API.Number(squared) then return squared<=10000,"distance" end
+  end
+  return true,"visible roster; exact area distance unavailable"
+end
 function B:BuffGroupCapabilities(b)
   if type(b)~="table" then return {} end
   local key=b.singleKey or b.key

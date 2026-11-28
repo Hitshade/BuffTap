@@ -141,6 +141,7 @@ function B:SelfBuffAwaitingAura(action)
 end
 
 function B:BeginHelperAttempt(action)
+  if self.BeginGroupAttempt then self:BeginGroupAttempt(action) end
   if action and not action.manual and (not action.source or action.source=='spell') then self.buffQueueQuietUntil=GetTime()+4 end
   self:RememberSelfBuffAttempt(action)
   if self.SmartShiftBegin then self:SmartShiftBegin(action) end

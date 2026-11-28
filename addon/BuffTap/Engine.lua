@@ -4,7 +4,7 @@
 
 local _, B = ...
 _G.BuffTap = B
-B.version = "1.30.1"
+B.version = "1.30.2"
 B.API = {}
 local A = B.API
 
@@ -925,14 +925,14 @@ function B:Candidates(b)
   return candidates,reason
 end
 
--- Ordinary ranked buffs use the Classic recipient allowance. This beta keeps
--- group versions and unusual/single-rank effects on their existing policy.
+-- Known ordinary and paired group ranks use the ten-level recipient allowance.
+-- Unusual unpaired effects retain their own existing policy.
 -- Use catalog rank levels, not a potentially Level-Linked learning API value.
 local recipientRankAllowance={motw=true,thorns=true,ai=true,dampen=true,amplify=true,
   fort=true,spirit=true,sp=true,bom=true,bow=true}
 local function recipientMinimum(self,b,c)
   local level=self.RankLevel[c.id]
-  if recipientRankAllowance[b.key] and c.order and b.ranks[c.order]==c.id
+  if (recipientRankAllowance[b.key] or b.singleKey) and c.order and b.ranks[c.order]==c.id
     and A.Number(level) and level>=1 then
     return math.max(1,level-10)
   end
@@ -2137,7 +2137,14 @@ end
 -- Broadcasts also reach covered recipients outside the missing bucket. Keep
 -- explicit recipient policy and unknown effect state equivalent to singles.
 local function groupRecipientSafe(self,b,entry,scans,scanErrors)
-  if not self:RecipientAllowed(b,entry) then return false,"recipient excluded" end
+  if entry.pet then return true end
+  local map=self:GroupPreference("buffClasses")[self:RootKey(b)]
+  if type(map)=="table" and map[entry.class]==false then return false,"explicit class exclusion" end
+  if entry.unit=="player" and not self:SelfRecipientAllowed(b) then return false,"self explicitly excluded" end
+  if not self:GroupSelected(b,entry.group or 1) then return false,"subgroup explicitly excluded" end
+  -- Automatic benefit defaults only decide who needs/counts. An incidental
+  -- recipient does not veto a useful broad stat buff or require an aura scan.
+  if not self:RecipientAllowed(b,entry) then return true end
   -- A known corpse cannot receive this buff; do not require a corpse aura scan.
   if A.Call(UnitIsDeadOrGhost,entry.unit)==true then return true end
   if not scans[entry.unit] and not scanErrors[entry.unit] then
@@ -2313,28 +2320,40 @@ function B:Select()
       -- Blessings to a class whose assigned members all belong to this family.
       local groupDef=b.groupKey and self:FindBuff(b.groupKey)
       if not self.queuePass and self:GroupPreference("group") and self:GroupPreference("smartGroup") and groupDef and (self:Enabled(groupDef) or (blessingPlan and b.kind=="blessing")) then
+        self:AddDiag(groupDef.key.." candidates="..#missing.." threshold="..self:BlessingGroupNeed(groupDef).." scope="..tostring(self:GroupCastScope(groupDef)))
         local buckets={}
         for _,need in ipairs(missing) do
           local entry=need.entry
           if (blessingPlan and b.kind=="blessing" and self:BlessingChoice(entry)==b.key) or (not (blessingPlan and b.kind=="blessing") and self:GroupSelected(b,entry.group) and self:GroupRecipientAllowed(b,entry)) then
-            local ga=self:Resolve(groupDef,entry.unit)
+            local ga,rankWhy=self:Resolve(groupDef,entry.unit)
             if ga then
-              local eligible,why=self:TargetEligible(ga,true)
-              if eligible then
-                local key=(b.kind=="blessing" or b.classWide) and entry.class or entry.group
+              local reach=true
+              if self:GroupCastScope(groupDef)=="raid" then
+                reach,ga.areaRangeSource=self:GroupCastRecipientReach(entry.unit)
+                self:AddDiag(groupDef.key.." coverage -> "..entry.unit..": "..ga.areaRangeSource)
+                ga.target="player"; ga.targetGUID=A.Call(UnitGUID,"player"); ga.targetName=A.Call(UnitName,"player")
+              end
+              local eligible,why=true,nil
+              -- Caster-centered casts validate once after counting; do not
+              -- enumerate the entire outdoor PvP roster once per recipient.
+              if self:GroupCastScope(groupDef)~="raid" then eligible,why=self:TargetEligible(ga,true) end
+              if eligible and reach then
+                local key=self:GroupCastScope(groupDef)=="raid" and "raid" or entry.class
                 if key then
                   buckets[key]=buckets[key] or {}; buckets[key][#buckets[key]+1]={need=need,action=ga}
                 end
-              elseif why=="target out of range" or why=="target range unknown" then self:AddRangeBlocked(ga) end
-            end
+              elseif why=="target out of range" or why=="target range unknown" then self:AddRangeBlocked(ga)
+              elseif not reach then self:AddDiag(groupDef.key.." -> "..entry.unit..": outside area radius") end
+            else self:AddDiag(groupDef.key.." -> "..entry.unit..": "..tostring(rankWhy)) end
           end
         end
         local keys={}; for key in pairs(buckets) do keys[#keys+1]=key end; table.sort(keys)
         for _,key in ipairs(keys) do
           local bucket=buckets[key]; local safe=#bucket>=self:BlessingGroupNeed(groupDef)
+          self:AddDiag(groupDef.key.." scope="..tostring(key).." counted="..#bucket.." threshold="..self:BlessingGroupNeed(groupDef))
           -- A group cast would also hit recipients whose reminder was dismissed.
           for _,entry in ipairs(roster) do
-            local affected=(b.kind=="blessing" or b.classWide) and entry.class==key or (b.kind~="blessing" and not b.classWide) and entry.group==key
+            local affected=not entry.pet and (self:GroupCastScope(groupDef)=="raid" or entry.class==key)
             if affected and self.HelperSuppressed and self:HelperSuppressed({key=b.key,target=entry.unit,targetGUID=A.Call(UnitGUID,entry.unit)}) then safe=false end
             if affected and safe then
               local allowed,why=groupRecipientSafe(self,b,entry,scans,scanErrors)
@@ -2349,7 +2368,7 @@ function B:Select()
           end
           if b.kind~="blessing" and not b.classWide then
             for _,entry in ipairs(roster) do
-              if entry.group==key and not self:GroupRecipientAllowed(b,entry) then safe=false end
+              if not entry.pet and not self:GroupSelected(b,entry.group or 1) then safe=false end
             end
           end
           if safe and #bucket>=self:BlessingGroupNeed(groupDef) then
@@ -2357,12 +2376,29 @@ function B:Select()
             for _,candidate in ipairs(bucket) do rankCounts[candidate.action.id]=(rankCounts[candidate.action.id] or 0)+1 end
             for _,candidate in ipairs(bucket) do
               local ga,need=candidate.action,candidate.need
+              ga.groupFallbackScope=groupDef.key..":"..tostring(key)
               -- Different target levels can resolve different group ranks. Only
               -- recipients verified for this exact rank justify its reagent cost.
               local verified=rankCounts[ga.id] or 0
-              if verified>=self:BlessingGroupNeed(groupDef) and self:Validate(ga) then
+              local valid,fail
+              if verified>=self:BlessingGroupNeed(groupDef)
+                and not (self.GroupFallbackBlocked and self:GroupFallbackBlocked(ga)) then valid,fail=self:Validate(ga) end
+              if fail and self.captureDiagnostics then
+                local usable,noPower=A.SpellUsable(ga.id)
+                local stock={}
+                for _,reagent in ipairs(self.GroupReagents[ga.id] or {}) do
+                  local count=A.Call(C_Item and C_Item.GetItemCount,reagent[1],false,false,false,false)
+                  stock[#stock+1]=tostring(reagent[1]).."="..(A.Number(count) and tostring(count) or "unknown")
+                end
+                self:AddDiag(groupDef.key.." spell="..ga.id.." skipped: "..fail.." | usable="..tostring(usable).." noPower="..tostring(noPower).." reagents="..table.concat(stock,","))
+              end
+              if valid then
                 ga.reason=tostring(verified).." verified recipients need "..b.name
                 ga.needState=need.reason; ga.remaining=need.remaining; ga.groupCast=true; ga.blessingAssigned=blessingPlan and b.kind=="blessing" or nil; ga.groupCount=verified
+                ga.groupRecipients={}
+                for _,other in ipairs(bucket) do
+                  if other.action.id==ga.id then ga.groupRecipients[#ga.groupRecipients+1]=other.need.action end
+                end
                 ga.selectedAt=GetTime(); return ga,"ready"
               end
             end
@@ -2472,6 +2508,9 @@ function B:RevalidateGroupAction(action)
   local fresh=self:Select()
   local valid=fresh and fresh.groupCast and fresh.id==action.id and fresh.key==action.key and
     fresh.target==action.target and fresh.targetGUID==action.targetGUID
-  if valid then action.groupCount=fresh.groupCount; action.reason=fresh.reason end
+  if valid then
+    action.groupCount=fresh.groupCount; action.reason=fresh.reason
+    action.groupRecipients=fresh.groupRecipients; action.groupFallbackScope=fresh.groupFallbackScope
+  end
   return valid==true
 end

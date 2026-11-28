@@ -13,7 +13,7 @@ function B:PvPGuardActive()
   if not self.db or self.db.pvpProtection~=true then return false end
   local inside=A.Call(IsInInstance)
   local kind=A.Call(function() local _,value=IsInInstance(); return value end)
-  if inside==true and (kind=="pvp" or kind=="arena") then return false end
+  if inside==true and (kind=="party" or kind=="raid" or kind=="pvp" or kind=="arena") then return false end
   local mine=flag("player")
   -- Missing countdown support must not authorize extending a flag.
   local countdown=A.Call(IsPVPTimerRunning)
@@ -65,12 +65,13 @@ function B:PvPActionAllowed(action)
   end
   local targetClass=A.Call(function() local _,value=UnitClass(action.target); return value end)
   local classWide=def.classWide or def.kind=="blessing"
-  if (classWide and not A.Text(targetClass)) or (not classWide and not targetGroup) then
+  local raidWide=self:GroupCastScope(def)=="raid" or def.key=="battle-shout"
+  if (classWide and not A.Text(targetClass)) or (not classWide and not raidWide and not targetGroup) then
     self.pvpBlocked=true; return false,"PvP protection: affected recipients unavailable"
   end
   for _,entry in ipairs(members) do
     local class=A.Call(function() local _,value=UnitClass(entry.unit); return value end)
-    local affected=classWide and (not A.Text(class) or class==targetClass)
+    local affected=raidWide or classWide and (not A.Text(class) or class==targetClass)
       or (not classWide and (not entry.group or entry.group==targetGroup))
     if affected then
       local ok,why=safe(entry.unit)

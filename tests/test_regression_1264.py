@@ -189,7 +189,7 @@ B.button.scripts.PreClick(nil,'LeftButton',true)
 assert(not B.button.attrs.type1)
 """)
 case('D','mixed group ranks do not count as one shared rank',GROUP+"""
-spell(21850,'Gift of the Wild',60); UnitLevel=function(u) return u=='player' and 60 or u=='party1' and 60 or 50 end
+spell(21850,'Gift of the Wild',60); UnitLevel=function(u) return u=='player' and 60 or u=='party1' and 60 or 49 end
 B.bookDirty=true; refresh(); assert(B.action and not B.action.groupCast)
 """)
 case('D','personal blessing exception is equivalent for single and Greater',PAL+"""
@@ -381,10 +381,10 @@ B.bookDirty=true; B:InvalidateRoster()
 case('D','raid group also respects explicit self exclusion',RAID+"""
 B.db.buffSelf.motw=false; refresh(); assert(B.action and not B.action.groupCast)
 """)
-case('D','self exclusion does not block a different raid subgroup',RAID+"""
+case('D','raid-wide cast respects self exclusion across subgroups',RAID+"""
 GetRaidRosterInfo=function(i) return 'Raider'..i,0,i==1 and 1 or 2 end
 B.db.buffSelf.motw=false; refresh()
-assert(B.action and B.action.groupCast and B.action.target~='player')
+assert(B.action and not B.action.groupCast,'raid-wide cast would include explicitly excluded self')
 """)
 case('D','healthy covered recipient still permits a justified group cast',GROUP+"""
 aura('party3',5232,'Mark of the Wild',1000,1800); B:InvalidateAura(); refresh()

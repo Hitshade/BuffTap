@@ -2,6 +2,10 @@
 local _,B=...
 -- Keep the ten most recent releases within a 24 KiB content ceiling.
 B.PatchNotes={
+ {version="1.30.2",title="A better fit for your group",items={
+  "Group buffs now count across the raid. Classes and pets that do not benefit from a buff no longer hold up a useful group cast. Your explicit exclusions and different blessing assignments still matter.",
+  "Mixed-level groups use the same ten-level rank allowance as ordinary buffs. Raid-wide spells are prepared on you, so they do not depend on another player's direct casting range.",
+  "Rejected or persistently incomplete group casts can temporarily offer single buffs instead. PvP protection no longer holds up buffing inside dungeons or raids. Thanks to the player whose Arcane Brilliance report prompted this review."}},
  {version="1.30.1",title="A lighter touch",items={
   "Combat cleansing reuses its existing controls when you change their look or learn new spells, keeping repeated adjustments lighter. Unchanged group frames no longer get laid out again on every update.",
   "Elixirs and Utility now explain their Everywhere or Dungeons and raids choice correctly. Combat cleansing controls are translated into German, Spanish, French and Brazilian Portuguese, with clearer click-safety guidance.",
@@ -38,8 +42,7 @@ B.PatchNotes={
   "The tab is named for its contents: Class helpers, Pet and tracking, or Tracking. These choices apply in every setup, so Use Solo settings is hidden there.",
   "Helpers now has a shortcut to the new tab. Your existing choices are kept.",
   "Helpers has roomier full-width cards for Solo thanks, Buff requests and Conveniences. Solo thanks has a faction-themed picture, and Camping has a new camp scene."}},
- {version="1.27.1",title="Ghosts of Nearby players past",items={
-  "Nearby now lets go of players who have left, even after moving your mouse through a busy list. Rows no longer linger after their players have gone."}},
+
 
 }
 function B:PatchNotesUnread()

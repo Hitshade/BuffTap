@@ -1,3 +1,20 @@
+# BuffTap 1.30.2
+
+### More useful group buffing
+This update adjusts how BuffTap chooses group spells. Mage, Priest and Druid group buffs count missing buffs across the raid. A Warrior who does not need Intellect, or a pet that cannot benefit from it, no longer prevents a useful cast for everyone else.
+
+Your explicit exclusions are still respected. Greater Blessings continue to follow class assignments and avoid replacing a different blessing you intended to keep. Known group ranks now use the same ten-level recipient allowance as ordinary ranked buffs. Broad raid spells are prepared on yourself, with their normal area effect deciding coverage.
+
+### Recovering without repeated group attempts
+If the game rejects a group cast, or repeated checks after a successful cast show the same players still missing it, BuffTap can temporarily offer single buffs instead. Every cast still needs your usual click or binding. Resource errors and incomplete information are kept separate from confirmed recipient problems.
+
+PvP protection now applies outdoors, with no PvP gating inside dungeons or raids. Existing settings and reagent handling are kept.
+
+### Helping us check the result
+The Full check-up now explains more of the group-spell decision. The beta has been reviewed by the owner; we have not independently reproduced the reporting player's exact setup. If a group spell is still skipped unexpectedly, capture the full report while it is happening.
+
+Thanks to the player who reported the Arcane Brilliance behavior and helped prompt these improvements.
+
 # BuffTap 1.30.1
 
 ### Lighter combat-frame adjustments

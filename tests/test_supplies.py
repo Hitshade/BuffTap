@@ -239,21 +239,32 @@ for _,u in ipairs({{'player','party1','party2'}}) do aura(u,{group},'{group_name
 refresh(); assert(BuffTap.action.id=={group} and BuffTap.action.needState=='expiring')
 ''')
 
-test('Group ranks do not combine incompatible recipients to meet threshold', '''
+test('Arcane Brilliance selects and remains clickable for a mixed-level party', '''
+playerClass='MAGE'; spells={}; book={}
+spell(1459,'Arcane Intellect',1); spell(23028,'Arcane Brilliance',56)
+UnitLevel=function(u) return u=='player' and 60 or 46 end
+BuffTap.db.group=true; BuffTap.db.groupNeed=3; bags[17020]=1
+refresh()
+assert(BuffTap.action and BuffTap.action.id==23028 and BuffTap.action.groupCount==3)
+BuffTap.button.scripts.PreClick(nil,'LeftButton',true)
+assert(BuffTap.action and BuffTap.button.attrs.spell==23028)
+''')
+
+test('Group ranks count mixed-level recipients without a learning-level gate', '''
 spell(21849,'Gift of the Wild',50); spell(21850,'Gift of the Wild',60)
 UnitLevel=function(u) return u=='party1' and 55 or 60 end
 BuffTap.db.group=true; BuffTap.db.groupNeed=3; refresh()
-assert(BuffTap.action.id~=21849 and BuffTap.action.id~=21850 and not BuffTap.action.groupCast)
+assert(BuffTap.action.id==21850 and BuffTap.action.groupCount==3)
 ''')
 test('Same-rank subgroup still qualifies in a mixed-level party', '''
 spell(21849,'Gift of the Wild',50); spell(21850,'Gift of the Wild',60)
 UnitLevel=function(u) return u=='party1' and 55 or 60 end
 BuffTap.db.group=true; BuffTap.db.groupNeed=2; refresh()
-assert(BuffTap.action.id==21850 and BuffTap.action.groupCount==2)
+assert(BuffTap.action.id==21850 and BuffTap.action.groupCount==3)
 ''')
 test('Group click cancels if a second recipient moves out of range', '''
 spell(21849,'Gift of the Wild',50); UnitLevel=function() return 60 end; BuffTap.db.group=true; refresh()
-C_Spell.IsSpellInRange=function(_,u) return u~='party2' end
+UnitDistanceSquared=function(u) return u=='party2' and 10201 or 100,true end
 BuffTap.button.scripts.PreClick(nil,'LeftButton',true); assert(not BuffTap.action and not BuffTap.button.attrs.spell)
 ''')
 test('Group click cancels when assignments change after display', '''

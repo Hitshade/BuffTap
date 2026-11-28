@@ -792,6 +792,7 @@ function B:DiagnosticsLines()
     out[#out+1]="Reason: "..tostring(a.reason).." | range: "..tostring(a.rangeSource or "not checked")
   else out[#out+1]="Next: none" end
   out[#out+1]="Solo thanks: "..tostring(self.helperThankStatus or "not observed")
+  if self.GroupFallbackSummary then out[#out+1]=self:GroupFallbackSummary() end
   if self.SoloThanksDiagnostics then for _,line in ipairs(self:SoloThanksDiagnostics()) do out[#out+1]=line end end
   out[#out+1]="Resting pause: "..tostring(self.db.pauseResting==true).." | resting read: "..tostring(A.Call(IsResting))
   if self.lastAlertInfo then
@@ -858,6 +859,7 @@ function B:Status(verbose)
   say("Rebuff default: " .. tostring(self:Preference("seconds")) .. " seconds")
   say("Friendly target buffing: " .. (self.db.friendlyTarget and "on" or "off") .. " | default target refresh: " .. tostring(self.db.targetSeconds or 300) .. " seconds")
   say("Solo thanks: "..tostring(self.helperThankStatus or "not observed"))
+  if self.GroupFallbackSummary then say(self:GroupFallbackSummary()) end
   if self.SoloThanksDiagnostics then for _,line in ipairs(self:SoloThanksDiagnostics()) do say(line) end end
   say("PvP protection: "..(self.db.pvpProtection and "on" or "off").." | blocked="..tostring(self.pvpBlocked==true).." | aura data unavailable="..tostring(self.buffDataUnavailable==true).." | ownership unknown="..tostring(self.ownershipUnavailable==true).." | temporary retry="..tostring(self.deferredBlocked==true))
   say("Consumables: " .. (self:Preference("consumablesEnabled") and "on" or "off") .. " | curated data build " .. tostring(self.ForeverDataBuild or "unknown"))
@@ -921,11 +923,11 @@ local events={"ADDON_LOADED","PLAYER_LOGIN","PLAYER_ENTERING_WORLD","PLAYER_REGE
   "PLAYER_DEAD","PLAYER_ALIVE","PLAYER_TARGET_CHANGED","UNIT_AURA","SPELLS_CHANGED",
   "PLAYER_TALENT_UPDATE","ACTIVE_TALENT_GROUP_CHANGED","PLAYER_SPECIALIZATION_CHANGED","GROUP_ROSTER_UPDATE",
   "ZONE_CHANGED_NEW_AREA","PLAYER_LEVEL_UP","SPELL_DATA_LOAD_RESULT","SPELL_TEXT_UPDATE","UNIT_SPELLCAST_SUCCEEDED",
-  "UNIT_SPELLCAST_FAILED","UNIT_SPELLCAST_INTERRUPTED","SPELL_UPDATE_COOLDOWN","UNIT_POWER_UPDATE",
+  "UNIT_SPELLCAST_FAILED","UNIT_SPELLCAST_INTERRUPTED","UNIT_SPELLCAST_SENT","SPELL_UPDATE_COOLDOWN","UNIT_POWER_UPDATE",
   "PLAYER_EQUIPMENT_CHANGED","WEAPON_ENCHANT_CHANGED","WEAPON_SLOT_CHANGED","PLAYER_MOUNT_DISPLAY_CHANGED","PLAYER_UPDATE_RESTING","UPDATE_STEALTH","UPDATE_SHAPESHIFT_FORM","UPDATE_BINDINGS",
   "BAG_UPDATE_DELAYED","ITEM_DATA_LOAD_RESULT","UI_ERROR_MESSAGE","MINIMAP_UPDATE_TRACKING","UNIT_CONNECTION",
   "UNIT_FLAGS","UNIT_HEALTH","PVP_TIMER_UPDATE","ADDON_RESTRICTION_STATE_CHANGED","UNIT_AURA_BLOCKED","UNIT_AURA_BLOCK_LIST_CLEARED"}
-local playerOnlyEvents={UNIT_POWER_UPDATE=true,UNIT_SPELLCAST_SUCCEEDED=true,UNIT_SPELLCAST_FAILED=true,UNIT_SPELLCAST_INTERRUPTED=true}
+local playerOnlyEvents={UNIT_POWER_UPDATE=true,UNIT_SPELLCAST_SUCCEEDED=true,UNIT_SPELLCAST_FAILED=true,UNIT_SPELLCAST_INTERRUPTED=true,UNIT_SPELLCAST_SENT=true}
 for _,event in ipairs(events) do
   local registered=false
   if playerOnlyEvents[event] and type(f.RegisterUnitEvent)=="function" then
@@ -943,7 +945,7 @@ local bookEvents={SPELLS_CHANGED=true,PLAYER_LOGIN=true,PLAYER_ENTERING_WORLD=tr
   SPELL_DATA_LOAD_RESULT=true,SPELL_TEXT_UPDATE=true,PLAYER_SPECIALIZATION_CHANGED=true,ACTIVE_TALENT_GROUP_CHANGED=true,PLAYER_LEVEL_UP=true}
 local castEvents={UNIT_SPELLCAST_SUCCEEDED=true,UNIT_SPELLCAST_FAILED=true,UNIT_SPELLCAST_INTERRUPTED=true}
 
-local function handleEvent(_,event,arg,castGUID,spellID)
+local function handleEvent(_,event,arg,castGUID,spellID,extraSpellID)
   if event=="ADDON_LOADED" then if arg==ADDON then B:InitDB() end; if B.SyncEditMode then B:SyncEditMode() end; return end
   if not B.db then return end
   if event=="UNIT_AURA" and A.EmptyAuraUpdate(castGUID) then return end
@@ -996,6 +998,8 @@ local itemRequested=event=="ITEM_DATA_LOAD_RESULT" and A.Number(arg) and ((B.ite
     return
   end
   if B.HelperEvent then B:HelperEvent(event,arg,castGUID,spellID) end
+  if B.GroupFallbackEvent then B:GroupFallbackEvent(event,arg,castGUID,spellID,extraSpellID) end
+  if event=="UNIT_SPELLCAST_SENT" then return end
   if event=="UI_ERROR_MESSAGE" then return end
   if event=="MINIMAP_UPDATE_TRACKING" then
     if not B:HelperEnabled("helperTracking") and not B:HelperEnabled("helperTreasure") then return end
