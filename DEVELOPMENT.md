@@ -1,5 +1,10 @@
 # BuffTap development record
 
+## 1.30.4 release (2026-11-28)
+Removed the out-of-combat three-second cleanse cutoff; positive remaining lifetime remains eligible during selection and input validation. Expired effects still rejected. Combat native controls unchanged. Owner accepted installed beta; 114 focused mocked checks passed, zero failed; all 55 modules compile. No full-suite rerun or native combat testing claimed.
+
+Source 3f9e5a6; GitHub release 461821094 / v1.30.4 public. CurseForge file 9876065 submitted, last observed Processing, approval pending. Stable installed with backup and all 151 files verified. Package 3,709,680 bytes; SHA256 d5436e3337fe50de7288bd9b34b9170cdbd40cba5d445e01e582b7f9d1a544e3. Receipts under ../releases/receipts/BuffTap-1.30.4*. Previous 1.30.3 verified Approved.
+
 ## 1.30.3 release (2026-11-28)
 GitHub #7 by Pepperybacon: all group spell thresholds can be 1 through 5, including Greater Blessings. Existing defaults retained. Updated normalization, contexts, per-buff settings, UI and slash guidance. Named credit in all three release-note audiences. 414 focused mocked checks passed, zero failed; 55 modules compile. No full-suite rerun or native test claimed.
 

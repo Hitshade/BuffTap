@@ -1,10 +1,16 @@
 # BuffTap handoff
 
-Updated 2026-11-28. Owner accepted the cleanse beta and authorized 1.30.4 publication; promotion in progress. Gameplay matches installed beta, only version/notes differ. 114 focused checks passed; all 55 modules compile. No new full suite required for this one-predicate change.
+Updated 2026-11-28. **1.30.4** published on GitHub and installed with backup. CurseForge file 9876065 submitted as Release for 1.60.1, automatic publication; last observed Processing, approval pending. 114 focused mocked checks passed, zero failed; all 55 modules compile. Owner accepted installed beta. Only five version/notes files differ from beta; combat controls unchanged.
 
 Previous receipt: Updated 2026-11-28. **1.30.3** published on GitHub and installed locally. CurseForge file 9874434 submitted as Release for 1.60.1 with automatic publication; last observed Uploading, approval pending. Pepperybacon thanked by name in all three release-note audiences for GitHub #7. Preserve named user credit for future suggestions/reports. Focused checks: 414 PASS / 0 FAIL; 55 modules compile. No full-suite rerun or native testing claimed.
 
 Previous receipt: Updated 2026-11-27. Owner accepted 1.30.2-beta1 and authorized stable publication. **1.30.2** release checks: 3,632 PASS / 0 FAIL; 55 Lua modules compile. Stable promotion differs from accepted beta only in five version/note files. Package: 151 files, 3,708,938 bytes; SHA256 f5a643727ab7c19bbf43da205d30937960986d69f6e5aa8819a0af6e4c2376ff. GitHub v1.30.2 is public, CurseForge file 9862618 submitted (Uploading; approval not yet verified), stable installed with backup and reporter reply posted. Previous 1.30.1 CurseForge file 9854529 is Approved. No open/recent GitHub issues found during final review.
+
+## 1.30.4 publication receipt
+- Source 3f9e5a63f9c16cb3126b560ae2ef72ce5aae2c69 pushed to main. GitHub release 461821094 / v1.30.4 public; server asset digest verified. https://github.com/Hitshade/BuffTap/releases/tag/v1.30.4 .
+- Package: 151 files, 3,709,680 bytes; SHA256 d5436e3337fe50de7288bd9b34b9170cdbd40cba5d445e01e582b7f9d1a544e3. Stable installed with backup and byte verification; no saved settings touched.
+- CurseForge file 9876065: Processing, Release, 1.60.1, automatic publication, LibDBIcon Embedded Library retained. Previous 1.30.3 confirmed Approved. Receipts under ../releases/receipts/BuffTap-1.30.4*.
+- Final GitHub recent-issue review only #7, previously resolved; no new report in scope. No unrelated reply or issue mutation. No full-suite rerun for the one-predicate change; 114 focused checks and compilation support this release, no native combat test claimed.
 
 ## 1.30.4-beta1 local cleanse expiry fix (2026-11-28)
 - Owner objected to the three-second cleanse cutoff. CleanseNeed now requires only positive remaining lifetime; untimed effects unchanged. Shared out-of-combat selection/input validation remain available at 1 second or less, while stale expired records fail. All scopes use the same predicate. Native combat self/grid controls do not use this cutoff and are untouched.
